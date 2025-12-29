@@ -43,22 +43,38 @@ const Layout = () => {
 
   const navItems = [
     { path: "/dashboard", icon: LayoutDashboard, label: "dashboard" },
-    { path: "/suppliers", icon: Users, label: "suppliers" },
-    { path: "/milk-reception", icon: Milk, label: "milk_reception" },
-    { path: "/customers", icon: ShoppingCart, label: "customers" },
-    { path: "/sales", icon: ShoppingCart, label: "sales" },
-    { path: "/feed-purchases", icon: Wheat, label: "feed_purchases" },
-    { path: "/inventory", icon: Package, label: "inventory" },
-    { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"] },
-    { path: "/hr", icon: Building2, label: "hr", roles: ["admin"] },
-    { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"] },
+    { path: "/suppliers", icon: Users, label: "suppliers", departments: ["purchasing", "milk_reception", "admin", "it"] },
+    { path: "/milk-reception", icon: Milk, label: "milk_reception", departments: ["milk_reception", "admin", "it"] },
+    { path: "/customers", icon: ShoppingCart, label: "customers", departments: ["sales", "admin", "it"] },
+    { path: "/sales", icon: ShoppingCart, label: "sales", departments: ["sales", "admin", "it"] },
+    { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
+    { path: "/inventory", icon: Package, label: "inventory", departments: ["inventory", "sales", "admin", "it"] },
+    { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
+    { path: "/hr", icon: Building2, label: "hr", roles: ["admin"], departments: ["hr", "admin", "it"] },
+    { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"], departments: ["hr", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/settings", icon: Settings, label: "settings" },
   ];
 
-  const filteredNavItems = navItems.filter(
-    (item) => !item.roles || item.roles.includes(user?.role)
-  );
+  // Filter nav items based on role and department
+  const filteredNavItems = navItems.filter((item) => {
+    // Admin and IT have access to everything
+    if (user?.role === 'admin' || user?.department === 'it' || user?.department === 'admin') {
+      return true;
+    }
+    
+    // Check role access
+    if (item.roles && !item.roles.includes(user?.role)) {
+      return false;
+    }
+    
+    // Check department access
+    if (item.departments && !item.departments.includes(user?.department)) {
+      return false;
+    }
+    
+    return true;
+  });
 
   const handleLogout = () => {
     logout();
