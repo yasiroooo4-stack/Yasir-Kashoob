@@ -202,6 +202,60 @@ class Employee(EmployeeBase):
     is_active: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# Feed Company Models (شركات الأعلاف)
+class FeedCompanyBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    phone: str
+    address: Optional[str] = None
+
+class FeedCompanyCreate(FeedCompanyBase):
+    pass
+
+class FeedCompany(FeedCompanyBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Feed Type Models (أنواع الأعلاف)
+class FeedTypeBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    company_id: str
+    company_name: str
+    unit: str = "kg"  # kg, bag, ton
+    price_per_unit: float
+    description: Optional[str] = None
+
+class FeedTypeCreate(FeedTypeBase):
+    pass
+
+class FeedType(FeedTypeBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Feed Purchase Models (مشتريات الأعلاف من رصيد المورد)
+class FeedPurchaseBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    supplier_id: str
+    supplier_name: str
+    feed_type_id: str
+    feed_type_name: str
+    company_name: str
+    quantity: float
+    price_per_unit: float
+    unit: str = "kg"
+
+class FeedPurchaseCreate(FeedPurchaseBase):
+    pass
+
+class FeedPurchase(FeedPurchaseBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    purchase_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    total_amount: float = 0.0
+    created_by: Optional[str] = None
+
 # ==================== AUTHENTICATION ====================
 
 def hash_password(password: str) -> str:
