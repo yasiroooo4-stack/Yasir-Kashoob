@@ -2103,6 +2103,31 @@ const HR = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Device Confirmation */}
+      <AlertDialog open={deleteDeviceDialogOpen} onOpenChange={setDeleteDeviceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ar" ? "تأكيد حذف الجهاز" : "Confirm Delete Device"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ar"
+                ? `هل أنت متأكد من حذف الجهاز "${selectedDevice?.name}"؟`
+                : `Are you sure you want to delete device "${selectedDevice?.name}"?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteDevice}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
