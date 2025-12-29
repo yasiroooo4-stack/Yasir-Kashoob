@@ -70,15 +70,28 @@ const Suppliers = () => {
     fetchData();
   }, []);
 
-  const fetchSuppliers = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API}/suppliers`);
-      setSuppliers(response.data);
+      const [suppliersRes, centersRes] = await Promise.all([
+        axios.get(`${API}/suppliers`),
+        axios.get(`${API}/centers`),
+      ]);
+      setSuppliers(suppliersRes.data);
+      setCenters(centersRes.data);
     } catch (error) {
       toast.error(t("error"));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCenterChange = (centerId) => {
+    const center = centers.find((c) => c.id === centerId);
+    setFormData({
+      ...formData,
+      center_id: centerId,
+      center_name: center?.name || "",
+    });
   };
 
   const handleSubmit = async (e) => {
