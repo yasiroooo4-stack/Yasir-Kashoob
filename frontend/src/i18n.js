@@ -221,7 +221,10 @@ const resources = {
       "total_suppliers": "إجمالي الموردين",
       "total_customers": "إجمالي العملاء",
       "receptions": "الاستلامات",
-      "payments": "المدفوعات"
+      "payments": "المدفوعات",
+      
+      // HR
+      "hr": "الموارد البشرية"
     }
   },
   en: {
