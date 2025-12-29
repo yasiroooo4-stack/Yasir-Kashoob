@@ -281,6 +281,15 @@ const HR = () => {
         params: { year: attendanceYear, month: attendanceMonth }
       });
       setAttendance(res.data.report || []);
+      
+      // Also fetch raw attendance records for display
+      const recordsRes = await axios.get(`${API}/hr/attendance`, {
+        params: { 
+          start_date: `${attendanceYear}-${String(attendanceMonth).padStart(2, '0')}-01`,
+          end_date: `${attendanceYear}-${String(attendanceMonth).padStart(2, '0')}-31`
+        }
+      });
+      setAttendanceRecords(recordsRes.data || []);
     } catch (error) {
       console.error("Error fetching attendance:", error);
     }
@@ -291,6 +300,31 @@ const HR = () => {
       fetchAttendance();
     }
   }, [activeTab, attendanceMonth, attendanceYear]);
+
+  // Attendance handlers
+  const handleAttendanceSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/hr/attendance`, attendanceForm);
+      toast.success(t("success"));
+      setAttendanceDialogOpen(false);
+      resetAttendanceForm();
+      fetchAttendance();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  const resetAttendanceForm = () => {
+    setAttendanceForm({
+      employee_id: "",
+      employee_name: "",
+      date: new Date().toISOString().split('T')[0],
+      check_in: "",
+      check_out: "",
+      source: "manual"
+    });
+  };
 
   // Employee handlers
   const handleEmployeeSubmit = async (e) => {
