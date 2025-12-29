@@ -1824,6 +1824,27 @@ async def get_fingerprint_devices(current_user: dict = Depends(get_current_user)
     devices = await db.hr_fingerprint_devices.find({"is_active": True}, {"_id": 0}).to_list(100)
     return devices
 
+@api_router.put("/hr/fingerprint-devices/{device_id}", response_model=FingerprintDevice)
+async def update_fingerprint_device(device_id: str, device_data: FingerprintDeviceCreate, current_user: dict = Depends(require_role(["admin"]))):
+    result = await db.hr_fingerprint_devices.update_one(
+        {"id": device_id},
+        {"$set": device_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    device = await db.hr_fingerprint_devices.find_one({"id": device_id}, {"_id": 0})
+    return device
+
+@api_router.delete("/hr/fingerprint-devices/{device_id}")
+async def delete_fingerprint_device(device_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    result = await db.hr_fingerprint_devices.update_one(
+        {"id": device_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return {"message": "Device deleted successfully"}
+
 @api_router.post("/hr/fingerprint-devices/{device_id}/sync")
 async def sync_fingerprint_device(device_id: str, current_user: dict = Depends(require_role(["admin"]))):
     """Sync attendance data from Hikvision fingerprint device"""
