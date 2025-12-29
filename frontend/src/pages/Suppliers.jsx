@@ -48,6 +48,8 @@ const Suppliers = () => {
     name: "",
     phone: "",
     address: "",
+    supplier_code: "",
+    bank_account: "",
     national_id: "",
     farm_size: "",
     cattle_count: "",
@@ -110,6 +112,8 @@ const Suppliers = () => {
       name: supplier.name,
       phone: supplier.phone,
       address: supplier.address,
+      supplier_code: supplier.supplier_code || "",
+      bank_account: supplier.bank_account || "",
       national_id: supplier.national_id || "",
       farm_size: supplier.farm_size || "",
       cattle_count: supplier.cattle_count || "",
@@ -122,6 +126,8 @@ const Suppliers = () => {
       name: "",
       phone: "",
       address: "",
+      supplier_code: "",
+      bank_account: "",
       national_id: "",
       farm_size: "",
       cattle_count: "",
@@ -230,8 +236,9 @@ const Suppliers = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("supplier_name")}</TableHead>
+                  <TableHead>{t("supplier_code")}</TableHead>
                   <TableHead>{t("phone")}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t("address")}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t("bank_account")}</TableHead>
                   <TableHead>{t("total_supplied")}</TableHead>
                   <TableHead>{t("balance")}</TableHead>
                   <TableHead>{t("actions")}</TableHead>
@@ -240,7 +247,7 @@ const Suppliers = () => {
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -249,16 +256,16 @@ const Suppliers = () => {
                     <TableRow key={supplier.id} className="table-row-hover" data-testid={`supplier-row-${supplier.id}`}>
                       <TableCell className="font-medium">{supplier.name}</TableCell>
                       <TableCell>
+                        <span className="badge-info">{supplier.supplier_code || "-"}</span>
+                      </TableCell>
+                      <TableCell>
                         <span className="flex items-center gap-1">
                           <Phone className="w-3 h-3 text-muted-foreground" />
                           {supplier.phone}
                         </span>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-muted-foreground" />
-                          {supplier.address}
-                        </span>
+                        {supplier.bank_account || "-"}
                       </TableCell>
                       <TableCell>
                         {(supplier.total_supplied || 0).toLocaleString()} {t("liters")}
