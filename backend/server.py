@@ -81,6 +81,8 @@ class SupplierBase(BaseModel):
     address: str
     supplier_code: Optional[str] = None
     bank_account: Optional[str] = None
+    center_id: Optional[str] = None  # مركز التجميع
+    center_name: Optional[str] = None
     national_id: Optional[str] = None
     farm_size: Optional[float] = None
     cattle_count: Optional[int] = None
