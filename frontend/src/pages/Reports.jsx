@@ -126,6 +126,89 @@ const Reports = () => {
     }
   };
 
+  // Export functions
+  const handleExportExcel = async (type) => {
+    try {
+      let endpoint = '';
+      let filename = '';
+      
+      switch (type) {
+        case 'suppliers':
+          endpoint = '/reports/export/suppliers/excel';
+          filename = 'suppliers_report.xlsx';
+          break;
+        case 'employees':
+          endpoint = '/reports/export/hr/employees/excel';
+          filename = 'employees_report.xlsx';
+          break;
+        case 'milk':
+          endpoint = `/reports/export/milk-receptions/excel?start_date=${selectedDate}`;
+          filename = 'milk_receptions.xlsx';
+          break;
+        case 'finance':
+          endpoint = '/reports/export/finance/excel';
+          filename = 'finance_report.xlsx';
+          break;
+        default:
+          return;
+      }
+      
+      const response = await axios.get(`${API}${endpoint}`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === "ar" ? "تم التصدير بنجاح" : "Exported successfully");
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل التصدير" : "Export failed");
+    }
+  };
+
+  const handleExportPDF = async (type) => {
+    try {
+      let endpoint = '';
+      let filename = '';
+      
+      switch (type) {
+        case 'suppliers':
+          endpoint = '/reports/export/suppliers/pdf';
+          filename = 'suppliers_report.pdf';
+          break;
+        case 'daily':
+          endpoint = `/reports/export/daily/pdf?date=${selectedDate}`;
+          filename = `daily_report_${selectedDate}.pdf`;
+          break;
+        default:
+          return;
+      }
+      
+      const response = await axios.get(`${API}${endpoint}`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === "ar" ? "تم التصدير بنجاح" : "Exported successfully");
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل التصدير" : "Export failed");
+    }
+  };
+
   const months = [
     { value: 1, label: language === "ar" ? "يناير" : "January" },
     { value: 2, label: language === "ar" ? "فبراير" : "February" },
