@@ -19,6 +19,7 @@ import Employees from "./pages/Employees";
 import Reports from "./pages/Reports";
 import FeedPurchases from "./pages/FeedPurchases";
 import Settings from "./pages/Settings";
+import HR from "./pages/HR";
 
 // Layout
 import Layout from "./components/Layout";
