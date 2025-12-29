@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Wheat,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -44,6 +45,7 @@ const Layout = () => {
     { path: "/milk-reception", icon: Milk, label: "milk_reception" },
     { path: "/customers", icon: ShoppingCart, label: "customers" },
     { path: "/sales", icon: ShoppingCart, label: "sales" },
+    { path: "/feed-purchases", icon: Wheat, label: "feed_purchases" },
     { path: "/inventory", icon: Package, label: "inventory" },
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"] },
     { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"] },
