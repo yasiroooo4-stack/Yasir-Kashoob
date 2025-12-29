@@ -17,6 +17,7 @@ import Inventory from "./pages/Inventory";
 import Finance from "./pages/Finance";
 import Employees from "./pages/Employees";
 import Reports from "./pages/Reports";
+import FeedPurchases from "./pages/FeedPurchases";
 
 // Layout
 import Layout from "./components/Layout";
@@ -204,6 +205,7 @@ function App() {
                 <Route path="milk-reception" element={<MilkReception />} />
                 <Route path="customers" element={<Customers />} />
                 <Route path="sales" element={<Sales />} />
+                <Route path="feed-purchases" element={<FeedPurchases />} />
                 <Route path="inventory" element={<Inventory />} />
                 <Route path="finance" element={
                   <ProtectedRoute allowedRoles={["admin", "accountant"]}>
