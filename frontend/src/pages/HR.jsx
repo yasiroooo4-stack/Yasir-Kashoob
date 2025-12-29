@@ -728,7 +728,7 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
                       <TableHead>{language === "ar" ? "القسم" : "Department"}</TableHead>
                       <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
-                      <TableHead>{language === "ar" ? "الهاتف" : "Phone"}</TableHead>
+                      <TableHead>{language === "ar" ? "المسؤول" : "Manager"}</TableHead>
                       <TableHead>{language === "ar" ? "الراتب" : "Salary"}</TableHead>
                       <TableHead>{language === "ar" ? "حساب النظام" : "Account"}</TableHead>
                       <TableHead>{t("actions")}</TableHead>
@@ -750,7 +750,13 @@ const HR = () => {
                           <TableCell className="font-medium">{emp.name}</TableCell>
                           <TableCell>{getDepartmentName(emp.department)}</TableCell>
                           <TableCell>{emp.position}</TableCell>
-                          <TableCell>{emp.phone}</TableCell>
+                          <TableCell>
+                            {emp.manager_name ? (
+                              <span className="text-sm text-muted-foreground">{emp.manager_name}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell>{emp.salary} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
                           <TableCell>
                             {emp.can_login ? (
