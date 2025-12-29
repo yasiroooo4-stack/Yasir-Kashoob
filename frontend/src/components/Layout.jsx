@@ -51,6 +51,7 @@ const Layout = () => {
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"] },
     { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
+    { path: "/settings", icon: Settings, label: "settings" },
   ];
 
   const filteredNavItems = navItems.filter(
