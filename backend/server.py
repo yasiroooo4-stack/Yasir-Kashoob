@@ -34,6 +34,29 @@ app = FastAPI(title="Milk Collection Center ERP")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Default collection centers (مراكز التجميع الافتراضية)
+DEFAULT_CENTERS = [
+    {"name": "حجيف", "code": "HAJIF", "address": "عُمان", "is_active": True},
+    {"name": "زيك", "code": "ZEEK", "address": "عُمان", "is_active": True},
+    {"name": "غدو", "code": "GHADU", "address": "عُمان", "is_active": True},
+]
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize default collection centers on startup"""
+    try:
+        for center_data in DEFAULT_CENTERS:
+            # Check if center already exists by code
+            existing = await db.collection_centers.find_one({"code": center_data["code"]})
+            if not existing:
+                center = CollectionCenter(**center_data)
+                await db.collection_centers.insert_one(center.model_dump())
+                logging.info(f"Created default center: {center_data['name']}")
+            else:
+                logging.info(f"Center already exists: {center_data['name']}")
+    except Exception as e:
+        logging.error(f"Error initializing default centers: {e}")
+
 # ==================== MODELS ====================
 
 class UserBase(BaseModel):
