@@ -1,0 +1,37 @@
+[
+  {
+    "test": "User Login",
+    "success": true,
+    "message": "Successfully logged in as testadmin",
+    "details": null,
+    "timestamp": "2025-12-29T08:56:14.946912"
+  },
+  {
+    "test": "Collection Centers API",
+    "success": true,
+    "message": "Found all 3 expected centers: ['حجيف', 'زيك', 'غدو']",
+    "details": null,
+    "timestamp": "2025-12-29T08:56:15.038858"
+  },
+  {
+    "test": "User Profile Update API",
+    "success": true,
+    "message": "Profile updated successfully",
+    "details": null,
+    "timestamp": "2025-12-29T08:56:15.068389"
+  },
+  {
+    "test": "Password Change API",
+    "success": true,
+    "message": "Password changed successfully (and reverted)",
+    "details": null,
+    "timestamp": "2025-12-29T08:56:16.790072"
+  },
+  {
+    "test": "Activity Logs API",
+    "success": true,
+    "message": "Retrieved 8 activity logs, including login activities",
+    "details": null,
+    "timestamp": "2025-12-29T08:56:16.806924"
+  }
+]
