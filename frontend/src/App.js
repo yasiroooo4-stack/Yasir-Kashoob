@@ -214,26 +214,50 @@ function App() {
               }>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="suppliers" element={<Suppliers />} />
-                <Route path="milk-reception" element={<MilkReception />} />
-                <Route path="customers" element={<Customers />} />
-                <Route path="sales" element={<Sales />} />
-                <Route path="feed-purchases" element={<FeedPurchases />} />
-                <Route path="inventory" element={<Inventory />} />
+                <Route path="suppliers" element={
+                  <ProtectedRoute allowedDepartments={["purchasing", "milk_reception", "admin", "it"]}>
+                    <Suppliers />
+                  </ProtectedRoute>
+                } />
+                <Route path="milk-reception" element={
+                  <ProtectedRoute allowedDepartments={["milk_reception", "admin", "it"]}>
+                    <MilkReception />
+                  </ProtectedRoute>
+                } />
+                <Route path="customers" element={
+                  <ProtectedRoute allowedDepartments={["sales", "admin", "it"]}>
+                    <Customers />
+                  </ProtectedRoute>
+                } />
+                <Route path="sales" element={
+                  <ProtectedRoute allowedDepartments={["sales", "admin", "it"]}>
+                    <Sales />
+                  </ProtectedRoute>
+                } />
+                <Route path="feed-purchases" element={
+                  <ProtectedRoute allowedDepartments={["purchasing", "admin", "it"]}>
+                    <FeedPurchases />
+                  </ProtectedRoute>
+                } />
+                <Route path="inventory" element={
+                  <ProtectedRoute allowedDepartments={["inventory", "sales", "admin", "it"]}>
+                    <Inventory />
+                  </ProtectedRoute>
+                } />
                 <Route path="finance" element={
-                  <ProtectedRoute allowedRoles={["admin", "accountant"]}>
+                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
                     <Finance />
                   </ProtectedRoute>
                 } />
                 <Route path="employees" element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["hr", "admin", "it"]}>
                     <Employees />
                   </ProtectedRoute>
                 } />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="hr" element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["hr", "admin", "it"]}>
                     <HR />
                   </ProtectedRoute>
                 } />
