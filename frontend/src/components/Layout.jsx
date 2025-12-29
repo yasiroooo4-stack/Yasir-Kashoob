@@ -19,6 +19,7 @@ import {
   ChevronRight,
   User,
   Wheat,
+  Settings,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
