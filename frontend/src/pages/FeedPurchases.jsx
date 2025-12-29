@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet } from "lucide-react";
 
 const FeedPurchases = () => {
   const { t } = useTranslation();
@@ -62,6 +62,7 @@ const FeedPurchases = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [editingPurchase, setEditingPurchase] = useState(null);
   
   // Form states
   const [purchaseForm, setPurchaseForm] = useState({
@@ -86,12 +87,12 @@ const FeedPurchases = () => {
     company_id: "",
     company_name: "",
     unit: "kg",
+    kg_per_unit: "",
     price_per_unit: "",
     description: "",
   });
   
   const [selectedSupplierBalance, setSelectedSupplierBalance] = useState(0);
-  const [selectedFeedTypePrice, setSelectedFeedTypePrice] = useState(0);
 
   useEffect(() => {
     fetchAllData();
@@ -124,7 +125,12 @@ const FeedPurchases = () => {
       supplier_id: supplierId,
       supplier_name: supplier?.name || "",
     });
-    setSelectedSupplierBalance(supplier?.balance || 0);
+    // For edit mode, add back the original amount to available balance
+    let balance = supplier?.balance || 0;
+    if (editingPurchase && editingPurchase.supplier_id === supplierId) {
+      balance += editingPurchase.total_amount || 0;
+    }
+    setSelectedSupplierBalance(balance);
   };
 
   // Handle feed type selection
@@ -138,7 +144,6 @@ const FeedPurchases = () => {
       price_per_unit: feedType?.price_per_unit || "",
       unit: feedType?.unit || "kg",
     });
-    setSelectedFeedTypePrice(feedType?.price_per_unit || 0);
   };
 
   // Handle company selection for feed type
@@ -151,23 +156,34 @@ const FeedPurchases = () => {
     });
   };
 
-  // Submit purchase
+  // Submit purchase (create or update)
   const handlePurchaseSubmit = async (e) => {
     e.preventDefault();
     const totalAmount = parseFloat(purchaseForm.quantity) * parseFloat(purchaseForm.price_per_unit);
     
-    if (totalAmount > selectedSupplierBalance) {
+    // For edit mode, calculate available balance differently
+    let availableBalance = selectedSupplierBalance;
+    
+    if (totalAmount > availableBalance) {
       toast.error(t("insufficient_balance"));
       return;
     }
     
     try {
-      await axios.post(`${API}/feed-purchases`, {
+      const data = {
         ...purchaseForm,
         quantity: parseFloat(purchaseForm.quantity),
         price_per_unit: parseFloat(purchaseForm.price_per_unit),
-      });
-      toast.success(t("success"));
+      };
+      
+      if (editingPurchase) {
+        await axios.put(`${API}/feed-purchases/${editingPurchase.id}`, data);
+        toast.success(t("success"));
+      } else {
+        await axios.post(`${API}/feed-purchases`, data);
+        toast.success(t("success"));
+      }
+      
       setPurchaseDialogOpen(false);
       resetPurchaseForm();
       fetchAllData();
@@ -201,6 +217,7 @@ const FeedPurchases = () => {
       const data = {
         ...feedTypeForm,
         price_per_unit: parseFloat(feedTypeForm.price_per_unit),
+        kg_per_unit: feedTypeForm.kg_per_unit ? parseFloat(feedTypeForm.kg_per_unit) : null,
       };
       if (selectedItem) {
         await axios.put(`${API}/feed-types/${selectedItem.id}`, data);
@@ -223,6 +240,8 @@ const FeedPurchases = () => {
         await axios.delete(`${API}/feed-companies/${selectedItem.id}`);
       } else if (deleteType === "feedType") {
         await axios.delete(`${API}/feed-types/${selectedItem.id}`);
+      } else if (deleteType === "purchase") {
+        await axios.delete(`${API}/feed-purchases/${selectedItem.id}`);
       }
       toast.success(t("success"));
       setDeleteDialogOpen(false);
@@ -246,7 +265,7 @@ const FeedPurchases = () => {
       unit: "kg",
     });
     setSelectedSupplierBalance(0);
-    setSelectedFeedTypePrice(0);
+    setEditingPurchase(null);
   };
 
   const resetCompanyForm = () => {
@@ -260,6 +279,7 @@ const FeedPurchases = () => {
       company_id: "",
       company_name: "",
       unit: "kg",
+      kg_per_unit: "",
       price_per_unit: "",
       description: "",
     });
@@ -284,10 +304,29 @@ const FeedPurchases = () => {
       company_id: feedType.company_id,
       company_name: feedType.company_name,
       unit: feedType.unit,
+      kg_per_unit: feedType.kg_per_unit || "",
       price_per_unit: feedType.price_per_unit,
       description: feedType.description || "",
     });
     setFeedTypeDialogOpen(true);
+  };
+
+  const openEditPurchase = (purchase) => {
+    setEditingPurchase(purchase);
+    setPurchaseForm({
+      supplier_id: purchase.supplier_id,
+      supplier_name: purchase.supplier_name,
+      feed_type_id: purchase.feed_type_id,
+      feed_type_name: purchase.feed_type_name,
+      company_name: purchase.company_name,
+      quantity: purchase.quantity,
+      price_per_unit: purchase.price_per_unit,
+      unit: purchase.unit,
+    });
+    // Set balance including the current purchase amount (since it will be refunded if changed)
+    const supplier = suppliers.find(s => s.id === purchase.supplier_id);
+    setSelectedSupplierBalance((supplier?.balance || 0) + (purchase.total_amount || 0));
+    setPurchaseDialogOpen(true);
   };
 
   const getUnitLabel = (unit) => {
@@ -297,9 +336,6 @@ const FeedPurchases = () => {
 
   // Stats
   const totalPurchases = purchases.reduce((sum, p) => sum + (p.total_amount || 0), 0);
-  const todayPurchases = purchases.filter((p) =>
-    p.purchase_date?.startsWith(new Date().toISOString().split("T")[0])
-  );
 
   if (loading) {
     return (
@@ -446,12 +482,13 @@ const FeedPurchases = () => {
                     <TableHead>{t("quantity")}</TableHead>
                     <TableHead>{t("price_per_unit")}</TableHead>
                     <TableHead>{t("total")}</TableHead>
+                    <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {purchases.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         {t("no_data")}
                       </TableCell>
                     </TableRow>
@@ -474,6 +511,31 @@ const FeedPurchases = () => {
                         </TableCell>
                         <TableCell className="font-semibold text-amber-600">
                           {purchase.total_amount?.toLocaleString()} {t("currency")}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditPurchase(purchase)}
+                              data-testid={`edit-purchase-${purchase.id}`}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setSelectedItem(purchase);
+                                setDeleteType("purchase");
+                                setDeleteDialogOpen(true);
+                              }}
+                              data-testid={`delete-purchase-${purchase.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -553,6 +615,7 @@ const FeedPurchases = () => {
                     <TableHead>{t("name")}</TableHead>
                     <TableHead>{t("feed_company")}</TableHead>
                     <TableHead>{t("unit")}</TableHead>
+                    <TableHead>{t("kg_per_unit")}</TableHead>
                     <TableHead>{t("price_per_unit")}</TableHead>
                     <TableHead>{t("actions")}</TableHead>
                   </TableRow>
@@ -560,7 +623,7 @@ const FeedPurchases = () => {
                 <TableBody>
                   {feedTypes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         {t("no_data")}
                       </TableCell>
                     </TableRow>
@@ -575,6 +638,9 @@ const FeedPurchases = () => {
                         </TableCell>
                         <TableCell>{feedType.company_name}</TableCell>
                         <TableCell>{getUnitLabel(feedType.unit)}</TableCell>
+                        <TableCell>
+                          {feedType.kg_per_unit ? `${feedType.kg_per_unit} ${t("kg")}` : "-"}
+                        </TableCell>
                         <TableCell className="font-semibold">
                           {feedType.price_per_unit} {t("currency")}
                         </TableCell>
@@ -615,7 +681,9 @@ const FeedPurchases = () => {
       <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("add_feed_purchase")}</DialogTitle>
+            <DialogTitle>
+              {editingPurchase ? t("edit_purchase") : t("add_feed_purchase")}
+            </DialogTitle>
             <DialogDescription>
               {language === "ar" ? "شراء أعلاف من رصيد المورد" : "Buy feed from supplier balance"}
             </DialogDescription>
@@ -629,7 +697,7 @@ const FeedPurchases = () => {
                   <SelectValue placeholder={t("supplier")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.filter(s => s.balance > 0).map((supplier) => (
+                  {suppliers.filter(s => s.balance > 0 || (editingPurchase && s.id === editingPurchase.supplier_id)).map((supplier) => (
                     <SelectItem key={supplier.id} value={supplier.id}>
                       {supplier.name} - {t("balance")}: {supplier.balance?.toLocaleString()} {t("currency")}
                     </SelectItem>
@@ -654,6 +722,7 @@ const FeedPurchases = () => {
                   {feedTypes.map((feedType) => (
                     <SelectItem key={feedType.id} value={feedType.id}>
                       {feedType.name} ({feedType.company_name}) - {feedType.price_per_unit} {t("currency")}/{getUnitLabel(feedType.unit)}
+                      {feedType.kg_per_unit && ` (${feedType.kg_per_unit} ${t("kg")})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -833,17 +902,29 @@ const FeedPurchases = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="feed_type_price">{t("price_per_unit")} *</Label>
+                <Label htmlFor="kg_per_unit">{t("kg_per_unit")}</Label>
                 <Input
-                  id="feed_type_price"
+                  id="kg_per_unit"
                   type="number"
-                  step="0.01"
-                  value={feedTypeForm.price_per_unit}
-                  onChange={(e) => setFeedTypeForm({ ...feedTypeForm, price_per_unit: e.target.value })}
-                  required
-                  data-testid="feed-type-price-input"
+                  step="0.1"
+                  value={feedTypeForm.kg_per_unit}
+                  onChange={(e) => setFeedTypeForm({ ...feedTypeForm, kg_per_unit: e.target.value })}
+                  placeholder={language === "ar" ? "مثال: 25 كجم للكيس" : "e.g., 25 kg per bag"}
+                  data-testid="feed-type-kg-input"
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="feed_type_price">{t("price_per_unit")} *</Label>
+              <Input
+                id="feed_type_price"
+                type="number"
+                step="0.01"
+                value={feedTypeForm.price_per_unit}
+                onChange={(e) => setFeedTypeForm({ ...feedTypeForm, price_per_unit: e.target.value })}
+                required
+                data-testid="feed-type-price-input"
+              />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setFeedTypeDialogOpen(false)}>
@@ -865,9 +946,21 @@ const FeedPurchases = () => {
               {language === "ar" ? "تأكيد الحذف" : "Confirm Delete"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === "ar"
-                ? `هل أنت متأكد من حذف "${selectedItem?.name}"؟`
-                : `Are you sure you want to delete "${selectedItem?.name}"?`}
+              {deleteType === "purchase" ? (
+                <>
+                  {language === "ar"
+                    ? `هل أنت متأكد من حذف هذه المشتراة؟`
+                    : `Are you sure you want to delete this purchase?`}
+                  <br />
+                  <span className="text-emerald-600 font-medium">
+                    {t("refund_note")}: {selectedItem?.total_amount?.toLocaleString()} {t("currency")}
+                  </span>
+                </>
+              ) : (
+                language === "ar"
+                  ? `هل أنت متأكد من حذف "${selectedItem?.name}"؟`
+                  : `Are you sure you want to delete "${selectedItem?.name}"?`
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
