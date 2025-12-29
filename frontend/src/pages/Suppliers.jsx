@@ -112,7 +112,7 @@ const Suppliers = () => {
       }
       setDialogOpen(false);
       resetForm();
-      fetchSuppliers();
+      fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || t("error"));
     }
