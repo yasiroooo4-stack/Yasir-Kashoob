@@ -247,15 +247,30 @@ const Suppliers = () => {
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="text-lg">{t("suppliers")}</CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder={t("search")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="ps-9"
-                data-testid="search-suppliers"
-              />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={filterCenter} onValueChange={setFilterCenter}>
+                <SelectTrigger className="w-full sm:w-40" data-testid="filter-center">
+                  <SelectValue placeholder={t("center")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === "ar" ? "جميع المراكز" : "All Centers"}</SelectItem>
+                  {centers.map((center) => (
+                    <SelectItem key={center.id} value={center.id}>
+                      {center.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder={t("search")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="ps-9"
+                  data-testid="search-suppliers"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
