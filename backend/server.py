@@ -354,6 +354,23 @@ def require_role(allowed_roles: List[str]):
         return current_user
     return role_checker
 
+# Activity logging helper
+async def log_activity(user_id: str, user_name: str, action: str, entity_type: str = None, 
+                       entity_id: str = None, entity_name: str = None, details: str = None,
+                       center_id: str = None, center_name: str = None):
+    activity = ActivityLog(
+        user_id=user_id,
+        user_name=user_name,
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        entity_name=entity_name,
+        details=details,
+        center_id=center_id,
+        center_name=center_name
+    )
+    await db.activity_logs.insert_one(activity.model_dump())
+
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register", response_model=Token)
