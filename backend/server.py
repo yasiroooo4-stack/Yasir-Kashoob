@@ -1918,13 +1918,63 @@ PERMISSIONS = {
     "inventory": ["inventory", "reports"]
 }
 
+# قائمة الصلاحيات المتاحة
+AVAILABLE_PERMISSIONS = [
+    {"id": "dashboard", "name": "لوحة التحكم", "name_en": "Dashboard"},
+    {"id": "suppliers", "name": "الموردين", "name_en": "Suppliers"},
+    {"id": "milk_reception", "name": "استلام الحليب", "name_en": "Milk Reception"},
+    {"id": "customers", "name": "العملاء", "name_en": "Customers"},
+    {"id": "sales", "name": "المبيعات", "name_en": "Sales"},
+    {"id": "feed_purchases", "name": "مشتريات الأعلاف", "name_en": "Feed Purchases"},
+    {"id": "inventory", "name": "المخزون", "name_en": "Inventory"},
+    {"id": "finance", "name": "المالية", "name_en": "Finance"},
+    {"id": "hr", "name": "الموارد البشرية", "name_en": "Human Resources"},
+    {"id": "employees", "name": "الموظفين", "name_en": "Employees"},
+    {"id": "reports", "name": "التقارير", "name_en": "Reports"},
+    {"id": "settings", "name": "الإعدادات", "name_en": "Settings"},
+    {"id": "attendance", "name": "الحضور والانصراف", "name_en": "Attendance"},
+    {"id": "leave", "name": "الإجازات", "name_en": "Leave Requests"},
+    {"id": "expense", "name": "المصاريف", "name_en": "Expenses"},
+    {"id": "car_contracts", "name": "عقود السيارات", "name_en": "Car Contracts"},
+    {"id": "letters", "name": "الرسائل الرسمية", "name_en": "Official Letters"},
+    {"id": "quality", "name": "فحص الجودة", "name_en": "Quality Testing"},
+    {"id": "payments", "name": "المدفوعات", "name_en": "Payments"},
+    {"id": "all", "name": "جميع الصلاحيات", "name_en": "All Permissions"},
+]
+
 @api_router.get("/hr/departments")
 async def get_departments():
     return DEPARTMENTS
 
+@api_router.get("/hr/available-permissions")
+async def get_available_permissions():
+    """Get list of all available permissions"""
+    return AVAILABLE_PERMISSIONS
+
 @api_router.get("/hr/permissions/{department}")
 async def get_department_permissions(department: str):
     return {"department": department, "permissions": PERMISSIONS.get(department, [])}
+
+@api_router.get("/hr/managers")
+async def get_managers(current_user: dict = Depends(get_current_user)):
+    """Get list of employees who can be managers (department heads)"""
+    managers = await db.hr_employees.find(
+        {"is_active": True, "position": {"$regex": "مدير|مسؤول|رئيس|Manager|Head|Supervisor", "$options": "i"}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Also include employees from admin/it/hr departments
+    dept_heads = await db.hr_employees.find(
+        {"is_active": True, "department": {"$in": ["admin", "it", "hr"]}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Merge and deduplicate
+    all_managers = {m["id"]: m for m in managers}
+    for m in dept_heads:
+        all_managers[m["id"]] = m
+    
+    return list(all_managers.values())
 
 # ==================== HR - DASHBOARD ====================
 
