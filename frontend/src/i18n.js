@@ -92,6 +92,50 @@ const resources = {
       "edit_purchase": "تعديل المشتراة",
       "refund_note": "سيتم إرجاع المبلغ لرصيد المورد",
       
+      // Centers
+      "centers": "مراكز التجميع",
+      "center": "المركز",
+      "center_hajeef": "مركز حجيف",
+      "center_zeek": "مركز زيك",
+      "center_ghado": "مركز غدو",
+      "add_center": "إضافة مركز",
+      "center_code": "كود المركز",
+      "manager_name": "اسم المدير",
+      
+      // Activity Log
+      "activity_log": "سجل النشاط",
+      "user_activity": "نشاط المستخدم",
+      "action": "الإجراء",
+      "timestamp": "التوقيت",
+      "login_time": "وقت الدخول",
+      "entity": "الكيان",
+      
+      // Settings
+      "settings": "الإعدادات",
+      "profile_settings": "إعدادات الحساب",
+      "change_password": "تغيير كلمة المرور",
+      "current_password": "كلمة المرور الحالية",
+      "new_password": "كلمة المرور الجديدة",
+      "confirm_password": "تأكيد كلمة المرور",
+      "avatar": "الصورة الشخصية",
+      "upload_avatar": "رفع صورة",
+      
+      // Devices
+      "devices": "الأجهزة",
+      "device_settings": "إعدادات الأجهزة",
+      "milk_scale": "ميزان الحليب",
+      "fat_analyzer": "جهاز الدهون",
+      "quality_tester": "جهاز الفحص",
+      "camera": "الكاميرا",
+      "connection_type": "نوع الاتصال",
+      "automatic": "تلقائي",
+      "manual": "يدوي",
+      
+      // Reports
+      "print_pdf": "طباعة PDF",
+      "export_excel": "تصدير Excel",
+      "print_document": "طباعة مستند",
+      
       // Suppliers
       "supplier_name": "اسم المورد",
       "phone": "الهاتف",
@@ -269,6 +313,50 @@ const resources = {
       "kg_per_unit": "Weight per Unit (kg)",
       "edit_purchase": "Edit Purchase",
       "refund_note": "Amount will be refunded to supplier balance",
+      
+      // Centers
+      "centers": "Collection Centers",
+      "center": "Center",
+      "center_hajeef": "Hajeef Center",
+      "center_zeek": "Zeek Center",
+      "center_ghado": "Ghado Center",
+      "add_center": "Add Center",
+      "center_code": "Center Code",
+      "manager_name": "Manager Name",
+      
+      // Activity Log
+      "activity_log": "Activity Log",
+      "user_activity": "User Activity",
+      "action": "Action",
+      "timestamp": "Timestamp",
+      "login_time": "Login Time",
+      "entity": "Entity",
+      
+      // Settings
+      "settings": "Settings",
+      "profile_settings": "Profile Settings",
+      "change_password": "Change Password",
+      "current_password": "Current Password",
+      "new_password": "New Password",
+      "confirm_password": "Confirm Password",
+      "avatar": "Avatar",
+      "upload_avatar": "Upload Avatar",
+      
+      // Devices
+      "devices": "Devices",
+      "device_settings": "Device Settings",
+      "milk_scale": "Milk Scale",
+      "fat_analyzer": "Fat Analyzer",
+      "quality_tester": "Quality Tester",
+      "camera": "Camera",
+      "connection_type": "Connection Type",
+      "automatic": "Automatic",
+      "manual": "Manual",
+      
+      // Reports
+      "print_pdf": "Print PDF",
+      "export_excel": "Export Excel",
+      "print_document": "Print Document",
       
       // Suppliers
       "supplier_name": "Supplier Name",
