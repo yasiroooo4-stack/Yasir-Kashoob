@@ -578,6 +578,51 @@ const HR = () => {
     }
   };
 
+  // Export Attendance functions
+  const handleExportAttendanceExcel = async () => {
+    try {
+      const response = await axios.get(`${API}/hr/attendance/export/excel`, {
+        params: { year: attendanceYear, month: attendanceMonth },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `attendance_${attendanceYear}_${attendanceMonth}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === "ar" ? "تم التصدير بنجاح" : "Exported successfully");
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل التصدير" : "Export failed");
+    }
+  };
+
+  const handleExportAttendancePDF = async () => {
+    try {
+      const response = await axios.get(`${API}/hr/attendance/export/pdf`, {
+        params: { year: attendanceYear, month: attendanceMonth },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `attendance_${attendanceYear}_${attendanceMonth}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === "ar" ? "تم التصدير بنجاح" : "Exported successfully");
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل التصدير" : "Export failed");
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: language === "ar" ? "قيد الانتظار" : "Pending", variant: "warning" },
