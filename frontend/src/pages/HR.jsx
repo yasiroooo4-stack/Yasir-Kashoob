@@ -1973,7 +1973,12 @@ const HR = () => {
       <Dialog open={deviceDialogOpen} onOpenChange={setDeviceDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{language === "ar" ? "إضافة جهاز بصمة" : "Add Fingerprint Device"}</DialogTitle>
+            <DialogTitle>
+              {selectedDevice 
+                ? (language === "ar" ? "تعديل جهاز بصمة" : "Edit Fingerprint Device")
+                : (language === "ar" ? "إضافة جهاز بصمة" : "Add Fingerprint Device")
+              }
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleDeviceSubmit} className="space-y-4">
             <div className="space-y-2">
