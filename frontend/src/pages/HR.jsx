@@ -1335,14 +1335,36 @@ const HR = () => {
                             ) : "-"}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSyncDevice(device.id)}
-                            >
-                              <RefreshCw className="w-4 h-4 me-1" />
-                              {language === "ar" ? "مزامنة" : "Sync"}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleSyncDevice(device.id)}
+                                title={language === "ar" ? "مزامنة" : "Sync"}
+                              >
+                                <RefreshCw className="w-4 h-4 text-blue-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditDevice(device)}
+                                title={language === "ar" ? "تعديل" : "Edit"}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  setSelectedDevice(device);
+                                  setDeleteDeviceDialogOpen(true);
+                                }}
+                                title={language === "ar" ? "حذف" : "Delete"}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
