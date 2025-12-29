@@ -97,6 +97,10 @@ const HR = () => {
   const [selectedCar, setSelectedCar] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
   
+  // Available permissions and managers
+  const [availablePermissions, setAvailablePermissions] = useState([]);
+  const [managers, setManagers] = useState([]);
+  
   // Form data
   const [employeeForm, setEmployeeForm] = useState({
     name: "",
@@ -111,6 +115,9 @@ const HR = () => {
     center_id: "",
     center_name: "",
     fingerprint_id: "",
+    permissions: [],
+    manager_id: "",
+    manager_name: "",
   });
   
   const [leaveForm, setLeaveForm] = useState({
