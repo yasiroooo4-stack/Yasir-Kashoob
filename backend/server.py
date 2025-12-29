@@ -399,15 +399,128 @@ async def login(credentials: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_access_token({"sub": user["id"], "role": user["role"]})
+    
+    # Log login activity
+    await log_activity(
+        user_id=user["id"],
+        user_name=user["full_name"],
+        action="login",
+        details="تسجيل دخول للنظام"
+    )
+    
     return Token(
         access_token=token,
         token_type="bearer",
-        user={"id": user["id"], "username": user["username"], "email": user["email"], "full_name": user["full_name"], "role": user["role"]}
+        user={"id": user["id"], "username": user["username"], "email": user["email"], "full_name": user["full_name"], "role": user["role"], "phone": user.get("phone"), "avatar_url": user.get("avatar_url")}
     )
 
 @api_router.get("/auth/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
+
+@api_router.put("/auth/profile")
+async def update_profile(profile_data: UserUpdate, current_user: dict = Depends(get_current_user)):
+    update_data = {k: v for k, v in profile_data.model_dump().items() if v is not None}
+    if update_data:
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$set": update_data}
+        )
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    return user
+
+@api_router.put("/auth/password")
+async def change_password(password_data: PasswordChange, current_user: dict = Depends(get_current_user)):
+    user = await db.users.find_one({"id": current_user["id"]})
+    if not verify_password(password_data.current_password, user["password"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    new_hash = hash_password(password_data.new_password)
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"password": new_hash}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="password_change",
+        details="تغيير كلمة المرور"
+    )
+    
+    return {"message": "Password changed successfully"}
+
+# ==================== COLLECTION CENTER ROUTES (مراكز التجميع) ====================
+
+@api_router.get("/centers", response_model=List[CollectionCenter])
+async def get_centers(current_user: dict = Depends(get_current_user)):
+    centers = await db.collection_centers.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return centers
+
+@api_router.post("/centers", response_model=CollectionCenter)
+async def create_center(center_data: CollectionCenterCreate, current_user: dict = Depends(require_role(["admin"]))):
+    center = CollectionCenter(**center_data.model_dump())
+    await db.collection_centers.insert_one(center.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_center",
+        entity_type="center",
+        entity_id=center.id,
+        entity_name=center.name,
+        details=f"إنشاء مركز تجميع: {center.name}"
+    )
+    
+    return center
+
+@api_router.put("/centers/{center_id}", response_model=CollectionCenter)
+async def update_center(center_id: str, center_data: CollectionCenterCreate, current_user: dict = Depends(require_role(["admin"]))):
+    result = await db.collection_centers.update_one(
+        {"id": center_id},
+        {"$set": center_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Center not found")
+    center = await db.collection_centers.find_one({"id": center_id}, {"_id": 0})
+    return center
+
+@api_router.delete("/centers/{center_id}")
+async def delete_center(center_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    result = await db.collection_centers.update_one(
+        {"id": center_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Center not found")
+    return {"message": "Center deleted successfully"}
+
+# ==================== ACTIVITY LOG ROUTES (سجل النشاط) ====================
+
+@api_router.get("/activity-logs")
+async def get_activity_logs(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    user_id: Optional[str] = None,
+    action: Optional[str] = None,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if user_id:
+        query["user_id"] = user_id
+    if action:
+        query["action"] = action
+    if start_date:
+        query["timestamp"] = {"$gte": start_date}
+    if end_date:
+        if "timestamp" in query:
+            query["timestamp"]["$lte"] = end_date
+        else:
+            query["timestamp"] = {"$lte": end_date}
+    
+    logs = await db.activity_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
 
 # ==================== SUPPLIER ROUTES ====================
 
@@ -415,11 +528,27 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 async def create_supplier(supplier_data: SupplierCreate, current_user: dict = Depends(get_current_user)):
     supplier = Supplier(**supplier_data.model_dump())
     await db.suppliers.insert_one(supplier.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_supplier",
+        entity_type="supplier",
+        entity_id=supplier.id,
+        entity_name=supplier.name,
+        center_id=supplier.center_id,
+        center_name=supplier.center_name,
+        details=f"إضافة مورد: {supplier.name}"
+    )
+    
     return supplier
 
 @api_router.get("/suppliers", response_model=List[Supplier])
-async def get_suppliers(current_user: dict = Depends(get_current_user)):
-    suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(1000)
+async def get_suppliers(center_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {"is_active": True}
+    if center_id:
+        query["center_id"] = center_id
+    suppliers = await db.suppliers.find(query, {"_id": 0}).to_list(1000)
     return suppliers
 
 @api_router.get("/suppliers/{supplier_id}", response_model=Supplier)
