@@ -71,6 +71,24 @@ const resources = {
       "select_all": "تحديد الكل",
       "select_supplier": "تحديد المورد",
       
+      // Feed (الأعلاف)
+      "feed_purchases": "مشتريات الأعلاف",
+      "feed_companies": "شركات الأعلاف",
+      "feed_types": "أنواع الأعلاف",
+      "feed_company": "شركة الأعلاف",
+      "feed_type": "نوع العلف",
+      "add_feed_company": "إضافة شركة أعلاف",
+      "add_feed_type": "إضافة نوع علف",
+      "add_feed_purchase": "شراء أعلاف",
+      "unit": "الوحدة",
+      "price_per_unit": "سعر الوحدة",
+      "kg": "كيلوجرام",
+      "bag": "كيس",
+      "ton": "طن",
+      "available_balance": "الرصيد المتاح",
+      "total_spent": "إجمالي المصروف",
+      "insufficient_balance": "الرصيد غير كافي",
+      
       // Suppliers
       "supplier_name": "اسم المورد",
       "phone": "الهاتف",
@@ -227,6 +245,24 @@ const resources = {
       "bank_account": "Bank Account",
       "select_all": "Select All",
       "select_supplier": "Select Supplier",
+      
+      // Feed
+      "feed_purchases": "Feed Purchases",
+      "feed_companies": "Feed Companies",
+      "feed_types": "Feed Types",
+      "feed_company": "Feed Company",
+      "feed_type": "Feed Type",
+      "add_feed_company": "Add Feed Company",
+      "add_feed_type": "Add Feed Type",
+      "add_feed_purchase": "Buy Feed",
+      "unit": "Unit",
+      "price_per_unit": "Price per Unit",
+      "kg": "Kilogram",
+      "bag": "Bag",
+      "ton": "Ton",
+      "available_balance": "Available Balance",
+      "total_spent": "Total Spent",
+      "insufficient_balance": "Insufficient Balance",
       
       // Suppliers
       "supplier_name": "Supplier Name",
