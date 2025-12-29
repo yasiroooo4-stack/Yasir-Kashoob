@@ -901,7 +901,7 @@ const HR = () => {
                   {language === "ar" ? "عرض سجلات الحضور" : "View attendance records"}
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Select value={attendanceMonth.toString()} onValueChange={(v) => setAttendanceMonth(parseInt(v))}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
