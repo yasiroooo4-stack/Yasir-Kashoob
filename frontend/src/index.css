@@ -32,7 +32,7 @@ body {
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 199 89% 48%;
+    --primary: 30 41% 45%;
     --primary-foreground: 210 40% 98%;
     --secondary: 160 84% 39%;
     --secondary-foreground: 210 40% 98%;
@@ -44,13 +44,14 @@ body {
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 199 89% 48%;
+    --ring: 30 41% 45%;
     --radius: 0.75rem;
-    --chart-1: 199 89% 48%;
+    --chart-1: 30 41% 45%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --header-bg: 30 30% 85%;
   }
 
   .dark {
@@ -120,7 +121,7 @@ body {
 
 /* Gradient backgrounds */
 .gradient-primary {
-  @apply bg-gradient-to-br from-sky-400 to-blue-600;
+  @apply bg-gradient-to-br from-amber-700 to-amber-900;
 }
 
 .gradient-secondary {
@@ -129,6 +130,11 @@ body {
 
 .gradient-accent {
   @apply bg-gradient-to-br from-amber-400 to-orange-500;
+}
+
+/* Header brown gradient */
+.header-brown {
+  background: linear-gradient(135deg, #c9a86c 0%, #a67c52 100%);
 }
 
 /* Animation classes */
