@@ -310,6 +310,9 @@ const HR = () => {
       center_id: "",
       center_name: "",
       fingerprint_id: "",
+      permissions: [],
+      manager_id: "",
+      manager_name: "",
     });
     setSelectedEmployee(null);
   };
@@ -329,6 +332,9 @@ const HR = () => {
       center_id: employee.center_id || "",
       center_name: employee.center_name || "",
       fingerprint_id: employee.fingerprint_id || "",
+      permissions: employee.permissions || [],
+      manager_id: employee.manager_id || "",
+      manager_name: employee.manager_name || "",
     });
     setEmployeeDialogOpen(true);
   };
