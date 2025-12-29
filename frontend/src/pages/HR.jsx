@@ -227,6 +227,8 @@ const HR = () => {
         devicesRes,
         dashboardRes,
         centersRes,
+        permissionsRes,
+        managersRes,
       ] = await Promise.all([
         axios.get(`${API}/hr/employees`),
         axios.get(`${API}/hr/departments`),
