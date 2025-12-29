@@ -1915,6 +1915,150 @@ async def import_attendance(
     
     return {"message": f"Imported {imported} attendance records"}
 
+# Export attendance to Excel
+@api_router.get("/hr/attendance/export/excel")
+async def export_attendance_excel(
+    year: int,
+    month: int,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export attendance report to Excel"""
+    import pandas as pd
+    from openpyxl.styles import PatternFill, Font, Alignment
+    
+    month_start = f"{year}-{month:02d}-01"
+    if month == 12:
+        month_end = f"{year + 1}-01-01"
+    else:
+        month_end = f"{year}-{month + 1:02d}-01"
+    
+    query = {"date": {"$gte": month_start, "$lt": month_end}}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).to_list(10000)
+    
+    if not attendance:
+        # Return empty template
+        df = pd.DataFrame(columns=['التاريخ', 'اسم الموظف', 'وقت الحضور', 'وقت الانصراف', 'المصدر'])
+    else:
+        df = pd.DataFrame(attendance)
+        columns_map = {
+            'date': 'التاريخ',
+            'employee_name': 'اسم الموظف',
+            'check_in': 'وقت الحضور',
+            'check_out': 'وقت الانصراف',
+            'source': 'المصدر'
+        }
+        available_cols = [col for col in columns_map.keys() if col in df.columns]
+        df = df[available_cols]
+        df = df.rename(columns={k: v for k, v in columns_map.items() if k in available_cols})
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name=f'الحضور {month}-{year}', index=False)
+        
+        worksheet = writer.sheets[f'الحضور {month}-{year}']
+        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center')
+        
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value or '')) for cell in column)
+            worksheet.column_dimensions[column[0].column_letter].width = max_length + 5
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=attendance_{year}_{month}.xlsx"}
+    )
+
+# Export attendance to PDF
+@api_router.get("/hr/attendance/export/pdf")
+async def export_attendance_pdf(
+    year: int,
+    month: int,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export attendance report to PDF"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
+    
+    month_start = f"{year}-{month:02d}-01"
+    if month == 12:
+        month_end = f"{year + 1}-01-01"
+    else:
+        month_end = f"{year}-{month + 1:02d}-01"
+    
+    query = {"date": {"$gte": month_start, "$lt": month_end}}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort("date", 1).to_list(10000)
+    
+    output = io.BytesIO()
+    doc = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Title
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=16)
+    elements.append(Paragraph(f"تقرير الحضور والانصراف - Attendance Report", title_style))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"الشهر: {month}/{year}", ParagraphStyle('Date', alignment=TA_CENTER)))
+    elements.append(Spacer(1, 20))
+    
+    # Table
+    headers = ['Date', 'Employee', 'Check In', 'Check Out', 'Source']
+    data = [headers]
+    
+    for record in attendance:
+        data.append([
+            record.get('date', ''),
+            record.get('employee_name', ''),
+            record.get('check_in', '-'),
+            record.get('check_out', '-'),
+            record.get('source', 'manual')
+        ])
+    
+    if len(data) == 1:
+        data.append(['', 'No attendance records', '', '', ''])
+    
+    table = Table(data, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
+    ]))
+    
+    elements.append(table)
+    doc.build(elements)
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=attendance_{year}_{month}.pdf"}
+    )
+
 # ==================== HR - DEPARTMENTS & PERMISSIONS ====================
 
 DEPARTMENTS = [
