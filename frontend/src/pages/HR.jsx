@@ -237,6 +237,8 @@ const HR = () => {
         axios.get(`${API}/hr/fingerprint-devices`),
         axios.get(`${API}/hr/dashboard`),
         axios.get(`${API}/centers`),
+        axios.get(`${API}/hr/available-permissions`),
+        axios.get(`${API}/hr/managers`),
       ]);
       
       setEmployees(employeesRes.data);
@@ -248,6 +250,8 @@ const HR = () => {
       setFingerprintDevices(devicesRes.data);
       setDashboard(dashboardRes.data);
       setCenters(centersRes.data);
+      setAvailablePermissions(permissionsRes.data);
+      setManagers(managersRes.data);
     } catch (error) {
       console.error("Error fetching HR data:", error);
     } finally {
