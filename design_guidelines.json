@@ -1,0 +1,177 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "Creative Designer",
+    "mission": "Create a modern, colorful, and efficient ERP for a milk collection center that bridges agriculture and technology.",
+    "principles": [
+      "Fusion over Imitation: Mix agricultural warmth with fintech precision.",
+      "Emotion First: Trust, Cleanliness, and Efficiency.",
+      "Content is King: Data legibility is paramount.",
+      "Zoom In: Focus on key metrics (Fat %, Quantity).",
+      "Negative Space: Breathable layouts for high-density data.",
+      "Contrast: High contrast for readability in bright environments (field use)."
+    ]
+  },
+  "typography": {
+    "primary_font": "Cairo",
+    "secondary_font": "Inter",
+    "font_stack": "'Cairo', 'Inter', sans-serif",
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "bold": 700
+    },
+    "usage": {
+      "headings": "font-bold tracking-tight",
+      "body": "font-normal leading-relaxed",
+      "data_labels": "font-medium text-muted-foreground uppercase tracking-wider text-xs"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Dairy Blue",
+        "hex": "#0EA5E9",
+        "tailwind": "bg-sky-500 text-white"
+      },
+      "secondary": {
+        "name": "Pasture Green",
+        "hex": "#10B981",
+        "tailwind": "bg-emerald-500 text-white"
+      },
+      "accent": {
+        "name": "Warning Amber",
+        "hex": "#F59E0B",
+        "tailwind": "bg-amber-500 text-white"
+      },
+      "background": {
+        "light": "#F8FAFC",
+        "dark": "#0F172A"
+      },
+      "surface": {
+        "light": "#FFFFFF",
+        "dark": "#1E293B"
+      }
+    },
+    "semantic": {
+      "success": "text-emerald-600 bg-emerald-50 border-emerald-200",
+      "warning": "text-amber-600 bg-amber-50 border-amber-200",
+      "error": "text-rose-600 bg-rose-50 border-rose-200",
+      "info": "text-sky-600 bg-sky-50 border-sky-200"
+    }
+  },
+  "layout": {
+    "rtl_strategy": {
+      "direction": "dir='rtl' for Arabic, dir='ltr' for English",
+      "spacing": "Use logical properties: ms-*, me-*, ps-*, pe-*, start-*, end-*",
+      "mirroring": "Ensure icons (arrows, chevrons) flip in RTL. Use 'transform rtl:rotate-180' where necessary."
+    },
+    "grid_system": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "widgets": {
+        "kpi": "col-span-1 md:col-span-3",
+        "chart_main": "col-span-1 md:col-span-8 row-span-2",
+        "list_side": "col-span-1 md:col-span-4 row-span-2"
+      }
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8",
+      "card_padding": "p-6",
+      "section_gap": "gap-8"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "rounded-xl border border-border/50 bg-card shadow-sm hover:shadow-md transition-all duration-200",
+      "header": "flex flex-row items-center justify-between space-y-0 pb-2"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-lg px-4 py-2 font-medium transition-colors",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm rounded-lg px-4 py-2 font-medium transition-colors",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-lg px-4 py-2 transition-colors"
+    },
+    "inputs": {
+      "style": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "tables": {
+      "style": "w-full caption-bottom text-sm",
+      "header": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "row": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+    }
+  },
+  "images": {
+    "login_hero": {
+      "url": "https://images.unsplash.com/photo-1759165996935-752b298c1889?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwxfHxkYWlyeSUyMGZhcm0lMjBjb3dzJTIwZ3JlZW4lMjBwYXN0dXJlfGVufDB8fHx8MTc2Njk4MzQwMnww&ixlib=rb-4.1.0&q=85",
+      "alt": "Cows grazing in a green pasture",
+      "category": "hero"
+    },
+    "dashboard_widgets": [
+      {
+        "url": "https://images.unsplash.com/photo-1748261347902-451fb437e8fb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxtaWxrJTIwdGVzdGluZyUyMGxhYm9yYXRvcnklMjBlcXVpcG1lbnQlMjBnbGFzc3xlbnwwfHx8fDE3NjY5ODM0MDN8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Milk testing laboratory",
+        "category": "widget_bg"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1740477138822-906f6b845579?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwyfHxmYXJtZXIlMjBwb3J0cmFpdCUyMHNtaWxpbmd8ZW58MHx8fHwxNzY2OTgzNDA2fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Farmers smiling",
+        "category": "widget_bg"
+      }
+    ],
+    "avatars": [
+      "https://images.unsplash.com/photo-1719154718540-8ef3d94e7712?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxmYXJtZXIlMjBwb3J0cmFpdCUyMHNtaWxpbmd8ZW58MHx8fHwxNzY2OTgzNDA2fDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1673538064334-72dcb3cbf181?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwzfHxmYXJtZXIlMjBwb3J0cmFpdCUyMHNtaWxpbmd8ZW58MHx8fHwxNzY2OTgzNDA2fDA&ixlib=rb-4.1.0&q=85"
+    ]
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-md bg-white/70 border border-white/20 shadow-lg",
+    "gradients": {
+      "primary": "bg-gradient-to-br from-sky-400 to-blue-600",
+      "secondary": "bg-gradient-to-br from-emerald-400 to-green-600"
+    },
+    "shadows": {
+      "soft": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+      "card": "shadow-[0_2px_8px_rgb(0,0,0,0.08)]"
+    }
+  },
+  "motion": {
+    "transitions": "transition-all duration-300 ease-in-out",
+    "hover_lift": "hover:-translate-y-1 hover:shadow-lg",
+    "page_transition": {
+      "initial": { "opacity": 0, "y": 20 },
+      "animate": { "opacity": 1, "y": 0 },
+      "exit": { "opacity": 0, "y": -20 }
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure text contrast ratio is at least 4.5:1 against background.",
+    "focus_states": "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "aria_labels": "All interactive elements must have aria-labels, especially icon-only buttons."
+  },
+  "instructions_to_main_agent": [
+    "Implement the 'Cairo' font for Arabic support and 'Inter' for English.",
+    "Use the 'lucide-react' library for icons.",
+    "Ensure all layouts are RTL-compatible using Tailwind logical properties (ms-*, me-*, start-*, end-*).",
+    "Create a 'LanguageSwitcher' component that toggles the 'dir' attribute on the HTML tag.",
+    "Use the provided image URLs for the login page and dashboard widgets.",
+    "Follow the 'Bento' grid layout for the main dashboard.",
+    "Use Shadcn UI components as the base but customize them with the defined border radii and shadows.",
+    "Implement a 'RoleBasedRoute' component to handle Admin, Employee, and Accountant access.",
+    "Use 'recharts' for data visualization (Milk Quantity, Fat/Protein Trends).",
+    "Add 'data-testid' to all interactive elements."
+  ],
+  "universal_guidelines": [
+    "Do not use generic centered layouts.",
+    "Create depth through layered design elements.",
+    "Use glass-morphism effects where appropriate.",
+    "Do not apply universal transitions (transition: all).",
+    "Do not center align the app container.",
+    "Use modern button styles (pill-shaped or sharp with animations).",
+    "Never use AI assistant emoji characters.",
+    "Every interaction needs micro-animations.",
+    "Use generous spacing (2-3x more than typical).",
+    "Use subtle grain textures or noise overlays if possible.",
+    "Use named exports for components and default exports for pages.",
+    "Use 'sonner' for toasts."
+  ]
+}
