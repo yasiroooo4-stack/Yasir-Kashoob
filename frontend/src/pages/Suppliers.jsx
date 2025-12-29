@@ -266,6 +266,7 @@ const Suppliers = () => {
                 <TableRow>
                   <TableHead>{t("supplier_name")}</TableHead>
                   <TableHead>{t("supplier_code")}</TableHead>
+                  <TableHead>{t("center")}</TableHead>
                   <TableHead>{t("phone")}</TableHead>
                   <TableHead className="hidden md:table-cell">{t("bank_account")}</TableHead>
                   <TableHead>{t("total_supplied")}</TableHead>
@@ -276,7 +277,7 @@ const Suppliers = () => {
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -286,6 +287,12 @@ const Suppliers = () => {
                       <TableCell className="font-medium">{supplier.name}</TableCell>
                       <TableCell>
                         <span className="badge-info">{supplier.supplier_code || "-"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="flex items-center gap-1">
+                          <Building className="w-3 h-3 text-amber-600" />
+                          {supplier.center_name || "-"}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span className="flex items-center gap-1">
