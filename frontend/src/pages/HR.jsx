@@ -79,6 +79,7 @@ const HR = () => {
   const [officialLetters, setOfficialLetters] = useState([]);
   const [fingerprintDevices, setFingerprintDevices] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [dashboard, setDashboard] = useState({});
   const [centers, setCenters] = useState([]);
   
@@ -91,6 +92,7 @@ const HR = () => {
   const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   
   // Selected items
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -98,6 +100,16 @@ const HR = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [selectedCar, setSelectedCar] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
+  
+  // Attendance form
+  const [attendanceForm, setAttendanceForm] = useState({
+    employee_id: "",
+    employee_name: "",
+    date: new Date().toISOString().split('T')[0],
+    check_in: "",
+    check_out: "",
+    source: "manual"
+  });
   
   // Available permissions and managers
   const [availablePermissions, setAvailablePermissions] = useState([]);
