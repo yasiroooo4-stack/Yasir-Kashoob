@@ -220,10 +220,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Settings page with profile, password, centers, activity tabs"
-    - "Suppliers page with center selection"
-    - "Navigation link to Settings"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
