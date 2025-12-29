@@ -222,15 +222,23 @@ class Payment(PaymentBase):
     payment_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     created_by: Optional[str] = None
 
-# Employee Models
+# Employee Models (نماذج الموظفين المُحسّنة)
 class EmployeeBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: str
     phone: str
+    email: Optional[str] = None
     position: str
-    department: str
+    department: str  # purchasing, finance, milk_reception, hr, it, admin
     salary: float
     hire_date: str
+    national_id: Optional[str] = None
+    employee_code: Optional[str] = None
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    fingerprint_id: Optional[str] = None  # معرف البصمة
+    can_login: bool = False  # هل يمكنه تسجيل الدخول للنظام
+    permissions: Optional[List[str]] = None  # الصلاحيات
 
 class EmployeeCreate(EmployeeBase):
     pass
@@ -238,6 +246,133 @@ class EmployeeCreate(EmployeeBase):
 class Employee(EmployeeBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Attendance Models (نماذج الحضور والانصراف)
+class AttendanceBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    date: str
+    check_in: Optional[str] = None
+    check_out: Optional[str] = None
+    device_ip: Optional[str] = None
+    source: str = "manual"  # manual, fingerprint
+
+class AttendanceCreate(AttendanceBase):
+    pass
+
+class Attendance(AttendanceBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Leave Request Models (نماذج طلبات الإجازة)
+class LeaveRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    leave_type: str  # annual, sick, emergency, unpaid
+    start_date: str
+    end_date: str
+    reason: Optional[str] = None
+    days_count: int
+
+class LeaveRequestCreate(LeaveRequestBase):
+    pass
+
+class LeaveRequest(LeaveRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, approved, rejected
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Expense Request Models (نماذج طلبات المصاريف)
+class ExpenseRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    expense_type: str  # travel, equipment, office, other
+    amount: float
+    description: str
+    receipt_url: Optional[str] = None
+
+class ExpenseRequestCreate(ExpenseRequestBase):
+    pass
+
+class ExpenseRequest(ExpenseRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, approved, rejected, paid
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    paid_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Car Contract Models (نماذج عقود السيارات)
+class CarContractBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: Optional[str] = None
+    employee_name: Optional[str] = None
+    car_type: str
+    plate_number: str
+    model_year: Optional[str] = None
+    color: Optional[str] = None
+    start_date: str
+    end_date: str
+    monthly_rent: float
+    total_value: float
+    contract_type: str = "rent"  # rent, ownership
+    notes: Optional[str] = None
+
+class CarContractCreate(CarContractBase):
+    pass
+
+class CarContract(CarContractBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "active"  # active, expired, cancelled
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Official Letter Models (نماذج الرسائل الرسمية)
+class OfficialLetterBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    letter_type: str  # salary_certificate, employment_letter, experience_letter, mission_letter, no_objection
+    purpose: Optional[str] = None
+    recipient: Optional[str] = None
+    content: Optional[str] = None
+
+class OfficialLetterCreate(OfficialLetterBase):
+    pass
+
+class OfficialLetter(OfficialLetterBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    letter_number: Optional[str] = None
+    status: str = "pending"  # pending, issued, delivered
+    issued_by: Optional[str] = None
+    issued_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Fingerprint Device Models (نماذج أجهزة البصمة)
+class FingerprintDeviceBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    ip_address: str
+    port: int = 80
+    login_id: str
+    password: str
+    device_type: str = "hikvision"
+    location: Optional[str] = None
+
+class FingerprintDeviceCreate(FingerprintDeviceBase):
+    pass
+
+class FingerprintDevice(FingerprintDeviceBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    last_sync: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # Collection Center Models (مراكز التجميع)
