@@ -2,36 +2,92 @@
   {
     "test": "User Login",
     "success": true,
-    "message": "Successfully logged in as testadmin",
+    "message": "Successfully logged in as yasir",
     "details": null,
-    "timestamp": "2025-12-29T08:56:14.946912"
+    "timestamp": "2025-12-29T10:49:46.920199"
   },
   {
-    "test": "Collection Centers API",
+    "test": "HR Employees API",
     "success": true,
-    "message": "Found all 3 expected centers: ['حجيف', 'زيك', 'غدو']",
+    "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Ahmed', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-29T08:56:15.038858"
+    "timestamp": "2025-12-29T10:49:46.938225"
   },
   {
-    "test": "User Profile Update API",
+    "test": "HR Dashboard API",
     "success": true,
-    "message": "Profile updated successfully",
+    "message": "Dashboard retrieved with fields: ['total_employees', 'today_attendance', 'pending_leaves', 'pending_expenses', 'active_car_contracts', 'recent_leave_requests', 'recent_expense_requests']",
     "details": null,
-    "timestamp": "2025-12-29T08:56:15.068389"
+    "timestamp": "2025-12-29T10:49:46.962675"
   },
   {
-    "test": "Password Change API",
+    "test": "HR Fingerprint Devices API",
     "success": true,
-    "message": "Password changed successfully (and reverted)",
+    "message": "Found 2 devices with expected IPs: ['192.168.100.201', '192.168.100.214']",
     "details": null,
-    "timestamp": "2025-12-29T08:56:16.790072"
+    "timestamp": "2025-12-29T10:49:47.019167"
   },
   {
-    "test": "Activity Logs API",
+    "test": "HR Employees API",
     "success": true,
-    "message": "Retrieved 8 activity logs, including login activities",
+    "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Ahmed', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-29T08:56:16.806924"
+    "timestamp": "2025-12-29T10:49:47.032483"
+  },
+  {
+    "test": "HR Leave Request Workflow",
+    "success": true,
+    "message": "Successfully created, retrieved, and approved leave request for Ahmed",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.099350"
+  },
+  {
+    "test": "HR Employees API",
+    "success": true,
+    "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Ahmed', 'Salim', 'Said']",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.113671"
+  },
+  {
+    "test": "HR Expense Request API",
+    "success": true,
+    "message": "Successfully created expense request for Yasir Kashoob IT",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.187693"
+  },
+  {
+    "test": "HR Employees API",
+    "success": true,
+    "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Ahmed', 'Salim', 'Said']",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.200622"
+  },
+  {
+    "test": "HR Official Letter API",
+    "success": true,
+    "message": "Successfully created salary certificate for Yasir Kashoob IT",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.271853"
+  },
+  {
+    "test": "HR Employees API",
+    "success": true,
+    "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Ahmed', 'Salim', 'Said']",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.285754"
+  },
+  {
+    "test": "HR Car Contract API",
+    "success": true,
+    "message": "Successfully created car contract for Yasir Kashoob IT",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.315563"
+  },
+  {
+    "test": "HR Attendance Report API",
+    "success": true,
+    "message": "Successfully retrieved attendance report for December 2025",
+    "details": null,
+    "timestamp": "2025-12-29T10:49:47.328182"
   }
 ]
