@@ -41,10 +41,23 @@ class UserBase(BaseModel):
     username: str
     email: str
     full_name: str
+    phone: Optional[str] = None
     role: str = "employee"  # admin, employee, accountant
+    center_id: Optional[str] = None  # مركز التجميع
+    avatar_url: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
 
 class User(UserBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
