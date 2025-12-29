@@ -902,6 +902,10 @@ const HR = () => {
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2 items-center">
+                <Button onClick={() => setAttendanceDialogOpen(true)} className="gradient-primary text-white gap-1">
+                  <Plus className="w-4 h-4" />
+                  {language === "ar" ? "إضافة حضور" : "Add Attendance"}
+                </Button>
                 <Select value={attendanceMonth.toString()} onValueChange={(v) => setAttendanceMonth(parseInt(v))}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -939,24 +943,32 @@ const HR = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
                       <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
-                      <TableHead>{language === "ar" ? "أيام الحضور" : "Present Days"}</TableHead>
-                      <TableHead>{language === "ar" ? "إجمالي الساعات" : "Total Hours"}</TableHead>
+                      <TableHead>{language === "ar" ? "وقت الحضور" : "Check In"}</TableHead>
+                      <TableHead>{language === "ar" ? "وقت الانصراف" : "Check Out"}</TableHead>
+                      <TableHead>{language === "ar" ? "المصدر" : "Source"}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {attendance.length === 0 ? (
+                    {attendanceRecords.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                          {t("no_data")}
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          {language === "ar" ? "لا توجد سجلات حضور. أضف حضور يدوياً أو قم بمزامنة جهاز البصمة." : "No attendance records. Add manually or sync fingerprint device."}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      attendance.map((record, idx) => (
+                      attendanceRecords.map((record, idx) => (
                         <TableRow key={idx}>
+                          <TableCell>{record.date}</TableCell>
                           <TableCell className="font-medium">{record.employee_name}</TableCell>
-                          <TableCell>{record.present_days}</TableCell>
-                          <TableCell>{record.total_hours?.toFixed(1) || 0}</TableCell>
+                          <TableCell>{record.check_in || "-"}</TableCell>
+                          <TableCell>{record.check_out || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant={record.source === "fingerprint" ? "success" : "secondary"}>
+                              {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : (language === "ar" ? "يدوي" : "Manual")}
+                            </Badge>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
