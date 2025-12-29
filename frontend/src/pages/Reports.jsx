@@ -238,7 +238,7 @@ const Reports = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="daily" className="gap-2" data-testid="tab-daily">
             <Calendar className="w-4 h-4" />
             {t("daily_report")}
@@ -250,6 +250,10 @@ const Reports = () => {
           <TabsTrigger value="supplier" className="gap-2" data-testid="tab-supplier">
             <FileText className="w-4 h-4" />
             {t("supplier_report")}
+          </TabsTrigger>
+          <TabsTrigger value="export" className="gap-2" data-testid="tab-export">
+            <Download className="w-4 h-4" />
+            {language === "ar" ? "تصدير" : "Export"}
           </TabsTrigger>
         </TabsList>
 
