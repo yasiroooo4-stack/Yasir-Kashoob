@@ -2142,6 +2142,75 @@ const HR = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Attendance Dialog */}
+      <Dialog open={attendanceDialogOpen} onOpenChange={setAttendanceDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "إضافة سجل حضور" : "Add Attendance Record"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAttendanceSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+              <Select
+                value={attendanceForm.employee_id}
+                onValueChange={(v) => {
+                  const emp = employees.find(e => e.id === v);
+                  setAttendanceForm({ 
+                    ...attendanceForm, 
+                    employee_id: v,
+                    employee_name: emp?.name || ""
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select Employee"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "التاريخ" : "Date"} *</Label>
+              <Input
+                type="date"
+                value={attendanceForm.date}
+                onChange={(e) => setAttendanceForm({ ...attendanceForm, date: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "وقت الحضور" : "Check In"}</Label>
+                <Input
+                  type="time"
+                  value={attendanceForm.check_in}
+                  onChange={(e) => setAttendanceForm({ ...attendanceForm, check_in: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "وقت الانصراف" : "Check Out"}</Label>
+                <Input
+                  type="time"
+                  value={attendanceForm.check_out}
+                  onChange={(e) => setAttendanceForm({ ...attendanceForm, check_out: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAttendanceDialogOpen(false)}>
+                {t("cancel")}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white">
+                {t("save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
