@@ -241,6 +241,8 @@ class EmployeeBase(BaseModel):
     fingerprint_id: Optional[str] = None  # معرف البصمة
     can_login: bool = False  # هل يمكنه تسجيل الدخول للنظام
     permissions: Optional[List[str]] = None  # الصلاحيات
+    manager_id: Optional[str] = None  # معرف المسؤول
+    manager_name: Optional[str] = None  # اسم المسؤول
 
 class EmployeeCreate(EmployeeBase):
     pass
