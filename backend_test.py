@@ -581,12 +581,16 @@ class BackendTester:
                 print("❌ Cannot proceed without authentication")
                 return False
         
-        # Run all API tests
+        # Run all HR API tests
         tests = [
-            self.test_collection_centers_api,
-            self.test_user_profile_update_api,
-            self.test_password_change_api,
-            self.test_activity_logs_api
+            self.test_hr_employees_api,
+            self.test_hr_dashboard_api,
+            self.test_hr_fingerprint_devices_api,
+            self.test_hr_leave_request_workflow,
+            self.test_hr_expense_request_api,
+            self.test_hr_official_letter_api,
+            self.test_hr_car_contract_api,
+            self.test_hr_attendance_report_api
         ]
         
         for test in tests:
