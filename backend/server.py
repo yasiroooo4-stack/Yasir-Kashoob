@@ -619,6 +619,141 @@ async def delete_employee(employee_id: str, current_user: dict = Depends(require
         raise HTTPException(status_code=404, detail="Employee not found")
     return {"message": "Employee deleted successfully"}
 
+# ==================== FEED COMPANY ROUTES (شركات الأعلاف) ====================
+
+@api_router.post("/feed-companies", response_model=FeedCompany)
+async def create_feed_company(company_data: FeedCompanyCreate, current_user: dict = Depends(get_current_user)):
+    company = FeedCompany(**company_data.model_dump())
+    await db.feed_companies.insert_one(company.model_dump())
+    return company
+
+@api_router.get("/feed-companies", response_model=List[FeedCompany])
+async def get_feed_companies(current_user: dict = Depends(get_current_user)):
+    companies = await db.feed_companies.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    return companies
+
+@api_router.put("/feed-companies/{company_id}", response_model=FeedCompany)
+async def update_feed_company(company_id: str, company_data: FeedCompanyCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.feed_companies.update_one(
+        {"id": company_id},
+        {"$set": company_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Feed company not found")
+    company = await db.feed_companies.find_one({"id": company_id}, {"_id": 0})
+    return company
+
+@api_router.delete("/feed-companies/{company_id}")
+async def delete_feed_company(company_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    result = await db.feed_companies.update_one(
+        {"id": company_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Feed company not found")
+    return {"message": "Feed company deleted successfully"}
+
+# ==================== FEED TYPE ROUTES (أنواع الأعلاف) ====================
+
+@api_router.post("/feed-types", response_model=FeedType)
+async def create_feed_type(feed_type_data: FeedTypeCreate, current_user: dict = Depends(get_current_user)):
+    feed_type = FeedType(**feed_type_data.model_dump())
+    await db.feed_types.insert_one(feed_type.model_dump())
+    return feed_type
+
+@api_router.get("/feed-types", response_model=List[FeedType])
+async def get_feed_types(company_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {"is_active": True}
+    if company_id:
+        query["company_id"] = company_id
+    feed_types = await db.feed_types.find(query, {"_id": 0}).to_list(1000)
+    return feed_types
+
+@api_router.put("/feed-types/{feed_type_id}", response_model=FeedType)
+async def update_feed_type(feed_type_id: str, feed_type_data: FeedTypeCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.feed_types.update_one(
+        {"id": feed_type_id},
+        {"$set": feed_type_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Feed type not found")
+    feed_type = await db.feed_types.find_one({"id": feed_type_id}, {"_id": 0})
+    return feed_type
+
+@api_router.delete("/feed-types/{feed_type_id}")
+async def delete_feed_type(feed_type_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    result = await db.feed_types.update_one(
+        {"id": feed_type_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Feed type not found")
+    return {"message": "Feed type deleted successfully"}
+
+# ==================== FEED PURCHASE ROUTES (مشتريات الأعلاف) ====================
+
+@api_router.post("/feed-purchases", response_model=FeedPurchase)
+async def create_feed_purchase(purchase_data: FeedPurchaseCreate, current_user: dict = Depends(get_current_user)):
+    # Check supplier balance
+    supplier = await db.suppliers.find_one({"id": purchase_data.supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    total_amount = purchase_data.quantity * purchase_data.price_per_unit
+    
+    if supplier.get("balance", 0) < total_amount:
+        raise HTTPException(status_code=400, detail="Insufficient supplier balance")
+    
+    purchase = FeedPurchase(**purchase_data.model_dump())
+    purchase.total_amount = total_amount
+    purchase.created_by = current_user["id"]
+    
+    await db.feed_purchases.insert_one(purchase.model_dump())
+    
+    # Deduct from supplier balance
+    await db.suppliers.update_one(
+        {"id": purchase.supplier_id},
+        {"$inc": {"balance": -total_amount}}
+    )
+    
+    return purchase
+
+@api_router.get("/feed-purchases", response_model=List[FeedPurchase])
+async def get_feed_purchases(
+    supplier_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if supplier_id:
+        query["supplier_id"] = supplier_id
+    if start_date:
+        query["purchase_date"] = {"$gte": start_date}
+    if end_date:
+        if "purchase_date" in query:
+            query["purchase_date"]["$lte"] = end_date
+        else:
+            query["purchase_date"] = {"$lte": end_date}
+    
+    purchases = await db.feed_purchases.find(query, {"_id": 0}).sort("purchase_date", -1).to_list(1000)
+    return purchases
+
+@api_router.get("/feed-purchases/supplier/{supplier_id}")
+async def get_supplier_feed_purchases(supplier_id: str, current_user: dict = Depends(get_current_user)):
+    supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    purchases = await db.feed_purchases.find({"supplier_id": supplier_id}, {"_id": 0}).sort("purchase_date", -1).to_list(100)
+    
+    return {
+        "supplier": supplier,
+        "purchases": purchases,
+        "total_spent": sum(p.get("total_amount", 0) for p in purchases),
+        "available_balance": supplier.get("balance", 0)
+    }
+
 # ==================== REPORTS & DASHBOARD ====================
 
 @api_router.get("/dashboard/stats")
