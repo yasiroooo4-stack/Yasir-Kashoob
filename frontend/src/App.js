@@ -49,8 +49,8 @@ export const useLanguage = () => {
   return context;
 };
 
-// Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles }) => {
+// Protected Route Component with Department-based permissions
+const ProtectedRoute = ({ children, allowedRoles, allowedDepartments }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -66,7 +66,18 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Admin and IT have access to everything
+  if (user.role === 'admin' || user.department === 'it' || user.department === 'admin') {
+    return children;
+  }
+
+  // Check role-based access
   if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Check department-based access
+  if (allowedDepartments && !allowedDepartments.includes(user.department)) {
     return <Navigate to="/dashboard" replace />;
   }
 
