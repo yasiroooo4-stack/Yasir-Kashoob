@@ -221,6 +221,11 @@ function App() {
                 } />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="hr" element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <HR />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
