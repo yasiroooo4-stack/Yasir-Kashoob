@@ -599,6 +599,120 @@ const Reports = () => {
             </div>
           )}
         </TabsContent>
+
+        {/* Export Tab */}
+        <TabsContent value="export" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Suppliers Export */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  {language === "ar" ? "تقرير الموردين" : "Suppliers Report"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تصدير قائمة الموردين مع أرصدتهم" : "Export suppliers list with balances"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex gap-2">
+                <Button onClick={() => handleExportExcel('suppliers')} variant="outline" className="flex-1">
+                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
+                  Excel
+                </Button>
+                <Button onClick={() => handleExportPDF('suppliers')} variant="outline" className="flex-1">
+                  <FileText className="w-4 h-4 me-2 text-red-600" />
+                  PDF
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Employees Export */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-purple-500" />
+                  {language === "ar" ? "تقرير الموظفين" : "Employees Report"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تصدير قائمة الموظفين" : "Export employees list"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex gap-2">
+                <Button onClick={() => handleExportExcel('employees')} variant="outline" className="flex-1">
+                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
+                  Excel
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Milk Receptions Export */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Milk className="w-5 h-5 text-sky-500" />
+                  {language === "ar" ? "تقرير استلام الحليب" : "Milk Receptions Report"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تصدير سجلات استلام الحليب" : "Export milk reception records"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex gap-2">
+                <Button onClick={() => handleExportExcel('milk')} variant="outline" className="flex-1">
+                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
+                  Excel
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Finance Export */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-amber-500" />
+                  {language === "ar" ? "التقرير المالي" : "Finance Report"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تصدير سجلات المدفوعات" : "Export payment records"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex gap-2">
+                <Button onClick={() => handleExportExcel('finance')} variant="outline" className="flex-1">
+                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
+                  Excel
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Daily Report Export */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-teal-500" />
+                  {language === "ar" ? "التقرير اليومي" : "Daily Report"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تصدير التقرير اليومي بصيغة PDF" : "Export daily report as PDF"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Label className="mb-2 block">{t("select_date")}</Label>
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={() => handleExportPDF('daily')} variant="outline">
+                    <FileText className="w-4 h-4 me-2 text-red-600" />
+                    {language === "ar" ? "تصدير PDF" : "Export PDF"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
