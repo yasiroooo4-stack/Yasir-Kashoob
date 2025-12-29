@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Milk Collection Center ERP
-Tests the core backend functionality as requested
+Backend API Testing for Milk Collection Center ERP - HR Module
+Tests the HR backend functionality as requested in Arabic review
+Testing HR APIs with credentials: yasir/admin123
 """
 
 import requests
