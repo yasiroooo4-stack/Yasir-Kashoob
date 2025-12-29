@@ -1395,6 +1395,69 @@ const HR = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Manager Selection - مسؤول القسم */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "مسؤول القسم" : "Department Manager"}</Label>
+              <Select
+                value={employeeForm.manager_id}
+                onValueChange={(v) => {
+                  const manager = managers.find(m => m.id === v);
+                  setEmployeeForm({ 
+                    ...employeeForm, 
+                    manager_id: v,
+                    manager_name: manager?.name || ""
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر المسؤول" : "Select Manager"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">{language === "ar" ? "بدون مسؤول" : "No Manager"}</SelectItem>
+                  {managers.map((manager) => (
+                    <SelectItem key={manager.id} value={manager.id}>
+                      {manager.name} - {getDepartmentName(manager.department)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Permissions - الصلاحيات */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الصلاحيات" : "Permissions"}</Label>
+              <div className="border rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2">
+                  {availablePermissions.map((perm) => (
+                    <label key={perm.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={employeeForm.permissions?.includes(perm.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setEmployeeForm({
+                              ...employeeForm,
+                              permissions: [...(employeeForm.permissions || []), perm.id]
+                            });
+                          } else {
+                            setEmployeeForm({
+                              ...employeeForm,
+                              permissions: (employeeForm.permissions || []).filter(p => p !== perm.id)
+                            });
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm">
+                        {language === "ar" ? perm.name : perm.name_en}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEmployeeDialogOpen(false)}>
                 {t("cancel")}
