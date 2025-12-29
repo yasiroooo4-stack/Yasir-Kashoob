@@ -1964,7 +1964,413 @@ async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
         "recent_expense_requests": recent_expenses
     }
 
-# ==================== ROOT ROUTE ====================
+# ==================== REPORTS EXPORT (تصدير التقارير) ====================
+
+@api_router.get("/reports/export/suppliers/excel")
+async def export_suppliers_excel(current_user: dict = Depends(get_current_user)):
+    """Export suppliers report to Excel"""
+    import pandas as pd
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    
+    suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    if not suppliers:
+        raise HTTPException(status_code=404, detail="No suppliers found")
+    
+    # Create DataFrame
+    df = pd.DataFrame(suppliers)
+    columns_map = {
+        'name': 'اسم المورد',
+        'code': 'الكود',
+        'phone': 'الهاتف',
+        'bank_account': 'رقم الحساب البنكي',
+        'balance': 'الرصيد',
+        'total_supplied': 'إجمالي التوريد',
+        'center_name': 'المركز'
+    }
+    
+    # Select and rename columns
+    available_cols = [col for col in columns_map.keys() if col in df.columns]
+    df = df[available_cols]
+    df = df.rename(columns={k: v for k, v in columns_map.items() if k in available_cols})
+    
+    # Create Excel file
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='الموردين', index=False)
+        
+        # Style the worksheet
+        workbook = writer.book
+        worksheet = writer.sheets['الموردين']
+        
+        # Style header
+        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center')
+        
+        # Adjust column widths
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value or '')) for cell in column)
+            worksheet.column_dimensions[column[0].column_letter].width = max_length + 5
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=suppliers_report.xlsx"}
+    )
+
+@api_router.get("/reports/export/milk-receptions/excel")
+async def export_milk_receptions_excel(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    supplier_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export milk receptions report to Excel"""
+    import pandas as pd
+    
+    query = {}
+    if start_date:
+        query["reception_date"] = {"$gte": start_date}
+    if end_date:
+        if "reception_date" in query:
+            query["reception_date"]["$lte"] = end_date
+        else:
+            query["reception_date"] = {"$lte": end_date}
+    if supplier_id:
+        query["supplier_id"] = supplier_id
+    
+    receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("reception_date", -1).to_list(10000)
+    
+    if not receptions:
+        raise HTTPException(status_code=404, detail="No receptions found")
+    
+    df = pd.DataFrame(receptions)
+    columns_map = {
+        'reception_date': 'تاريخ الاستلام',
+        'supplier_name': 'اسم المورد',
+        'quantity_liters': 'الكمية (لتر)',
+        'price_per_liter': 'سعر اللتر',
+        'total_amount': 'المبلغ الإجمالي',
+        'fat_percentage': 'نسبة الدهون',
+        'protein_percentage': 'نسبة البروتين'
+    }
+    
+    available_cols = [col for col in columns_map.keys() if col in df.columns]
+    df = df[available_cols]
+    df = df.rename(columns={k: v for k, v in columns_map.items() if k in available_cols})
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='استلام الحليب', index=False)
+        
+        workbook = writer.book
+        worksheet = writer.sheets['استلام الحليب']
+        
+        from openpyxl.styles import PatternFill, Font, Alignment
+        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center')
+        
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value or '')) for cell in column)
+            worksheet.column_dimensions[column[0].column_letter].width = max_length + 5
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=milk_receptions_report.xlsx"}
+    )
+
+@api_router.get("/reports/export/hr/employees/excel")
+async def export_employees_excel(current_user: dict = Depends(get_current_user)):
+    """Export HR employees report to Excel"""
+    import pandas as pd
+    from openpyxl.styles import PatternFill, Font, Alignment
+    
+    employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    if not employees:
+        raise HTTPException(status_code=404, detail="No employees found")
+    
+    df = pd.DataFrame(employees)
+    columns_map = {
+        'employee_code': 'كود الموظف',
+        'name': 'اسم الموظف',
+        'department': 'القسم',
+        'position': 'المنصب',
+        'phone': 'الهاتف',
+        'email': 'البريد الإلكتروني',
+        'salary': 'الراتب',
+        'hire_date': 'تاريخ التعيين'
+    }
+    
+    available_cols = [col for col in columns_map.keys() if col in df.columns]
+    df = df[available_cols]
+    df = df.rename(columns={k: v for k, v in columns_map.items() if k in available_cols})
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='الموظفين', index=False)
+        
+        worksheet = writer.sheets['الموظفين']
+        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center')
+        
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value or '')) for cell in column)
+            worksheet.column_dimensions[column[0].column_letter].width = max_length + 5
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=employees_report.xlsx"}
+    )
+
+@api_router.get("/reports/export/finance/excel")
+async def export_finance_excel(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export finance report to Excel"""
+    import pandas as pd
+    from openpyxl.styles import PatternFill, Font, Alignment
+    
+    query = {}
+    if start_date:
+        query["payment_date"] = {"$gte": start_date}
+    if end_date:
+        if "payment_date" in query:
+            query["payment_date"]["$lte"] = end_date
+        else:
+            query["payment_date"] = {"$lte": end_date}
+    
+    payments = await db.payments.find(query, {"_id": 0}).sort("payment_date", -1).to_list(10000)
+    
+    if not payments:
+        raise HTTPException(status_code=404, detail="No payments found")
+    
+    df = pd.DataFrame(payments)
+    columns_map = {
+        'payment_date': 'تاريخ الدفع',
+        'payment_type': 'نوع الدفع',
+        'related_name': 'الاسم',
+        'amount': 'المبلغ',
+        'payment_method': 'طريقة الدفع',
+        'bank_account': 'الحساب البنكي',
+        'notes': 'ملاحظات'
+    }
+    
+    available_cols = [col for col in columns_map.keys() if col in df.columns]
+    df = df[available_cols]
+    df = df.rename(columns={k: v for k, v in columns_map.items() if k in available_cols})
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='المدفوعات', index=False)
+        
+        worksheet = writer.sheets['المدفوعات']
+        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center')
+        
+        for column in worksheet.columns:
+            max_length = max(len(str(cell.value or '')) for cell in column)
+            worksheet.column_dimensions[column[0].column_letter].width = max_length + 5
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=finance_report.xlsx"}
+    )
+
+@api_router.get("/reports/export/suppliers/pdf")
+async def export_suppliers_pdf(current_user: dict = Depends(get_current_user)):
+    """Export suppliers report to PDF"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    
+    suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    if not suppliers:
+        raise HTTPException(status_code=404, detail="No suppliers found")
+    
+    output = io.BytesIO()
+    doc = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Title
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=18)
+    elements.append(Paragraph("تقرير الموردين - Suppliers Report", title_style))
+    elements.append(Spacer(1, 20))
+    
+    # Date
+    date_style = ParagraphStyle('Date', parent=styles['Normal'], alignment=TA_CENTER, fontSize=10)
+    elements.append(Paragraph(f"التاريخ: {datetime.now().strftime('%Y-%m-%d')}", date_style))
+    elements.append(Spacer(1, 20))
+    
+    # Table data
+    headers = ['Code', 'Name', 'Phone', 'Bank Account', 'Balance', 'Total Supplied', 'Center']
+    data = [headers]
+    
+    for s in suppliers:
+        row = [
+            s.get('code', ''),
+            s.get('name', ''),
+            s.get('phone', ''),
+            s.get('bank_account', ''),
+            f"{s.get('balance', 0):.3f}",
+            f"{s.get('total_supplied', 0):.2f}",
+            s.get('center_name', '')
+        ]
+        data.append(row)
+    
+    # Create table
+    table = Table(data, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#E9ECF1')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
+    ]))
+    
+    elements.append(table)
+    doc.build(elements)
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=suppliers_report.pdf"}
+    )
+
+@api_router.get("/reports/export/daily/pdf")
+async def export_daily_report_pdf(
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export daily report to PDF"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
+    
+    # Get daily data
+    receptions = await db.milk_receptions.find({"reception_date": date}, {"_id": 0}).to_list(1000)
+    sales = await db.sales.find({"sale_date": date}, {"_id": 0}).to_list(1000)
+    
+    output = io.BytesIO()
+    doc = SimpleDocTemplate(output, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Title
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=16)
+    elements.append(Paragraph(f"التقرير اليومي - Daily Report", title_style))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"التاريخ: {date}", ParagraphStyle('Date', alignment=TA_CENTER)))
+    elements.append(Spacer(1, 20))
+    
+    # Summary
+    total_milk = sum(r.get('quantity_liters', 0) for r in receptions)
+    total_sales = sum(s.get('total_amount', 0) for s in sales)
+    
+    summary_data = [
+        ['الوصف', 'القيمة'],
+        ['إجمالي الحليب المستلم (لتر)', f'{total_milk:.2f}'],
+        ['عدد عمليات الاستلام', str(len(receptions))],
+        ['إجمالي المبيعات (ر.ع)', f'{total_sales:.3f}'],
+        ['عدد عمليات البيع', str(len(sales))],
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[200, 150])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
+    ]))
+    
+    elements.append(summary_table)
+    elements.append(Spacer(1, 30))
+    
+    # Receptions detail
+    if receptions:
+        elements.append(Paragraph("تفاصيل استلام الحليب - Milk Receptions", styles['Heading2']))
+        elements.append(Spacer(1, 10))
+        
+        rec_headers = ['Supplier', 'Quantity (L)', 'Price/L', 'Total', 'Fat %']
+        rec_data = [rec_headers]
+        for r in receptions:
+            rec_data.append([
+                r.get('supplier_name', ''),
+                f"{r.get('quantity_liters', 0):.2f}",
+                f"{r.get('price_per_liter', 0):.3f}",
+                f"{r.get('total_amount', 0):.3f}",
+                f"{r.get('fat_percentage', 0):.1f}"
+            ])
+        
+        rec_table = Table(rec_data, repeatRows=1)
+        rec_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#70AD47')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        elements.append(rec_table)
+    
+    doc.build(elements)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=daily_report_{date}.pdf"}
+    )
 
 @api_router.get("/")
 async def root():
