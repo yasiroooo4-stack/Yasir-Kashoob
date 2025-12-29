@@ -62,10 +62,7 @@
 user_problem_statement: |
   نظام ERP كامل لمركز تجميع الحليب يتضمن:
   - مراكز تجميع متعددة (حجيف، زيك، غدو)
-  - إدارة الموردين مع ربطهم بمراكز التجميع
-  - صفحة إعدادات المستخدم
-  - سجل النشاط
-  - تصدير التقارير PDF/Excel
+  - قسم الموارد البشرية الشامل مع ربط جهاز البصمة Hikvision
 
 backend:
   - task: "Auto-create collection centers on startup"
@@ -76,217 +73,150 @@ backend:
     priority: "high"
     needs_retesting: false
     status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Implemented startup event to create 3 default centers (حجيف، زيك، غدو)"
       - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: All 3 collection centers (حجيف، زيك، غدو) are successfully created and accessible via GET /api/centers"
+        agent: "main"
+        comment: "Implemented and verified - 3 centers created (حجيف، زيك، غدو)"
 
-  - task: "Collection Centers API endpoints"
+  - task: "HR Employee Management APIs"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "GET /api/centers, POST, PUT, DELETE endpoints exist"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: GET /api/centers returns exactly 3 centers with correct Arabic names (حجيف، زيك، غدو)"
+        comment: "CRUD APIs for HR employees with department-based permissions"
 
-  - task: "User profile update API"
+  - task: "Attendance Management APIs"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "PUT /api/auth/profile endpoint exists"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: PUT /api/auth/profile successfully updates user profile data (full_name, phone)"
+        comment: "APIs for attendance tracking and monthly reports"
 
-  - task: "Password change API"
+  - task: "Leave Request APIs"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "PUT /api/auth/password endpoint exists"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: PUT /api/auth/password successfully changes password with proper validation"
+        comment: "APIs for leave requests with approve/reject"
 
-  - task: "Activity logs API"
+  - task: "Expense Request APIs"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "GET /api/activity-logs endpoint exists, log_activity helper function created"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: GET /api/activity-logs returns activity logs including login activities"
+        comment: "APIs for expense requests with approve/reject/pay"
+
+  - task: "Car Contract APIs"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "CRUD APIs for small car contracts"
+
+  - task: "Official Letter APIs"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "APIs for official letters with auto letter number"
+
+  - task: "Fingerprint Device APIs"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "APIs for Hikvision fingerprint device management and sync"
+
+  - task: "Create Employee Account API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "API to create login account for employee with department-based role"
 
 frontend:
-  - task: "Settings page with profile, password, centers, activity tabs"
+  - task: "HR Page with all tabs"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/Settings.jsx"
+    file: "/app/frontend/src/pages/HR.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Settings page with 4 tabs created and route added to App.js"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Settings page accessible via navigation. Found exactly 4 tabs: 'إعدادات الحساب', 'تغيير كلمة المرور', 'مراكز التجميع', 'سجل النشاط'. Centers tab displays all 3 collection centers (حجيف، زيك، غدو) correctly."
-
-  - task: "Suppliers page with center selection"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Suppliers.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Center dropdown in supplier form"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Suppliers page accessible. 'Add Supplier' button opens form dialog with center selection dropdown containing all 3 centers (حجيف، زيك، غدو). Dropdown functionality working correctly."
-
-  - task: "Navigation link to Settings"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/components/Layout.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Settings link added to sidebar navigation"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Settings navigation link working correctly. Successfully navigates to Settings page when clicked."
-
-  - task: "Login functionality and dashboard redirect"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Login.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Login page loads correctly. Authentication with testadmin/testpassword works. Successfully redirects to dashboard after login."
-
-  - task: "Logo and header design"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/components/Layout.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Logo 'المروج للألبان' is visible in header. Header has brown/amber styling with classes 'header-brown border-amber-600/30'. Design matches requirements."
+        comment: "HR page with 7 tabs: employees, attendance, leaves, expenses, cars, letters, devices"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 3
+  test_sequence: 2
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "HR Employee Management APIs"
+    - "Leave Request APIs"
+    - "Expense Request APIs"
+    - "Official Letter APIs"
+    - "Create Employee Account API"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
     message: |
-      مرحباً testing agent! أرجو اختبار:
-      1. التحقق من إنشاء مراكز التجميع الثلاثة تلقائياً (حجيف، زيك، غدو)
-      2. اختبار صفحة الإعدادات:
-         - تسجيل الدخول: username: testadmin, password: testpassword
-         - الذهاب إلى /settings
-         - التحقق من tabs الأربعة
-         - التحقق من عرض المراكز في tab المراكز
-      3. اختبار صفحة الموردين:
-         - التحقق من ظهور dropdown لاختيار المركز
-  - agent: "testing"
-    message: |
-      ✅ BACKEND TESTING COMPLETED SUCCESSFULLY!
+      Please test the HR module backend APIs:
       
-      All requested backend APIs are working perfectly:
+      **Credentials:**
+      - Username: yasir
+      - Password: admin123
       
-      1. ✅ Collection Centers API (GET /api/centers):
-         - Returns exactly 3 centers: حجيف، زيك، غدو
-         - Auto-creation on startup working correctly
-      
-      2. ✅ User Authentication APIs:
-         - Login successful with testadmin/testpassword
-         - Profile update (PUT /api/auth/profile) working
-         - Password change (PUT /api/auth/password) working
-      
-      3. ✅ Activity Logs API (GET /api/activity-logs):
-         - Returns activity logs including login activities
-         - Logging system functioning properly
-      
-      All backend functionality is ready for frontend integration.
-      Frontend testing is NOT performed as per system limitations.
-  - agent: "testing"
-    message: |
-      🎉 FRONTEND UI TESTING COMPLETED SUCCESSFULLY!
-      
-      All requested UI functionality has been verified and is working correctly:
-      
-      1. ✅ LOGIN FUNCTIONALITY:
-         - Login page loads correctly with proper Arabic interface
-         - Authentication with testadmin/testpassword works perfectly
-         - Successfully redirects to dashboard after login
-      
-      2. ✅ LOGO AND DESIGN:
-         - Logo "المروج للألبان" is visible in header
-         - Header has proper brown/amber styling (header-brown, border-amber-600/30)
-         - Design matches requirements
-      
-      3. ✅ SETTINGS PAGE:
-         - Settings navigation link works correctly
-         - Page displays exactly 4 tabs as required:
-           * إعدادات الحساب (Account Settings)
-           * تغيير كلمة المرور (Change Password)  
-           * مراكز التجميع (Collection Centers)
-           * سجل النشاط (Activity Log)
-         - Centers tab displays all 3 collection centers: حجيف، زيك، غدو
-      
-      4. ✅ SUPPLIERS PAGE:
-         - Suppliers page accessible via navigation
-         - "Add Supplier" button opens form dialog correctly
-         - Center selection dropdown contains all 3 centers: حجيف، زيك، غدو
-         - Dropdown functionality working properly
-      
-      ALL REQUIREMENTS HAVE BEEN SUCCESSFULLY TESTED AND VERIFIED!
+      **Test the following:**
+      1. GET /api/hr/employees - should return 4 employees
+      2. GET /api/hr/dashboard - should return HR stats
+      3. POST /api/hr/leave-requests - create leave request
+      4. PUT /api/hr/leave-requests/{id}/approve - approve leave
+      5. POST /api/hr/expense-requests - create expense request
+      6. POST /api/hr/official-letters - create official letter
+      7. GET /api/hr/fingerprint-devices - should return 2 devices
+      8. POST /api/hr/employees/{id}/create-account - create account for Ahmed
