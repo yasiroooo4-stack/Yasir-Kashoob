@@ -88,15 +88,17 @@ const Layout = () => {
           sidebarOpen ? "w-64" : "w-20"
         } ${mobileMenuOpen ? "translate-x-0" : language === "ar" ? "translate-x-full lg:translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        {/* Logo */}
+        /* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {sidebarOpen && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                <Milk className="w-6 h-6 text-white" />
-              </div>
+              <img 
+                src="https://customer-assets.emergentagent.com/job_dairy-collect-sys/artifacts/gjkguf5p_almoroojdairy.png" 
+                alt="المروج للألبان"
+                className="w-10 h-10 rounded-xl object-contain"
+              />
               <span className="font-bold text-lg text-foreground">
-                {t("app_name")}
+                {language === "ar" ? "المروج للألبان" : "Al-Morooj Dairy"}
               </span>
             </div>
           )}
