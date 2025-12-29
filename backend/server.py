@@ -1363,6 +1363,605 @@ async def get_supplier_report(supplier_id: str, current_user: dict = Depends(get
         }
     }
 
+# ==================== HR - EMPLOYEE MANAGEMENT (إدارة الموظفين) ====================
+
+@api_router.post("/hr/employees", response_model=Employee)
+async def create_hr_employee(employee_data: EmployeeCreate, current_user: dict = Depends(get_current_user)):
+    # Generate employee code if not provided
+    if not employee_data.employee_code:
+        count = await db.hr_employees.count_documents({})
+        employee_data.employee_code = f"EMP{count + 1:04d}"
+    
+    employee = Employee(**employee_data.model_dump())
+    await db.hr_employees.insert_one(employee.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_employee",
+        entity_type="employee",
+        entity_id=employee.id,
+        entity_name=employee.name,
+        details=f"إضافة موظف: {employee.name} - {employee.department}"
+    )
+    
+    return employee
+
+@api_router.get("/hr/employees", response_model=List[Employee])
+async def get_hr_employees(
+    department: Optional[str] = None,
+    is_active: bool = True,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {"is_active": is_active}
+    if department:
+        query["department"] = department
+    employees = await db.hr_employees.find(query, {"_id": 0}).to_list(1000)
+    return employees
+
+@api_router.get("/hr/employees/{employee_id}", response_model=Employee)
+async def get_hr_employee(employee_id: str, current_user: dict = Depends(get_current_user)):
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return employee
+
+@api_router.put("/hr/employees/{employee_id}", response_model=Employee)
+async def update_hr_employee(employee_id: str, employee_data: EmployeeCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": employee_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    return employee
+
+@api_router.delete("/hr/employees/{employee_id}")
+async def delete_hr_employee(employee_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return {"message": "Employee deactivated successfully"}
+
+# Create user account for employee
+@api_router.post("/hr/employees/{employee_id}/create-account")
+async def create_employee_account(
+    employee_id: str, 
+    password: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Check if user already exists
+    existing = await db.users.find_one({"email": employee.get("email")})
+    if existing:
+        raise HTTPException(status_code=400, detail="User account already exists")
+    
+    # Determine role based on department
+    department_roles = {
+        "admin": "admin",
+        "it": "admin",
+        "finance": "accountant",
+        "purchasing": "employee",
+        "milk_reception": "employee",
+        "hr": "employee"
+    }
+    role = department_roles.get(employee.get("department", ""), "employee")
+    
+    # Create user
+    username = employee.get("employee_code", "").lower() or employee.get("name", "").replace(" ", "").lower()
+    user = User(
+        username=username,
+        email=employee.get("email") or f"{username}@company.com",
+        full_name=employee.get("name"),
+        phone=employee.get("phone"),
+        role=role,
+        center_id=employee.get("center_id")
+    )
+    user_dict = user.model_dump()
+    user_dict["password"] = hash_password(password)
+    user_dict["employee_id"] = employee_id
+    user_dict["department"] = employee.get("department")
+    user_dict["permissions"] = employee.get("permissions", [])
+    
+    await db.users.insert_one(user_dict)
+    
+    # Update employee
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"can_login": True}}
+    )
+    
+    return {"message": "User account created successfully", "username": username}
+
+# ==================== HR - ATTENDANCE (الحضور والانصراف) ====================
+
+@api_router.post("/hr/attendance", response_model=Attendance)
+async def create_attendance(attendance_data: AttendanceCreate, current_user: dict = Depends(get_current_user)):
+    # Check if attendance already exists for this employee and date
+    existing = await db.hr_attendance.find_one({
+        "employee_id": attendance_data.employee_id,
+        "date": attendance_data.date
+    })
+    if existing:
+        # Update existing record
+        await db.hr_attendance.update_one(
+            {"id": existing["id"]},
+            {"$set": attendance_data.model_dump()}
+        )
+        attendance = await db.hr_attendance.find_one({"id": existing["id"]}, {"_id": 0})
+        return attendance
+    
+    attendance = Attendance(**attendance_data.model_dump())
+    await db.hr_attendance.insert_one(attendance.model_dump())
+    return attendance
+
+@api_router.get("/hr/attendance")
+async def get_attendance(
+    employee_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if start_date:
+        query["date"] = {"$gte": start_date}
+    if end_date:
+        if "date" in query:
+            query["date"]["$lte"] = end_date
+        else:
+            query["date"] = {"$lte": end_date}
+    
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    return attendance
+
+@api_router.get("/hr/attendance/report")
+async def get_attendance_report(
+    year: int,
+    month: int,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    month_start = f"{year}-{month:02d}-01"
+    if month == 12:
+        month_end = f"{year + 1}-01-01"
+    else:
+        month_end = f"{year}-{month + 1:02d}-01"
+    
+    query = {"date": {"$gte": month_start, "$lt": month_end}}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).to_list(10000)
+    
+    # Group by employee
+    employee_report = {}
+    for record in attendance:
+        emp_id = record.get("employee_id")
+        if emp_id not in employee_report:
+            employee_report[emp_id] = {
+                "employee_name": record.get("employee_name"),
+                "present_days": 0,
+                "absent_days": 0,
+                "late_days": 0,
+                "total_hours": 0,
+                "records": []
+            }
+        
+        employee_report[emp_id]["records"].append(record)
+        if record.get("check_in"):
+            employee_report[emp_id]["present_days"] += 1
+            # Calculate hours if both check_in and check_out exist
+            if record.get("check_out"):
+                try:
+                    check_in = datetime.fromisoformat(record["check_in"].replace("Z", "+00:00"))
+                    check_out = datetime.fromisoformat(record["check_out"].replace("Z", "+00:00"))
+                    hours = (check_out - check_in).total_seconds() / 3600
+                    employee_report[emp_id]["total_hours"] += hours
+                except:
+                    pass
+    
+    return {
+        "year": year,
+        "month": month,
+        "report": list(employee_report.values())
+    }
+
+# ==================== HR - LEAVE REQUESTS (طلبات الإجازة) ====================
+
+@api_router.post("/hr/leave-requests", response_model=LeaveRequest)
+async def create_leave_request(request_data: LeaveRequestCreate, current_user: dict = Depends(get_current_user)):
+    leave_request = LeaveRequest(**request_data.model_dump())
+    await db.hr_leave_requests.insert_one(leave_request.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_leave_request",
+        entity_type="leave_request",
+        entity_id=leave_request.id,
+        details=f"طلب إجازة: {request_data.employee_name} - {request_data.leave_type}"
+    )
+    
+    return leave_request
+
+@api_router.get("/hr/leave-requests")
+async def get_leave_requests(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    requests = await db.hr_leave_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return requests
+
+@api_router.put("/hr/leave-requests/{request_id}/approve")
+async def approve_leave_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_leave_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+    
+    request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    return request
+
+@api_router.put("/hr/leave-requests/{request_id}/reject")
+async def reject_leave_request(request_id: str, reason: str = "", current_user: dict = Depends(get_current_user)):
+    result = await db.hr_leave_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "approved_by": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+    
+    request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    return request
+
+# ==================== HR - EXPENSE REQUESTS (طلبات المصاريف) ====================
+
+@api_router.post("/hr/expense-requests", response_model=ExpenseRequest)
+async def create_expense_request(request_data: ExpenseRequestCreate, current_user: dict = Depends(get_current_user)):
+    expense_request = ExpenseRequest(**request_data.model_dump())
+    await db.hr_expense_requests.insert_one(expense_request.model_dump())
+    return expense_request
+
+@api_router.get("/hr/expense-requests")
+async def get_expense_requests(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    requests = await db.hr_expense_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return requests
+
+@api_router.put("/hr/expense-requests/{request_id}/approve")
+async def approve_expense_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_expense_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Expense request not found")
+    
+    request = await db.hr_expense_requests.find_one({"id": request_id}, {"_id": 0})
+    return request
+
+@api_router.put("/hr/expense-requests/{request_id}/reject")
+async def reject_expense_request(request_id: str, reason: str = "", current_user: dict = Depends(get_current_user)):
+    result = await db.hr_expense_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "approved_by": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Expense request not found")
+    
+    request = await db.hr_expense_requests.find_one({"id": request_id}, {"_id": 0})
+    return request
+
+@api_router.put("/hr/expense-requests/{request_id}/pay")
+async def mark_expense_paid(request_id: str, current_user: dict = Depends(require_role(["admin", "accountant"]))):
+    result = await db.hr_expense_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "paid",
+            "paid_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Expense request not found")
+    
+    request = await db.hr_expense_requests.find_one({"id": request_id}, {"_id": 0})
+    return request
+
+# ==================== HR - CAR CONTRACTS (عقود السيارات) ====================
+
+@api_router.post("/hr/car-contracts", response_model=CarContract)
+async def create_car_contract(contract_data: CarContractCreate, current_user: dict = Depends(get_current_user)):
+    contract = CarContract(**contract_data.model_dump())
+    await db.hr_car_contracts.insert_one(contract.model_dump())
+    return contract
+
+@api_router.get("/hr/car-contracts")
+async def get_car_contracts(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    contracts = await db.hr_car_contracts.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return contracts
+
+@api_router.put("/hr/car-contracts/{contract_id}", response_model=CarContract)
+async def update_car_contract(contract_id: str, contract_data: CarContractCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_car_contracts.update_one(
+        {"id": contract_id},
+        {"$set": contract_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Car contract not found")
+    
+    contract = await db.hr_car_contracts.find_one({"id": contract_id}, {"_id": 0})
+    return contract
+
+@api_router.delete("/hr/car-contracts/{contract_id}")
+async def delete_car_contract(contract_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_car_contracts.update_one(
+        {"id": contract_id},
+        {"$set": {"status": "cancelled"}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Car contract not found")
+    return {"message": "Car contract cancelled"}
+
+# ==================== HR - OFFICIAL LETTERS (الرسائل الرسمية) ====================
+
+@api_router.post("/hr/official-letters", response_model=OfficialLetter)
+async def create_official_letter(letter_data: OfficialLetterCreate, current_user: dict = Depends(get_current_user)):
+    # Generate letter number
+    count = await db.hr_official_letters.count_documents({})
+    year = datetime.now().year
+    letter_number = f"LTR-{year}-{count + 1:04d}"
+    
+    letter = OfficialLetter(**letter_data.model_dump())
+    letter_dict = letter.model_dump()
+    letter_dict["letter_number"] = letter_number
+    
+    await db.hr_official_letters.insert_one(letter_dict)
+    return OfficialLetter(**letter_dict)
+
+@api_router.get("/hr/official-letters")
+async def get_official_letters(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    letter_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    if letter_type:
+        query["letter_type"] = letter_type
+    
+    letters = await db.hr_official_letters.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return letters
+
+@api_router.put("/hr/official-letters/{letter_id}/issue")
+async def issue_official_letter(letter_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.hr_official_letters.update_one(
+        {"id": letter_id},
+        {"$set": {
+            "status": "issued",
+            "issued_by": current_user["full_name"],
+            "issued_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Official letter not found")
+    
+    letter = await db.hr_official_letters.find_one({"id": letter_id}, {"_id": 0})
+    return letter
+
+# ==================== HR - FINGERPRINT DEVICES (أجهزة البصمة) ====================
+
+@api_router.post("/hr/fingerprint-devices", response_model=FingerprintDevice)
+async def create_fingerprint_device(device_data: FingerprintDeviceCreate, current_user: dict = Depends(require_role(["admin"]))):
+    device = FingerprintDevice(**device_data.model_dump())
+    await db.hr_fingerprint_devices.insert_one(device.model_dump())
+    return device
+
+@api_router.get("/hr/fingerprint-devices")
+async def get_fingerprint_devices(current_user: dict = Depends(get_current_user)):
+    devices = await db.hr_fingerprint_devices.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return devices
+
+@api_router.post("/hr/fingerprint-devices/{device_id}/sync")
+async def sync_fingerprint_device(device_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    """Sync attendance data from Hikvision fingerprint device"""
+    import aiohttp
+    
+    device = await db.hr_fingerprint_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    try:
+        # Hikvision API integration
+        device_url = f"http://{device['ip_address']}/csl/login"
+        
+        async with aiohttp.ClientSession() as session:
+            # Login to device
+            login_data = {
+                "id": device.get("login_id"),
+                "password": device.get("password")
+            }
+            
+            async with session.post(device_url, data=login_data) as response:
+                if response.status != 200:
+                    raise HTTPException(status_code=500, detail="Failed to connect to fingerprint device")
+                
+                # Get attendance records
+                # Note: Actual implementation depends on Hikvision API
+                attendance_url = f"http://{device['ip_address']}/csl/attendance"
+                async with session.get(attendance_url) as att_response:
+                    if att_response.status == 200:
+                        # Process attendance data
+                        # This is a simplified example - actual implementation needs Hikvision SDK
+                        pass
+        
+        # Update last sync time
+        await db.hr_fingerprint_devices.update_one(
+            {"id": device_id},
+            {"$set": {"last_sync": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"message": "Sync initiated successfully", "device": device["name"]}
+    
+    except Exception as e:
+        logging.error(f"Fingerprint sync error: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+# Manual attendance import endpoint
+@api_router.post("/hr/attendance/import")
+async def import_attendance(
+    records: List[AttendanceCreate],
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Import attendance records manually or from device export"""
+    imported = 0
+    for record in records:
+        existing = await db.hr_attendance.find_one({
+            "employee_id": record.employee_id,
+            "date": record.date
+        })
+        if existing:
+            await db.hr_attendance.update_one(
+                {"id": existing["id"]},
+                {"$set": record.model_dump()}
+            )
+        else:
+            attendance = Attendance(**record.model_dump())
+            await db.hr_attendance.insert_one(attendance.model_dump())
+        imported += 1
+    
+    return {"message": f"Imported {imported} attendance records"}
+
+# ==================== HR - DEPARTMENTS & PERMISSIONS ====================
+
+DEPARTMENTS = [
+    {"id": "admin", "name": "الإدارة", "name_en": "Administration"},
+    {"id": "it", "name": "تقنية المعلومات", "name_en": "IT"},
+    {"id": "hr", "name": "الموارد البشرية", "name_en": "Human Resources"},
+    {"id": "finance", "name": "المالية", "name_en": "Finance"},
+    {"id": "purchasing", "name": "المشتريات", "name_en": "Purchasing"},
+    {"id": "milk_reception", "name": "استلام الحليب", "name_en": "Milk Reception"},
+    {"id": "sales", "name": "المبيعات", "name_en": "Sales"},
+    {"id": "inventory", "name": "المخازن", "name_en": "Inventory"},
+]
+
+PERMISSIONS = {
+    "admin": ["all"],
+    "it": ["all"],
+    "hr": ["hr", "employees", "attendance", "leave", "expense", "car_contracts", "letters"],
+    "finance": ["finance", "payments", "reports", "expense"],
+    "purchasing": ["suppliers", "feed_purchases", "inventory"],
+    "milk_reception": ["milk_reception", "suppliers", "quality"],
+    "sales": ["sales", "customers", "inventory"],
+    "inventory": ["inventory", "reports"]
+}
+
+@api_router.get("/hr/departments")
+async def get_departments():
+    return DEPARTMENTS
+
+@api_router.get("/hr/permissions/{department}")
+async def get_department_permissions(department: str):
+    return {"department": department, "permissions": PERMISSIONS.get(department, [])}
+
+# ==================== HR - DASHBOARD ====================
+
+@api_router.get("/hr/dashboard")
+async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
+    today = datetime.now(timezone.utc).date().isoformat()
+    
+    # Count employees
+    total_employees = await db.hr_employees.count_documents({"is_active": True})
+    
+    # Today's attendance
+    today_attendance = await db.hr_attendance.count_documents({"date": today})
+    
+    # Pending leave requests
+    pending_leaves = await db.hr_leave_requests.count_documents({"status": "pending"})
+    
+    # Pending expense requests
+    pending_expenses = await db.hr_expense_requests.count_documents({"status": "pending"})
+    
+    # Active car contracts
+    active_contracts = await db.hr_car_contracts.count_documents({"status": "active"})
+    
+    # Recent activities
+    recent_leaves = await db.hr_leave_requests.find(
+        {}, {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    
+    recent_expenses = await db.hr_expense_requests.find(
+        {}, {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    
+    return {
+        "total_employees": total_employees,
+        "today_attendance": today_attendance,
+        "pending_leaves": pending_leaves,
+        "pending_expenses": pending_expenses,
+        "active_car_contracts": active_contracts,
+        "recent_leave_requests": recent_leaves,
+        "recent_expense_requests": recent_expenses
+    }
+
 # ==================== ROOT ROUTE ====================
 
 @api_router.get("/")
