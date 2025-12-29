@@ -1858,25 +1858,33 @@ async def sync_fingerprint_device(device_id: str, current_user: dict = Depends(r
         # Hikvision API integration
         device_url = f"http://{device['ip_address']}/csl/login"
         
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            # Try to connect to ZKTeco device
+            try:
+                async with session.get(f"http://{device['ip_address']}/", timeout=5) as response:
+                    # Device is reachable
+                    pass
+            except Exception as conn_error:
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"لا يمكن الاتصال بجهاز البصمة ({device['ip_address']}). تأكد من:\n1. أن الجهاز متصل بالشبكة\n2. أن عنوان IP صحيح\n3. أن النظام على نفس الشبكة المحلية"
+                )
+            
             # Login to device
             login_data = {
                 "id": device.get("login_id"),
                 "password": device.get("password")
             }
             
-            async with session.post(device_url, data=login_data) as response:
-                if response.status != 200:
-                    raise HTTPException(status_code=500, detail="Failed to connect to fingerprint device")
-                
-                # Get attendance records
-                # Note: Actual implementation depends on Hikvision API
-                attendance_url = f"http://{device['ip_address']}/csl/attendance"
-                async with session.get(attendance_url) as att_response:
-                    if att_response.status == 200:
-                        # Process attendance data
-                        # This is a simplified example - actual implementation needs Hikvision SDK
-                        pass
+            try:
+                async with session.post(device_url, data=login_data, timeout=10) as response:
+                    if response.status != 200:
+                        raise HTTPException(status_code=500, detail="فشل تسجيل الدخول للجهاز. تحقق من بيانات الدخول.")
+                    
+                    # Note: ZKTeco API integration requires specific SDK
+                    # This is a placeholder for actual implementation
+            except aiohttp.ClientError as e:
+                raise HTTPException(status_code=500, detail=f"خطأ في الاتصال: {str(e)}")
         
         # Update last sync time
         await db.hr_fingerprint_devices.update_one(
@@ -1884,11 +1892,20 @@ async def sync_fingerprint_device(device_id: str, current_user: dict = Depends(r
             {"$set": {"last_sync": datetime.now(timezone.utc).isoformat()}}
         )
         
-        return {"message": "Sync initiated successfully", "device": device["name"]}
+        return {
+            "message": "تم الاتصال بالجهاز بنجاح. ملاحظة: تحتاج إلى تثبيت ZKTeco SDK لسحب البيانات تلقائياً.", 
+            "device": device["name"],
+            "note": "يمكنك استخدام خيار 'إضافة حضور' لإدخال البيانات يدوياً"
+        }
     
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Fingerprint sync error: {e}")
-        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"فشل المزامنة: الجهاز غير متصل أو خارج الشبكة المحلية ({device['ip_address']})"
+        )
 
 # Manual attendance import endpoint
 @api_router.post("/hr/attendance/import")
