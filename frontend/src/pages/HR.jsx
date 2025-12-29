@@ -510,10 +510,17 @@ const HR = () => {
   };
 
   // Device handlers
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [deleteDeviceDialogOpen, setDeleteDeviceDialogOpen] = useState(false);
+
   const handleDeviceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/hr/fingerprint-devices`, deviceForm);
+      if (selectedDevice) {
+        await axios.put(`${API}/hr/fingerprint-devices/${selectedDevice.id}`, deviceForm);
+      } else {
+        await axios.post(`${API}/hr/fingerprint-devices`, deviceForm);
+      }
       toast.success(t("success"));
       setDeviceDialogOpen(false);
       resetDeviceForm();
@@ -530,9 +537,36 @@ const HR = () => {
       port: 80,
       login_id: "",
       password: "",
-      device_type: "hikvision",
+      device_type: "zkteco",
       location: "",
     });
+    setSelectedDevice(null);
+  };
+
+  const openEditDevice = (device) => {
+    setSelectedDevice(device);
+    setDeviceForm({
+      name: device.name,
+      ip_address: device.ip_address,
+      port: device.port || 80,
+      login_id: device.login_id,
+      password: device.password,
+      device_type: device.device_type || "zkteco",
+      location: device.location || "",
+    });
+    setDeviceDialogOpen(true);
+  };
+
+  const handleDeleteDevice = async () => {
+    try {
+      await axios.delete(`${API}/hr/fingerprint-devices/${selectedDevice.id}`);
+      toast.success(t("success"));
+      setDeleteDeviceDialogOpen(false);
+      setSelectedDevice(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
   };
 
   const handleSyncDevice = async (deviceId) => {
