@@ -66,6 +66,8 @@ class SupplierBase(BaseModel):
     name: str
     phone: str
     address: str
+    supplier_code: Optional[str] = None
+    bank_account: Optional[str] = None
     national_id: Optional[str] = None
     farm_size: Optional[float] = None
     cattle_count: Optional[int] = None

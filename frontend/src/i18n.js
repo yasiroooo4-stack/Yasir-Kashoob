@@ -65,7 +65,11 @@ const resources = {
       "avg_fat": "متوسط الدهون",
       "avg_protein": "متوسط البروتين",
       "liters": "لتر",
-      "currency": "ر.س",
+      "currency": "ر.ع",
+      "supplier_code": "كود المورد",
+      "bank_account": "رقم الحساب البنكي",
+      "select_all": "تحديد الكل",
+      "select_supplier": "تحديد المورد",
       
       // Suppliers
       "supplier_name": "اسم المورد",
@@ -218,7 +222,11 @@ const resources = {
       "avg_fat": "Average Fat",
       "avg_protein": "Average Protein",
       "liters": "L",
-      "currency": "SAR",
+      "currency": "OMR",
+      "supplier_code": "Supplier Code",
+      "bank_account": "Bank Account",
+      "select_all": "Select All",
+      "select_supplier": "Select Supplier",
       
       // Suppliers
       "supplier_name": "Supplier Name",
