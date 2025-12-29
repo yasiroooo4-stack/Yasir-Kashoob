@@ -124,7 +124,7 @@ const Suppliers = () => {
       toast.success(t("success"));
       setDeleteDialogOpen(false);
       setSelectedSupplier(null);
-      fetchSuppliers();
+      fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || t("error"));
     }
