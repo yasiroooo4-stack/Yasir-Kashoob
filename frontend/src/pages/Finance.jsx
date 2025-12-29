@@ -32,7 +32,8 @@ import {
 } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Plus, Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Building } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
+import { Plus, Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Building, Users } from "lucide-react";
 
 const Finance = () => {
   const { t } = useTranslation();
@@ -43,12 +44,15 @@ const Finance = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [filterMode, setFilterMode] = useState("all"); // "all" or "supplier"
+  const [selectedFilterSupplier, setSelectedFilterSupplier] = useState("");
   const [formData, setFormData] = useState({
     payment_type: "supplier_payment",
     related_id: "",
     related_name: "",
     amount: "",
     payment_method: "cash",
+    bank_account: "",
     notes: "",
   });
 
@@ -80,6 +84,7 @@ const Finance = () => {
       ...formData,
       related_id: relatedId,
       related_name: item?.name || "",
+      bank_account: item?.bank_account || "",
     });
   };
 
@@ -87,8 +92,12 @@ const Finance = () => {
     e.preventDefault();
     try {
       const data = {
-        ...formData,
+        payment_type: formData.payment_type,
+        related_id: formData.related_id,
+        related_name: formData.related_name,
         amount: parseFloat(formData.amount),
+        payment_method: formData.payment_method,
+        notes: formData.notes,
       };
 
       await axios.post(`${API}/payments`, data);
@@ -108,6 +117,7 @@ const Finance = () => {
       related_name: "",
       amount: "",
       payment_method: "cash",
+      bank_account: "",
       notes: "",
     });
   };
@@ -117,12 +127,20 @@ const Finance = () => {
   const totalSupplierPayments = supplierPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalCustomerReceipts = customerReceipts.reduce((sum, p) => sum + (p.amount || 0), 0);
 
-  const filteredPayments =
+  // Apply tab filter first
+  let filteredPayments =
     activeTab === "all"
       ? payments
       : activeTab === "supplier"
       ? supplierPayments
       : customerReceipts;
+
+  // Apply supplier filter if in supplier mode
+  if (filterMode === "supplier" && selectedFilterSupplier) {
+    filteredPayments = filteredPayments.filter(
+      (p) => p.related_id === selectedFilterSupplier
+    );
+  }
 
   const getPaymentMethodIcon = (method) => {
     switch (method) {
@@ -219,6 +237,50 @@ const Finance = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Filter Section */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <Label className="font-medium">{language === "ar" ? "تصفية حسب:" : "Filter by:"}</Label>
+              <RadioGroup
+                value={filterMode}
+                onValueChange={(value) => {
+                  setFilterMode(value);
+                  if (value === "all") setSelectedFilterSupplier("");
+                }}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <RadioGroupItem value="all" id="filter-all" data-testid="filter-all-radio" />
+                  <Label htmlFor="filter-all" className="cursor-pointer">{t("select_all")}</Label>
+                </div>
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <RadioGroupItem value="supplier" id="filter-supplier" data-testid="filter-supplier-radio" />
+                  <Label htmlFor="filter-supplier" className="cursor-pointer">{t("select_supplier")}</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            {filterMode === "supplier" && (
+              <div className="flex-1 max-w-xs">
+                <Select value={selectedFilterSupplier} onValueChange={setSelectedFilterSupplier}>
+                  <SelectTrigger data-testid="filter-supplier-select">
+                    <SelectValue placeholder={t("supplier")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} {s.supplier_code ? `(${s.supplier_code})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Payments Table with Tabs */}
       <Card>
@@ -324,7 +386,7 @@ const Finance = () => {
               <Select
                 value={formData.payment_type}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, payment_type: value, related_id: "", related_name: "" })
+                  setFormData({ ...formData, payment_type: value, related_id: "", related_name: "", bank_account: "" })
                 }
               >
                 <SelectTrigger data-testid="payment-type-select">
@@ -353,13 +415,24 @@ const Finance = () => {
                   {(formData.payment_type === "supplier_payment" ? suppliers : customers).map(
                     (item) => (
                       <SelectItem key={item.id} value={item.id}>
-                        {item.name} ({t("balance")}: {item.balance?.toLocaleString()})
+                        {item.name} {item.supplier_code ? `(${item.supplier_code})` : ""} - {t("balance")}: {item.balance?.toLocaleString()}
                       </SelectItem>
                     )
                   )}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Bank Account Display for Suppliers */}
+            {formData.payment_type === "supplier_payment" && formData.bank_account && (
+              <div className="p-3 bg-muted rounded-lg">
+                <Label className="text-sm text-muted-foreground">{t("bank_account")}</Label>
+                <p className="font-medium text-foreground flex items-center gap-2">
+                  <Building className="w-4 h-4" />
+                  {formData.bank_account}
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
