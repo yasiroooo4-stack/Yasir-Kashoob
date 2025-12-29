@@ -224,6 +224,7 @@ class FeedTypeBase(BaseModel):
     company_id: str
     company_name: str
     unit: str = "kg"  # kg, bag, ton
+    kg_per_unit: Optional[float] = None  # رقم الكيلو للوحدة
     price_per_unit: float
     description: Optional[str] = None
 
