@@ -57,8 +57,8 @@ const Login = () => {
       {/* Left Side - Hero Image */}
       <div className="hidden lg:flex lg:w-1/2 relative">
         <img
-          src="https://images.unsplash.com/photo-1759165996935-752b298c1889?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwxfHxkYWlyeSUyMGZhcm0lMjBjb3dzJTIwZ3JlZW4lMjBwYXN0dXJlfGVufDB8fHx8MTc2Njk4MzQwMnww&ixlib=rb-4.1.0&q=85"
-          alt="Dairy Farm"
+          src="https://customer-assets.emergentagent.com/job_dairysystem/artifacts/9vg9jfp2_%D8%A7%D9%84%D8%A7%D8%A8%D9%84.jpg"
+          alt="الإبل"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
