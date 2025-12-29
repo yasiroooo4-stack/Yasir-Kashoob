@@ -24,6 +24,13 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,14 +40,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Users, Phone, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Phone, MapPin, Building } from "lucide-react";
 
 const Suppliers = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [suppliers, setSuppliers] = useState([]);
+  const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterCenter, setFilterCenter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -50,13 +59,15 @@ const Suppliers = () => {
     address: "",
     supplier_code: "",
     bank_account: "",
+    center_id: "",
+    center_name: "",
     national_id: "",
     farm_size: "",
     cattle_count: "",
   });
 
   useEffect(() => {
-    fetchSuppliers();
+    fetchData();
   }, []);
 
   const fetchSuppliers = async () => {
