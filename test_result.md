@@ -70,63 +70,78 @@ user_problem_statement: |
 backend:
   - task: "Auto-create collection centers on startup"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented startup event to create 3 default centers (حجيف، زيك، غدو)"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: All 3 collection centers (حجيف، زيك، غدو) are successfully created and accessible via GET /api/centers"
 
   - task: "Collection Centers API endpoints"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "GET /api/centers, POST, PUT, DELETE endpoints exist"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: GET /api/centers returns exactly 3 centers with correct Arabic names (حجيف، زيك، غدو)"
 
   - task: "User profile update API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "PUT /api/auth/profile endpoint exists"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: PUT /api/auth/profile successfully updates user profile data (full_name, phone)"
 
   - task: "Password change API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "PUT /api/auth/password endpoint exists"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: PUT /api/auth/password successfully changes password with proper validation"
 
   - task: "Activity logs API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "GET /api/activity-logs endpoint exists, log_activity helper function created"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: GET /api/activity-logs returns activity logs including login activities"
 
 frontend:
   - task: "Settings page with profile, password, centers, activity tabs"
