@@ -12,9 +12,9 @@ from datetime import datetime
 # Get backend URL from frontend .env
 BACKEND_URL = "https://dairysystem.preview.emergentagent.com/api"
 
-# Test credentials
-TEST_USERNAME = "testadmin"
-TEST_PASSWORD = "testpassword"
+# Test credentials (as specified in review request)
+TEST_USERNAME = "yasir"
+TEST_PASSWORD = "admin123"
 
 class BackendTester:
     def __init__(self):
