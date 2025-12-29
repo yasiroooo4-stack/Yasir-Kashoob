@@ -18,6 +18,7 @@ import Finance from "./pages/Finance";
 import Employees from "./pages/Employees";
 import Reports from "./pages/Reports";
 import FeedPurchases from "./pages/FeedPurchases";
+import Settings from "./pages/Settings";
 
 // Layout
 import Layout from "./components/Layout";
