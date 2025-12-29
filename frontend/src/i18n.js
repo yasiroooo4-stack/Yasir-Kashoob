@@ -446,7 +446,10 @@ const resources = {
       "total_suppliers": "Total Suppliers",
       "total_customers": "Total Customers",
       "receptions": "Receptions",
-      "payments": "Payments"
+      "payments": "Payments",
+      
+      // HR
+      "hr": "Human Resources"
     }
   }
 };
