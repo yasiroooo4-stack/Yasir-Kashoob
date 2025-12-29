@@ -924,6 +924,14 @@ const HR = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                <Button variant="outline" onClick={handleExportAttendanceExcel} className="gap-1">
+                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                  Excel
+                </Button>
+                <Button variant="outline" onClick={handleExportAttendancePDF} className="gap-1">
+                  <FileText className="w-4 h-4 text-red-600" />
+                  PDF
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
