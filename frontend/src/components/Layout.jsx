@@ -88,7 +88,7 @@ const Layout = () => {
           sidebarOpen ? "w-64" : "w-20"
         } ${mobileMenuOpen ? "translate-x-0" : language === "ar" ? "translate-x-full lg:translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        /* Logo */}
+        {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {sidebarOpen && (
             <div className="flex items-center gap-3">
