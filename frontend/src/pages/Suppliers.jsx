@@ -394,6 +394,21 @@ const Suppliers = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>{t("center")} *</Label>
+                <Select value={formData.center_id} onValueChange={handleCenterChange}>
+                  <SelectTrigger data-testid="supplier-center-select">
+                    <SelectValue placeholder={t("center")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {centers.map((center) => (
+                      <SelectItem key={center.id} value={center.id}>
+                        {center.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="phone">{t("phone")} *</Label>
                 <Input
                   id="phone"
@@ -403,6 +418,8 @@ const Suppliers = () => {
                   data-testid="supplier-phone-input"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="bank_account">{t("bank_account")}</Label>
                 <Input
@@ -412,16 +429,16 @@ const Suppliers = () => {
                   data-testid="supplier-bank-account-input"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">{t("address")} *</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                required
-                data-testid="supplier-address-input"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="address">{t("address")} *</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                  data-testid="supplier-address-input"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
