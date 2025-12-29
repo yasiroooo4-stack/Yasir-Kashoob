@@ -755,6 +755,64 @@ async def get_supplier_feed_purchases(supplier_id: str, current_user: dict = Dep
         "available_balance": supplier.get("balance", 0)
     }
 
+@api_router.put("/feed-purchases/{purchase_id}", response_model=FeedPurchase)
+async def update_feed_purchase(purchase_id: str, purchase_data: FeedPurchaseCreate, current_user: dict = Depends(get_current_user)):
+    # Get existing purchase
+    existing = await db.feed_purchases.find_one({"id": purchase_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Feed purchase not found")
+    
+    # Get supplier
+    supplier = await db.suppliers.find_one({"id": purchase_data.supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    # Calculate new total
+    new_total = purchase_data.quantity * purchase_data.price_per_unit
+    old_total = existing.get("total_amount", 0)
+    difference = new_total - old_total
+    
+    # Check if supplier has enough balance for the difference
+    if difference > 0 and supplier.get("balance", 0) < difference:
+        raise HTTPException(status_code=400, detail="Insufficient supplier balance")
+    
+    # Update purchase
+    update_data = purchase_data.model_dump()
+    update_data["total_amount"] = new_total
+    
+    await db.feed_purchases.update_one(
+        {"id": purchase_id},
+        {"$set": update_data}
+    )
+    
+    # Update supplier balance
+    if difference != 0:
+        await db.suppliers.update_one(
+            {"id": purchase_data.supplier_id},
+            {"$inc": {"balance": -difference}}
+        )
+    
+    purchase = await db.feed_purchases.find_one({"id": purchase_id}, {"_id": 0})
+    return purchase
+
+@api_router.delete("/feed-purchases/{purchase_id}")
+async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(get_current_user)):
+    # Get existing purchase
+    existing = await db.feed_purchases.find_one({"id": purchase_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Feed purchase not found")
+    
+    # Refund supplier balance
+    await db.suppliers.update_one(
+        {"id": existing["supplier_id"]},
+        {"$inc": {"balance": existing.get("total_amount", 0)}}
+    )
+    
+    # Delete purchase
+    await db.feed_purchases.delete_one({"id": purchase_id})
+    
+    return {"message": "Feed purchase deleted and amount refunded to supplier"}
+
 # ==================== REPORTS & DASHBOARD ====================
 
 @api_router.get("/dashboard/stats")
