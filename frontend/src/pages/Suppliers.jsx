@@ -138,6 +138,8 @@ const Suppliers = () => {
       address: supplier.address,
       supplier_code: supplier.supplier_code || "",
       bank_account: supplier.bank_account || "",
+      center_id: supplier.center_id || "",
+      center_name: supplier.center_name || "",
       national_id: supplier.national_id || "",
       farm_size: supplier.farm_size || "",
       cattle_count: supplier.cattle_count || "",
@@ -152,6 +154,8 @@ const Suppliers = () => {
       address: "",
       supplier_code: "",
       bank_account: "",
+      center_id: "",
+      center_name: "",
       national_id: "",
       farm_size: "",
       cattle_count: "",
@@ -161,8 +165,9 @@ const Suppliers = () => {
 
   const filteredSuppliers = suppliers.filter(
     (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.phone.includes(searchTerm)
+      (s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.phone.includes(searchTerm)) &&
+      (filterCenter === "all" || s.center_id === filterCenter)
   );
 
   if (loading) {
