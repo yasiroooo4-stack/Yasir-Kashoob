@@ -1406,21 +1406,29 @@ const HR = () => {
             <div className="space-y-2">
               <Label>{language === "ar" ? "مسؤول القسم" : "Department Manager"}</Label>
               <Select
-                value={employeeForm.manager_id}
+                value={employeeForm.manager_id || "none"}
                 onValueChange={(v) => {
-                  const manager = managers.find(m => m.id === v);
-                  setEmployeeForm({ 
-                    ...employeeForm, 
-                    manager_id: v,
-                    manager_name: manager?.name || ""
-                  });
+                  if (v === "none") {
+                    setEmployeeForm({ 
+                      ...employeeForm, 
+                      manager_id: "",
+                      manager_name: ""
+                    });
+                  } else {
+                    const manager = managers.find(m => m.id === v);
+                    setEmployeeForm({ 
+                      ...employeeForm, 
+                      manager_id: v,
+                      manager_name: manager?.name || ""
+                    });
+                  }
                 }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={language === "ar" ? "اختر المسؤول" : "Select Manager"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{language === "ar" ? "بدون مسؤول" : "No Manager"}</SelectItem>
+                  <SelectItem value="none">{language === "ar" ? "بدون مسؤول" : "No Manager"}</SelectItem>
                   {managers.map((manager) => (
                     <SelectItem key={manager.id} value={manager.id}>
                       {manager.name} - {getDepartmentName(manager.department)}
