@@ -50,6 +50,7 @@ const Layout = () => {
     { path: "/feed-purchases", icon: Wheat, label: "feed_purchases" },
     { path: "/inventory", icon: Package, label: "inventory" },
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"] },
+    { path: "/hr", icon: Building2, label: "hr", roles: ["admin"] },
     { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/settings", icon: Settings, label: "settings" },
