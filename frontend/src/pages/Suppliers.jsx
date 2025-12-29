@@ -332,6 +332,17 @@ const Suppliers = () => {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="supplier_code">{t("supplier_code")}</Label>
+                <Input
+                  id="supplier_code"
+                  value={formData.supplier_code}
+                  onChange={(e) => setFormData({ ...formData, supplier_code: e.target.value })}
+                  data-testid="supplier-code-input"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="phone">{t("phone")} *</Label>
                 <Input
                   id="phone"
@@ -339,6 +350,15 @@ const Suppliers = () => {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
                   data-testid="supplier-phone-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_account">{t("bank_account")}</Label>
+                <Input
+                  id="bank_account"
+                  value={formData.bank_account}
+                  onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
+                  data-testid="supplier-bank-account-input"
                 />
               </div>
             </div>
