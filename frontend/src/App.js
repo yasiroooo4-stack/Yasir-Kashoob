@@ -219,6 +219,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="reports" element={<Reports />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
