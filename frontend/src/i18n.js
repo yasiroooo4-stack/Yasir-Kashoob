@@ -88,6 +88,9 @@ const resources = {
       "available_balance": "الرصيد المتاح",
       "total_spent": "إجمالي المصروف",
       "insufficient_balance": "الرصيد غير كافي",
+      "kg_per_unit": "وزن الوحدة (كجم)",
+      "edit_purchase": "تعديل المشتراة",
+      "refund_note": "سيتم إرجاع المبلغ لرصيد المورد",
       
       // Suppliers
       "supplier_name": "اسم المورد",
@@ -263,6 +266,9 @@ const resources = {
       "available_balance": "Available Balance",
       "total_spent": "Total Spent",
       "insufficient_balance": "Insufficient Balance",
+      "kg_per_unit": "Weight per Unit (kg)",
+      "edit_purchase": "Edit Purchase",
+      "refund_note": "Amount will be refunded to supplier balance",
       
       // Suppliers
       "supplier_name": "Supplier Name",
