@@ -117,6 +117,14 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
   
+  // Theme state
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem("app_theme") || "default";
+  });
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("dark_mode") === "true";
+  });
+  
   // Profile state
   const [profileData, setProfileData] = useState({
     full_name: "",
