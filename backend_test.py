@@ -2372,6 +2372,13 @@ class BackendTester:
         self.test_operations_vehicles_crud()
         self.test_operations_incidents_crud()
         
+        print("\n📈 Testing Marketing Module...")
+        self.test_marketing_dashboard_api()
+        self.test_marketing_campaigns_crud()
+        self.test_marketing_leads_crud()
+        self.test_marketing_offers_crud()
+        self.test_marketing_returns_crud()
+        
         print("\n📝 Testing Activity Logging...")
         self.test_activity_logs_new_modules()
         self.test_activity_logs_api_filters()
