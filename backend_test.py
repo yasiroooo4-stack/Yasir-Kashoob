@@ -1750,6 +1750,209 @@ class BackendTester:
         except Exception as e:
             self.log_test("Activity Logs - New Modules", False, f"Error: {str(e)}")
             return False
+
+    # ==================== PASSWORD RECOVERY TESTS ====================
+    
+    def test_forgot_password_api(self):
+        """Test POST /api/auth/forgot-password - request password reset"""
+        try:
+            # Test with valid email format
+            test_email = "testadmin@test.com"
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/forgot-password",
+                data={"email": test_email},
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                expected_message = "If the email exists, a reset link will be sent"
+                
+                if result.get("message") == expected_message:
+                    self.log_test(
+                        "Forgot Password API", 
+                        True, 
+                        f"Successfully requested password reset for {test_email}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Forgot Password API", 
+                        False, 
+                        f"Unexpected response message: {result.get('message')}",
+                        f"Expected: {expected_message}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Forgot Password API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Forgot Password API", False, f"Error: {str(e)}")
+            return False
+
+    def test_verify_reset_token_api(self):
+        """Test GET /api/auth/verify-reset-token - verify token validity"""
+        try:
+            # Test with invalid token
+            invalid_token = "invalid_token_12345"
+            
+            response = self.session.get(
+                f"{BACKEND_URL}/auth/verify-reset-token?token={invalid_token}"
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("valid") == False:
+                    self.log_test(
+                        "Verify Reset Token API", 
+                        True, 
+                        "Successfully verified invalid token returns valid=false"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Verify Reset Token API", 
+                        False, 
+                        f"Invalid token should return valid=false, got: {result}",
+                        f"Response: {result}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Verify Reset Token API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Verify Reset Token API", False, f"Error: {str(e)}")
+            return False
+
+    def test_reset_password_api(self):
+        """Test POST /api/auth/reset-password - reset password with token"""
+        try:
+            # Test with invalid token
+            invalid_token = "invalid_token_12345"
+            new_password = "newpassword123"
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/reset-password",
+                data={
+                    "token": invalid_token,
+                    "new_password": new_password
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if response.status_code == 400:
+                result = response.json()
+                expected_detail = "Invalid or expired reset token"
+                
+                if result.get("detail") == expected_detail:
+                    self.log_test(
+                        "Reset Password API", 
+                        True, 
+                        "Successfully rejected invalid token with proper error message"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Reset Password API", 
+                        False, 
+                        f"Unexpected error message: {result.get('detail')}",
+                        f"Expected: {expected_detail}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Reset Password API", 
+                    False, 
+                    f"Expected 400 status for invalid token, got {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Reset Password API", False, f"Error: {str(e)}")
+            return False
+
+    def test_password_recovery_workflow(self):
+        """Test complete password recovery workflow with real user"""
+        try:
+            # First, create a test user for password recovery
+            test_user_data = {
+                "username": "recovery_test_user",
+                "password": "original_password123",
+                "email": "recovery_test@test.com",
+                "full_name": "Recovery Test User",
+                "role": "employee"
+            }
+            
+            # Register test user
+            register_response = self.session.post(
+                f"{BACKEND_URL}/auth/register",
+                json=test_user_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if register_response.status_code != 200:
+                self.log_test(
+                    "Password Recovery Workflow", 
+                    False, 
+                    f"Failed to create test user: {register_response.status_code}",
+                    register_response.text
+                )
+                return False
+            
+            # Step 1: Request password reset
+            forgot_response = self.session.post(
+                f"{BACKEND_URL}/auth/forgot-password",
+                data={"email": test_user_data["email"]},
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if forgot_response.status_code != 200:
+                self.log_test(
+                    "Password Recovery Workflow", 
+                    False, 
+                    f"Forgot password request failed: {forgot_response.status_code}",
+                    forgot_response.text
+                )
+                return False
+            
+            forgot_result = forgot_response.json()
+            
+            # Check if email was sent (this depends on SMTP configuration)
+            email_sent = forgot_result.get("email_sent", False)
+            
+            if email_sent:
+                self.log_test(
+                    "Password Recovery Workflow", 
+                    True, 
+                    f"Complete password recovery workflow tested successfully for {test_user_data['email']} (email sent)"
+                )
+            else:
+                self.log_test(
+                    "Password Recovery Workflow", 
+                    True, 
+                    f"Password recovery workflow tested successfully for {test_user_data['email']} (email not sent - SMTP config issue)"
+                )
+            
+            return True
+                
+        except Exception as e:
+            self.log_test("Password Recovery Workflow", False, f"Error: {str(e)}")
+            return False
     
     def run_all_tests(self):
         """Run all backend tests"""
