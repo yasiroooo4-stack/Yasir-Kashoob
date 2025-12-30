@@ -40,6 +40,8 @@ const MilkReception = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [supplierCode, setSupplierCode] = useState("");
+  const [supplierFound, setSupplierFound] = useState(null);
   const [formData, setFormData] = useState({
     supplier_id: "",
     supplier_name: "",
