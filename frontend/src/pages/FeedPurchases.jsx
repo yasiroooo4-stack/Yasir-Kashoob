@@ -41,7 +41,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet } from "lucide-react";
+import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet, Printer, CheckCircle } from "lucide-react";
+import { Badge } from "../components/ui/badge";
 
 const FeedPurchases = () => {
   const { t } = useTranslation();
