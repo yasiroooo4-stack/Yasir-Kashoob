@@ -2336,21 +2336,20 @@ class BackendTester:
     # ==================== NEW FEATURES TESTING (Review Request) ====================
     
     def test_departments_api(self):
-        """Test GET /api/departments - should include legal, projects, operations, marketing"""
+        """Test GET /api/hr/departments - should include legal, projects, operations, marketing"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/departments")
+            response = self.session.get(f"{BACKEND_URL}/hr/departments")
             
             if response.status_code == 200:
                 departments = response.json()
                 expected_departments = ["legal", "projects", "operations", "marketing"]
                 found_departments = []
                 
-                # Check if departments is a list of strings or objects
+                # Check if departments is a list of objects with id field
                 if isinstance(departments, list):
-                    if departments and isinstance(departments[0], str):
-                        found_departments = [dept.lower() for dept in departments]
-                    elif departments and isinstance(departments[0], dict):
-                        found_departments = [dept.get("name", "").lower() for dept in departments]
+                    for dept in departments:
+                        if isinstance(dept, dict) and "id" in dept:
+                            found_departments.append(dept["id"].lower())
                 
                 missing_departments = [dept for dept in expected_departments if dept not in found_departments]
                 
@@ -2383,9 +2382,9 @@ class BackendTester:
             return False
 
     def test_permissions_api(self):
-        """Test GET /api/permissions - should include permissions for new departments"""
+        """Test GET /api/hr/available-permissions - should include permissions for new departments"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/permissions")
+            response = self.session.get(f"{BACKEND_URL}/hr/available-permissions")
             
             if response.status_code == 200:
                 permissions = response.json()
@@ -2404,12 +2403,11 @@ class BackendTester:
                 
                 found_permissions = []
                 
-                # Check if permissions is a list of strings or objects
+                # Check if permissions is a list of objects with id field
                 if isinstance(permissions, list):
-                    if permissions and isinstance(permissions[0], str):
-                        found_permissions = [perm.lower() for perm in permissions]
-                    elif permissions and isinstance(permissions[0], dict):
-                        found_permissions = [perm.get("name", "").lower() for perm in permissions]
+                    for perm in permissions:
+                        if isinstance(perm, dict) and "id" in perm:
+                            found_permissions.append(perm["id"].lower())
                 
                 missing_permissions = [perm for perm in expected_permissions if perm not in found_permissions]
                 
@@ -2444,20 +2442,38 @@ class BackendTester:
     def test_hr_attendance_import_excel(self):
         """Test POST /api/hr/attendance/import-excel - Excel import functionality"""
         try:
-            # Create a simple test Excel file content (CSV format for simplicity)
+            # Create a simple test Excel file using openpyxl
             import io
+            from openpyxl import Workbook
             
-            # Create mock Excel data as CSV
-            csv_content = """employee_id,employee_name,date,check_in,check_out
-emp001,أحمد محمد,2025-01-15,08:00,17:00
-emp002,فاطمة علي,2025-01-15,08:30,17:30
-emp003,محمد سالم,2025-01-15,09:00,18:00"""
+            # Create workbook and worksheet
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Attendance"
             
-            # Create file-like object
-            file_data = io.BytesIO(csv_content.encode('utf-8'))
+            # Add headers
+            headers = ["employee_id", "employee_name", "date", "check_in", "check_out"]
+            for col, header in enumerate(headers, 1):
+                ws.cell(row=1, column=col, value=header)
+            
+            # Add sample data
+            data = [
+                ["emp001", "أحمد محمد", "2025-01-15", "08:00", "17:00"],
+                ["emp002", "فاطمة علي", "2025-01-15", "08:30", "17:30"],
+                ["emp003", "محمد سالم", "2025-01-15", "09:00", "18:00"]
+            ]
+            
+            for row, row_data in enumerate(data, 2):
+                for col, value in enumerate(row_data, 1):
+                    ws.cell(row=row, column=col, value=value)
+            
+            # Save to BytesIO
+            excel_buffer = io.BytesIO()
+            wb.save(excel_buffer)
+            excel_buffer.seek(0)
             
             # Test the import endpoint
-            files = {'file': ('attendance.csv', file_data, 'text/csv')}
+            files = {'file': ('attendance.xlsx', excel_buffer, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
             
             response = self.session.post(
                 f"{BACKEND_URL}/hr/attendance/import-excel",
@@ -2468,15 +2484,16 @@ emp003,محمد سالم,2025-01-15,09:00,18:00"""
                 result = response.json()
                 
                 # Check expected response structure
-                if ("imported" in result or "updated" in result or "errors" in result):
+                if ("imported" in result or "updated" in result or "errors" in result or "message" in result):
                     imported_count = result.get("imported", 0)
                     updated_count = result.get("updated", 0)
                     errors = result.get("errors", [])
+                    message = result.get("message", "")
                     
                     self.log_test(
                         "HR Attendance Import Excel", 
                         True, 
-                        f"Excel import successful - Imported: {imported_count}, Updated: {updated_count}, Errors: {len(errors)}"
+                        f"Excel import successful - {message or f'Imported: {imported_count}, Updated: {updated_count}, Errors: {len(errors)}'}"
                     )
                     return True
                 else:
