@@ -121,7 +121,7 @@ body {
 
 /* Gradient backgrounds */
 .gradient-primary {
-  @apply bg-gradient-to-br from-amber-700 to-amber-900;
+  background: linear-gradient(135deg, var(--theme-primary, #2563eb) 0%, var(--theme-primary-dark, #1d4ed8) 100%) !important;
 }
 
 .gradient-secondary {
@@ -130,6 +130,63 @@ body {
 
 .gradient-accent {
   @apply bg-gradient-to-br from-amber-400 to-orange-500;
+}
+
+/* Theme Variables */
+:root {
+  --theme-primary: #2563eb;
+  --theme-primary-dark: #1d4ed8;
+  --theme-secondary: #64748b;
+  --theme-accent: #f59e0b;
+}
+
+/* Theme: Ocean */
+[data-theme="ocean"] {
+  --theme-primary: #0891b2;
+  --theme-primary-dark: #0e7490;
+  --primary: 187 91% 37%;
+}
+
+/* Theme: Sunset */
+[data-theme="sunset"] {
+  --theme-primary: #ea580c;
+  --theme-primary-dark: #c2410c;
+  --primary: 21 90% 48%;
+}
+
+/* Theme: Forest */
+[data-theme="forest"] {
+  --theme-primary: #059669;
+  --theme-primary-dark: #047857;
+  --primary: 160 84% 39%;
+}
+
+/* Theme: Royal */
+[data-theme="royal"] {
+  --theme-primary: #7c3aed;
+  --theme-primary-dark: #6d28d9;
+  --primary: 263 70% 58%;
+}
+
+/* Theme: Rose */
+[data-theme="rose"] {
+  --theme-primary: #e11d48;
+  --theme-primary-dark: #be123c;
+  --primary: 347 77% 50%;
+}
+
+/* Theme: Midnight */
+[data-theme="midnight"] {
+  --theme-primary: #1e293b;
+  --theme-primary-dark: #0f172a;
+  --primary: 217 33% 17%;
+}
+
+/* Theme: Gold */
+[data-theme="gold"] {
+  --theme-primary: #b45309;
+  --theme-primary-dark: #92400e;
+  --primary: 28 88% 37%;
 }
 
 /* Header brown gradient */
