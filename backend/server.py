@@ -1930,9 +1930,19 @@ async def create_feed_purchase(purchase_data: FeedPurchaseCreate, current_user: 
     if supplier.get("balance", 0) < total_amount:
         raise HTTPException(status_code=400, detail="Insufficient supplier balance")
     
+    # Generate invoice number
+    count = await db.feed_purchases.count_documents({})
+    year = datetime.now().year
+    invoice_number = f"FP-{year}-{count + 1:05d}"
+    
     purchase = FeedPurchase(**purchase_data.model_dump())
+    purchase.invoice_number = invoice_number
     purchase.total_amount = total_amount
     purchase.created_by = current_user["id"]
+    purchase.created_by_name = current_user.get("full_name", "")
+    # Add supplier details to invoice
+    purchase.supplier_phone = supplier.get("phone", "")
+    purchase.supplier_address = supplier.get("address", "")
     
     await db.feed_purchases.insert_one(purchase.model_dump())
     
@@ -1949,10 +1959,47 @@ async def create_feed_purchase(purchase_data: FeedPurchaseCreate, current_user: 
         entity_type="feed_purchase",
         entity_id=purchase.id,
         entity_name=supplier.get("name"),
-        details=f"شراء علف: {purchase.feed_type_name} - {total_amount} ر.ع من رصيد {supplier.get('name')}"
+        details=f"فاتورة شراء علف: {invoice_number} - {purchase.feed_type_name} - {total_amount} ر.ع من رصيد {supplier.get('name')}"
     )
     
     return purchase
+
+# Approve feed purchase invoice (electronic signature)
+@api_router.post("/feed-purchases/{purchase_id}/approve")
+async def approve_feed_purchase(purchase_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    purchase = await db.feed_purchases.find_one({"id": purchase_id}, {"_id": 0})
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    if purchase.get("is_approved"):
+        raise HTTPException(status_code=400, detail="Invoice already approved")
+    
+    # Generate signature code
+    import hashlib
+    signature_data = f"{purchase_id}-{current_user['id']}-{datetime.now().isoformat()}"
+    signature_code = hashlib.sha256(signature_data.encode()).hexdigest()[:16].upper()
+    
+    await db.feed_purchases.update_one(
+        {"id": purchase_id},
+        {"$set": {
+            "is_approved": True,
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user.get("full_name", ""),
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "signature_code": signature_code
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_feed_purchase",
+        entity_type="feed_purchase",
+        entity_id=purchase_id,
+        details=f"تصديق فاتورة شراء علف: {purchase.get('invoice_number')} - كود التصديق: {signature_code}"
+    )
+    
+    return {"message": "تم تصديق الفاتورة بنجاح", "signature_code": signature_code}
 
 @api_router.get("/feed-purchases", response_model=List[FeedPurchase])
 async def get_feed_purchases(
