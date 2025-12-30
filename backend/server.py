@@ -424,6 +424,360 @@ class DeviceSettings(BaseModel):
     is_active: bool = True
     last_sync: Optional[str] = None
 
+# ==================== LEGAL MODULE MODELS (قسم القانون) ====================
+
+# Legal Contract Models (العقود القانونية)
+class LegalContractBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    contract_number: Optional[str] = None
+    contract_type: str  # employment, vendor, service, lease, partnership, other
+    title: str
+    party_name: str  # اسم الطرف الآخر
+    party_type: str  # individual, company, government
+    start_date: str
+    end_date: str
+    value: float
+    currency: str = "OMR"
+    description: Optional[str] = None
+    terms: Optional[str] = None
+    responsible_employee_id: Optional[str] = None
+    responsible_employee_name: Optional[str] = None
+    attachments: Optional[List[str]] = None
+    renewal_reminder_days: int = 30
+    auto_renew: bool = False
+
+class LegalContractCreate(LegalContractBase):
+    pass
+
+class LegalContract(LegalContractBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "active"  # draft, active, expired, terminated, renewed
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Legal Case Models (القضايا القانونية)
+class LegalCaseBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    case_number: Optional[str] = None
+    case_type: str  # litigation, arbitration, dispute, complaint, regulatory
+    title: str
+    description: str
+    plaintiff: str  # المدعي
+    defendant: str  # المدعى عليه
+    court_name: Optional[str] = None
+    filing_date: str
+    hearing_date: Optional[str] = None
+    lawyer_name: Optional[str] = None
+    lawyer_contact: Optional[str] = None
+    estimated_value: Optional[float] = None
+    priority: str = "medium"  # low, medium, high, critical
+    notes: Optional[str] = None
+    attachments: Optional[List[str]] = None
+
+class LegalCaseCreate(LegalCaseBase):
+    pass
+
+class LegalCase(LegalCaseBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "open"  # open, in_progress, closed, won, lost, settled
+    outcome: Optional[str] = None
+    settlement_amount: Optional[float] = None
+    closed_at: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Legal Consultation Models (الاستشارات القانونية)
+class LegalConsultationBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    requester_id: str
+    requester_name: str
+    department: str
+    subject: str
+    description: str
+    urgency: str = "normal"  # low, normal, urgent, critical
+    consultation_type: str  # contract_review, legal_advice, compliance, other
+
+class LegalConsultationCreate(LegalConsultationBase):
+    pass
+
+class LegalConsultation(LegalConsultationBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, in_review, completed
+    response: Optional[str] = None
+    responded_by: Optional[str] = None
+    responded_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Legal Document Models (المستندات القانونية)
+class LegalDocumentBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    document_type: str  # policy, regulation, agreement, certificate, license, permit
+    title: str
+    description: Optional[str] = None
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    issuing_authority: Optional[str] = None
+    reference_number: Optional[str] = None
+    file_url: Optional[str] = None
+    related_entity_type: Optional[str] = None  # contract, case, employee
+    related_entity_id: Optional[str] = None
+
+class LegalDocumentCreate(LegalDocumentBase):
+    pass
+
+class LegalDocument(LegalDocumentBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "valid"  # valid, expired, revoked
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ==================== PROJECTS MODULE MODELS (قسم المشاريع) ====================
+
+# Project Models (المشاريع)
+class ProjectBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    project_code: Optional[str] = None
+    name: str
+    description: str
+    project_type: str  # construction, it, marketing, research, operational, other
+    client_name: Optional[str] = None
+    start_date: str
+    end_date: str
+    budget: float
+    currency: str = "OMR"
+    priority: str = "medium"  # low, medium, high, critical
+    manager_id: Optional[str] = None
+    manager_name: Optional[str] = None
+    department: Optional[str] = None
+    location: Optional[str] = None
+    objectives: Optional[str] = None
+    deliverables: Optional[str] = None
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class Project(ProjectBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "planning"  # planning, in_progress, on_hold, completed, cancelled
+    progress_percentage: float = 0.0
+    actual_cost: float = 0.0
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Project Task Models (مهام المشروع)
+class ProjectTaskBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    project_id: str
+    project_name: str
+    task_name: str
+    description: Optional[str] = None
+    assigned_to_id: Optional[str] = None
+    assigned_to_name: Optional[str] = None
+    start_date: str
+    due_date: str
+    priority: str = "medium"  # low, medium, high, critical
+    estimated_hours: Optional[float] = None
+    parent_task_id: Optional[str] = None
+
+class ProjectTaskCreate(ProjectTaskBase):
+    pass
+
+class ProjectTask(ProjectTaskBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, in_progress, completed, cancelled
+    actual_hours: float = 0.0
+    progress_percentage: float = 0.0
+    completed_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Project Team Member Models (أعضاء فريق المشروع)
+class ProjectTeamMemberBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    project_id: str
+    project_name: str
+    employee_id: str
+    employee_name: str
+    role: str  # manager, developer, analyst, designer, tester, coordinator
+    allocation_percentage: float = 100.0
+    start_date: str
+    end_date: Optional[str] = None
+
+class ProjectTeamMemberCreate(ProjectTeamMemberBase):
+    pass
+
+class ProjectTeamMember(ProjectTeamMemberBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Project Milestone Models (المراحل الرئيسية)
+class ProjectMilestoneBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    project_id: str
+    project_name: str
+    name: str
+    description: Optional[str] = None
+    due_date: str
+    deliverables: Optional[str] = None
+    payment_amount: Optional[float] = None
+
+class ProjectMilestoneCreate(ProjectMilestoneBase):
+    pass
+
+class ProjectMilestone(ProjectMilestoneBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, achieved, missed
+    achieved_date: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ==================== OPERATIONS MODULE MODELS (قسم العمليات) ====================
+
+# Daily Operation Models (العمليات اليومية)
+class DailyOperationBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    operation_date: str
+    shift: str  # morning, afternoon, night
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    supervisor_id: Optional[str] = None
+    supervisor_name: Optional[str] = None
+    milk_received_liters: float = 0.0
+    milk_processed_liters: float = 0.0
+    milk_sold_liters: float = 0.0
+    wastage_liters: float = 0.0
+    quality_issues: Optional[str] = None
+    notes: Optional[str] = None
+    weather_conditions: Optional[str] = None
+    staff_present: int = 0
+
+class DailyOperationCreate(DailyOperationBase):
+    pass
+
+class DailyOperation(DailyOperationBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "ongoing"  # ongoing, completed, reviewed
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Equipment Models (المعدات)
+class EquipmentBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    equipment_code: Optional[str] = None
+    name: str
+    equipment_type: str  # tank, cooler, pump, scale, analyzer, vehicle, generator, other
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    serial_number: Optional[str] = None
+    purchase_date: Optional[str] = None
+    purchase_price: Optional[float] = None
+    warranty_expiry: Optional[str] = None
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    location: Optional[str] = None
+    specifications: Optional[str] = None
+
+class EquipmentCreate(EquipmentBase):
+    pass
+
+class Equipment(EquipmentBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "operational"  # operational, maintenance, out_of_order, retired
+    last_maintenance_date: Optional[str] = None
+    next_maintenance_date: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Maintenance Record Models (سجلات الصيانة)
+class MaintenanceRecordBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    equipment_id: str
+    equipment_name: str
+    maintenance_type: str  # preventive, corrective, emergency, inspection
+    description: str
+    performed_by: Optional[str] = None
+    vendor_name: Optional[str] = None
+    cost: float = 0.0
+    parts_replaced: Optional[str] = None
+    maintenance_date: str
+    next_maintenance_date: Optional[str] = None
+    notes: Optional[str] = None
+
+class MaintenanceRecordCreate(MaintenanceRecordBase):
+    pass
+
+class MaintenanceRecord(MaintenanceRecordBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "completed"  # scheduled, in_progress, completed, cancelled
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Incident Report Models (تقارير الحوادث)
+class IncidentReportBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    incident_type: str  # accident, equipment_failure, quality_issue, safety, environmental, other
+    title: str
+    description: str
+    incident_date: str
+    incident_time: Optional[str] = None
+    location: str
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    severity: str = "medium"  # low, medium, high, critical
+    reported_by_id: str
+    reported_by_name: str
+    witnesses: Optional[str] = None
+    injuries: Optional[str] = None
+    damage_description: Optional[str] = None
+    estimated_damage_cost: Optional[float] = None
+    immediate_actions: Optional[str] = None
+    root_cause: Optional[str] = None
+    preventive_measures: Optional[str] = None
+
+class IncidentReportCreate(IncidentReportBase):
+    pass
+
+class IncidentReport(IncidentReportBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    incident_number: Optional[str] = None
+    status: str = "reported"  # reported, investigating, resolved, closed
+    investigated_by: Optional[str] = None
+    resolved_at: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Vehicle Fleet Models (أسطول المركبات)
+class VehicleBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    vehicle_code: Optional[str] = None
+    vehicle_type: str  # truck, tanker, pickup, car, motorcycle
+    brand: str
+    model: str
+    year: int
+    plate_number: str
+    color: Optional[str] = None
+    vin_number: Optional[str] = None
+    fuel_type: str = "diesel"  # diesel, petrol, electric, hybrid
+    tank_capacity: Optional[float] = None
+    assigned_driver_id: Optional[str] = None
+    assigned_driver_name: Optional[str] = None
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    insurance_expiry: Optional[str] = None
+    registration_expiry: Optional[str] = None
+
+class VehicleCreate(VehicleBase):
+    pass
+
+class Vehicle(VehicleBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "available"  # available, in_use, maintenance, out_of_service
+    current_mileage: float = 0.0
+    last_service_date: Optional[str] = None
+    next_service_mileage: Optional[float] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Feed Company Models (شركات الأعلاف)
 class FeedCompanyBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
