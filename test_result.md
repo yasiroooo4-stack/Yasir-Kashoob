@@ -204,11 +204,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "API to create login account for employee with department-based role"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED - Employee Account Creation API working: POST /api/hr/employees/{id}/create-account creates user accounts with department-based roles (admin, accountant, employee), username generation functional."
 
 frontend:
   - task: "HR Page with all tabs"
