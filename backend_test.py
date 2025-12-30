@@ -2884,24 +2884,37 @@ class BackendTester:
                 )
                 return False
             
-            approved_letter = approve_response.json()
+            approval_result = approve_response.json()
             
-            # Check electronic signature and approval
-            if not approved_letter.get("signature_code"):
+            # Check electronic signature from approval response
+            if not approval_result.get("signature_code"):
                 self.log_test(
                     "Official Letters Workflow", 
                     False, 
                     "Electronic signature code not generated",
-                    f"Response: {approved_letter}"
+                    f"Response: {approval_result}"
                 )
                 return False
             
-            if not approved_letter.get("is_approved"):
+            # Get the updated letter to verify approval status
+            updated_letter_response = self.session.get(f"{BACKEND_URL}/hr/official-letters")
+            if updated_letter_response.status_code != 200:
+                self.log_test("Official Letters Workflow", False, "Cannot get updated letter")
+                return False
+            
+            letters = updated_letter_response.json()
+            approved_letter = None
+            for l in letters:
+                if l.get("id") == letter_id:
+                    approved_letter = l
+                    break
+            
+            if not approved_letter or not approved_letter.get("is_approved"):
                 self.log_test(
                     "Official Letters Workflow", 
                     False, 
-                    "Letter not marked as approved",
-                    f"is_approved: {approved_letter.get('is_approved')}"
+                    "Letter not marked as approved in database",
+                    f"is_approved: {approved_letter.get('is_approved') if approved_letter else 'Letter not found'}"
                 )
                 return False
             
