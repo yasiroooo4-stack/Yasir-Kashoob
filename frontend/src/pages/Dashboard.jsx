@@ -32,6 +32,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState([]);
+  const [centralDashboard, setCentralDashboard] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -39,12 +40,14 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, monthlyRes] = await Promise.all([
+      const [statsRes, monthlyRes, centralRes] = await Promise.all([
         axios.get(`${API}/dashboard/stats`),
         axios.get(`${API}/reports/monthly?year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
+        axios.get(`${API}/dashboard/central`),
       ]);
       setStats(statsRes.data);
       setMonthlyData(monthlyRes.data.daily_data || []);
+      setCentralDashboard(centralRes.data);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
