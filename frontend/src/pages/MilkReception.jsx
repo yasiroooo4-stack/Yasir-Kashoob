@@ -329,6 +329,33 @@ const MilkReception = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Supplier Code Search */}
+            <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+              <Label className="text-blue-700 font-medium">
+                {language === "ar" ? "البحث بكود المورد" : "Search by Supplier Code"}
+              </Label>
+              <div className="flex gap-3">
+                <Input
+                  placeholder={language === "ar" ? "أدخل كود المورد..." : "Enter supplier code..."}
+                  value={supplierCode}
+                  onChange={(e) => handleSupplierCodeChange(e.target.value)}
+                  className="flex-1"
+                  data-testid="supplier-code-input"
+                />
+                {supplierFound && (
+                  <div className="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-2 rounded-lg">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="font-medium">{supplierFound.name}</span>
+                  </div>
+                )}
+              </div>
+              {supplierCode && !supplierFound && (
+                <p className="text-sm text-orange-600">
+                  {language === "ar" ? "لم يتم العثور على مورد بهذا الكود" : "Supplier not found with this code"}
+                </p>
+              )}
+            </div>
+
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -343,7 +370,7 @@ const MilkReception = () => {
                   <SelectContent>
                     {suppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
+                        {supplier.supplier_code ? `${supplier.supplier_code} - ` : ""}{supplier.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
