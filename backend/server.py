@@ -789,6 +789,188 @@ class Vehicle(VehicleBase):
     next_service_mileage: Optional[float] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ==================== MARKETING MODULE MODELS (قسم التسويق) ====================
+
+# Password Reset Token Model
+class PasswordResetToken(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    email: str
+    token: str
+    expires_at: str
+    used: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Marketing Campaign Models (الحملات التسويقية)
+class MarketingCampaignBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    campaign_type: str  # social_media, email, sms, billboard, tv, radio, event, other
+    description: str
+    objective: str  # awareness, leads, sales, retention
+    target_audience: Optional[str] = None
+    start_date: str
+    end_date: str
+    budget: float
+    currency: str = "OMR"
+    channels: Optional[List[str]] = None  # facebook, instagram, twitter, whatsapp, email
+    responsible_id: Optional[str] = None
+    responsible_name: Optional[str] = None
+
+class MarketingCampaignCreate(MarketingCampaignBase):
+    pass
+
+class MarketingCampaign(MarketingCampaignBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_code: Optional[str] = None
+    status: str = "draft"  # draft, active, paused, completed, cancelled
+    actual_cost: float = 0.0
+    leads_generated: int = 0
+    conversions: int = 0
+    reach: int = 0
+    engagement: int = 0
+    roi: float = 0.0
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Lead Models (العملاء المحتملين)
+class LeadBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    company_name: Optional[str] = None
+    phone: str
+    email: Optional[str] = None
+    address: Optional[str] = None
+    lead_source: str  # website, social_media, referral, cold_call, event, advertisement, other
+    interest: str  # milk_supply, milk_purchase, partnership, other
+    notes: Optional[str] = None
+    assigned_to_id: Optional[str] = None
+    assigned_to_name: Optional[str] = None
+    campaign_id: Optional[str] = None
+    campaign_name: Optional[str] = None
+    expected_value: Optional[float] = None
+
+class LeadCreate(LeadBase):
+    pass
+
+class Lead(LeadBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    lead_code: Optional[str] = None
+    status: str = "new"  # new, contacted, qualified, proposal, negotiation, won, lost
+    priority: str = "medium"  # low, medium, high
+    last_contact_date: Optional[str] = None
+    next_follow_up: Optional[str] = None
+    conversion_date: Optional[str] = None
+    lost_reason: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Social Media Post Models (منشورات التواصل الاجتماعي)
+class SocialMediaPostBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    platform: str  # facebook, instagram, twitter, linkedin, whatsapp, tiktok
+    post_type: str  # text, image, video, story, reel, carousel
+    content: str
+    scheduled_date: Optional[str] = None
+    campaign_id: Optional[str] = None
+    campaign_name: Optional[str] = None
+    hashtags: Optional[List[str]] = None
+    target_audience: Optional[str] = None
+
+class SocialMediaPostCreate(SocialMediaPostBase):
+    pass
+
+class SocialMediaPost(SocialMediaPostBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "draft"  # draft, scheduled, published, failed
+    published_at: Optional[str] = None
+    likes: int = 0
+    comments: int = 0
+    shares: int = 0
+    reach: int = 0
+    engagement_rate: float = 0.0
+    post_url: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Sales Offer Models (عروض المبيعات)
+class SalesOfferBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    offer_type: str  # discount, bundle, bulk, seasonal, promotional
+    title: str
+    description: str
+    product_type: str  # raw_milk, processed_milk, all
+    discount_percentage: Optional[float] = None
+    discount_amount: Optional[float] = None
+    min_quantity: Optional[float] = None
+    max_quantity: Optional[float] = None
+    start_date: str
+    end_date: str
+    terms_conditions: Optional[str] = None
+    target_customers: Optional[str] = None  # all, new, existing, vip
+
+class SalesOfferCreate(SalesOfferBase):
+    pass
+
+class SalesOffer(SalesOfferBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    offer_code: Optional[str] = None
+    status: str = "draft"  # draft, active, expired, cancelled
+    total_redemptions: int = 0
+    total_revenue: float = 0.0
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Market Return Models (مرتجعات السوق)
+class MarketReturnBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    return_date: str
+    customer_id: str
+    customer_name: str
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    quantity_liters: float
+    reason: str  # quality_issue, expired, damaged, excess, other
+    quality_grade: Optional[str] = None  # A, B, C, rejected
+    batch_number: Optional[str] = None
+    notes: Optional[str] = None
+    refund_amount: Optional[float] = None
+
+class MarketReturnCreate(MarketReturnBase):
+    pass
+
+class MarketReturn(MarketReturnBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    return_code: Optional[str] = None
+    status: str = "pending"  # pending, approved, rejected, processed
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    disposal_method: Optional[str] = None  # reprocess, dispose, return_to_supplier
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Market Sales Summary Models (ملخص مبيعات السوق)
+class MarketSalesSummaryBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    report_date: str
+    center_id: Optional[str] = None
+    center_name: Optional[str] = None
+    market_name: str
+    total_quantity_sold: float
+    total_revenue: float
+    total_returns: float = 0.0
+    net_quantity: float = 0.0
+    net_revenue: float = 0.0
+    notes: Optional[str] = None
+
+class MarketSalesSummaryCreate(MarketSalesSummaryBase):
+    pass
+
+class MarketSalesSummary(MarketSalesSummaryBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Feed Company Models (شركات الأعلاف)
 class FeedCompanyBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
