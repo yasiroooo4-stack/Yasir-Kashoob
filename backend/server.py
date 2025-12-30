@@ -1561,16 +1561,40 @@ async def update_hr_employee(employee_id: str, employee_data: EmployeeCreate, cu
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Employee not found")
     employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_employee",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"تعديل بيانات موظف: {employee.get('name')}"
+    )
+    
     return employee
 
 @api_router.delete("/hr/employees/{employee_id}")
 async def delete_hr_employee(employee_id: str, current_user: dict = Depends(get_current_user)):
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
     result = await db.hr_employees.update_one(
         {"id": employee_id},
         {"$set": {"is_active": False}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_employee",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"إيقاف موظف: {employee.get('name')}"
+    )
+    
     return {"message": "Employee deactivated successfully"}
 
 # Create user account for employee
