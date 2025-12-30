@@ -1011,21 +1011,32 @@ class FeedPurchaseBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     supplier_id: str
     supplier_name: str
+    supplier_phone: Optional[str] = None
+    supplier_address: Optional[str] = None
     feed_type_id: str
     feed_type_name: str
     company_name: str
     quantity: float
     price_per_unit: float
     unit: str = "kg"
+    notes: Optional[str] = None
 
 class FeedPurchaseCreate(FeedPurchaseBase):
     pass
 
 class FeedPurchase(FeedPurchaseBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    invoice_number: Optional[str] = None
     purchase_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     total_amount: float = 0.0
     created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+    # Electronic signature fields
+    is_approved: bool = False
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    signature_code: Optional[str] = None  # كود التصديق الإلكتروني
 
 # ==================== AUTHENTICATION ====================
 
