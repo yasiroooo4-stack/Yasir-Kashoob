@@ -181,6 +181,53 @@ const Settings = () => {
     }
   };
 
+  // Apply theme
+  const applyTheme = (themeId) => {
+    const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+    document.documentElement.style.setProperty('--primary', theme.primary);
+    document.documentElement.style.setProperty('--theme-gradient', theme.gradient);
+    
+    // Update CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--color-primary', theme.primary);
+    
+    // Save to localStorage
+    localStorage.setItem("app_theme", themeId);
+    setCurrentTheme(themeId);
+    
+    toast.success(language === "ar" ? "تم تغيير الثيم بنجاح" : "Theme changed successfully");
+  };
+
+  // Toggle dark mode
+  const toggleDarkMode = (enabled) => {
+    setDarkMode(enabled);
+    localStorage.setItem("dark_mode", enabled.toString());
+    
+    if (enabled) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    toast.success(language === "ar" ? "تم تغيير الوضع" : "Mode changed");
+  };
+
+  // Apply saved theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("app_theme");
+    if (savedTheme) {
+      const theme = THEMES.find(t => t.id === savedTheme);
+      if (theme) {
+        document.documentElement.style.setProperty('--primary', theme.primary);
+      }
+    }
+    
+    const savedDarkMode = localStorage.getItem("dark_mode") === "true";
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     try {
