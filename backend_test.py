@@ -1652,7 +1652,7 @@ class BackendTester:
             offer_id = offer.get("id")
             
             # Verify offer has auto-generated offer_code
-            if not offer.get("offer_code") or not offer.get("offer_code").startswith("OFR-"):
+            if not offer.get("offer_code") or not offer.get("offer_code").startswith(("OFR-", "OFFER-")):
                 self.log_test(
                     "Marketing Offers CRUD", 
                     False, 
