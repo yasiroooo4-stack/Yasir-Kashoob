@@ -3099,6 +3099,168 @@ async def import_attendance_from_excel(
         logging.error(f"Error importing Excel: {e}")
         raise HTTPException(status_code=500, detail=f"خطأ في معالجة الملف: {str(e)}")
 
+# Import attendance from ZKTeco MDB file
+@api_router.post("/hr/attendance/import-zkteco")
+async def import_attendance_from_zkteco(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Import attendance records from ZKTeco MDB database file"""
+    import subprocess
+    import tempfile
+    import csv
+    from io import StringIO
+    
+    if not file.filename.endswith('.mdb'):
+        raise HTTPException(status_code=400, detail="يجب أن يكون الملف بصيغة MDB من جهاز ZKTeco")
+    
+    try:
+        # Save uploaded file temporarily
+        content = await file.read()
+        with tempfile.NamedTemporaryFile(suffix='.mdb', delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        # Extract users from MDB
+        users_result = subprocess.run(
+            ['mdb-export', tmp_path, 'USERINFO'],
+            capture_output=True, text=True
+        )
+        
+        # Parse users into dictionary
+        user_map = {}
+        if users_result.returncode == 0:
+            reader = csv.DictReader(StringIO(users_result.stdout))
+            for row in reader:
+                user_id = row.get('USERID', '')
+                name = row.get('Name', '') or row.get('Badgenumber', '')
+                badge = row.get('Badgenumber', '')
+                if user_id:
+                    user_map[user_id] = {'name': name, 'badge': badge}
+        
+        # Extract attendance records from MDB
+        attendance_result = subprocess.run(
+            ['mdb-export', tmp_path, 'CHECKINOUT'],
+            capture_output=True, text=True
+        )
+        
+        if attendance_result.returncode != 0:
+            raise HTTPException(status_code=500, detail="فشل في قراءة ملف قاعدة البيانات")
+        
+        # Parse attendance records
+        reader = csv.DictReader(StringIO(attendance_result.stdout))
+        
+        # Group records by user and date
+        attendance_by_day = {}
+        for row in reader:
+            user_id = row.get('USERID', '')
+            check_time_str = row.get('CHECKTIME', '')
+            
+            if not user_id or not check_time_str:
+                continue
+            
+            try:
+                # Parse datetime (format: "MM/DD/YY HH:MM:SS")
+                from datetime import datetime as dt
+                check_time = dt.strptime(check_time_str, "%m/%d/%y %H:%M:%S")
+                date_str = check_time.strftime("%Y-%m-%d")
+                time_str = check_time.strftime("%H:%M")
+                
+                key = f"{user_id}_{date_str}"
+                if key not in attendance_by_day:
+                    user_info = user_map.get(user_id, {'name': f'User_{user_id}', 'badge': user_id})
+                    attendance_by_day[key] = {
+                        'user_id': user_id,
+                        'employee_name': user_info['name'],
+                        'employee_badge': user_info['badge'],
+                        'date': date_str,
+                        'times': []
+                    }
+                attendance_by_day[key]['times'].append(time_str)
+            except Exception as e:
+                continue
+        
+        # Process and save attendance records
+        imported = 0
+        updated = 0
+        
+        for key, record in attendance_by_day.items():
+            times = sorted(record['times'])
+            check_in = times[0] if times else None
+            check_out = times[-1] if len(times) > 1 else None
+            
+            # Find employee by badge or name
+            employee = await db.hr_employees.find_one(
+                {"$or": [
+                    {"employee_id": record['employee_badge']},
+                    {"name": record['employee_name']}
+                ]},
+                {"_id": 0}
+            )
+            
+            employee_id = employee['id'] if employee else record['employee_badge']
+            employee_name = employee['name'] if employee else record['employee_name']
+            
+            # Check if record exists
+            existing = await db.hr_attendance.find_one({
+                "employee_id": employee_id,
+                "date": record['date']
+            })
+            
+            if existing:
+                # Update if new times are different
+                update_data = {"source": "zkteco_import"}
+                if check_in and (not existing.get('check_in') or check_in < existing.get('check_in', '23:59')):
+                    update_data["check_in"] = check_in
+                if check_out and (not existing.get('check_out') or check_out > existing.get('check_out', '00:00')):
+                    update_data["check_out"] = check_out
+                
+                if len(update_data) > 1:
+                    await db.hr_attendance.update_one(
+                        {"id": existing["id"]},
+                        {"$set": update_data}
+                    )
+                    updated += 1
+            else:
+                # Create new record
+                attendance = Attendance(
+                    employee_id=employee_id,
+                    employee_name=employee_name,
+                    date=record['date'],
+                    check_in=check_in,
+                    check_out=check_out,
+                    source="zkteco_import"
+                )
+                await db.hr_attendance.insert_one(attendance.model_dump())
+                imported += 1
+        
+        # Cleanup temp file
+        import os
+        os.unlink(tmp_path)
+        
+        # Log activity
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="import_attendance_zkteco",
+            entity_type="attendance",
+            details=f"استيراد {imported} سجل جديد و تحديث {updated} سجل من ملف ZKTeco"
+        )
+        
+        return {
+            "message": f"تم استيراد {imported} سجل جديد وتحديث {updated} سجل من جهاز البصمة",
+            "imported": imported,
+            "updated": updated,
+            "total_users": len(user_map),
+            "total_days": len(attendance_by_day)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error importing ZKTeco MDB: {e}")
+        raise HTTPException(status_code=500, detail=f"خطأ في معالجة الملف: {str(e)}")
+
 # Export attendance to Excel
 @api_router.get("/hr/attendance/export/excel")
 async def export_attendance_excel(
