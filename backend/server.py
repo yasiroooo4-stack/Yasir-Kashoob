@@ -645,16 +645,40 @@ async def update_center(center_id: str, center_data: CollectionCenterCreate, cur
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Center not found")
     center = await db.collection_centers.find_one({"id": center_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_center",
+        entity_type="center",
+        entity_id=center_id,
+        entity_name=center.get("name"),
+        details=f"تعديل مركز تجميع: {center.get('name')}"
+    )
+    
     return center
 
 @api_router.delete("/centers/{center_id}")
 async def delete_center(center_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    center = await db.collection_centers.find_one({"id": center_id}, {"_id": 0})
+    if not center:
+        raise HTTPException(status_code=404, detail="Center not found")
+    
     result = await db.collection_centers.update_one(
         {"id": center_id},
         {"$set": {"is_active": False}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Center not found")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_center",
+        entity_type="center",
+        entity_id=center_id,
+        entity_name=center.get("name"),
+        details=f"حذف مركز تجميع: {center.get('name')}"
+    )
+    
     return {"message": "Center deleted successfully"}
 
 # ==================== ACTIVITY LOG ROUTES (سجل النشاط) ====================
