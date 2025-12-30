@@ -729,16 +729,40 @@ async def update_supplier(supplier_id: str, supplier_data: SupplierCreate, curre
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Supplier not found")
     supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_supplier",
+        entity_type="supplier",
+        entity_id=supplier_id,
+        entity_name=supplier.get("name"),
+        details=f"تعديل بيانات مورد: {supplier.get('name')}"
+    )
+    
     return supplier
 
 @api_router.delete("/suppliers/{supplier_id}")
 async def delete_supplier(supplier_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
     result = await db.suppliers.update_one(
         {"id": supplier_id},
         {"$set": {"is_active": False}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_supplier",
+        entity_type="supplier",
+        entity_id=supplier_id,
+        entity_name=supplier.get("name"),
+        details=f"حذف مورد: {supplier.get('name')}"
+    )
+    
     return {"message": "Supplier deleted successfully"}
 
 # ==================== MILK RECEPTION ROUTES ====================
@@ -762,6 +786,16 @@ async def create_milk_reception(reception_data: MilkReceptionCreate, current_use
         {"product_type": "raw_milk"},
         {"$inc": {"quantity_liters": reception.quantity_liters}, "$set": {"last_updated": datetime.now(timezone.utc).isoformat()}},
         upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_milk_reception",
+        entity_type="milk_reception",
+        entity_id=reception.id,
+        entity_name=reception.supplier_name,
+        details=f"استلام حليب: {reception.quantity_liters} لتر من {reception.supplier_name}"
     )
     
     return reception
@@ -800,6 +834,17 @@ async def get_milk_reception(reception_id: str, current_user: dict = Depends(get
 async def create_customer(customer_data: CustomerCreate, current_user: dict = Depends(get_current_user)):
     customer = Customer(**customer_data.model_dump())
     await db.customers.insert_one(customer.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_customer",
+        entity_type="customer",
+        entity_id=customer.id,
+        entity_name=customer.name,
+        details=f"إضافة عميل: {customer.name}"
+    )
+    
     return customer
 
 @api_router.get("/customers", response_model=List[Customer])
@@ -823,16 +868,40 @@ async def update_customer(customer_id: str, customer_data: CustomerCreate, curre
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Customer not found")
     customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_customer",
+        entity_type="customer",
+        entity_id=customer_id,
+        entity_name=customer.get("name"),
+        details=f"تعديل بيانات عميل: {customer.get('name')}"
+    )
+    
     return customer
 
 @api_router.delete("/customers/{customer_id}")
 async def delete_customer(customer_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
     result = await db.customers.update_one(
         {"id": customer_id},
         {"$set": {"is_active": False}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_customer",
+        entity_type="customer",
+        entity_id=customer_id,
+        entity_name=customer.get("name"),
+        details=f"حذف عميل: {customer.get('name')}"
+    )
+    
     return {"message": "Customer deleted successfully"}
 
 # ==================== SALES ROUTES ====================
