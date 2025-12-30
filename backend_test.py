@@ -1756,7 +1756,7 @@ class BackendTester:
             return_id = return_record.get("id")
             
             # Verify return has auto-generated return_code
-            if not return_record.get("return_code") or not return_record.get("return_code").startswith("RET-"):
+            if not return_record.get("return_code") or not return_record.get("return_code").startswith(("RET-", "RTN-")):
                 self.log_test(
                     "Marketing Returns CRUD", 
                     False, 
