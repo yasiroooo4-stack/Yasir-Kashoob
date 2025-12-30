@@ -102,6 +102,10 @@ const HR = () => {
   const [selectedCar, setSelectedCar] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
   
+  // Excel import
+  const [importLoading, setImportLoading] = useState(false);
+  const fileInputRef = useState(null);
+  
   // Attendance form
   const [attendanceForm, setAttendanceForm] = useState({
     employee_id: "",
