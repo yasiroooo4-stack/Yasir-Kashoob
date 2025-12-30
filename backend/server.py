@@ -4519,6 +4519,641 @@ async def get_operations_dashboard(current_user: dict = Depends(get_current_user
         "today_operations": today_operations
     }
 
+# ==================== MARKETING MODULE ROUTES (قسم التسويق) ====================
+
+# Marketing Campaigns
+@api_router.post("/marketing/campaigns", response_model=MarketingCampaign)
+async def create_marketing_campaign(campaign_data: MarketingCampaignCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.marketing_campaigns.count_documents({})
+    year = datetime.now().year
+    campaign_code = f"CMP-{year}-{count + 1:04d}"
+    
+    campaign = MarketingCampaign(**campaign_data.model_dump())
+    campaign_dict = campaign.model_dump()
+    campaign_dict["campaign_code"] = campaign_code
+    campaign_dict["created_by"] = current_user["id"]
+    
+    await db.marketing_campaigns.insert_one(campaign_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_campaign",
+        entity_type="marketing_campaign",
+        entity_id=campaign.id,
+        entity_name=campaign_data.name,
+        details=f"حملة تسويقية جديدة: {campaign_data.name}"
+    )
+    
+    return MarketingCampaign(**campaign_dict)
+
+@api_router.get("/marketing/campaigns")
+async def get_marketing_campaigns(
+    status: Optional[str] = None,
+    campaign_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if campaign_type:
+        query["campaign_type"] = campaign_type
+    
+    campaigns = await db.marketing_campaigns.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return campaigns
+
+@api_router.put("/marketing/campaigns/{campaign_id}", response_model=MarketingCampaign)
+async def update_marketing_campaign(campaign_id: str, campaign_data: MarketingCampaignCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.marketing_campaigns.update_one(
+        {"id": campaign_id},
+        {"$set": campaign_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    campaign = await db.marketing_campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    return campaign
+
+@api_router.put("/marketing/campaigns/{campaign_id}/status")
+async def update_campaign_status(campaign_id: str, status: str, current_user: dict = Depends(get_current_user)):
+    result = await db.marketing_campaigns.update_one(
+        {"id": campaign_id},
+        {"$set": {"status": status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    campaign = await db.marketing_campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    return campaign
+
+# Leads (العملاء المحتملين)
+@api_router.post("/marketing/leads", response_model=Lead)
+async def create_lead(lead_data: LeadCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.marketing_leads.count_documents({})
+    lead_code = f"LEAD-{count + 1:05d}"
+    
+    lead = Lead(**lead_data.model_dump())
+    lead_dict = lead.model_dump()
+    lead_dict["lead_code"] = lead_code
+    lead_dict["created_by"] = current_user["id"]
+    
+    await db.marketing_leads.insert_one(lead_dict)
+    
+    # Increment campaign leads if associated
+    if lead_data.campaign_id:
+        await db.marketing_campaigns.update_one(
+            {"id": lead_data.campaign_id},
+            {"$inc": {"leads_generated": 1}}
+        )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_lead",
+        entity_type="lead",
+        entity_id=lead.id,
+        entity_name=lead_data.name,
+        details=f"عميل محتمل جديد: {lead_data.name}"
+    )
+    
+    return Lead(**lead_dict)
+
+@api_router.get("/marketing/leads")
+async def get_leads(
+    status: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    assigned_to_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if lead_source:
+        query["lead_source"] = lead_source
+    if assigned_to_id:
+        query["assigned_to_id"] = assigned_to_id
+    
+    leads = await db.marketing_leads.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return leads
+
+@api_router.put("/marketing/leads/{lead_id}", response_model=Lead)
+async def update_lead(lead_id: str, lead_data: LeadCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.marketing_leads.update_one(
+        {"id": lead_id},
+        {"$set": lead_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    lead = await db.marketing_leads.find_one({"id": lead_id}, {"_id": 0})
+    return lead
+
+@api_router.put("/marketing/leads/{lead_id}/status")
+async def update_lead_status(lead_id: str, status: str, notes: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    update_data = {"status": status, "last_contact_date": datetime.now(timezone.utc).isoformat()}
+    
+    if status == "won":
+        update_data["conversion_date"] = datetime.now(timezone.utc).isoformat()
+        # Update campaign conversions
+        lead = await db.marketing_leads.find_one({"id": lead_id})
+        if lead and lead.get("campaign_id"):
+            await db.marketing_campaigns.update_one(
+                {"id": lead["campaign_id"]},
+                {"$inc": {"conversions": 1}}
+            )
+    elif status == "lost" and notes:
+        update_data["lost_reason"] = notes
+    
+    result = await db.marketing_leads.update_one(
+        {"id": lead_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    lead = await db.marketing_leads.find_one({"id": lead_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_lead_status",
+        entity_type="lead",
+        entity_id=lead_id,
+        entity_name=lead.get("name"),
+        details=f"تحديث حالة عميل محتمل: {lead.get('name')} - {status}"
+    )
+    
+    return lead
+
+# Social Media Posts
+@api_router.post("/marketing/social-posts", response_model=SocialMediaPost)
+async def create_social_post(post_data: SocialMediaPostCreate, current_user: dict = Depends(get_current_user)):
+    post = SocialMediaPost(**post_data.model_dump())
+    post_dict = post.model_dump()
+    post_dict["created_by"] = current_user["id"]
+    
+    await db.social_media_posts.insert_one(post_dict)
+    
+    return SocialMediaPost(**post_dict)
+
+@api_router.get("/marketing/social-posts")
+async def get_social_posts(
+    platform: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if platform:
+        query["platform"] = platform
+    if status:
+        query["status"] = status
+    
+    posts = await db.social_media_posts.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return posts
+
+@api_router.put("/marketing/social-posts/{post_id}/publish")
+async def publish_social_post(post_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.social_media_posts.update_one(
+        {"id": post_id},
+        {"$set": {
+            "status": "published",
+            "published_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    post = await db.social_media_posts.find_one({"id": post_id}, {"_id": 0})
+    return post
+
+# Sales Offers
+@api_router.post("/marketing/offers", response_model=SalesOffer)
+async def create_sales_offer(offer_data: SalesOfferCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.sales_offers.count_documents({})
+    offer_code = f"OFFER-{count + 1:04d}"
+    
+    offer = SalesOffer(**offer_data.model_dump())
+    offer_dict = offer.model_dump()
+    offer_dict["offer_code"] = offer_code
+    offer_dict["created_by"] = current_user["id"]
+    
+    await db.sales_offers.insert_one(offer_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_offer",
+        entity_type="sales_offer",
+        entity_id=offer.id,
+        entity_name=offer_data.title,
+        details=f"عرض مبيعات جديد: {offer_data.title}"
+    )
+    
+    return SalesOffer(**offer_dict)
+
+@api_router.get("/marketing/offers")
+async def get_sales_offers(
+    status: Optional[str] = None,
+    offer_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if offer_type:
+        query["offer_type"] = offer_type
+    
+    offers = await db.sales_offers.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return offers
+
+@api_router.put("/marketing/offers/{offer_id}/activate")
+async def activate_offer(offer_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.sales_offers.update_one(
+        {"id": offer_id},
+        {"$set": {"status": "active"}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    
+    offer = await db.sales_offers.find_one({"id": offer_id}, {"_id": 0})
+    return offer
+
+# Market Returns (مرتجعات السوق)
+@api_router.post("/marketing/returns", response_model=MarketReturn)
+async def create_market_return(return_data: MarketReturnCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.market_returns.count_documents({})
+    year = datetime.now().year
+    return_code = f"RTN-{year}-{count + 1:04d}"
+    
+    market_return = MarketReturn(**return_data.model_dump())
+    return_dict = market_return.model_dump()
+    return_dict["return_code"] = return_code
+    return_dict["created_by"] = current_user["id"]
+    
+    await db.market_returns.insert_one(return_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_market_return",
+        entity_type="market_return",
+        entity_id=market_return.id,
+        entity_name=return_data.customer_name,
+        details=f"مرتجع سوق: {return_data.quantity_liters} لتر من {return_data.customer_name}"
+    )
+    
+    return MarketReturn(**return_dict)
+
+@api_router.get("/marketing/returns")
+async def get_market_returns(
+    status: Optional[str] = None,
+    center_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if center_id:
+        query["center_id"] = center_id
+    if start_date:
+        query["return_date"] = {"$gte": start_date}
+    if end_date:
+        if "return_date" in query:
+            query["return_date"]["$lte"] = end_date
+        else:
+            query["return_date"] = {"$lte": end_date}
+    
+    returns = await db.market_returns.find(query, {"_id": 0}).sort("return_date", -1).to_list(1000)
+    return returns
+
+@api_router.put("/marketing/returns/{return_id}/approve")
+async def approve_market_return(return_id: str, disposal_method: str, current_user: dict = Depends(get_current_user)):
+    result = await db.market_returns.update_one(
+        {"id": return_id},
+        {"$set": {
+            "status": "approved",
+            "disposal_method": disposal_method,
+            "approved_by": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Return not found")
+    
+    market_return = await db.market_returns.find_one({"id": return_id}, {"_id": 0})
+    return market_return
+
+# Market Sales Summary
+@api_router.post("/marketing/sales-summary", response_model=MarketSalesSummary)
+async def create_market_sales_summary(summary_data: MarketSalesSummaryCreate, current_user: dict = Depends(get_current_user)):
+    summary = MarketSalesSummary(**summary_data.model_dump())
+    summary_dict = summary.model_dump()
+    summary_dict["created_by"] = current_user["id"]
+    
+    # Calculate net values
+    summary_dict["net_quantity"] = summary_data.total_quantity_sold - summary_data.total_returns
+    summary_dict["net_revenue"] = summary_data.total_revenue - (summary_data.total_returns * 0.5)  # Adjust based on return policy
+    
+    await db.market_sales_summaries.insert_one(summary_dict)
+    
+    return MarketSalesSummary(**summary_dict)
+
+@api_router.get("/marketing/sales-summary")
+async def get_market_sales_summaries(
+    center_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if center_id:
+        query["center_id"] = center_id
+    if start_date:
+        query["report_date"] = {"$gte": start_date}
+    if end_date:
+        if "report_date" in query:
+            query["report_date"]["$lte"] = end_date
+        else:
+            query["report_date"] = {"$lte": end_date}
+    
+    summaries = await db.market_sales_summaries.find(query, {"_id": 0}).sort("report_date", -1).to_list(1000)
+    return summaries
+
+# Marketing Dashboard
+@api_router.get("/marketing/dashboard")
+async def get_marketing_dashboard(current_user: dict = Depends(get_current_user)):
+    # Campaigns stats
+    active_campaigns = await db.marketing_campaigns.count_documents({"status": "active"})
+    total_campaigns = await db.marketing_campaigns.count_documents({})
+    
+    # Leads stats
+    total_leads = await db.marketing_leads.count_documents({})
+    new_leads = await db.marketing_leads.count_documents({"status": "new"})
+    qualified_leads = await db.marketing_leads.count_documents({"status": "qualified"})
+    converted_leads = await db.marketing_leads.count_documents({"status": "won"})
+    
+    # Calculate conversion rate
+    conversion_rate = (converted_leads / total_leads * 100) if total_leads > 0 else 0
+    
+    # Active offers
+    active_offers = await db.sales_offers.count_documents({"status": "active"})
+    
+    # Returns stats - this month
+    this_month_start = datetime.now().replace(day=1).strftime("%Y-%m-%d")
+    monthly_returns = await db.market_returns.find(
+        {"return_date": {"$gte": this_month_start}},
+        {"_id": 0, "quantity_liters": 1, "refund_amount": 1}
+    ).to_list(1000)
+    
+    total_return_quantity = sum(r.get("quantity_liters", 0) for r in monthly_returns)
+    total_refund_amount = sum(r.get("refund_amount", 0) or 0 for r in monthly_returns)
+    
+    # Campaign budget vs actual
+    campaigns = await db.marketing_campaigns.find({}, {"_id": 0, "budget": 1, "actual_cost": 1}).to_list(1000)
+    total_budget = sum(c.get("budget", 0) for c in campaigns)
+    total_actual_cost = sum(c.get("actual_cost", 0) for c in campaigns)
+    
+    return {
+        "campaigns": {
+            "total": total_campaigns,
+            "active": active_campaigns,
+            "total_budget": total_budget,
+            "actual_cost": total_actual_cost
+        },
+        "leads": {
+            "total": total_leads,
+            "new": new_leads,
+            "qualified": qualified_leads,
+            "converted": converted_leads,
+            "conversion_rate": round(conversion_rate, 2)
+        },
+        "offers": {
+            "active": active_offers
+        },
+        "returns": {
+            "monthly_quantity": total_return_quantity,
+            "monthly_refund": total_refund_amount
+        }
+    }
+
+# ==================== CENTRAL DASHBOARD (لوحة التحكم المركزية) ====================
+
+@api_router.get("/dashboard/central")
+async def get_central_dashboard(current_user: dict = Depends(get_current_user)):
+    """Central dashboard showing data from all centers"""
+    
+    # Get all centers
+    centers = await db.collection_centers.find({"is_active": True}, {"_id": 0}).to_list(100)
+    
+    # Today's date
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    this_month_start = datetime.now().replace(day=1).strftime("%Y-%m-%d")
+    
+    center_stats = []
+    total_milk_today = 0
+    total_milk_month = 0
+    total_sales_today = 0
+    total_suppliers = 0
+    
+    for center in centers:
+        center_id = center["id"]
+        
+        # Today's milk reception for this center
+        today_milk = await db.milk_receptions.find(
+            {"center_id": center_id, "reception_date": {"$regex": f"^{today}"}},
+            {"_id": 0, "quantity_liters": 1, "total_amount": 1}
+        ).to_list(1000)
+        
+        center_milk_today = sum(m.get("quantity_liters", 0) for m in today_milk)
+        center_amount_today = sum(m.get("total_amount", 0) for m in today_milk)
+        
+        # Monthly milk for this center
+        monthly_milk = await db.milk_receptions.find(
+            {"center_id": center_id, "reception_date": {"$gte": this_month_start}},
+            {"_id": 0, "quantity_liters": 1}
+        ).to_list(10000)
+        
+        center_milk_month = sum(m.get("quantity_liters", 0) for m in monthly_milk)
+        
+        # Suppliers count for this center
+        center_suppliers = await db.suppliers.count_documents({"center_id": center_id, "is_active": True})
+        
+        center_stats.append({
+            "center_id": center_id,
+            "center_name": center["name"],
+            "center_code": center.get("code", ""),
+            "today_milk_liters": center_milk_today,
+            "today_amount": center_amount_today,
+            "monthly_milk_liters": center_milk_month,
+            "suppliers_count": center_suppliers
+        })
+        
+        total_milk_today += center_milk_today
+        total_milk_month += center_milk_month
+        total_suppliers += center_suppliers
+    
+    # Total sales today
+    today_sales = await db.sales.find(
+        {"sale_date": {"$regex": f"^{today}"}},
+        {"_id": 0, "total_amount": 1, "quantity_liters": 1}
+    ).to_list(1000)
+    
+    total_sales_amount = sum(s.get("total_amount", 0) for s in today_sales)
+    total_sales_liters = sum(s.get("quantity_liters", 0) for s in today_sales)
+    
+    # Inventory status
+    inventory = await db.inventory.find_one({"product_type": "raw_milk"}, {"_id": 0})
+    current_stock = inventory.get("quantity_liters", 0) if inventory else 0
+    
+    # HR stats
+    total_employees = await db.hr_employees.count_documents({"is_active": True})
+    present_today = await db.hr_attendance.count_documents({"date": today, "check_in": {"$ne": None}})
+    
+    # Pending approvals
+    pending_leaves = await db.hr_leave_requests.count_documents({"status": "pending"})
+    pending_expenses = await db.hr_expense_requests.count_documents({"status": "pending"})
+    
+    # Financial summary
+    monthly_payments = await db.payments.find(
+        {"payment_date": {"$gte": this_month_start}},
+        {"_id": 0, "amount": 1, "payment_type": 1}
+    ).to_list(10000)
+    
+    supplier_payments = sum(p.get("amount", 0) for p in monthly_payments if p.get("payment_type") == "supplier_payment")
+    customer_receipts = sum(p.get("amount", 0) for p in monthly_payments if p.get("payment_type") == "customer_receipt")
+    
+    return {
+        "summary": {
+            "total_centers": len(centers),
+            "total_suppliers": total_suppliers,
+            "total_employees": total_employees,
+            "present_today": present_today
+        },
+        "milk": {
+            "today_liters": total_milk_today,
+            "monthly_liters": total_milk_month,
+            "current_stock": current_stock
+        },
+        "sales": {
+            "today_liters": total_sales_liters,
+            "today_amount": total_sales_amount
+        },
+        "financial": {
+            "monthly_supplier_payments": supplier_payments,
+            "monthly_customer_receipts": customer_receipts
+        },
+        "pending_approvals": {
+            "leaves": pending_leaves,
+            "expenses": pending_expenses
+        },
+        "centers": center_stats
+    }
+
+# ==================== ATTENDANCE IMPORT FROM EXCEL ====================
+
+@api_router.post("/hr/attendance/import")
+async def import_attendance_from_excel(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Import attendance records from Excel file"""
+    import openpyxl
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are supported")
+    
+    try:
+        contents = await file.read()
+        wb = openpyxl.load_workbook(io.BytesIO(contents))
+        ws = wb.active
+        
+        imported_count = 0
+        errors = []
+        
+        # Expected columns: employee_code, date, check_in, check_out
+        headers = [cell.value for cell in ws[1]]
+        
+        for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            if not any(row):  # Skip empty rows
+                continue
+            
+            try:
+                employee_code = str(row[0]) if row[0] else None
+                date = str(row[1]) if row[1] else None
+                check_in = str(row[2]) if row[2] else None
+                check_out = str(row[3]) if row[3] else None
+                
+                if not employee_code or not date:
+                    errors.append(f"Row {row_num}: Missing employee code or date")
+                    continue
+                
+                # Find employee
+                employee = await db.hr_employees.find_one(
+                    {"$or": [{"employee_code": employee_code}, {"id": employee_code}]},
+                    {"_id": 0}
+                )
+                
+                if not employee:
+                    errors.append(f"Row {row_num}: Employee {employee_code} not found")
+                    continue
+                
+                # Check if attendance already exists
+                existing = await db.hr_attendance.find_one({
+                    "employee_id": employee["id"],
+                    "date": date
+                })
+                
+                if existing:
+                    # Update existing record
+                    update_data = {}
+                    if check_in:
+                        update_data["check_in"] = check_in
+                    if check_out:
+                        update_data["check_out"] = check_out
+                    update_data["source"] = "excel_import"
+                    
+                    await db.hr_attendance.update_one(
+                        {"id": existing["id"]},
+                        {"$set": update_data}
+                    )
+                else:
+                    # Create new record
+                    attendance = {
+                        "id": str(uuid.uuid4()),
+                        "employee_id": employee["id"],
+                        "employee_name": employee["name"],
+                        "date": date,
+                        "check_in": check_in,
+                        "check_out": check_out,
+                        "source": "excel_import",
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.hr_attendance.insert_one(attendance)
+                
+                imported_count += 1
+                
+            except Exception as e:
+                errors.append(f"Row {row_num}: {str(e)}")
+        
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="import_attendance",
+            details=f"استيراد {imported_count} سجل حضور من Excel"
+        )
+        
+        return {
+            "success": True,
+            "imported_count": imported_count,
+            "errors": errors[:10] if errors else [],  # Return first 10 errors
+            "total_errors": len(errors)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
