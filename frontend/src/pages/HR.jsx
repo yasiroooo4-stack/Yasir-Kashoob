@@ -179,6 +179,8 @@ const HR = () => {
   const [letterForm, setLetterForm] = useState({
     employee_id: "",
     employee_name: "",
+    department: "",
+    position: "",
     letter_type: "salary_certificate",
     purpose: "",
     recipient: "",
