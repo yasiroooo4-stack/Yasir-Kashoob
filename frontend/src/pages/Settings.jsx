@@ -31,7 +31,84 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { User, Lock, Building, Activity, Settings as SettingsIcon, Plus, Pencil, Trash2 } from "lucide-react";
+import { User, Lock, Building, Activity, Settings as SettingsIcon, Plus, Pencil, Trash2, Palette, Sun, Moon, Sparkles } from "lucide-react";
+import { Switch } from "../components/ui/switch";
+
+// Theme configurations
+const THEMES = [
+  { 
+    id: "default", 
+    name: "الافتراضي", 
+    name_en: "Default",
+    primary: "#2563eb",
+    secondary: "#64748b",
+    accent: "#f59e0b",
+    gradient: "from-blue-600 to-blue-800"
+  },
+  { 
+    id: "ocean", 
+    name: "المحيط", 
+    name_en: "Ocean",
+    primary: "#0891b2",
+    secondary: "#06b6d4",
+    accent: "#14b8a6",
+    gradient: "from-cyan-600 to-teal-600"
+  },
+  { 
+    id: "sunset", 
+    name: "الغروب", 
+    name_en: "Sunset",
+    primary: "#ea580c",
+    secondary: "#f97316",
+    accent: "#fbbf24",
+    gradient: "from-orange-500 to-amber-500"
+  },
+  { 
+    id: "forest", 
+    name: "الغابة", 
+    name_en: "Forest",
+    primary: "#059669",
+    secondary: "#10b981",
+    accent: "#34d399",
+    gradient: "from-emerald-600 to-green-600"
+  },
+  { 
+    id: "royal", 
+    name: "ملكي", 
+    name_en: "Royal",
+    primary: "#7c3aed",
+    secondary: "#8b5cf6",
+    accent: "#a78bfa",
+    gradient: "from-violet-600 to-purple-600"
+  },
+  { 
+    id: "rose", 
+    name: "الورد", 
+    name_en: "Rose",
+    primary: "#e11d48",
+    secondary: "#f43f5e",
+    accent: "#fb7185",
+    gradient: "from-rose-500 to-pink-500"
+  },
+  { 
+    id: "midnight", 
+    name: "منتصف الليل", 
+    name_en: "Midnight",
+    primary: "#1e293b",
+    secondary: "#334155",
+    accent: "#60a5fa",
+    gradient: "from-slate-800 to-slate-900"
+  },
+  { 
+    id: "gold", 
+    name: "الذهبي", 
+    name_en: "Gold",
+    primary: "#b45309",
+    secondary: "#d97706",
+    accent: "#fbbf24",
+    gradient: "from-amber-600 to-yellow-500"
+  },
+];
 
 const Settings = () => {
   const { t } = useTranslation();
