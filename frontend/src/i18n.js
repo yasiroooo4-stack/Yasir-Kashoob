@@ -233,7 +233,10 @@ const resources = {
       "projects": "المشاريع",
       
       // Operations
-      "operations": "العمليات"
+      "operations": "العمليات",
+      
+      // Marketing
+      "marketing": "التسويق"
     }
   },
   en: {
