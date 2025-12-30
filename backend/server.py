@@ -2920,7 +2920,7 @@ async def issue_official_letter(letter_id: str, current_user: dict = Depends(get
 
 # Approve official letter (electronic signature by HR manager)
 @api_router.post("/hr/official-letters/{letter_id}/approve")
-async def approve_official_letter(letter_id: str, current_user: dict = Depends(require_role(["admin"]))):
+async def approve_official_letter(letter_id: str, current_user: dict = Depends(require_role(["admin", "hr_manager"]))):
     letter = await db.hr_official_letters.find_one({"id": letter_id}, {"_id": 0})
     if not letter:
         raise HTTPException(status_code=404, detail="Letter not found")
