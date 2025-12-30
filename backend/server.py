@@ -1963,7 +1963,7 @@ async def create_car_contract(contract_data: CarContractCreate, current_user: di
         entity_type="car_contract",
         entity_id=contract.id,
         entity_name=contract_data.employee_name,
-        details=f"عقد سيارة جديد: {contract_data.employee_name} - {contract_data.car_model}"
+        details=f"عقد سيارة جديد: {contract_data.employee_name} - {contract_data.car_type}"
     )
     
     return contract
