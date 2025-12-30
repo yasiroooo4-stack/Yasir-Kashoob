@@ -1792,6 +1792,17 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
         raise HTTPException(status_code=404, detail="Leave request not found")
     
     request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_leave_request",
+        entity_type="leave_request",
+        entity_id=request_id,
+        entity_name=request.get("employee_name"),
+        details=f"الموافقة على إجازة: {request.get('employee_name')}"
+    )
+    
     return request
 
 @api_router.put("/hr/leave-requests/{request_id}/reject")
@@ -1809,6 +1820,17 @@ async def reject_leave_request(request_id: str, reason: str = "", current_user: 
         raise HTTPException(status_code=404, detail="Leave request not found")
     
     request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="reject_leave_request",
+        entity_type="leave_request",
+        entity_id=request_id,
+        entity_name=request.get("employee_name"),
+        details=f"رفض إجازة: {request.get('employee_name')} - {reason}"
+    )
+    
     return request
 
 # ==================== HR - EXPENSE REQUESTS (طلبات المصاريف) ====================
@@ -1817,6 +1839,17 @@ async def reject_leave_request(request_id: str, reason: str = "", current_user: 
 async def create_expense_request(request_data: ExpenseRequestCreate, current_user: dict = Depends(get_current_user)):
     expense_request = ExpenseRequest(**request_data.model_dump())
     await db.hr_expense_requests.insert_one(expense_request.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_expense_request",
+        entity_type="expense_request",
+        entity_id=expense_request.id,
+        entity_name=request_data.employee_name,
+        details=f"طلب مصاريف: {request_data.employee_name} - {request_data.amount} ر.ع"
+    )
+    
     return expense_request
 
 @api_router.get("/hr/expense-requests")
@@ -1848,6 +1881,17 @@ async def approve_expense_request(request_id: str, current_user: dict = Depends(
         raise HTTPException(status_code=404, detail="Expense request not found")
     
     request = await db.hr_expense_requests.find_one({"id": request_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_expense_request",
+        entity_type="expense_request",
+        entity_id=request_id,
+        entity_name=request.get("employee_name"),
+        details=f"الموافقة على مصاريف: {request.get('employee_name')} - {request.get('amount')} ر.ع"
+    )
+    
     return request
 
 @api_router.put("/hr/expense-requests/{request_id}/reject")
@@ -1865,6 +1909,17 @@ async def reject_expense_request(request_id: str, reason: str = "", current_user
         raise HTTPException(status_code=404, detail="Expense request not found")
     
     request = await db.hr_expense_requests.find_one({"id": request_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="reject_expense_request",
+        entity_type="expense_request",
+        entity_id=request_id,
+        entity_name=request.get("employee_name"),
+        details=f"رفض مصاريف: {request.get('employee_name')} - {reason}"
+    )
+    
     return request
 
 @api_router.put("/hr/expense-requests/{request_id}/pay")
@@ -1880,6 +1935,17 @@ async def mark_expense_paid(request_id: str, current_user: dict = Depends(requir
         raise HTTPException(status_code=404, detail="Expense request not found")
     
     request = await db.hr_expense_requests.find_one({"id": request_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="pay_expense_request",
+        entity_type="expense_request",
+        entity_id=request_id,
+        entity_name=request.get("employee_name"),
+        details=f"صرف مصاريف: {request.get('employee_name')} - {request.get('amount')} ر.ع"
+    )
+    
     return request
 
 # ==================== HR - CAR CONTRACTS (عقود السيارات) ====================
