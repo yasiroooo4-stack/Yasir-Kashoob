@@ -1419,6 +1419,385 @@ class BackendTester:
             self.log_test("Project Tasks CRUD", False, f"Error: {str(e)}")
             return False
 
+    # ==================== MARKETING MODULE TESTS ====================
+    
+    def test_marketing_dashboard_api(self):
+        """Test GET /api/marketing/dashboard - verify returns marketing stats"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/marketing/dashboard")
+            
+            if response.status_code == 200:
+                dashboard = response.json()
+                expected_fields = ["campaigns", "leads", "offers", "returns", "budget_summary"]
+                found_fields = [field for field in expected_fields if field in dashboard]
+                
+                if len(found_fields) >= 4:  # At least 4 expected fields
+                    self.log_test(
+                        "Marketing Dashboard API", 
+                        True, 
+                        f"Marketing dashboard retrieved with fields: {list(dashboard.keys())}"
+                    )
+                    return True
+                else:
+                    missing_fields = [field for field in expected_fields if field not in dashboard]
+                    self.log_test(
+                        "Marketing Dashboard API", 
+                        False, 
+                        f"Marketing dashboard missing fields: {missing_fields}",
+                        f"Found: {list(dashboard.keys())}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Marketing Dashboard API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Marketing Dashboard API", False, f"Error: {str(e)}")
+            return False
+
+    def test_marketing_campaigns_crud(self):
+        """Test Marketing Campaigns CRUD operations"""
+        try:
+            # Create campaign
+            campaign_data = {
+                "name": "حملة ترويجية للألبان الطازجة",
+                "campaign_type": "social_media",
+                "description": "حملة تسويقية لترويج منتجات الألبان الطازجة",
+                "objective": "awareness",
+                "start_date": "2025-01-15",
+                "end_date": "2025-02-15",
+                "budget": 2000.0,
+                "target_audience": "العائلات والأطفال",
+                "channels": ["facebook", "instagram", "whatsapp"],
+                "responsible_name": "مدير التسويق"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/marketing/campaigns",
+                json=campaign_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Marketing Campaigns CRUD", 
+                    False, 
+                    f"Failed to create campaign: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            campaign = create_response.json()
+            campaign_id = campaign.get("id")
+            
+            # Verify campaign has auto-generated campaign_code
+            if not campaign.get("campaign_code") or not campaign.get("campaign_code").startswith("CAMP-"):
+                self.log_test(
+                    "Marketing Campaigns CRUD", 
+                    False, 
+                    "Campaign code not auto-generated properly",
+                    f"Campaign code: {campaign.get('campaign_code')}"
+                )
+                return False
+            
+            # Test GET campaigns
+            get_response = self.session.get(f"{BACKEND_URL}/marketing/campaigns")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Marketing Campaigns CRUD", 
+                    False, 
+                    f"Failed to get campaigns: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            campaigns = get_response.json()
+            found_campaign = any(c.get("id") == campaign_id for c in campaigns)
+            
+            if found_campaign:
+                self.log_test(
+                    "Marketing Campaigns CRUD", 
+                    True, 
+                    f"Successfully created campaign '{campaign_data['name']}' with auto-generated code {campaign.get('campaign_code')}"
+                )
+                return True, campaign_id
+            else:
+                self.log_test(
+                    "Marketing Campaigns CRUD", 
+                    False, 
+                    "Created campaign not found in GET campaigns"
+                )
+                return False, None
+                
+        except Exception as e:
+            self.log_test("Marketing Campaigns CRUD", False, f"Error: {str(e)}")
+            return False, None
+
+    def test_marketing_leads_crud(self):
+        """Test Marketing Leads CRUD operations"""
+        try:
+            # Create lead
+            lead_data = {
+                "name": "أحمد محمد العلوي",
+                "company_name": "شركة الخليج للتجارة",
+                "phone": "+968 9123 4567",
+                "email": "ahmed@gulf-trading.com",
+                "address": "مسقط، عُمان",
+                "lead_source": "website",
+                "interest": "milk_purchase",
+                "notes": "مهتم بشراء كميات كبيرة من الحليب الطازج",
+                "expected_value": 5000.0,
+                "assigned_to_name": "مندوب المبيعات"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/marketing/leads",
+                json=lead_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Marketing Leads CRUD", 
+                    False, 
+                    f"Failed to create lead: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            lead = create_response.json()
+            lead_id = lead.get("id")
+            
+            # Verify lead has auto-generated lead_code
+            if not lead.get("lead_code") or not lead.get("lead_code").startswith("LEAD-"):
+                self.log_test(
+                    "Marketing Leads CRUD", 
+                    False, 
+                    "Lead code not auto-generated properly",
+                    f"Lead code: {lead.get('lead_code')}"
+                )
+                return False
+            
+            # Test GET leads
+            get_response = self.session.get(f"{BACKEND_URL}/marketing/leads")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Marketing Leads CRUD", 
+                    False, 
+                    f"Failed to get leads: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            leads = get_response.json()
+            found_lead = any(l.get("id") == lead_id for l in leads)
+            
+            if found_lead:
+                self.log_test(
+                    "Marketing Leads CRUD", 
+                    True, 
+                    f"Successfully created lead '{lead_data['name']}' with auto-generated code {lead.get('lead_code')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Marketing Leads CRUD", 
+                    False, 
+                    "Created lead not found in GET leads"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Marketing Leads CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_marketing_offers_crud(self):
+        """Test Marketing Offers CRUD operations"""
+        try:
+            # Create offer
+            offer_data = {
+                "offer_type": "discount",
+                "title": "خصم 15% على الحليب الطازج",
+                "description": "عرض خاص للعملاء الجدد - خصم 15% على جميع منتجات الحليب الطازج",
+                "product_type": "raw_milk",
+                "discount_percentage": 15.0,
+                "min_quantity": 100.0,
+                "start_date": "2025-01-20",
+                "end_date": "2025-02-20",
+                "terms_conditions": "العرض ساري للعملاء الجدد فقط",
+                "target_customers": "new"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/marketing/offers",
+                json=offer_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Marketing Offers CRUD", 
+                    False, 
+                    f"Failed to create offer: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            offer = create_response.json()
+            offer_id = offer.get("id")
+            
+            # Verify offer has auto-generated offer_code
+            if not offer.get("offer_code") or not offer.get("offer_code").startswith("OFR-"):
+                self.log_test(
+                    "Marketing Offers CRUD", 
+                    False, 
+                    "Offer code not auto-generated properly",
+                    f"Offer code: {offer.get('offer_code')}"
+                )
+                return False
+            
+            # Test GET offers
+            get_response = self.session.get(f"{BACKEND_URL}/marketing/offers")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Marketing Offers CRUD", 
+                    False, 
+                    f"Failed to get offers: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            offers = get_response.json()
+            found_offer = any(o.get("id") == offer_id for o in offers)
+            
+            if found_offer:
+                self.log_test(
+                    "Marketing Offers CRUD", 
+                    True, 
+                    f"Successfully created offer '{offer_data['title']}' with auto-generated code {offer.get('offer_code')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Marketing Offers CRUD", 
+                    False, 
+                    "Created offer not found in GET offers"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Marketing Offers CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_marketing_returns_crud(self):
+        """Test Marketing Returns CRUD operations"""
+        try:
+            # First create a customer to use for the return
+            customer_data = {
+                "name": "متجر الأسرة السعيدة",
+                "phone": "+968 2456 7890",
+                "address": "صحار، الباطنة الشمالية",
+                "customer_type": "retail",
+                "credit_limit": 1000.0
+            }
+            
+            customer_response = self.session.post(
+                f"{BACKEND_URL}/customers",
+                json=customer_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if customer_response.status_code != 200:
+                self.log_test(
+                    "Marketing Returns CRUD", 
+                    False, 
+                    f"Failed to create customer for return test: {customer_response.status_code}",
+                    customer_response.text
+                )
+                return False
+            
+            customer = customer_response.json()
+            customer_id = customer.get("id")
+            
+            # Create return
+            return_data = {
+                "return_date": "2025-01-10",
+                "customer_id": customer_id,
+                "customer_name": customer_data["name"],
+                "quantity_liters": 50.0,
+                "reason": "quality_issue",
+                "quality_grade": "C",
+                "batch_number": "BATCH-2025-001",
+                "notes": "الحليب لم يكن طازجاً كما هو متوقع",
+                "refund_amount": 125.0
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/marketing/returns",
+                json=return_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Marketing Returns CRUD", 
+                    False, 
+                    f"Failed to create return: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            return_record = create_response.json()
+            return_id = return_record.get("id")
+            
+            # Verify return has auto-generated return_code
+            if not return_record.get("return_code") or not return_record.get("return_code").startswith("RET-"):
+                self.log_test(
+                    "Marketing Returns CRUD", 
+                    False, 
+                    "Return code not auto-generated properly",
+                    f"Return code: {return_record.get('return_code')}"
+                )
+                return False
+            
+            # Test GET returns
+            get_response = self.session.get(f"{BACKEND_URL}/marketing/returns")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Marketing Returns CRUD", 
+                    False, 
+                    f"Failed to get returns: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            returns = get_response.json()
+            found_return = any(r.get("id") == return_id for r in returns)
+            
+            if found_return:
+                self.log_test(
+                    "Marketing Returns CRUD", 
+                    True, 
+                    f"Successfully created return for '{return_data['customer_name']}' with auto-generated code {return_record.get('return_code')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Marketing Returns CRUD", 
+                    False, 
+                    "Created return not found in GET returns"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Marketing Returns CRUD", False, f"Error: {str(e)}")
+            return False
+
     # ==================== OPERATIONS MODULE TESTS ====================
     
     def test_operations_dashboard(self):
