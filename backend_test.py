@@ -1028,6 +1028,728 @@ class BackendTester:
         except Exception as e:
             self.log_test("Activity Log - API Filters", False, f"Error: {str(e)}")
             return False
+
+    # ==================== LEGAL MODULE TESTS ====================
+    
+    def test_legal_dashboard_api(self):
+        """Test GET /api/legal/dashboard - verify returns stats"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/legal/dashboard")
+            
+            if response.status_code == 200:
+                dashboard = response.json()
+                expected_fields = ["contracts_active", "contracts_expiring_soon", "cases_open", "consultations_pending"]
+                found_fields = [field for field in expected_fields if field in dashboard]
+                
+                if len(found_fields) == len(expected_fields):
+                    self.log_test(
+                        "Legal Dashboard API", 
+                        True, 
+                        f"Legal dashboard retrieved with all expected fields: {list(dashboard.keys())}"
+                    )
+                    return True
+                else:
+                    missing_fields = [field for field in expected_fields if field not in dashboard]
+                    self.log_test(
+                        "Legal Dashboard API", 
+                        False, 
+                        f"Legal dashboard missing fields: {missing_fields}",
+                        f"Found: {list(dashboard.keys())}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Legal Dashboard API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Legal Dashboard API", False, f"Error: {str(e)}")
+            return False
+
+    def test_legal_contracts_crud(self):
+        """Test Legal Contracts CRUD operations"""
+        try:
+            # Create contract
+            contract_data = {
+                "contract_type": "vendor",
+                "title": "عقد توريد",
+                "party_name": "شركة الأمل",
+                "party_type": "company",
+                "start_date": "2025-01-01",
+                "end_date": "2025-12-31",
+                "value": 5000,
+                "currency": "OMR",
+                "description": "عقد توريد مواد غذائية",
+                "terms": "شروط وأحكام العقد"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/legal/contracts",
+                json=contract_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Legal Contracts CRUD", 
+                    False, 
+                    f"Failed to create contract: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            contract = create_response.json()
+            contract_id = contract.get("id")
+            
+            # Verify contract has auto-generated contract_number
+            if not contract.get("contract_number") or not contract.get("contract_number").startswith("CTR-"):
+                self.log_test(
+                    "Legal Contracts CRUD", 
+                    False, 
+                    "Contract number not auto-generated properly",
+                    f"Contract number: {contract.get('contract_number')}"
+                )
+                return False
+            
+            # Test GET contracts
+            get_response = self.session.get(f"{BACKEND_URL}/legal/contracts")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Legal Contracts CRUD", 
+                    False, 
+                    f"Failed to get contracts: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            contracts = get_response.json()
+            found_contract = any(c.get("id") == contract_id for c in contracts)
+            
+            if found_contract:
+                self.log_test(
+                    "Legal Contracts CRUD", 
+                    True, 
+                    f"Successfully created contract '{contract_data['title']}' with auto-generated number {contract.get('contract_number')}"
+                )
+                return True, contract_id
+            else:
+                self.log_test(
+                    "Legal Contracts CRUD", 
+                    False, 
+                    "Created contract not found in GET contracts"
+                )
+                return False, None
+                
+        except Exception as e:
+            self.log_test("Legal Contracts CRUD", False, f"Error: {str(e)}")
+            return False, None
+
+    def test_legal_cases_crud(self):
+        """Test Legal Cases CRUD operations"""
+        try:
+            # Create case
+            case_data = {
+                "case_type": "litigation",
+                "title": "قضية تعويض",
+                "description": "Test case description",
+                "plaintiff": "المروج للألبان",
+                "defendant": "شركة أخرى",
+                "filing_date": "2025-01-15",
+                "priority": "high",
+                "court_name": "محكمة مسقط الابتدائية",
+                "lawyer_name": "المحامي أحمد علي",
+                "estimated_value": 10000
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/legal/cases",
+                json=case_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Legal Cases CRUD", 
+                    False, 
+                    f"Failed to create case: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            case = create_response.json()
+            case_id = case.get("id")
+            
+            # Verify case has auto-generated case_number
+            if not case.get("case_number") or not case.get("case_number").startswith("CASE-"):
+                self.log_test(
+                    "Legal Cases CRUD", 
+                    False, 
+                    "Case number not auto-generated properly",
+                    f"Case number: {case.get('case_number')}"
+                )
+                return False
+            
+            # Test GET cases
+            get_response = self.session.get(f"{BACKEND_URL}/legal/cases")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Legal Cases CRUD", 
+                    False, 
+                    f"Failed to get cases: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            cases = get_response.json()
+            found_case = any(c.get("id") == case_id for c in cases)
+            
+            if found_case:
+                self.log_test(
+                    "Legal Cases CRUD", 
+                    True, 
+                    f"Successfully created case '{case_data['title']}' with auto-generated number {case.get('case_number')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Legal Cases CRUD", 
+                    False, 
+                    "Created case not found in GET cases"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Legal Cases CRUD", False, f"Error: {str(e)}")
+            return False
+
+    # ==================== PROJECTS MODULE TESTS ====================
+    
+    def test_projects_dashboard_stats(self):
+        """Test GET /api/projects/dashboard/stats - verify returns stats"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/projects/dashboard/stats")
+            
+            if response.status_code == 200:
+                dashboard = response.json()
+                expected_fields = ["total_projects", "active_projects", "completed_projects", "overdue_tasks", "total_budget", "total_actual_cost"]
+                found_fields = [field for field in expected_fields if field in dashboard]
+                
+                if len(found_fields) == len(expected_fields):
+                    self.log_test(
+                        "Projects Dashboard Stats", 
+                        True, 
+                        f"Projects dashboard retrieved with all expected fields: {list(dashboard.keys())}"
+                    )
+                    return True
+                else:
+                    missing_fields = [field for field in expected_fields if field not in dashboard]
+                    self.log_test(
+                        "Projects Dashboard Stats", 
+                        False, 
+                        f"Projects dashboard missing fields: {missing_fields}",
+                        f"Found: {list(dashboard.keys())}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Projects Dashboard Stats", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Projects Dashboard Stats", False, f"Error: {str(e)}")
+            return False
+
+    def test_projects_crud(self):
+        """Test Projects CRUD operations"""
+        try:
+            # Create project
+            project_data = {
+                "name": "مشروع توسعة المصنع",
+                "description": "توسعة خطوط الإنتاج",
+                "project_type": "construction",
+                "start_date": "2025-01-01",
+                "end_date": "2025-06-30",
+                "budget": 50000,
+                "priority": "high",
+                "manager_name": "مدير المشروع",
+                "department": "الهندسة",
+                "location": "مسقط",
+                "objectives": "زيادة الطاقة الإنتاجية"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/projects",
+                json=project_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Projects CRUD", 
+                    False, 
+                    f"Failed to create project: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            project = create_response.json()
+            project_id = project.get("id")
+            
+            # Verify project has auto-generated project_code
+            if not project.get("project_code") or not project.get("project_code").startswith("PRJ-"):
+                self.log_test(
+                    "Projects CRUD", 
+                    False, 
+                    "Project code not auto-generated properly",
+                    f"Project code: {project.get('project_code')}"
+                )
+                return False
+            
+            # Test GET projects
+            get_response = self.session.get(f"{BACKEND_URL}/projects")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Projects CRUD", 
+                    False, 
+                    f"Failed to get projects: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            projects = get_response.json()
+            found_project = any(p.get("id") == project_id for p in projects)
+            
+            if found_project:
+                self.log_test(
+                    "Projects CRUD", 
+                    True, 
+                    f"Successfully created project '{project_data['name']}' with auto-generated code {project.get('project_code')}"
+                )
+                return True, project_id
+            else:
+                self.log_test(
+                    "Projects CRUD", 
+                    False, 
+                    "Created project not found in GET projects"
+                )
+                return False, None
+                
+        except Exception as e:
+            self.log_test("Projects CRUD", False, f"Error: {str(e)}")
+            return False, None
+
+    def test_project_tasks_crud(self):
+        """Test Project Tasks CRUD operations"""
+        try:
+            # First create a project
+            project_success, project_id = self.test_projects_crud()
+            if not project_success:
+                self.log_test("Project Tasks CRUD", False, "Cannot test without project")
+                return False
+            
+            # Create task for the project
+            task_data = {
+                "project_id": project_id,
+                "project_name": "مشروع توسعة المصنع",
+                "task_name": "تصميم المخططات",
+                "description": "تصميم المخططات الهندسية للتوسعة",
+                "start_date": "2025-01-15",
+                "due_date": "2025-02-15",
+                "priority": "high",
+                "estimated_hours": 40,
+                "assigned_to_name": "المهندس أحمد"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/projects/tasks",
+                json=task_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Project Tasks CRUD", 
+                    False, 
+                    f"Failed to create task: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            task = create_response.json()
+            task_id = task.get("id")
+            
+            # Test GET project tasks
+            get_response = self.session.get(f"{BACKEND_URL}/projects/{project_id}/tasks")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Project Tasks CRUD", 
+                    False, 
+                    f"Failed to get project tasks: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            tasks = get_response.json()
+            found_task = any(t.get("id") == task_id for t in tasks)
+            
+            if found_task:
+                self.log_test(
+                    "Project Tasks CRUD", 
+                    True, 
+                    f"Successfully created task '{task_data['task_name']}' for project"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Project Tasks CRUD", 
+                    False, 
+                    "Created task not found in GET project tasks"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Project Tasks CRUD", False, f"Error: {str(e)}")
+            return False
+
+    # ==================== OPERATIONS MODULE TESTS ====================
+    
+    def test_operations_dashboard(self):
+        """Test GET /api/operations/dashboard - verify returns stats"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/operations/dashboard")
+            
+            if response.status_code == 200:
+                dashboard = response.json()
+                expected_fields = ["equipment", "vehicles", "open_incidents", "today_operations"]
+                found_fields = [field for field in expected_fields if field in dashboard]
+                
+                if len(found_fields) == len(expected_fields):
+                    # Check nested structure
+                    equipment = dashboard.get("equipment", {})
+                    vehicles = dashboard.get("vehicles", {})
+                    
+                    equipment_fields = ["operational", "maintenance", "out_of_order"]
+                    vehicle_fields = ["available", "in_use"]
+                    
+                    equipment_ok = all(field in equipment for field in equipment_fields)
+                    vehicles_ok = all(field in vehicles for field in vehicle_fields)
+                    
+                    if equipment_ok and vehicles_ok:
+                        self.log_test(
+                            "Operations Dashboard", 
+                            True, 
+                            f"Operations dashboard retrieved with all expected fields and structure"
+                        )
+                        return True
+                    else:
+                        self.log_test(
+                            "Operations Dashboard", 
+                            False, 
+                            "Operations dashboard structure incomplete",
+                            f"Equipment: {equipment}, Vehicles: {vehicles}"
+                        )
+                        return False
+                else:
+                    missing_fields = [field for field in expected_fields if field not in dashboard]
+                    self.log_test(
+                        "Operations Dashboard", 
+                        False, 
+                        f"Operations dashboard missing fields: {missing_fields}",
+                        f"Found: {list(dashboard.keys())}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Operations Dashboard", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Operations Dashboard", False, f"Error: {str(e)}")
+            return False
+
+    def test_operations_equipment_crud(self):
+        """Test Operations Equipment CRUD operations"""
+        try:
+            # Create equipment
+            equipment_data = {
+                "name": "خزان تبريد",
+                "equipment_type": "tank",
+                "brand": "Alfa Laval",
+                "model": "TX500",
+                "serial_number": "AL-TX500-2024-001",
+                "purchase_date": "2024-12-01",
+                "purchase_price": 15000,
+                "location": "قسم التبريد",
+                "specifications": "خزان تبريد بسعة 5000 لتر"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/operations/equipment",
+                json=equipment_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Operations Equipment CRUD", 
+                    False, 
+                    f"Failed to create equipment: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            equipment = create_response.json()
+            equipment_id = equipment.get("id")
+            
+            # Verify equipment has auto-generated equipment_code
+            if not equipment.get("equipment_code") or not equipment.get("equipment_code").startswith("EQP-"):
+                self.log_test(
+                    "Operations Equipment CRUD", 
+                    False, 
+                    "Equipment code not auto-generated properly",
+                    f"Equipment code: {equipment.get('equipment_code')}"
+                )
+                return False
+            
+            # Test GET equipment
+            get_response = self.session.get(f"{BACKEND_URL}/operations/equipment")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Operations Equipment CRUD", 
+                    False, 
+                    f"Failed to get equipment: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            equipment_list = get_response.json()
+            found_equipment = any(e.get("id") == equipment_id for e in equipment_list)
+            
+            if found_equipment:
+                self.log_test(
+                    "Operations Equipment CRUD", 
+                    True, 
+                    f"Successfully created equipment '{equipment_data['name']}' with auto-generated code {equipment.get('equipment_code')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Operations Equipment CRUD", 
+                    False, 
+                    "Created equipment not found in GET equipment"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Operations Equipment CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_operations_vehicles_crud(self):
+        """Test Operations Vehicles CRUD operations"""
+        try:
+            # Create vehicle
+            vehicle_data = {
+                "vehicle_type": "tanker",
+                "brand": "Isuzu",
+                "model": "NPR",
+                "year": 2024,
+                "plate_number": "AB 1234",
+                "color": "أبيض",
+                "fuel_type": "diesel",
+                "tank_capacity": 3000,
+                "assigned_driver_name": "السائق محمد"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/operations/vehicles",
+                json=vehicle_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Operations Vehicles CRUD", 
+                    False, 
+                    f"Failed to create vehicle: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            vehicle = create_response.json()
+            vehicle_id = vehicle.get("id")
+            
+            # Verify vehicle has auto-generated vehicle_code
+            if not vehicle.get("vehicle_code") or not vehicle.get("vehicle_code").startswith("VEH-"):
+                self.log_test(
+                    "Operations Vehicles CRUD", 
+                    False, 
+                    "Vehicle code not auto-generated properly",
+                    f"Vehicle code: {vehicle.get('vehicle_code')}"
+                )
+                return False
+            
+            # Test GET vehicles
+            get_response = self.session.get(f"{BACKEND_URL}/operations/vehicles")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Operations Vehicles CRUD", 
+                    False, 
+                    f"Failed to get vehicles: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            vehicles = get_response.json()
+            found_vehicle = any(v.get("id") == vehicle_id for v in vehicles)
+            
+            if found_vehicle:
+                self.log_test(
+                    "Operations Vehicles CRUD", 
+                    True, 
+                    f"Successfully created vehicle '{vehicle_data['brand']} {vehicle_data['model']}' with auto-generated code {vehicle.get('vehicle_code')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Operations Vehicles CRUD", 
+                    False, 
+                    "Created vehicle not found in GET vehicles"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Operations Vehicles CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_operations_incidents_crud(self):
+        """Test Operations Incidents CRUD operations"""
+        try:
+            # Create incident report
+            incident_data = {
+                "incident_type": "equipment_failure",
+                "title": "عطل في خزان التبريد",
+                "description": "توقف خزان التبريد الرئيسي عن العمل",
+                "incident_date": "2025-01-15",
+                "incident_time": "14:30",
+                "location": "قسم التبريد",
+                "severity": "high",
+                "reported_by_id": self.user_data.get("id"),
+                "reported_by_name": self.user_data.get("full_name"),
+                "immediate_actions": "تم إيقاف التشغيل وتحويل الحليب لخزان احتياطي",
+                "estimated_damage_cost": 2000
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/operations/incidents",
+                json=incident_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Operations Incidents CRUD", 
+                    False, 
+                    f"Failed to create incident: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            incident = create_response.json()
+            incident_id = incident.get("id")
+            
+            # Verify incident has auto-generated incident_number
+            if not incident.get("incident_number") or not incident.get("incident_number").startswith("INC-"):
+                self.log_test(
+                    "Operations Incidents CRUD", 
+                    False, 
+                    "Incident number not auto-generated properly",
+                    f"Incident number: {incident.get('incident_number')}"
+                )
+                return False
+            
+            # Test GET incidents
+            get_response = self.session.get(f"{BACKEND_URL}/operations/incidents")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Operations Incidents CRUD", 
+                    False, 
+                    f"Failed to get incidents: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            incidents = get_response.json()
+            found_incident = any(i.get("id") == incident_id for i in incidents)
+            
+            if found_incident:
+                self.log_test(
+                    "Operations Incidents CRUD", 
+                    True, 
+                    f"Successfully created incident '{incident_data['title']}' with auto-generated number {incident.get('incident_number')}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Operations Incidents CRUD", 
+                    False, 
+                    "Created incident not found in GET incidents"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Operations Incidents CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_activity_logs_new_modules(self):
+        """Test that new module operations are logged in activity logs"""
+        try:
+            # Check for legal activity logs
+            legal_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=create_legal_contract&limit=5")
+            projects_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=create_project&limit=5")
+            operations_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=create_equipment&limit=5")
+            
+            legal_logs = legal_response.json() if legal_response.status_code == 200 else []
+            projects_logs = projects_response.json() if projects_response.status_code == 200 else []
+            operations_logs = operations_response.json() if operations_response.status_code == 200 else []
+            
+            logged_modules = []
+            if legal_logs:
+                logged_modules.append("Legal")
+            if projects_logs:
+                logged_modules.append("Projects")
+            if operations_logs:
+                logged_modules.append("Operations")
+            
+            if len(logged_modules) >= 2:  # At least 2 modules should have activity logs
+                self.log_test(
+                    "Activity Logs - New Modules", 
+                    True, 
+                    f"New module operations properly logged: {', '.join(logged_modules)}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Activity Logs - New Modules", 
+                    False, 
+                    f"Insufficient activity logging for new modules. Found: {', '.join(logged_modules) if logged_modules else 'None'}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Activity Logs - New Modules", False, f"Error: {str(e)}")
+            return False
     
     def run_all_tests(self):
         """Run all backend tests"""
