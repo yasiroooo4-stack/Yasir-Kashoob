@@ -200,6 +200,9 @@ const Layout = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Employee Stats Widget */}
+            <EmployeeStatsWidget currentUser={user} />
+
             {/* Letter Request Button */}
             <LetterRequestButton currentUser={user} />
 
