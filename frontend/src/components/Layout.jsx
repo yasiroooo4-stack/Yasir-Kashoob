@@ -54,12 +54,12 @@ const Layout = () => {
     { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
     { path: "/inventory", icon: Package, label: "inventory", departments: ["inventory", "sales", "admin", "it"] },
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
-    { path: "/hr", icon: Building2, label: "hr", roles: ["admin"], departments: ["hr", "admin", "it"] },
+    { path: "/hr", icon: Building2, label: "hr", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
     { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
-    { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"], departments: ["hr", "admin", "it"] },
+    { path: "/employees", icon: UserCog, label: "employees", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/settings", icon: Settings, label: "settings" },
   ];
@@ -69,6 +69,11 @@ const Layout = () => {
     // Admin and IT have access to everything
     if (user?.role === 'admin' || user?.department === 'it' || user?.department === 'admin') {
       return true;
+    }
+    
+    // HR Manager has access to HR only
+    if (user?.role === 'hr_manager') {
+      return item.path === '/hr' || item.path === '/employees' || item.path === '/dashboard' || item.path === '/settings';
     }
     
     // Check role access
