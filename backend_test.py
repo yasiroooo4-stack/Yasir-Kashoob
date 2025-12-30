@@ -2989,7 +2989,7 @@ class BackendTester:
             self.log_test(
                 "Official Letters Workflow", 
                 True, 
-                f"Successfully completed official letters workflow: created {letter_number}, approved with signature {approved_letter.get('signature_code')}, and printed"
+                f"Successfully completed official letters workflow: created {letter_number}, approved with signature {approval_result.get('signature_code')}, and printed"
             )
             return True
             
