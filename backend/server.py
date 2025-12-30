@@ -2037,6 +2037,33 @@ async def get_feed_purchases(
     purchases = await db.feed_purchases.find(query, {"_id": 0}).sort("purchase_date", -1).to_list(1000)
     return purchases
 
+# Get feed purchase invoice for printing
+@api_router.get("/feed-purchases/{purchase_id}/invoice")
+async def get_feed_purchase_invoice(purchase_id: str, current_user: dict = Depends(get_current_user)):
+    """Get feed purchase invoice details for printing"""
+    purchase = await db.feed_purchases.find_one({"id": purchase_id}, {"_id": 0})
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    # Get supplier details
+    supplier = await db.suppliers.find_one({"id": purchase.get("supplier_id")}, {"_id": 0})
+    
+    # Get company info
+    company_info = {
+        "name": "شركة المروج للألبان",
+        "name_en": "Al Morooj Dairy Company",
+        "address": "سلطنة عمان",
+        "phone": "+968 XXXX XXXX",
+        "cr_number": "XXXXXXXX"
+    }
+    
+    return {
+        "invoice": purchase,
+        "supplier": supplier,
+        "company": company_info,
+        "print_time": datetime.now(timezone.utc).isoformat()
+    }
+
 @api_router.get("/feed-purchases/supplier/{supplier_id}")
 async def get_supplier_feed_purchases(supplier_id: str, current_user: dict = Depends(get_current_user)):
     supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
