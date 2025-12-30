@@ -2891,6 +2891,116 @@ async def issue_official_letter(letter_id: str, current_user: dict = Depends(get
     
     return letter
 
+# Approve official letter (electronic signature by HR manager)
+@api_router.post("/hr/official-letters/{letter_id}/approve")
+async def approve_official_letter(letter_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    letter = await db.hr_official_letters.find_one({"id": letter_id}, {"_id": 0})
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+    
+    if letter.get("is_approved"):
+        raise HTTPException(status_code=400, detail="Letter already approved")
+    
+    # Generate electronic signature code
+    import hashlib
+    signature_data = f"{letter_id}-{current_user['id']}-{datetime.now().isoformat()}"
+    signature_code = hashlib.sha256(signature_data.encode()).hexdigest()[:16].upper()
+    
+    await db.hr_official_letters.update_one(
+        {"id": letter_id},
+        {"$set": {
+            "status": "approved",
+            "is_approved": True,
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user.get("full_name", ""),
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "signature_code": signature_code
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_official_letter",
+        entity_type="official_letter",
+        entity_id=letter_id,
+        entity_name=letter.get("employee_name"),
+        details=f"تصديق رسالة رسمية: {letter.get('letter_number')} - كود التصديق: {signature_code}"
+    )
+    
+    return {"message": "تم تصديق الرسالة بنجاح", "signature_code": signature_code}
+
+# Reject official letter
+@api_router.post("/hr/official-letters/{letter_id}/reject")
+async def reject_official_letter(letter_id: str, reason: str = "", current_user: dict = Depends(require_role(["admin"]))):
+    letter = await db.hr_official_letters.find_one({"id": letter_id}, {"_id": 0})
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+    
+    await db.hr_official_letters.update_one(
+        {"id": letter_id},
+        {"$set": {
+            "status": "rejected",
+            "rejection_reason": reason,
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user.get("full_name", ""),
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="reject_official_letter",
+        entity_type="official_letter",
+        entity_id=letter_id,
+        entity_name=letter.get("employee_name"),
+        details=f"رفض رسالة رسمية: {letter.get('letter_number')} - السبب: {reason}"
+    )
+    
+    return {"message": "تم رفض الرسالة"}
+
+# Mark letter as printed
+@api_router.post("/hr/official-letters/{letter_id}/print")
+async def mark_letter_printed(letter_id: str, current_user: dict = Depends(get_current_user)):
+    letter = await db.hr_official_letters.find_one({"id": letter_id}, {"_id": 0})
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+    
+    if not letter.get("is_approved"):
+        raise HTTPException(status_code=400, detail="يجب تصديق الرسالة قبل الطباعة")
+    
+    await db.hr_official_letters.update_one(
+        {"id": letter_id},
+        {"$set": {
+            "is_printed": True,
+            "printed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "تم تسجيل الطباعة"}
+
+# Get employee's own letters
+@api_router.get("/hr/my-letters")
+async def get_my_letters(current_user: dict = Depends(get_current_user)):
+    # Find employee by username or user_id
+    employee = await db.hr_employees.find_one({
+        "$or": [
+            {"user_id": current_user["id"]},
+            {"username": current_user["username"]}
+        ]
+    }, {"_id": 0})
+    
+    if not employee:
+        return []
+    
+    letters = await db.hr_official_letters.find(
+        {"employee_id": employee["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return letters
+
 # ==================== HR - FINGERPRINT DEVICES (أجهزة البصمة) ====================
 
 @api_router.post("/hr/fingerprint-devices", response_model=FingerprintDevice)
