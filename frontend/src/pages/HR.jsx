@@ -1134,14 +1134,32 @@ const HR = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {attendanceRecords.length === 0 ? (
+                    {attendanceRecords
+                      .filter(record => {
+                        const matchesSearch = !attendanceSearch || 
+                          record.employee_name?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
+                          record.employee_id?.toLowerCase().includes(attendanceSearch.toLowerCase());
+                        const matchesEmployee = !selectedAttendanceEmployee || selectedAttendanceEmployee === "all" || 
+                          record.employee_id === selectedAttendanceEmployee;
+                        return matchesSearch && matchesEmployee;
+                      })
+                      .length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                           {language === "ar" ? "لا توجد سجلات حضور. أضف حضور يدوياً أو قم بمزامنة جهاز البصمة." : "No attendance records. Add manually or sync fingerprint device."}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      attendanceRecords.map((record, idx) => (
+                      attendanceRecords
+                        .filter(record => {
+                          const matchesSearch = !attendanceSearch || 
+                            record.employee_name?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
+                            record.employee_id?.toLowerCase().includes(attendanceSearch.toLowerCase());
+                          const matchesEmployee = !selectedAttendanceEmployee || selectedAttendanceEmployee === "all" || 
+                            record.employee_id === selectedAttendanceEmployee;
+                          return matchesSearch && matchesEmployee;
+                        })
+                        .map((record, idx) => (
                         <TableRow key={idx}>
                           <TableCell>{record.date}</TableCell>
                           <TableCell className="font-medium">{record.employee_name}</TableCell>
@@ -1149,7 +1167,10 @@ const HR = () => {
                           <TableCell>{record.check_out || "-"}</TableCell>
                           <TableCell>
                             <Badge variant={record.source === "fingerprint" ? "success" : "secondary"}>
-                              {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : (language === "ar" ? "يدوي" : "Manual")}
+                              {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : 
+                               record.source === "zkteco_import" ? "ZKTeco" :
+                               record.source === "excel_import" ? "Excel" :
+                               (language === "ar" ? "يدوي" : "Manual")}
                             </Badge>
                           </TableCell>
                         </TableRow>
