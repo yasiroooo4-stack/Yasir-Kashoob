@@ -2974,6 +2974,9 @@ class BackendTester:
                 return False
         
         print("\n🆕 Testing NEW FEATURES (Review Request)...")
+        self.test_feed_purchase_invoice_with_signature()
+        self.test_supplier_milk_type()
+        self.test_official_letters_workflow()
         self.test_departments_api()
         self.test_permissions_api()
         self.test_hr_attendance_import_excel()
