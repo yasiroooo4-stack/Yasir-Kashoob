@@ -199,6 +199,9 @@ const Layout = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Letter Request Button */}
+            <LetterRequestButton currentUser={user} />
+
             {/* Language Toggle */}
             <Button
               variant="outline"
