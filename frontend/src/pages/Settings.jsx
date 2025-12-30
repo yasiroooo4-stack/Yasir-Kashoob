@@ -496,6 +496,112 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
+        {/* Appearance Tab */}
+        <TabsContent value="appearance">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                {language === "ar" ? "تخصيص المظهر" : "Customize Appearance"}
+              </CardTitle>
+              <CardDescription>
+                {language === "ar" ? "اختر ثيم وألوان تناسب ذوقك" : "Choose a theme and colors that suit your taste"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Dark Mode Toggle */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div className="flex items-center gap-3">
+                  {darkMode ? <Moon className="w-5 h-5 text-indigo-500" /> : <Sun className="w-5 h-5 text-amber-500" />}
+                  <div>
+                    <p className="font-medium">{language === "ar" ? "الوضع الليلي" : "Dark Mode"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "ar" ? "تقليل إجهاد العين في الإضاءة المنخفضة" : "Reduce eye strain in low light"}
+                    </p>
+                  </div>
+                </div>
+                <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+              </div>
+
+              {/* Theme Selection */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  {language === "ar" ? "اختر الثيم" : "Choose Theme"}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      onClick={() => applyTheme(theme.id)}
+                      className={`relative p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 ${
+                        currentTheme === theme.id 
+                          ? 'border-primary ring-2 ring-primary/20 shadow-lg' 
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {/* Theme Preview */}
+                      <div className={`h-20 rounded-lg bg-gradient-to-br ${theme.gradient} mb-3 shadow-md`}>
+                        <div className="h-full w-full flex items-end p-2">
+                          <div className="flex gap-1">
+                            <div className="w-3 h-3 rounded-full bg-white/30"></div>
+                            <div className="w-3 h-3 rounded-full bg-white/50"></div>
+                            <div className="w-3 h-3 rounded-full bg-white/70"></div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Theme Name */}
+                      <p className="font-medium text-center">
+                        {language === "ar" ? theme.name : theme.name_en}
+                      </p>
+                      
+                      {/* Color Dots */}
+                      <div className="flex justify-center gap-1 mt-2">
+                        <div 
+                          className="w-4 h-4 rounded-full border border-white shadow-sm" 
+                          style={{ backgroundColor: theme.primary }}
+                        />
+                        <div 
+                          className="w-4 h-4 rounded-full border border-white shadow-sm" 
+                          style={{ backgroundColor: theme.secondary }}
+                        />
+                        <div 
+                          className="w-4 h-4 rounded-full border border-white shadow-sm" 
+                          style={{ backgroundColor: theme.accent }}
+                        />
+                      </div>
+
+                      {/* Selected Badge */}
+                      {currentTheme === theme.id && (
+                        <div className="absolute -top-2 -right-2 bg-primary text-white text-xs px-2 py-1 rounded-full shadow-lg">
+                          ✓
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className="mt-6 p-6 rounded-xl bg-slate-50 dark:bg-slate-800">
+                <h4 className="font-medium mb-4">{language === "ar" ? "معاينة" : "Preview"}</h4>
+                <div className="flex flex-wrap gap-3">
+                  <Button className="gradient-primary text-white">
+                    {language === "ar" ? "زر أساسي" : "Primary Button"}
+                  </Button>
+                  <Button variant="outline">
+                    {language === "ar" ? "زر ثانوي" : "Secondary Button"}
+                  </Button>
+                  <Button variant="ghost">
+                    {language === "ar" ? "زر شفاف" : "Ghost Button"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Centers Tab */}
         <TabsContent value="centers">
           <Card>
