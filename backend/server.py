@@ -3159,6 +3159,30 @@ AVAILABLE_PERMISSIONS = [
     {"id": "letters", "name": "الرسائل الرسمية", "name_en": "Official Letters"},
     {"id": "quality", "name": "فحص الجودة", "name_en": "Quality Testing"},
     {"id": "payments", "name": "المدفوعات", "name_en": "Payments"},
+    # Legal permissions
+    {"id": "legal", "name": "القسم القانوني", "name_en": "Legal"},
+    {"id": "contracts", "name": "العقود القانونية", "name_en": "Legal Contracts"},
+    {"id": "cases", "name": "القضايا", "name_en": "Legal Cases"},
+    {"id": "consultations", "name": "الاستشارات القانونية", "name_en": "Legal Consultations"},
+    {"id": "documents", "name": "المستندات القانونية", "name_en": "Legal Documents"},
+    # Projects permissions
+    {"id": "projects", "name": "المشاريع", "name_en": "Projects"},
+    {"id": "tasks", "name": "مهام المشاريع", "name_en": "Project Tasks"},
+    {"id": "milestones", "name": "المراحل", "name_en": "Milestones"},
+    {"id": "team_members", "name": "أعضاء الفريق", "name_en": "Team Members"},
+    # Operations permissions
+    {"id": "operations", "name": "العمليات", "name_en": "Operations"},
+    {"id": "equipment", "name": "المعدات", "name_en": "Equipment"},
+    {"id": "maintenance", "name": "الصيانة", "name_en": "Maintenance"},
+    {"id": "incidents", "name": "الحوادث", "name_en": "Incidents"},
+    {"id": "vehicles", "name": "المركبات", "name_en": "Vehicles"},
+    # Marketing permissions
+    {"id": "marketing", "name": "التسويق", "name_en": "Marketing"},
+    {"id": "campaigns", "name": "الحملات التسويقية", "name_en": "Marketing Campaigns"},
+    {"id": "leads", "name": "العملاء المحتملين", "name_en": "Leads"},
+    {"id": "offers", "name": "العروض", "name_en": "Sales Offers"},
+    {"id": "returns", "name": "المرتجعات", "name_en": "Returns"},
+    {"id": "social", "name": "وسائل التواصل", "name_en": "Social Media"},
     {"id": "all", "name": "جميع الصلاحيات", "name_en": "All Permissions"},
 ]
 
