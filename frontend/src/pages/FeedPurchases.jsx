@@ -658,7 +658,27 @@ const FeedPurchases = () => {
                           {purchase.total_amount?.toLocaleString()} {t("currency")}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            {!purchase.is_approved && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600"
+                                onClick={() => handleApproveInvoice(purchase.id)}
+                                title={language === "ar" ? "تصديق" : "Approve"}
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600"
+                              onClick={() => handlePrintInvoice(purchase)}
+                              title={language === "ar" ? "طباعة" : "Print"}
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
