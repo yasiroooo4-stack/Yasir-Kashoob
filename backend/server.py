@@ -2962,6 +2962,143 @@ async def import_attendance(
     
     return {"message": f"Imported {imported} attendance records"}
 
+# Import attendance from Excel file
+@api_router.post("/hr/attendance/import-excel")
+async def import_attendance_from_excel(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Import attendance records from Excel file"""
+    import pandas as pd
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="يجب أن يكون الملف بصيغة Excel (.xlsx أو .xls)")
+    
+    try:
+        content = await file.read()
+        df = pd.read_excel(io.BytesIO(content))
+        
+        # Map column names (support both Arabic and English)
+        column_mapping = {
+            'التاريخ': 'date',
+            'Date': 'date',
+            'اسم الموظف': 'employee_name',
+            'Employee Name': 'employee_name',
+            'رقم الموظف': 'employee_id',
+            'Employee ID': 'employee_id',
+            'وقت الحضور': 'check_in',
+            'Check In': 'check_in',
+            'وقت الانصراف': 'check_out',
+            'Check Out': 'check_out',
+        }
+        
+        df = df.rename(columns=column_mapping)
+        
+        # Check required columns
+        required_cols = ['date', 'employee_name']
+        for col in required_cols:
+            if col not in df.columns:
+                raise HTTPException(status_code=400, detail=f"عمود مطلوب غير موجود: {col}")
+        
+        imported = 0
+        updated = 0
+        errors = []
+        
+        for idx, row in df.iterrows():
+            try:
+                # Find employee by name if no ID provided
+                employee_id = row.get('employee_id', '')
+                employee_name = str(row.get('employee_name', ''))
+                
+                if not employee_id:
+                    employee = await db.hr_employees.find_one({"name": employee_name}, {"_id": 0})
+                    if employee:
+                        employee_id = employee['id']
+                    else:
+                        employee_id = employee_name  # Use name as fallback
+                
+                # Parse date
+                date_val = row.get('date')
+                if pd.isna(date_val):
+                    continue
+                if hasattr(date_val, 'strftime'):
+                    date_str = date_val.strftime('%Y-%m-%d')
+                else:
+                    date_str = str(date_val)[:10]
+                
+                # Parse times
+                check_in = row.get('check_in', '')
+                check_out = row.get('check_out', '')
+                
+                if pd.isna(check_in):
+                    check_in = None
+                elif hasattr(check_in, 'strftime'):
+                    check_in = check_in.strftime('%H:%M')
+                else:
+                    check_in = str(check_in)[:5] if check_in else None
+                
+                if pd.isna(check_out):
+                    check_out = None
+                elif hasattr(check_out, 'strftime'):
+                    check_out = check_out.strftime('%H:%M')
+                else:
+                    check_out = str(check_out)[:5] if check_out else None
+                
+                # Check if record exists
+                existing = await db.hr_attendance.find_one({
+                    "employee_id": employee_id,
+                    "date": date_str
+                })
+                
+                if existing:
+                    # Update existing record
+                    update_data = {"source": "excel_import"}
+                    if check_in:
+                        update_data["check_in"] = check_in
+                    if check_out:
+                        update_data["check_out"] = check_out
+                    
+                    await db.hr_attendance.update_one(
+                        {"id": existing["id"]},
+                        {"$set": update_data}
+                    )
+                    updated += 1
+                else:
+                    # Create new record
+                    attendance = Attendance(
+                        employee_id=employee_id,
+                        employee_name=employee_name,
+                        date=date_str,
+                        check_in=check_in,
+                        check_out=check_out,
+                        source="excel_import"
+                    )
+                    await db.hr_attendance.insert_one(attendance.model_dump())
+                    imported += 1
+                    
+            except Exception as e:
+                errors.append(f"خطأ في الصف {idx + 2}: {str(e)}")
+        
+        # Log activity
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="import_attendance_excel",
+            entity_type="attendance",
+            details=f"استيراد {imported} سجل جديد و تحديث {updated} سجل من ملف Excel"
+        )
+        
+        return {
+            "message": f"تم استيراد {imported} سجل جديد وتحديث {updated} سجل",
+            "imported": imported,
+            "updated": updated,
+            "errors": errors[:10] if errors else []
+        }
+        
+    except Exception as e:
+        logging.error(f"Error importing Excel: {e}")
+        raise HTTPException(status_code=500, detail=f"خطأ في معالجة الملف: {str(e)}")
+
 # Export attendance to Excel
 @api_router.get("/hr/attendance/export/excel")
 async def export_attendance_excel(
