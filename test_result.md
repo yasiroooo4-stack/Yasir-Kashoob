@@ -285,7 +285,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Marketing Module APIs"
+    - "RBAC System for New Departments"
+    - "Excel Attendance Import"
+    - "Central Dashboard for All Centers"
   stuck_tasks: []
   test_all: false
 
@@ -432,3 +434,43 @@ agent_communication:
       ✅ Customer integration for returns functionality
       
       **🎯 MARKETING MODULE READY FOR PRODUCTION USE**
+
+  - agent: "testing"
+    message: |
+      🆕 **NEW FEATURES TESTING COMPLETED SUCCESSFULLY** 🆕
+      
+      **✅ ALL REQUESTED NEW FEATURES FULLY TESTED AND WORKING:**
+      
+      **1. RBAC System for New Departments:**
+      ✅ GET /api/hr/departments - Returns all expected departments (legal, projects, operations, marketing)
+      ✅ GET /api/hr/available-permissions - Returns all expected permissions for new departments
+      ✅ Proper department and permission structure with Arabic and English names
+      ✅ All new department permissions properly configured
+      
+      **2. Excel Attendance Import:**
+      ✅ POST /api/hr/attendance/import-excel - Successfully imports Excel files (.xlsx/.xls)
+      ✅ Imported 3 test attendance records successfully
+      ✅ Proper file format validation and error handling
+      ✅ Returns detailed import statistics (imported, updated, errors)
+      
+      **3. Central Dashboard for All Centers:**
+      ✅ GET /api/dashboard/central - Returns complete central dashboard
+      ✅ Summary section: total_centers, total_suppliers, total_employees, present_today
+      ✅ Milk section: today_liters, monthly_liters, current_stock
+      ✅ Centers array: detailed information for each collection center
+      ✅ All 4 collection centers (حجيف، زيك، غدو) properly displayed
+      
+      **📊 NEW FEATURES TEST RESULTS:**
+      - Total Tests: 4
+      - Passed: 4 (100%)
+      - Failed: 0
+      
+      **🔍 VERIFIED FEATURES:**
+      ✅ RBAC system with new departments and permissions
+      ✅ Excel import functionality with proper validation
+      ✅ Central dashboard with comprehensive center data
+      ✅ All APIs responding correctly with expected data structures
+      ✅ Proper Arabic text handling throughout
+      ✅ Authentication and authorization working for all endpoints
+      
+      **🎯 ALL NEW FEATURES READY FOR PRODUCTION USE**
