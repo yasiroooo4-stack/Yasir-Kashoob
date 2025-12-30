@@ -2632,6 +2632,30 @@ class BackendTester:
             supplier = suppliers[0]
             feed_type = feed_types[0]
             
+            # First add balance to supplier by creating a milk reception
+            milk_reception_data = {
+                "supplier_id": supplier["id"],
+                "supplier_name": supplier["name"],
+                "quantity_liters": 100.0,
+                "price_per_liter": 1.5,
+                "quality_test": {
+                    "fat_percentage": 3.5,
+                    "protein_percentage": 3.2,
+                    "temperature": 4.0,
+                    "is_accepted": True
+                }
+            }
+            
+            milk_response = self.session.post(
+                f"{BACKEND_URL}/milk-receptions",
+                json=milk_reception_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if milk_response.status_code != 200:
+                self.log_test("Feed Purchase Invoice", False, "Failed to add supplier balance")
+                return False
+            
             # Create feed purchase
             purchase_data = {
                 "supplier_id": supplier["id"],
@@ -2641,8 +2665,8 @@ class BackendTester:
                 "feed_type_id": feed_type["id"],
                 "feed_type_name": feed_type["name"],
                 "company_name": feed_type["company_name"],
-                "quantity": 100.0,
-                "price_per_unit": 25.0,
+                "quantity": 50.0,  # Reduced quantity to ensure sufficient balance
+                "price_per_unit": 2.0,  # Total: 100 OMR (less than 150 OMR balance from milk)
                 "unit": "kg",
                 "notes": "Test feed purchase"
             }
