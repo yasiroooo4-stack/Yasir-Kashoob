@@ -326,9 +326,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "RBAC System for New Departments"
-    - "Excel Attendance Import"
-    - "Central Dashboard for All Centers"
+    - "Feed Purchase Invoice with Electronic Signature"
+    - "Supplier Milk Type Field"
+    - "Official Letters with Electronic Approval"
   stuck_tasks: []
   test_all: false
 
