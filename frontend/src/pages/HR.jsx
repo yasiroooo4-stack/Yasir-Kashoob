@@ -716,6 +716,38 @@ const HR = () => {
     }
   };
 
+  // Import attendance from ZKTeco MDB file
+  const handleImportZKTeco = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setImportLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await axios.post(`${API}/hr/attendance/import-zkteco`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      toast.success(
+        language === "ar" 
+          ? `تم استيراد ${response.data.imported} سجل جديد وتحديث ${response.data.updated} سجل من جهاز البصمة`
+          : `Imported ${response.data.imported} new and updated ${response.data.updated} records from fingerprint device`
+      );
+      
+      fetchAttendance();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.detail || 
+        (language === "ar" ? "فشل استيراد ملف البصمة" : "ZKTeco import failed")
+      );
+    } finally {
+      setImportLoading(false);
+      event.target.value = '';
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: language === "ar" ? "قيد الانتظار" : "Pending", variant: "warning" },
