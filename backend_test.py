@@ -2943,15 +2943,24 @@ class BackendTester:
                 )
                 
                 if reject_response.status_code == 200:
-                    rejected_letter = reject_response.json()
-                    if rejected_letter.get("status") != "rejected":
-                        self.log_test(
-                            "Official Letters Workflow", 
-                            False, 
-                            "Letter rejection not working properly",
-                            f"Status: {rejected_letter.get('status')}"
-                        )
-                        return False
+                    # Get the updated letter to verify rejection status
+                    updated_letters_response = self.session.get(f"{BACKEND_URL}/hr/official-letters")
+                    if updated_letters_response.status_code == 200:
+                        updated_letters = updated_letters_response.json()
+                        rejected_letter = None
+                        for l in updated_letters:
+                            if l.get("id") == letter_id_2:
+                                rejected_letter = l
+                                break
+                        
+                        if not rejected_letter or rejected_letter.get("status") != "rejected":
+                            self.log_test(
+                                "Official Letters Workflow", 
+                                False, 
+                                "Letter rejection not working properly",
+                                f"Status: {rejected_letter.get('status') if rejected_letter else 'Letter not found'}"
+                            )
+                            return False
             
             # Test printing (only for approved letters)
             print_response = self.session.post(f"{BACKEND_URL}/hr/official-letters/{letter_id}/print")
