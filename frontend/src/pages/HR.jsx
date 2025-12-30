@@ -1471,16 +1471,38 @@ const HR = () => {
                           <TableCell className="max-w-[200px] truncate">{letter.purpose || "-"}</TableCell>
                           <TableCell>{getStatusBadge(letter.status)}</TableCell>
                           <TableCell>
-                            {letter.status === "pending" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-green-600"
-                                onClick={() => handleIssueLetter(letter.id)}
-                              >
-                                {language === "ar" ? "إصدار" : "Issue"}
-                              </Button>
-                            )}
+                            <div className="flex items-center gap-1">
+                              {letter.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-green-600"
+                                    onClick={() => handleApproveLetter(letter.id)}
+                                  >
+                                    {language === "ar" ? "تصديق" : "Approve"}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600"
+                                    onClick={() => handleRejectLetter(letter.id)}
+                                  >
+                                    {language === "ar" ? "رفض" : "Reject"}
+                                  </Button>
+                                </>
+                              )}
+                              {letter.is_approved && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-blue-600"
+                                  onClick={() => handlePrintLetter(letter)}
+                                >
+                                  {language === "ar" ? "طباعة" : "Print"}
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
