@@ -246,12 +246,12 @@ const Settings = () => {
 
   // Apply saved theme on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("app_theme");
-    if (savedTheme) {
-      const theme = THEMES.find(t => t.id === savedTheme);
-      if (theme) {
-        document.documentElement.style.setProperty('--primary', theme.primary);
-      }
+    const savedTheme = localStorage.getItem("app_theme") || "default";
+    const theme = THEMES.find(t => t.id === savedTheme);
+    if (theme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.documentElement.style.setProperty('--theme-primary', theme.primary);
+      document.documentElement.style.setProperty('--theme-primary-dark', theme.secondary);
     }
     
     const savedDarkMode = localStorage.getItem("dark_mode") === "true";
