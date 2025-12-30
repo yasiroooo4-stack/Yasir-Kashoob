@@ -224,7 +224,16 @@ const resources = {
       "payments": "المدفوعات",
       
       // HR
-      "hr": "الموارد البشرية"
+      "hr": "الموارد البشرية",
+      
+      // Legal
+      "legal": "القسم القانوني",
+      
+      // Projects
+      "projects": "المشاريع",
+      
+      // Operations
+      "operations": "العمليات"
     }
   },
   en: {
