@@ -680,6 +680,42 @@ const HR = () => {
     }
   };
 
+  // Import attendance from Excel
+  const handleImportExcel = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setImportLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await axios.post(`${API}/hr/attendance/import-excel`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      toast.success(
+        language === "ar" 
+          ? `تم استيراد ${response.data.imported} سجل جديد وتحديث ${response.data.updated} سجل`
+          : `Imported ${response.data.imported} new and updated ${response.data.updated} records`
+      );
+      
+      if (response.data.errors?.length > 0) {
+        console.warn("Import errors:", response.data.errors);
+      }
+      
+      fetchAttendance();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.detail || 
+        (language === "ar" ? "فشل الاستيراد" : "Import failed")
+      );
+    } finally {
+      setImportLoading(false);
+      event.target.value = '';
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: language === "ar" ? "قيد الانتظار" : "Pending", variant: "warning" },
