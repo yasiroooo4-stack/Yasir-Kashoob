@@ -37,6 +37,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import LetterRequestButton from "./LetterRequestButton";
+import EmployeeStatsWidget from "./EmployeeStatsWidget";
 
 const Layout = () => {
   const { t } = useTranslation();
