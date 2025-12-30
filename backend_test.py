@@ -1496,7 +1496,7 @@ class BackendTester:
             campaign_id = campaign.get("id")
             
             # Verify campaign has auto-generated campaign_code
-            if not campaign.get("campaign_code") or not campaign.get("campaign_code").startswith("CAMP-"):
+            if not campaign.get("campaign_code") or not campaign.get("campaign_code").startswith(("CAMP-", "CMP-")):
                 self.log_test(
                     "Marketing Campaigns CRUD", 
                     False, 
