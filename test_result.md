@@ -168,6 +168,42 @@ backend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE MARKETING MODULE TESTING COMPLETED: Marketing Dashboard API ✅, Marketing Campaigns CRUD with auto-generated CMP- codes ✅, Marketing Leads CRUD with auto-generated LEAD- codes ✅, Marketing Offers CRUD with auto-generated OFFER- codes ✅, Marketing Returns CRUD with auto-generated RTN- codes ✅. All endpoints working correctly with proper activity logging."
 
+  - task: "RBAC System for New Departments"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ RBAC SYSTEM TESTING COMPLETED: GET /api/hr/departments returns all expected departments (legal, projects, operations, marketing) ✅ GET /api/hr/available-permissions returns all expected permissions for new departments ✅ All department and permission APIs working correctly"
+
+  - task: "Excel Attendance Import"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ EXCEL IMPORT TESTING COMPLETED: POST /api/hr/attendance/import-excel successfully imports Excel files ✅ Imported 3 test records successfully ✅ Proper file format validation (requires .xlsx/.xls) ✅ Returns proper response structure with import statistics"
+
+  - task: "Central Dashboard for All Centers"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CENTRAL DASHBOARD TESTING COMPLETED: GET /api/dashboard/central returns complete dashboard structure ✅ Summary section with total_centers, total_suppliers, total_employees, present_today ✅ Milk section with today_liters, monthly_liters, current_stock ✅ Centers array with detailed center information ✅ All expected fields present and working correctly"
+
 frontend:
   - task: "Password Recovery Pages"
     implemented: true
