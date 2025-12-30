@@ -296,6 +296,7 @@ const Suppliers = () => {
                 <TableRow>
                   <TableHead>{t("supplier_name")}</TableHead>
                   <TableHead>{t("supplier_code")}</TableHead>
+                  <TableHead>{language === "ar" ? "نوع الحليب" : "Milk Type"}</TableHead>
                   <TableHead>{t("center")}</TableHead>
                   <TableHead>{t("phone")}</TableHead>
                   <TableHead className="hidden md:table-cell">{t("bank_account")}</TableHead>
@@ -307,7 +308,7 @@ const Suppliers = () => {
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -317,6 +318,16 @@ const Suppliers = () => {
                       <TableCell className="font-medium">{supplier.name}</TableCell>
                       <TableCell>
                         <span className="badge-info">{supplier.supplier_code || "-"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          supplier.milk_type === 'camel' ? 'bg-amber-100 text-amber-700' :
+                          supplier.milk_type === 'goat' ? 'bg-green-100 text-green-700' :
+                          supplier.milk_type === 'mixed' ? 'bg-purple-100 text-purple-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {getMilkTypeName(supplier.milk_type || 'cow')}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span className="flex items-center gap-1">
