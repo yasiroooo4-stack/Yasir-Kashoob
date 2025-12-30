@@ -8,6 +8,8 @@ import { Toaster, toast } from "sonner";
 
 // Pages
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Suppliers from "./pages/Suppliers";
 import MilkReception from "./pages/MilkReception";
@@ -209,6 +211,8 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+              <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
+              <Route path="/reset-password" element={user ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
               
               <Route path="/" element={
                 <ProtectedRoute>
