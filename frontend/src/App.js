@@ -6,6 +6,33 @@ import "./i18n";
 import "./App.css";
 import { Toaster, toast } from "sonner";
 
+// Theme configurations for App-wide use
+const THEMES = {
+  default: { primary: "#2563eb", secondary: "#1d4ed8" },
+  ocean: { primary: "#0891b2", secondary: "#0e7490" },
+  sunset: { primary: "#ea580c", secondary: "#c2410c" },
+  forest: { primary: "#059669", secondary: "#047857" },
+  royal: { primary: "#7c3aed", secondary: "#6d28d9" },
+  rose: { primary: "#e11d48", secondary: "#be123c" },
+  midnight: { primary: "#1e293b", secondary: "#0f172a" },
+  gold: { primary: "#b45309", secondary: "#92400e" },
+};
+
+// Apply saved theme on app load
+const initTheme = () => {
+  const savedTheme = localStorage.getItem("app_theme") || "default";
+  const theme = THEMES[savedTheme] || THEMES.default;
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.documentElement.style.setProperty('--theme-primary', theme.primary);
+  document.documentElement.style.setProperty('--theme-primary-dark', theme.secondary);
+  
+  const darkMode = localStorage.getItem("dark_mode") === "true";
+  if (darkMode) {
+    document.documentElement.classList.add('dark');
+  }
+};
+initTheme();
+
 // Pages
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
