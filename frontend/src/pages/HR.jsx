@@ -604,9 +604,10 @@ const HR = () => {
     // Mark as printed in backend
     axios.post(`${API}/hr/official-letters/${letter.id}/print`).catch(() => {});
     
-    // Generate printable content
+    // Generate printable content with background image
     const printWindow = window.open('', '_blank');
     const letterTypeName = LETTER_TYPES.find(t => t.id === letter.letter_type);
+    const backgroundImage = "https://customer-assets.emergentagent.com/job_dairy-erp/artifacts/rotzc27o_%D9%86%D9%85%D9%88%D8%B0%D8%AC.jpeg";
     
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -615,54 +616,113 @@ const HR = () => {
         <meta charset="UTF-8">
         <title>رسالة رسمية - ${letter.letter_number}</title>
         <style>
-          body { font-family: 'Arial', sans-serif; padding: 40px; direction: rtl; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-          .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
-          .letter-number { margin-top: 20px; text-align: left; }
-          .content { margin: 30px 0; line-height: 2; }
-          .signature { margin-top: 50px; }
-          .signature-code { background: #f3f4f6; padding: 10px; border-radius: 5px; font-family: monospace; }
-          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
-          .stamp { border: 2px solid #2563eb; padding: 15px; display: inline-block; border-radius: 50%; text-align: center; }
-          @media print { body { padding: 20px; } }
+          @page { size: A4; margin: 0; }
+          body { 
+            font-family: 'Arial', sans-serif; 
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-image: url('${backgroundImage}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+          }
+          .content-wrapper {
+            padding: 180px 60px 100px 60px;
+            min-height: calc(100vh - 280px);
+          }
+          .letter-info { 
+            text-align: left; 
+            margin-bottom: 30px;
+            font-size: 14px;
+          }
+          .letter-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 40px 0;
+            color: #1a365d;
+          }
+          .letter-body { 
+            line-height: 2.2; 
+            font-size: 16px;
+            text-align: justify;
+            margin: 30px 0;
+          }
+          .letter-body p { margin: 15px 0; }
+          .signature-section {
+            margin-top: 60px;
+            text-align: left;
+          }
+          .signature-box {
+            display: inline-block;
+            text-align: center;
+            padding: 20px;
+          }
+          .signature-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+          }
+          .signature-code {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+          }
+          .print-footer {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+          }
+          @media print { 
+            body { 
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">شركة المروج للألبان</div>
-          <div>Al Morooj Dairy Company</div>
-          <div style="font-size: 12px; margin-top: 10px;">سلطنة عمان</div>
-        </div>
-        
-        <div class="letter-number">
-          <strong>رقم الرسالة:</strong> ${letter.letter_number}<br>
-          <strong>التاريخ:</strong> ${new Date(letter.approved_at || letter.created_at).toLocaleDateString('ar-SA')}
-        </div>
-        
-        <h2 style="text-align: center; margin: 30px 0;">${letterTypeName?.name || letter.letter_type}</h2>
-        
-        <div class="content">
-          <p><strong>إلى من يهمه الأمر،</strong></p>
-          <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
-          ${letter.department ? `<p>القسم: ${letter.department}</p>` : ''}
-          ${letter.position ? `<p>المسمى الوظيفي: ${letter.position}</p>` : ''}
-          ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
-          ${letter.content ? `<p>${letter.content}</p>` : ''}
-          <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
-        </div>
-        
-        <div class="signature">
-          <p><strong>مدير الموارد البشرية</strong></p>
-          <p>HASSAN SALIM KASHOOB</p>
-          <div class="signature-code">
-            <strong>كود التصديق الإلكتروني:</strong><br>
-            ${letter.signature_code || 'N/A'}
+        <div class="content-wrapper">
+          <div class="letter-info">
+            <strong>رقم الرسالة:</strong> ${letter.letter_number}<br>
+            <strong>التاريخ:</strong> ${new Date(letter.approved_at || letter.created_at).toLocaleDateString('ar-SA')}
+          </div>
+          
+          <div class="letter-title">${letterTypeName?.name || letter.letter_type}</div>
+          
+          <div class="letter-body">
+            <p><strong>إلى من يهمه الأمر،</strong></p>
+            <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
+            ${letter.department ? `<p>القسم: ${letter.department}</p>` : ''}
+            ${letter.position ? `<p>المسمى الوظيفي: ${letter.position}</p>` : ''}
+            ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
+            ${letter.content ? `<p>${letter.content}</p>` : ''}
+            <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
+          </div>
+          
+          <div class="signature-section">
+            <div class="signature-box">
+              <div><strong>مدير الموارد البشرية</strong></div>
+              <div class="signature-name">HASSAN SALIM KASHOOB</div>
+              <div class="signature-code">
+                كود التصديق: ${letter.signature_code || 'N/A'}
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="footer">
-          <p>تم طباعة هذه الرسالة إلكترونياً - ${new Date().toLocaleString('ar-SA')}</p>
-          <p>للتحقق من صحة الرسالة، يرجى التواصل مع قسم الموارد البشرية</p>
+        <div class="print-footer">
+          تم طباعة هذه الرسالة إلكترونياً - ${new Date().toLocaleString('ar-SA')}
         </div>
       </body>
       </html>
