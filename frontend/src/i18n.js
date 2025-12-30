@@ -458,7 +458,16 @@ const resources = {
       "payments": "Payments",
       
       // HR
-      "hr": "Human Resources"
+      "hr": "Human Resources",
+      
+      // Legal
+      "legal": "Legal",
+      
+      // Projects
+      "projects": "Projects",
+      
+      // Operations
+      "operations": "Operations"
     }
   }
 };
