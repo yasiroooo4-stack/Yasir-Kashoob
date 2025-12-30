@@ -1956,7 +1956,7 @@ class BackendTester:
     
     def run_all_tests(self):
         """Run all backend tests"""
-        print(f"🧪 Starting Backend API Tests for New Modules (Legal, Projects, Operations)")
+        print(f"🧪 Starting Backend API Tests for Password Recovery System")
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Test User: {TEST_USERNAME}")
         print("=" * 60)
@@ -1969,31 +1969,33 @@ class BackendTester:
                 print("❌ Cannot proceed without authentication")
                 return False
         
-        # Run tests for the three new modules as requested
-        tests = [
-            # Legal Module Tests
-            self.test_legal_dashboard_api,
-            self.test_legal_contracts_crud,
-            self.test_legal_cases_crud,
-            
-            # Projects Module Tests
-            self.test_projects_dashboard_stats,
-            self.test_projects_crud,
-            self.test_project_tasks_crud,
-            
-            # Operations Module Tests
-            self.test_operations_dashboard,
-            self.test_operations_equipment_crud,
-            self.test_operations_vehicles_crud,
-            self.test_operations_incidents_crud,
-            
-            # Activity Logging for New Modules
-            self.test_activity_logs_new_modules,
-            self.test_activity_logs_api_filters
-        ]
+        # Password Recovery Tests (as requested in review)
+        print("\n🔐 Testing Password Recovery System...")
+        self.test_forgot_password_api()
+        self.test_verify_reset_token_api()
+        self.test_reset_password_api()
+        self.test_password_recovery_workflow()
         
-        for test in tests:
-            test()
+        # Run tests for the three new modules as well
+        print("\n⚖️ Testing Legal Module...")
+        self.test_legal_dashboard_api()
+        self.test_legal_contracts_crud()
+        self.test_legal_cases_crud()
+        
+        print("\n🏗️ Testing Projects Module...")
+        self.test_projects_dashboard_stats()
+        self.test_projects_crud()
+        self.test_project_tasks_crud()
+        
+        print("\n🔧 Testing Operations Module...")
+        self.test_operations_dashboard()
+        self.test_operations_equipment_crud()
+        self.test_operations_vehicles_crud()
+        self.test_operations_incidents_crud()
+        
+        print("\n📝 Testing Activity Logging...")
+        self.test_activity_logs_new_modules()
+        self.test_activity_logs_api_filters()
         
         # Summary
         print("\n" + "=" * 60)
