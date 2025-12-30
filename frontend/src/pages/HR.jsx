@@ -1100,6 +1100,28 @@ const HR = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Search and Filter */}
+              <div className="flex flex-wrap gap-3 mb-4">
+                <div className="flex-1 min-w-[200px]">
+                  <Input
+                    placeholder={language === "ar" ? "البحث عن موظف..." : "Search employee..."}
+                    value={attendanceSearch}
+                    onChange={(e) => setAttendanceSearch(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Select value={selectedAttendanceEmployee} onValueChange={setSelectedAttendanceEmployee}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder={language === "ar" ? "تحديد موظف" : "Select Employee"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === "ar" ? "جميع الموظفين" : "All Employees"}</SelectItem>
+                    {employees.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
