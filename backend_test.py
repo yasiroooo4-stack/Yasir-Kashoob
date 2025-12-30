@@ -2601,6 +2601,364 @@ class BackendTester:
         except Exception as e:
             self.log_test("Central Dashboard API", False, f"Error: {str(e)}")
             return False
+
+    # ==================== NEW FEATURES TESTS (Review Request) ====================
+    
+    def test_feed_purchase_invoice_with_signature(self):
+        """Test Feed Purchase Invoice with Electronic Signature"""
+        try:
+            # First get suppliers and feed types
+            suppliers_response = self.session.get(f"{BACKEND_URL}/suppliers")
+            if suppliers_response.status_code != 200:
+                self.log_test("Feed Purchase Invoice", False, "Cannot get suppliers for test")
+                return False
+            
+            suppliers = suppliers_response.json()
+            if not suppliers:
+                self.log_test("Feed Purchase Invoice", False, "No suppliers found for test")
+                return False
+            
+            # Get feed types
+            feed_types_response = self.session.get(f"{BACKEND_URL}/feed-types")
+            if feed_types_response.status_code != 200:
+                self.log_test("Feed Purchase Invoice", False, "Cannot get feed types for test")
+                return False
+            
+            feed_types = feed_types_response.json()
+            if not feed_types:
+                self.log_test("Feed Purchase Invoice", False, "No feed types found for test")
+                return False
+            
+            supplier = suppliers[0]
+            feed_type = feed_types[0]
+            
+            # Create feed purchase
+            purchase_data = {
+                "supplier_id": supplier["id"],
+                "supplier_name": supplier["name"],
+                "supplier_phone": supplier.get("phone"),
+                "supplier_address": supplier.get("address"),
+                "feed_type_id": feed_type["id"],
+                "feed_type_name": feed_type["name"],
+                "company_name": feed_type["company_name"],
+                "quantity": 100.0,
+                "price_per_unit": 25.0,
+                "unit": "kg",
+                "notes": "Test feed purchase"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/feed-purchases",
+                json=purchase_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Feed Purchase Invoice", 
+                    False, 
+                    f"Failed to create feed purchase: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            purchase = create_response.json()
+            purchase_id = purchase.get("id")
+            
+            # Check if invoice_number is generated (like FP-2025-00001)
+            invoice_number = purchase.get("invoice_number")
+            if not invoice_number or not invoice_number.startswith("FP-"):
+                self.log_test(
+                    "Feed Purchase Invoice", 
+                    False, 
+                    "Invoice number not generated properly",
+                    f"Invoice number: {invoice_number}"
+                )
+                return False
+            
+            # Test electronic approval
+            approve_response = self.session.post(f"{BACKEND_URL}/feed-purchases/{purchase_id}/approve")
+            
+            if approve_response.status_code != 200:
+                self.log_test(
+                    "Feed Purchase Invoice", 
+                    False, 
+                    f"Failed to approve feed purchase: {approve_response.status_code}",
+                    approve_response.text
+                )
+                return False
+            
+            approved_purchase = approve_response.json()
+            signature_code = approved_purchase.get("signature_code")
+            
+            if not signature_code:
+                self.log_test(
+                    "Feed Purchase Invoice", 
+                    False, 
+                    "Electronic signature code not generated",
+                    f"Response: {approved_purchase}"
+                )
+                return False
+            
+            self.log_test(
+                "Feed Purchase Invoice", 
+                True, 
+                f"Successfully created feed purchase with invoice {invoice_number} and electronic signature {signature_code}"
+            )
+            return True
+            
+        except Exception as e:
+            self.log_test("Feed Purchase Invoice", False, f"Error: {str(e)}")
+            return False
+
+    def test_supplier_milk_type(self):
+        """Test Supplier with Milk Type field"""
+        try:
+            # Create supplier with milk_type
+            supplier_data = {
+                "name": "مورد إبل الصحراء",
+                "phone": "+968 9876 5432",
+                "address": "البريمي، عُمان",
+                "milk_type": "camel"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/suppliers",
+                json=supplier_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Supplier Milk Type", 
+                    False, 
+                    f"Failed to create supplier: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            supplier = create_response.json()
+            
+            # Check if milk_type is saved
+            if supplier.get("milk_type") != "camel":
+                self.log_test(
+                    "Supplier Milk Type", 
+                    False, 
+                    "Milk type not saved properly",
+                    f"Expected: camel, Got: {supplier.get('milk_type')}"
+                )
+                return False
+            
+            # Test GET suppliers to verify milk_type is included
+            get_response = self.session.get(f"{BACKEND_URL}/suppliers")
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Supplier Milk Type", 
+                    False, 
+                    f"Failed to get suppliers: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            suppliers = get_response.json()
+            found_supplier = None
+            for s in suppliers:
+                if s.get("id") == supplier.get("id"):
+                    found_supplier = s
+                    break
+            
+            if not found_supplier:
+                self.log_test(
+                    "Supplier Milk Type", 
+                    False, 
+                    "Created supplier not found in GET suppliers"
+                )
+                return False
+            
+            if found_supplier.get("milk_type") != "camel":
+                self.log_test(
+                    "Supplier Milk Type", 
+                    False, 
+                    "Milk type not returned in GET suppliers",
+                    f"Expected: camel, Got: {found_supplier.get('milk_type')}"
+                )
+                return False
+            
+            self.log_test(
+                "Supplier Milk Type", 
+                True, 
+                f"Successfully created supplier '{supplier_data['name']}' with milk_type: {supplier.get('milk_type')}"
+            )
+            return True
+            
+        except Exception as e:
+            self.log_test("Supplier Milk Type", False, f"Error: {str(e)}")
+            return False
+
+    def test_official_letters_workflow(self):
+        """Test Official Letters with Electronic Approval workflow"""
+        try:
+            # Get employees first
+            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            if employees_response.status_code != 200:
+                self.log_test("Official Letters Workflow", False, "Cannot get employees for test")
+                return False
+            
+            employees = employees_response.json()
+            if not employees:
+                self.log_test("Official Letters Workflow", False, "No employees found for test")
+                return False
+            
+            employee = employees[0]
+            
+            # Create official letter request
+            letter_data = {
+                "employee_id": employee["id"],
+                "employee_name": employee["name"],
+                "letter_type": "salary_certificate",
+                "purpose": "للبنك الأهلي العماني"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/hr/official-letters",
+                json=letter_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    f"Failed to create official letter: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            letter = create_response.json()
+            letter_id = letter.get("id")
+            
+            # Check if letter_number is generated (like LTR-2025-0001)
+            letter_number = letter.get("letter_number")
+            if not letter_number or not letter_number.startswith("LTR-"):
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    "Letter number not generated properly",
+                    f"Letter number: {letter_number}"
+                )
+                return False
+            
+            # Test approval
+            approve_response = self.session.post(f"{BACKEND_URL}/hr/official-letters/{letter_id}/approve")
+            
+            if approve_response.status_code != 200:
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    f"Failed to approve letter: {approve_response.status_code}",
+                    approve_response.text
+                )
+                return False
+            
+            approved_letter = approve_response.json()
+            
+            # Check electronic signature and approval
+            if not approved_letter.get("signature_code"):
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    "Electronic signature code not generated",
+                    f"Response: {approved_letter}"
+                )
+                return False
+            
+            if not approved_letter.get("is_approved"):
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    "Letter not marked as approved",
+                    f"is_approved: {approved_letter.get('is_approved')}"
+                )
+                return False
+            
+            # Test rejection workflow
+            letter_data_2 = {
+                "employee_id": employee["id"],
+                "employee_name": employee["name"],
+                "letter_type": "employment_letter",
+                "purpose": "للسفارة"
+            }
+            
+            create_response_2 = self.session.post(
+                f"{BACKEND_URL}/hr/official-letters",
+                json=letter_data_2,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response_2.status_code == 200:
+                letter_2 = create_response_2.json()
+                letter_id_2 = letter_2.get("id")
+                
+                # Test rejection
+                reject_response = self.session.post(
+                    f"{BACKEND_URL}/hr/official-letters/{letter_id_2}/reject",
+                    params={"reason": "معلومات ناقصة"}
+                )
+                
+                if reject_response.status_code == 200:
+                    rejected_letter = reject_response.json()
+                    if rejected_letter.get("status") != "rejected":
+                        self.log_test(
+                            "Official Letters Workflow", 
+                            False, 
+                            "Letter rejection not working properly",
+                            f"Status: {rejected_letter.get('status')}"
+                        )
+                        return False
+            
+            # Test printing (only for approved letters)
+            print_response = self.session.post(f"{BACKEND_URL}/hr/official-letters/{letter_id}/print")
+            
+            if print_response.status_code != 200:
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    f"Failed to register printing: {print_response.status_code}",
+                    print_response.text
+                )
+                return False
+            
+            printed_letter = print_response.json()
+            if not printed_letter.get("is_printed"):
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    "Letter not marked as printed",
+                    f"is_printed: {printed_letter.get('is_printed')}"
+                )
+                return False
+            
+            # Test GET my letters
+            my_letters_response = self.session.get(f"{BACKEND_URL}/hr/my-letters")
+            if my_letters_response.status_code != 200:
+                self.log_test(
+                    "Official Letters Workflow", 
+                    False, 
+                    f"Failed to get my letters: {my_letters_response.status_code}",
+                    my_letters_response.text
+                )
+                return False
+            
+            self.log_test(
+                "Official Letters Workflow", 
+                True, 
+                f"Successfully completed official letters workflow: created {letter_number}, approved with signature {approved_letter.get('signature_code')}, and printed"
+            )
+            return True
+            
+        except Exception as e:
+            self.log_test("Official Letters Workflow", False, f"Error: {str(e)}")
+            return False
     
     def run_all_tests(self):
         """Run all backend tests"""
