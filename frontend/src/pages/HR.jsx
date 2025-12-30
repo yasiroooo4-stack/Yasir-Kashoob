@@ -1016,6 +1016,21 @@ const HR = () => {
                     </span>
                   </Button>
                 </label>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".mdb"
+                    onChange={handleImportZKTeco}
+                    className="hidden"
+                    disabled={importLoading}
+                  />
+                  <Button variant="outline" className="gap-1" asChild disabled={importLoading}>
+                    <span>
+                      <Fingerprint className="w-4 h-4 text-green-600" />
+                      {language === "ar" ? "استيراد ZKTeco" : "Import ZKTeco"}
+                    </span>
+                  </Button>
+                </label>
                 <Select value={attendanceMonth.toString()} onValueChange={(v) => setAttendanceMonth(parseInt(v))}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
