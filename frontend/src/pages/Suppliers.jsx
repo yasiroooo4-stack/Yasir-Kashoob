@@ -151,6 +151,7 @@ const Suppliers = () => {
       national_id: supplier.national_id || "",
       farm_size: supplier.farm_size || "",
       cattle_count: supplier.cattle_count || "",
+      milk_type: supplier.milk_type || "cow",
     });
     setDialogOpen(true);
   };
@@ -167,8 +168,14 @@ const Suppliers = () => {
       national_id: "",
       farm_size: "",
       cattle_count: "",
+      milk_type: "cow",
     });
     setSelectedSupplier(null);
+  };
+
+  const getMilkTypeName = (type) => {
+    const milkType = MILK_TYPES.find(t => t.id === type);
+    return milkType ? (language === "ar" ? milkType.name : milkType.name_en) : type;
   };
 
   const filteredSuppliers = suppliers.filter(
