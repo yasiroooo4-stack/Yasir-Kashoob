@@ -25,6 +25,7 @@ import HR from "./pages/HR";
 import Legal from "./pages/Legal";
 import Projects from "./pages/Projects";
 import Operations from "./pages/Operations";
+import Marketing from "./pages/Marketing";
 
 // Layout
 import Layout from "./components/Layout";
