@@ -265,6 +265,136 @@ crontab -e
 
 ---
 
+## 🔌 ربط أجهزة البصمة من مراكز متعددة (VPN)
+
+### المشكلة
+عند وجود مراكز تجميع متعددة في مواقع جغرافية مختلفة، كل مركز له شبكة محلية منفصلة وأجهزة بصمة ZKTeco خاصة به. الخادم المركزي لا يستطيع الوصول المباشر لأجهزة البصمة في الشبكات المختلفة.
+
+### الحل: إعداد خادم VPN مركزي
+
+#### الخطوة 1: تثبيت OpenVPN على الخادم المركزي
+
+```bash
+# Ubuntu
+sudo apt update
+sudo apt install -y openvpn easy-rsa
+
+# إعداد CA
+make-cadir ~/openvpn-ca
+cd ~/openvpn-ca
+./easyrsa init-pki
+./easyrsa build-ca
+./easyrsa gen-dh
+./easyrsa build-server-full server nopass
+```
+
+#### الخطوة 2: إعداد ملف الخادم
+
+```bash
+# /etc/openvpn/server.conf
+port 1194
+proto udp
+dev tun
+ca ca.crt
+cert server.crt
+key server.key
+dh dh.pem
+server 10.8.0.0 255.255.255.0
+push "route 192.168.0.0 255.255.0.0"
+client-to-client
+keepalive 10 120
+cipher AES-256-CBC
+user nobody
+group nogroup
+persist-key
+persist-tun
+status /var/log/openvpn-status.log
+verb 3
+```
+
+#### الخطوة 3: إنشاء شهادات للمراكز
+
+```bash
+# لكل مركز
+./easyrsa build-client-full center1 nopass
+./easyrsa build-client-full center2 nopass
+./easyrsa build-client-full center3 nopass
+```
+
+#### الخطوة 4: إعداد العميل في كل مركز
+
+```bash
+# /etc/openvpn/client.conf
+client
+dev tun
+proto udp
+remote YOUR_CENTRAL_SERVER_IP 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+ca ca.crt
+cert center1.crt
+key center1.key
+cipher AES-256-CBC
+verb 3
+```
+
+#### الخطوة 5: تكوين جهاز البصمة
+
+1. سجل الدخول إلى واجهة الويب لجهاز ZKTeco
+2. اذهب إلى **Network Settings**
+3. غيّر Gateway إلى عنوان VPN للمركز (مثل: 10.8.0.2)
+4. أضف Static Route للوصول للخادم المركزي
+
+#### الخطوة 6: تحديث إعدادات النظام
+
+في ملف `/app/backend/.env`:
+```
+ZKTECO_DEVICES=10.8.0.2:4370,10.8.0.3:4370,10.8.0.4:4370
+```
+
+### البديل: استخدام WireGuard (أبسط وأسرع)
+
+```bash
+# تثبيت WireGuard
+sudo apt install wireguard
+
+# إنشاء مفاتيح
+wg genkey | tee privatekey | wg pubkey > publickey
+
+# إعداد الخادم
+cat > /etc/wireguard/wg0.conf << EOF
+[Interface]
+Address = 10.0.0.1/24
+ListenPort = 51820
+PrivateKey = $(cat privatekey)
+
+[Peer]
+# Center 1
+PublicKey = CENTER1_PUBLIC_KEY
+AllowedIPs = 10.0.0.2/32, 192.168.1.0/24
+
+[Peer]
+# Center 2
+PublicKey = CENTER2_PUBLIC_KEY
+AllowedIPs = 10.0.0.3/32, 192.168.2.0/24
+EOF
+
+# تشغيل
+sudo wg-quick up wg0
+sudo systemctl enable wg-quick@wg0
+```
+
+### ملاحظات هامة
+
+1. **الأمان**: استخدم جدار ناري لتقييد الوصول
+2. **النسخ الاحتياطي**: احتفظ بنسخة من الشهادات
+3. **المراقبة**: راقب اتصالات VPN بانتظام
+4. **التوثيق**: وثّق عناوين IP لكل مركز
+
+---
+
 ## الدعم الفني
 
 للمساعدة أو الإبلاغ عن مشاكل:
