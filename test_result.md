@@ -153,6 +153,21 @@ backend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE PASSWORD RECOVERY TESTING COMPLETED: All 3 backend APIs working correctly ✅ POST /api/auth/forgot-password - Returns proper security message ✅ GET /api/auth/verify-reset-token - Correctly validates tokens ✅ POST /api/auth/reset-password - Properly rejects invalid tokens ✅ Complete workflow tested with email sending functionality ✅ All endpoints responding with correct status codes and messages"
 
+  - task: "Marketing Module APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "APIs for marketing campaigns, leads, offers, returns with dashboard"
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE MARKETING MODULE TESTING COMPLETED: Marketing Dashboard API ✅, Marketing Campaigns CRUD with auto-generated CMP- codes ✅, Marketing Leads CRUD with auto-generated LEAD- codes ✅, Marketing Offers CRUD with auto-generated OFFER- codes ✅, Marketing Returns CRUD with auto-generated RTN- codes ✅. All endpoints working correctly with proper activity logging."
+
 frontend:
   - task: "Password Recovery Pages"
     implemented: true
