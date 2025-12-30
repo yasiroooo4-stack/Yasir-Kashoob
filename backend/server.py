@@ -1758,6 +1758,7 @@ async def create_leave_request(request_data: LeaveRequestCreate, current_user: d
         action="create_leave_request",
         entity_type="leave_request",
         entity_id=leave_request.id,
+        entity_name=request_data.employee_name,
         details=f"طلب إجازة: {request_data.employee_name} - {request_data.leave_type}"
     )
     
