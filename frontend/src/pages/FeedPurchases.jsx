@@ -621,12 +621,13 @@ const FeedPurchases = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("date")}</TableHead>
+                    <TableHead>{language === "ar" ? "رقم الفاتورة" : "Invoice #"}</TableHead>
                     <TableHead>{t("supplier")}</TableHead>
                     <TableHead>{t("feed_type")}</TableHead>
                     <TableHead>{t("feed_company")}</TableHead>
                     <TableHead>{t("quantity")}</TableHead>
-                    <TableHead>{t("price_per_unit")}</TableHead>
                     <TableHead>{t("total")}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
                     <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
