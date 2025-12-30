@@ -2314,7 +2314,9 @@ const HR = () => {
                   setLetterForm({ 
                     ...letterForm, 
                     employee_id: v,
-                    employee_name: emp?.name || ""
+                    employee_name: emp?.name || "",
+                    department: emp?.department || "",
+                    position: emp?.position || ""
                   });
                 }}
               >
@@ -2327,6 +2329,14 @@ const HR = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "المنصب" : "Position"}</Label>
+              <Input
+                value={letterForm.position}
+                onChange={(e) => setLetterForm({ ...letterForm, position: e.target.value })}
+                placeholder={language === "ar" ? "أدخل المنصب" : "Enter position"}
+              />
             </div>
             <div className="space-y-2">
               <Label>{language === "ar" ? "نوع الرسالة" : "Letter Type"} *</Label>
