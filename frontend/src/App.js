@@ -284,6 +284,11 @@ function App() {
                     <Operations />
                   </ProtectedRoute>
                 } />
+                <Route path="marketing" element={
+                  <ProtectedRoute allowedDepartments={["marketing", "admin", "it"]}>
+                    <Marketing />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
