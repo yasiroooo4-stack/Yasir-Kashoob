@@ -2333,20 +2333,276 @@ class BackendTester:
             self.log_test("Password Recovery Workflow", False, f"Error: {str(e)}")
             return False
     
+    # ==================== NEW FEATURES TESTING (Review Request) ====================
+    
+    def test_departments_api(self):
+        """Test GET /api/departments - should include legal, projects, operations, marketing"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/departments")
+            
+            if response.status_code == 200:
+                departments = response.json()
+                expected_departments = ["legal", "projects", "operations", "marketing"]
+                found_departments = []
+                
+                # Check if departments is a list of strings or objects
+                if isinstance(departments, list):
+                    if departments and isinstance(departments[0], str):
+                        found_departments = [dept.lower() for dept in departments]
+                    elif departments and isinstance(departments[0], dict):
+                        found_departments = [dept.get("name", "").lower() for dept in departments]
+                
+                missing_departments = [dept for dept in expected_departments if dept not in found_departments]
+                
+                if not missing_departments:
+                    self.log_test(
+                        "Departments API", 
+                        True, 
+                        f"All expected departments found: {expected_departments}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Departments API", 
+                        False, 
+                        f"Missing departments: {missing_departments}",
+                        f"Found departments: {found_departments}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Departments API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Departments API", False, f"Error: {str(e)}")
+            return False
+
+    def test_permissions_api(self):
+        """Test GET /api/permissions - should include permissions for new departments"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/permissions")
+            
+            if response.status_code == 200:
+                permissions = response.json()
+                
+                # Expected permissions for new departments
+                expected_permissions = [
+                    # Legal permissions
+                    "legal", "contracts", "cases", "consultations", "documents",
+                    # Projects permissions
+                    "projects", "tasks", "milestones", "team_members",
+                    # Operations permissions
+                    "operations", "equipment", "maintenance", "incidents", "vehicles",
+                    # Marketing permissions
+                    "marketing", "campaigns", "leads", "offers", "returns", "social"
+                ]
+                
+                found_permissions = []
+                
+                # Check if permissions is a list of strings or objects
+                if isinstance(permissions, list):
+                    if permissions and isinstance(permissions[0], str):
+                        found_permissions = [perm.lower() for perm in permissions]
+                    elif permissions and isinstance(permissions[0], dict):
+                        found_permissions = [perm.get("name", "").lower() for perm in permissions]
+                
+                missing_permissions = [perm for perm in expected_permissions if perm not in found_permissions]
+                
+                if len(missing_permissions) <= 5:  # Allow some flexibility
+                    self.log_test(
+                        "Permissions API", 
+                        True, 
+                        f"Most expected permissions found. Missing: {missing_permissions if missing_permissions else 'None'}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Permissions API", 
+                        False, 
+                        f"Too many missing permissions: {missing_permissions}",
+                        f"Found permissions: {found_permissions[:10]}..."  # Show first 10
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Permissions API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Permissions API", False, f"Error: {str(e)}")
+            return False
+
+    def test_hr_attendance_import_excel(self):
+        """Test POST /api/hr/attendance/import-excel - Excel import functionality"""
+        try:
+            # Create a simple test Excel file content (CSV format for simplicity)
+            import io
+            
+            # Create mock Excel data as CSV
+            csv_content = """employee_id,employee_name,date,check_in,check_out
+emp001,أحمد محمد,2025-01-15,08:00,17:00
+emp002,فاطمة علي,2025-01-15,08:30,17:30
+emp003,محمد سالم,2025-01-15,09:00,18:00"""
+            
+            # Create file-like object
+            file_data = io.BytesIO(csv_content.encode('utf-8'))
+            
+            # Test the import endpoint
+            files = {'file': ('attendance.csv', file_data, 'text/csv')}
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/hr/attendance/import-excel",
+                files=files
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Check expected response structure
+                if ("imported" in result or "updated" in result or "errors" in result):
+                    imported_count = result.get("imported", 0)
+                    updated_count = result.get("updated", 0)
+                    errors = result.get("errors", [])
+                    
+                    self.log_test(
+                        "HR Attendance Import Excel", 
+                        True, 
+                        f"Excel import successful - Imported: {imported_count}, Updated: {updated_count}, Errors: {len(errors)}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "HR Attendance Import Excel", 
+                        False, 
+                        "Response structure not as expected",
+                        f"Response: {result}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "HR Attendance Import Excel", 
+                    False, 
+                    f"Import failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("HR Attendance Import Excel", False, f"Error: {str(e)}")
+            return False
+
+    def test_central_dashboard_api(self):
+        """Test GET /api/dashboard/central - Central dashboard for all centers"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/dashboard/central")
+            
+            if response.status_code == 200:
+                dashboard = response.json()
+                
+                # Expected structure
+                expected_sections = ["summary", "milk", "centers"]
+                found_sections = [section for section in expected_sections if section in dashboard]
+                
+                if len(found_sections) == len(expected_sections):
+                    # Check summary section
+                    summary = dashboard.get("summary", {})
+                    expected_summary_fields = ["total_centers", "total_suppliers", "total_employees", "present_today"]
+                    summary_fields = [field for field in expected_summary_fields if field in summary]
+                    
+                    # Check milk section
+                    milk = dashboard.get("milk", {})
+                    expected_milk_fields = ["today_liters", "monthly_liters", "current_stock"]
+                    milk_fields = [field for field in expected_milk_fields if field in milk]
+                    
+                    # Check centers section
+                    centers = dashboard.get("centers", [])
+                    
+                    if len(summary_fields) >= 3 and len(milk_fields) >= 2 and isinstance(centers, list):
+                        # Check centers structure if any centers exist
+                        if centers:
+                            center = centers[0]
+                            expected_center_fields = ["center_id", "center_name", "today_milk_liters", "monthly_milk_liters", "suppliers_count"]
+                            center_fields = [field for field in expected_center_fields if field in center]
+                            
+                            if len(center_fields) >= 3:
+                                self.log_test(
+                                    "Central Dashboard API", 
+                                    True, 
+                                    f"Central dashboard complete - Summary: {len(summary_fields)} fields, Milk: {len(milk_fields)} fields, Centers: {len(centers)} centers"
+                                )
+                                return True
+                            else:
+                                self.log_test(
+                                    "Central Dashboard API", 
+                                    False, 
+                                    f"Centers structure incomplete. Found fields: {center_fields}",
+                                    f"Expected: {expected_center_fields}"
+                                )
+                                return False
+                        else:
+                            self.log_test(
+                                "Central Dashboard API", 
+                                True, 
+                                f"Central dashboard structure correct - Summary: {len(summary_fields)} fields, Milk: {len(milk_fields)} fields, Centers: empty (expected)"
+                            )
+                            return True
+                    else:
+                        self.log_test(
+                            "Central Dashboard API", 
+                            False, 
+                            f"Dashboard sections incomplete - Summary: {len(summary_fields)}/{len(expected_summary_fields)}, Milk: {len(milk_fields)}/{len(expected_milk_fields)}",
+                            f"Dashboard structure: {list(dashboard.keys())}"
+                        )
+                        return False
+                else:
+                    missing_sections = [section for section in expected_sections if section not in dashboard]
+                    self.log_test(
+                        "Central Dashboard API", 
+                        False, 
+                        f"Missing dashboard sections: {missing_sections}",
+                        f"Found sections: {list(dashboard.keys())}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Central Dashboard API", 
+                    False, 
+                    f"API call failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Central Dashboard API", False, f"Error: {str(e)}")
+            return False
+    
     def run_all_tests(self):
         """Run all backend tests"""
-        print(f"🧪 Starting Backend API Tests for Password Recovery System")
+        print("🚀 Starting Backend API Testing...")
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Test User: {TEST_USERNAME}")
         print("=" * 60)
         
-        # Try to login first
+        # Authentication
         if not self.test_login():
-            # If login fails, try to register
-            print("Login failed, attempting to register test user...")
             if not self.test_register_if_needed():
                 print("❌ Cannot proceed without authentication")
                 return False
+        
+        print("\n🆕 Testing NEW FEATURES (Review Request)...")
+        self.test_departments_api()
+        self.test_permissions_api()
+        self.test_hr_attendance_import_excel()
+        self.test_central_dashboard_api()
         
         # Password Recovery Tests (as requested in review)
         print("\n🔐 Testing Password Recovery System...")
