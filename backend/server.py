@@ -1081,6 +1081,8 @@ async def log_activity(user_id: str, user_name: str, action: str, entity_type: s
     await db.activity_logs.insert_one(activity.model_dump())
 
 # Email sending helper
+SMTP_USE_SSL = os.environ.get('SMTP_USE_SSL', 'false').lower() == 'true'
+
 async def send_email(to_email: str, subject: str, html_content: str):
     """Send email using SMTP"""
     try:
@@ -1092,14 +1094,25 @@ async def send_email(to_email: str, subject: str, html_content: str):
         html_part = MIMEText(html_content, "html", "utf-8")
         message.attach(html_part)
         
-        await aiosmtplib.send(
-            message,
-            hostname=SMTP_HOST,
-            port=SMTP_PORT,
-            username=SMTP_USER,
-            password=SMTP_PASSWORD,
-            start_tls=True
-        )
+        # Use SSL for port 465, TLS for other ports
+        if SMTP_USE_SSL or SMTP_PORT == 465:
+            await aiosmtplib.send(
+                message,
+                hostname=SMTP_HOST,
+                port=SMTP_PORT,
+                username=SMTP_USER,
+                password=SMTP_PASSWORD,
+                use_tls=True  # SSL/TLS connection
+            )
+        else:
+            await aiosmtplib.send(
+                message,
+                hostname=SMTP_HOST,
+                port=SMTP_PORT,
+                username=SMTP_USER,
+                password=SMTP_PASSWORD,
+                start_tls=True  # STARTTLS
+            )
         return True
     except Exception as e:
         logging.error(f"Error sending email: {e}")
