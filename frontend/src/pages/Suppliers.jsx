@@ -477,6 +477,21 @@ const Suppliers = () => {
                 />
               </div>
               <div className="space-y-2">
+                <Label>{language === "ar" ? "نوع الحليب" : "Milk Type"} *</Label>
+                <Select value={formData.milk_type} onValueChange={(v) => setFormData({ ...formData, milk_type: v })}>
+                  <SelectTrigger data-testid="supplier-milk-type-select">
+                    <SelectValue placeholder={language === "ar" ? "نوع الحليب" : "Milk Type"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MILK_TYPES.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {language === "ar" ? type.name : type.name_en}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="farm_size">{t("farm_size")}</Label>
                 <Input
                   id="farm_size"
