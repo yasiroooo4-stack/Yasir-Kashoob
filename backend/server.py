@@ -3117,6 +3117,10 @@ DEPARTMENTS = [
     {"id": "milk_reception", "name": "استلام الحليب", "name_en": "Milk Reception"},
     {"id": "sales", "name": "المبيعات", "name_en": "Sales"},
     {"id": "inventory", "name": "المخازن", "name_en": "Inventory"},
+    {"id": "legal", "name": "القسم القانوني", "name_en": "Legal"},
+    {"id": "projects", "name": "المشاريع", "name_en": "Projects"},
+    {"id": "operations", "name": "العمليات", "name_en": "Operations"},
+    {"id": "marketing", "name": "التسويق", "name_en": "Marketing"},
 ]
 
 PERMISSIONS = {
@@ -3127,7 +3131,11 @@ PERMISSIONS = {
     "purchasing": ["suppliers", "feed_purchases", "inventory"],
     "milk_reception": ["milk_reception", "suppliers", "quality"],
     "sales": ["sales", "customers", "inventory"],
-    "inventory": ["inventory", "reports"]
+    "inventory": ["inventory", "reports"],
+    "legal": ["legal", "contracts", "cases", "consultations", "documents"],
+    "projects": ["projects", "tasks", "milestones", "team_members"],
+    "operations": ["operations", "equipment", "maintenance", "incidents", "vehicles"],
+    "marketing": ["marketing", "campaigns", "leads", "offers", "returns", "social"]
 }
 
 # قائمة الصلاحيات المتاحة
