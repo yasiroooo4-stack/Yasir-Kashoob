@@ -566,6 +566,468 @@ class BackendTester:
         except Exception as e:
             self.log_test("HR Attendance Report API", False, f"Error: {str(e)}")
             return False
+
+    # ==================== ACTIVITY LOGGING TESTS ====================
+    
+    def test_activity_logs_login_logged(self):
+        """Test that login action is logged in activity logs"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/activity-logs?action=login&limit=10")
+            
+            if response.status_code == 200:
+                logs = response.json()
+                # Find login log for current user
+                login_log = None
+                for log in logs:
+                    if (log.get("action") == "login" and 
+                        log.get("user_name") == self.user_data.get("full_name")):
+                        login_log = log
+                        break
+                
+                if login_log:
+                    required_fields = ["user_id", "user_name", "action", "timestamp"]
+                    missing_fields = [field for field in required_fields if not login_log.get(field)]
+                    
+                    if not missing_fields:
+                        self.log_test(
+                            "Activity Log - Login Logged", 
+                            True, 
+                            f"Login action properly logged for user {login_log.get('user_name')}"
+                        )
+                        return True
+                    else:
+                        self.log_test(
+                            "Activity Log - Login Logged", 
+                            False, 
+                            f"Login log missing required fields: {missing_fields}",
+                            f"Log entry: {login_log}"
+                        )
+                        return False
+                else:
+                    self.log_test(
+                        "Activity Log - Login Logged", 
+                        False, 
+                        f"No login log found for user {self.user_data.get('full_name')}",
+                        f"Available logs: {[log.get('action') + ' by ' + log.get('user_name') for log in logs[:5]]}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Activity Log - Login Logged", 
+                    False, 
+                    f"Activity logs API failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Activity Log - Login Logged", False, f"Error: {str(e)}")
+            return False
+
+    def test_activity_logs_supplier_crud(self):
+        """Test that supplier CRUD operations are logged"""
+        try:
+            # Create a supplier
+            supplier_data = {
+                "name": "مزرعة الخير للألبان",
+                "phone": "+968 9876 5432",
+                "address": "صلالة، ظفار",
+                "supplier_code": "SUP001",
+                "bank_account": "1234567890",
+                "center_id": None,
+                "center_name": None,
+                "national_id": "12345678",
+                "farm_size": 50.5,
+                "cattle_count": 25
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/suppliers",
+                json=supplier_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - Supplier CRUD", 
+                    False, 
+                    f"Failed to create supplier: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            supplier = create_response.json()
+            supplier_id = supplier.get("id")
+            
+            # Check if create_supplier action is logged
+            logs_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=create_supplier&limit=10")
+            if logs_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - Supplier CRUD", 
+                    False, 
+                    f"Failed to get activity logs: {logs_response.status_code}",
+                    logs_response.text
+                )
+                return False
+            
+            logs = logs_response.json()
+            create_log = None
+            for log in logs:
+                if (log.get("action") == "create_supplier" and 
+                    log.get("entity_name") == supplier_data["name"]):
+                    create_log = log
+                    break
+            
+            if not create_log:
+                self.log_test(
+                    "Activity Log - Supplier CRUD", 
+                    False, 
+                    f"Create supplier action not logged for {supplier_data['name']}",
+                    f"Available logs: {[log.get('action') + ' - ' + str(log.get('entity_name')) for log in logs[:5]]}"
+                )
+                return False
+            
+            # Update the supplier
+            update_data = {
+                "name": "مزرعة الخير المحدثة",
+                "phone": "+968 9876 5432",
+                "address": "صلالة، ظفار - محدث",
+                "supplier_code": "SUP001",
+                "bank_account": "1234567890",
+                "center_id": None,
+                "center_name": None,
+                "national_id": "12345678",
+                "farm_size": 60.0,
+                "cattle_count": 30
+            }
+            
+            update_response = self.session.put(
+                f"{BACKEND_URL}/suppliers/{supplier_id}",
+                json=update_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if update_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - Supplier CRUD", 
+                    False, 
+                    f"Failed to update supplier: {update_response.status_code}",
+                    update_response.text
+                )
+                return False
+            
+            # Check if update_supplier action is logged
+            logs_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=update_supplier&limit=10")
+            if logs_response.status_code == 200:
+                logs = logs_response.json()
+                update_log = None
+                for log in logs:
+                    if (log.get("action") == "update_supplier" and 
+                        log.get("entity_id") == supplier_id):
+                        update_log = log
+                        break
+                
+                if update_log:
+                    # Verify log structure
+                    required_fields = ["user_id", "user_name", "action", "entity_type", "entity_id", "entity_name", "timestamp"]
+                    missing_fields = [field for field in required_fields if not update_log.get(field)]
+                    
+                    if not missing_fields:
+                        self.log_test(
+                            "Activity Log - Supplier CRUD", 
+                            True, 
+                            f"Supplier CRUD operations properly logged (create & update) for {supplier_data['name']}"
+                        )
+                        return True
+                    else:
+                        self.log_test(
+                            "Activity Log - Supplier CRUD", 
+                            False, 
+                            f"Update log missing required fields: {missing_fields}",
+                            f"Log entry: {update_log}"
+                        )
+                        return False
+                else:
+                    self.log_test(
+                        "Activity Log - Supplier CRUD", 
+                        False, 
+                        f"Update supplier action not logged for supplier ID {supplier_id}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Activity Log - Supplier CRUD", 
+                    False, 
+                    f"Failed to get update logs: {logs_response.status_code}",
+                    logs_response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Activity Log - Supplier CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_activity_logs_customer_crud(self):
+        """Test that customer CRUD operations are logged"""
+        try:
+            # Create a customer
+            customer_data = {
+                "name": "شركة الألبان المتقدمة",
+                "phone": "+968 2468 1357",
+                "address": "مسقط، مسقط",
+                "customer_type": "wholesale",
+                "credit_limit": 5000.0
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/customers",
+                json=customer_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - Customer CRUD", 
+                    False, 
+                    f"Failed to create customer: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            customer = create_response.json()
+            customer_id = customer.get("id")
+            
+            # Check if create_customer action is logged
+            logs_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=create_customer&limit=10")
+            if logs_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - Customer CRUD", 
+                    False, 
+                    f"Failed to get activity logs: {logs_response.status_code}",
+                    logs_response.text
+                )
+                return False
+            
+            logs = logs_response.json()
+            create_log = None
+            for log in logs:
+                if (log.get("action") == "create_customer" and 
+                    log.get("entity_name") == customer_data["name"]):
+                    create_log = log
+                    break
+            
+            if create_log:
+                # Verify log structure
+                required_fields = ["user_id", "user_name", "action", "entity_type", "entity_id", "entity_name", "timestamp"]
+                missing_fields = [field for field in required_fields if not create_log.get(field)]
+                
+                if not missing_fields:
+                    self.log_test(
+                        "Activity Log - Customer CRUD", 
+                        True, 
+                        f"Customer create operation properly logged for {customer_data['name']}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Activity Log - Customer CRUD", 
+                        False, 
+                        f"Create log missing required fields: {missing_fields}",
+                        f"Log entry: {create_log}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Activity Log - Customer CRUD", 
+                    False, 
+                    f"Create customer action not logged for {customer_data['name']}",
+                    f"Available logs: {[log.get('action') + ' - ' + str(log.get('entity_name')) for log in logs[:5]]}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Activity Log - Customer CRUD", False, f"Error: {str(e)}")
+            return False
+
+    def test_activity_logs_hr_leave_request(self):
+        """Test that HR leave request operations are logged"""
+        try:
+            # Get employees first
+            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            if employees_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - HR Leave Request", 
+                    False, 
+                    f"Failed to get employees: {employees_response.status_code}",
+                    employees_response.text
+                )
+                return False
+            
+            employees = employees_response.json()
+            if not employees:
+                self.log_test(
+                    "Activity Log - HR Leave Request", 
+                    False, 
+                    "No employees found to create leave request"
+                )
+                return False
+            
+            employee = employees[0]
+            
+            # Create leave request
+            leave_data = {
+                "employee_id": employee["id"],
+                "employee_name": employee["name"],
+                "leave_type": "annual",
+                "start_date": "2025-02-15",
+                "end_date": "2025-02-17",
+                "reason": "Family vacation",
+                "days_count": 3
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/hr/leave-requests",
+                json=leave_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if create_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - HR Leave Request", 
+                    False, 
+                    f"Failed to create leave request: {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            leave_request = create_response.json()
+            
+            # Check if create_leave_request action is logged
+            logs_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=create_leave_request&limit=10")
+            if logs_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - HR Leave Request", 
+                    False, 
+                    f"Failed to get activity logs: {logs_response.status_code}",
+                    logs_response.text
+                )
+                return False
+            
+            logs = logs_response.json()
+            create_log = None
+            for log in logs:
+                if (log.get("action") == "create_leave_request" and 
+                    log.get("entity_name") == employee["name"]):
+                    create_log = log
+                    break
+            
+            if create_log:
+                # Verify log structure
+                required_fields = ["user_id", "user_name", "action", "entity_type", "entity_name", "timestamp"]
+                missing_fields = [field for field in required_fields if not create_log.get(field)]
+                
+                if not missing_fields:
+                    self.log_test(
+                        "Activity Log - HR Leave Request", 
+                        True, 
+                        f"HR leave request creation properly logged for {employee['name']}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Activity Log - HR Leave Request", 
+                        False, 
+                        f"Leave request log missing required fields: {missing_fields}",
+                        f"Log entry: {create_log}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Activity Log - HR Leave Request", 
+                    False, 
+                    f"Create leave request action not logged for {employee['name']}",
+                    f"Available logs: {[log.get('action') + ' - ' + str(log.get('entity_name')) for log in logs[:5]]}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Activity Log - HR Leave Request", False, f"Error: {str(e)}")
+            return False
+
+    def test_activity_logs_api_filters(self):
+        """Test Activity Logs API filters (limit, action)"""
+        try:
+            # Test limit filter
+            limit_response = self.session.get(f"{BACKEND_URL}/activity-logs?limit=5")
+            if limit_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - API Filters", 
+                    False, 
+                    f"Failed to get limited logs: {limit_response.status_code}",
+                    limit_response.text
+                )
+                return False
+            
+            limited_logs = limit_response.json()
+            if len(limited_logs) > 5:
+                self.log_test(
+                    "Activity Log - API Filters", 
+                    False, 
+                    f"Limit filter not working: expected max 5 logs, got {len(limited_logs)}"
+                )
+                return False
+            
+            # Test action filter
+            action_response = self.session.get(f"{BACKEND_URL}/activity-logs?action=login")
+            if action_response.status_code != 200:
+                self.log_test(
+                    "Activity Log - API Filters", 
+                    False, 
+                    f"Failed to get filtered logs: {action_response.status_code}",
+                    action_response.text
+                )
+                return False
+            
+            filtered_logs = action_response.json()
+            non_login_logs = [log for log in filtered_logs if log.get("action") != "login"]
+            
+            if non_login_logs:
+                self.log_test(
+                    "Activity Log - API Filters", 
+                    False, 
+                    f"Action filter not working: found {len(non_login_logs)} non-login logs",
+                    f"Non-login actions: {[log.get('action') for log in non_login_logs[:3]]}"
+                )
+                return False
+            
+            # Test sorting (newest first)
+            all_logs_response = self.session.get(f"{BACKEND_URL}/activity-logs?limit=10")
+            if all_logs_response.status_code == 200:
+                all_logs = all_logs_response.json()
+                if len(all_logs) >= 2:
+                    # Check if timestamps are in descending order
+                    timestamps = [log.get("timestamp") for log in all_logs if log.get("timestamp")]
+                    if len(timestamps) >= 2:
+                        is_sorted = all(timestamps[i] >= timestamps[i+1] for i in range(len(timestamps)-1))
+                        if not is_sorted:
+                            self.log_test(
+                                "Activity Log - API Filters", 
+                                False, 
+                                "Logs not sorted by timestamp descending (newest first)",
+                                f"First 3 timestamps: {timestamps[:3]}"
+                            )
+                            return False
+            
+            self.log_test(
+                "Activity Log - API Filters", 
+                True, 
+                f"Activity logs API filters working correctly (limit={len(limited_logs)}, action filter, sorting)"
+            )
+            return True
+                
+        except Exception as e:
+            self.log_test("Activity Log - API Filters", False, f"Error: {str(e)}")
+            return False
     
     def run_all_tests(self):
         """Run all backend tests"""
