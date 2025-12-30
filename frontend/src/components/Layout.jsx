@@ -21,6 +21,9 @@ import {
   Wheat,
   Settings,
   Building2,
+  Scale,
+  FolderKanban,
+  Activity,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
