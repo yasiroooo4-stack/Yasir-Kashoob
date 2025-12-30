@@ -10,40 +10,27 @@ import { Milk, Globe, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const { t } = useTranslation();
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const { language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   
-  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    email: "",
-    full_name: "",
-    role: "employee",
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRoleChange = (value) => {
-    setFormData({ ...formData, role: value });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    let result;
-    if (isLogin) {
-      result = await login(formData.username, formData.password);
-    } else {
-      result = await register(formData);
-    }
+    const result = await login(formData.username, formData.password);
 
     setLoading(false);
     if (result.success) {
