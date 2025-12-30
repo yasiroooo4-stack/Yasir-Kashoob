@@ -3263,6 +3263,902 @@ async def export_daily_report_pdf(
         headers={"Content-Disposition": f"attachment; filename=daily_report_{date}.pdf"}
     )
 
+# ==================== LEGAL MODULE ROUTES (قسم القانون) ====================
+
+# Legal Contracts (العقود القانونية)
+@api_router.post("/legal/contracts", response_model=LegalContract)
+async def create_legal_contract(contract_data: LegalContractCreate, current_user: dict = Depends(get_current_user)):
+    # Generate contract number
+    count = await db.legal_contracts.count_documents({})
+    year = datetime.now().year
+    contract_number = f"CTR-{year}-{count + 1:04d}"
+    
+    contract = LegalContract(**contract_data.model_dump())
+    contract_dict = contract.model_dump()
+    contract_dict["contract_number"] = contract_number
+    contract_dict["created_by"] = current_user["id"]
+    
+    await db.legal_contracts.insert_one(contract_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_legal_contract",
+        entity_type="legal_contract",
+        entity_id=contract.id,
+        entity_name=contract_data.title,
+        details=f"عقد قانوني: {contract_data.title} - {contract_data.party_name}"
+    )
+    
+    return LegalContract(**contract_dict)
+
+@api_router.get("/legal/contracts")
+async def get_legal_contracts(
+    status: Optional[str] = None,
+    contract_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if contract_type:
+        query["contract_type"] = contract_type
+    
+    contracts = await db.legal_contracts.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return contracts
+
+@api_router.get("/legal/contracts/{contract_id}")
+async def get_legal_contract(contract_id: str, current_user: dict = Depends(get_current_user)):
+    contract = await db.legal_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    return contract
+
+@api_router.put("/legal/contracts/{contract_id}", response_model=LegalContract)
+async def update_legal_contract(contract_id: str, contract_data: LegalContractCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.legal_contracts.update_one(
+        {"id": contract_id},
+        {"$set": contract_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    contract = await db.legal_contracts.find_one({"id": contract_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_legal_contract",
+        entity_type="legal_contract",
+        entity_id=contract_id,
+        entity_name=contract.get("title"),
+        details=f"تعديل عقد: {contract.get('title')}"
+    )
+    
+    return contract
+
+@api_router.delete("/legal/contracts/{contract_id}")
+async def delete_legal_contract(contract_id: str, current_user: dict = Depends(get_current_user)):
+    contract = await db.legal_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    await db.legal_contracts.update_one(
+        {"id": contract_id},
+        {"$set": {"status": "terminated"}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="terminate_legal_contract",
+        entity_type="legal_contract",
+        entity_id=contract_id,
+        entity_name=contract.get("title"),
+        details=f"إنهاء عقد: {contract.get('title')}"
+    )
+    
+    return {"message": "Contract terminated successfully"}
+
+# Legal Cases (القضايا القانونية)
+@api_router.post("/legal/cases", response_model=LegalCase)
+async def create_legal_case(case_data: LegalCaseCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.legal_cases.count_documents({})
+    year = datetime.now().year
+    case_number = f"CASE-{year}-{count + 1:04d}"
+    
+    case = LegalCase(**case_data.model_dump())
+    case_dict = case.model_dump()
+    case_dict["case_number"] = case_number
+    case_dict["created_by"] = current_user["id"]
+    
+    await db.legal_cases.insert_one(case_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_legal_case",
+        entity_type="legal_case",
+        entity_id=case.id,
+        entity_name=case_data.title,
+        details=f"قضية قانونية: {case_data.title}"
+    )
+    
+    return LegalCase(**case_dict)
+
+@api_router.get("/legal/cases")
+async def get_legal_cases(
+    status: Optional[str] = None,
+    case_type: Optional[str] = None,
+    priority: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if case_type:
+        query["case_type"] = case_type
+    if priority:
+        query["priority"] = priority
+    
+    cases = await db.legal_cases.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return cases
+
+@api_router.put("/legal/cases/{case_id}", response_model=LegalCase)
+async def update_legal_case(case_id: str, case_data: LegalCaseCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.legal_cases.update_one(
+        {"id": case_id},
+        {"$set": case_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    case = await db.legal_cases.find_one({"id": case_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_legal_case",
+        entity_type="legal_case",
+        entity_id=case_id,
+        entity_name=case.get("title"),
+        details=f"تعديل قضية: {case.get('title')}"
+    )
+    
+    return case
+
+@api_router.put("/legal/cases/{case_id}/close")
+async def close_legal_case(case_id: str, outcome: str, settlement_amount: Optional[float] = None, current_user: dict = Depends(get_current_user)):
+    result = await db.legal_cases.update_one(
+        {"id": case_id},
+        {"$set": {
+            "status": "closed",
+            "outcome": outcome,
+            "settlement_amount": settlement_amount,
+            "closed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    case = await db.legal_cases.find_one({"id": case_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="close_legal_case",
+        entity_type="legal_case",
+        entity_id=case_id,
+        entity_name=case.get("title"),
+        details=f"إغلاق قضية: {case.get('title')} - {outcome}"
+    )
+    
+    return case
+
+# Legal Consultations (الاستشارات القانونية)
+@api_router.post("/legal/consultations", response_model=LegalConsultation)
+async def create_legal_consultation(consultation_data: LegalConsultationCreate, current_user: dict = Depends(get_current_user)):
+    consultation = LegalConsultation(**consultation_data.model_dump())
+    await db.legal_consultations.insert_one(consultation.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_legal_consultation",
+        entity_type="legal_consultation",
+        entity_id=consultation.id,
+        entity_name=consultation_data.subject,
+        details=f"استشارة قانونية: {consultation_data.subject}"
+    )
+    
+    return consultation
+
+@api_router.get("/legal/consultations")
+async def get_legal_consultations(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    
+    consultations = await db.legal_consultations.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return consultations
+
+@api_router.put("/legal/consultations/{consultation_id}/respond")
+async def respond_to_consultation(consultation_id: str, response: str, current_user: dict = Depends(get_current_user)):
+    result = await db.legal_consultations.update_one(
+        {"id": consultation_id},
+        {"$set": {
+            "status": "completed",
+            "response": response,
+            "responded_by": current_user["full_name"],
+            "responded_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+    
+    consultation = await db.legal_consultations.find_one({"id": consultation_id}, {"_id": 0})
+    return consultation
+
+# Legal Documents (المستندات القانونية)
+@api_router.post("/legal/documents", response_model=LegalDocument)
+async def create_legal_document(document_data: LegalDocumentCreate, current_user: dict = Depends(get_current_user)):
+    document = LegalDocument(**document_data.model_dump())
+    document_dict = document.model_dump()
+    document_dict["created_by"] = current_user["id"]
+    
+    await db.legal_documents.insert_one(document_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_legal_document",
+        entity_type="legal_document",
+        entity_id=document.id,
+        entity_name=document_data.title,
+        details=f"مستند قانوني: {document_data.title}"
+    )
+    
+    return LegalDocument(**document_dict)
+
+@api_router.get("/legal/documents")
+async def get_legal_documents(
+    document_type: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if document_type:
+        query["document_type"] = document_type
+    if status:
+        query["status"] = status
+    
+    documents = await db.legal_documents.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return documents
+
+# Legal Dashboard Stats
+@api_router.get("/legal/dashboard")
+async def get_legal_dashboard(current_user: dict = Depends(get_current_user)):
+    contracts_active = await db.legal_contracts.count_documents({"status": "active"})
+    contracts_expiring = await db.legal_contracts.count_documents({
+        "status": "active",
+        "end_date": {"$lte": (datetime.now() + timedelta(days=30)).isoformat()}
+    })
+    cases_open = await db.legal_cases.count_documents({"status": {"$in": ["open", "in_progress"]}})
+    consultations_pending = await db.legal_consultations.count_documents({"status": "pending"})
+    
+    return {
+        "contracts_active": contracts_active,
+        "contracts_expiring_soon": contracts_expiring,
+        "cases_open": cases_open,
+        "consultations_pending": consultations_pending
+    }
+
+# ==================== PROJECTS MODULE ROUTES (قسم المشاريع) ====================
+
+# Projects
+@api_router.post("/projects", response_model=Project)
+async def create_project(project_data: ProjectCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.projects.count_documents({})
+    year = datetime.now().year
+    project_code = f"PRJ-{year}-{count + 1:04d}"
+    
+    project = Project(**project_data.model_dump())
+    project_dict = project.model_dump()
+    project_dict["project_code"] = project_code
+    project_dict["created_by"] = current_user["id"]
+    
+    await db.projects.insert_one(project_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_project",
+        entity_type="project",
+        entity_id=project.id,
+        entity_name=project_data.name,
+        details=f"مشروع جديد: {project_data.name}"
+    )
+    
+    return Project(**project_dict)
+
+@api_router.get("/projects")
+async def get_projects(
+    status: Optional[str] = None,
+    project_type: Optional[str] = None,
+    manager_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if project_type:
+        query["project_type"] = project_type
+    if manager_id:
+        query["manager_id"] = manager_id
+    
+    projects = await db.projects.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return projects
+
+@api_router.get("/projects/{project_id}")
+async def get_project(project_id: str, current_user: dict = Depends(get_current_user)):
+    project = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+@api_router.put("/projects/{project_id}", response_model=Project)
+async def update_project(project_id: str, project_data: ProjectCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.projects.update_one(
+        {"id": project_id},
+        {"$set": project_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    project = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_project",
+        entity_type="project",
+        entity_id=project_id,
+        entity_name=project.get("name"),
+        details=f"تعديل مشروع: {project.get('name')}"
+    )
+    
+    return project
+
+@api_router.put("/projects/{project_id}/status")
+async def update_project_status(project_id: str, status: str, progress_percentage: Optional[float] = None, current_user: dict = Depends(get_current_user)):
+    update_data = {"status": status}
+    if progress_percentage is not None:
+        update_data["progress_percentage"] = progress_percentage
+    
+    result = await db.projects.update_one(
+        {"id": project_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    project = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_project_status",
+        entity_type="project",
+        entity_id=project_id,
+        entity_name=project.get("name"),
+        details=f"تحديث حالة مشروع: {project.get('name')} - {status}"
+    )
+    
+    return project
+
+# Project Tasks
+@api_router.post("/projects/tasks", response_model=ProjectTask)
+async def create_project_task(task_data: ProjectTaskCreate, current_user: dict = Depends(get_current_user)):
+    task = ProjectTask(**task_data.model_dump())
+    await db.project_tasks.insert_one(task.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_project_task",
+        entity_type="project_task",
+        entity_id=task.id,
+        entity_name=task_data.task_name,
+        details=f"مهمة جديدة: {task_data.task_name} - {task_data.project_name}"
+    )
+    
+    return task
+
+@api_router.get("/projects/{project_id}/tasks")
+async def get_project_tasks(project_id: str, status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {"project_id": project_id}
+    if status:
+        query["status"] = status
+    
+    tasks = await db.project_tasks.find(query, {"_id": 0}).sort("due_date", 1).to_list(1000)
+    return tasks
+
+@api_router.put("/projects/tasks/{task_id}", response_model=ProjectTask)
+async def update_project_task(task_id: str, task_data: ProjectTaskCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.project_tasks.update_one(
+        {"id": task_id},
+        {"$set": task_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task = await db.project_tasks.find_one({"id": task_id}, {"_id": 0})
+    return task
+
+@api_router.put("/projects/tasks/{task_id}/complete")
+async def complete_project_task(task_id: str, actual_hours: float = 0, current_user: dict = Depends(get_current_user)):
+    result = await db.project_tasks.update_one(
+        {"id": task_id},
+        {"$set": {
+            "status": "completed",
+            "progress_percentage": 100,
+            "actual_hours": actual_hours,
+            "completed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task = await db.project_tasks.find_one({"id": task_id}, {"_id": 0})
+    return task
+
+# Project Team Members
+@api_router.post("/projects/team", response_model=ProjectTeamMember)
+async def add_project_team_member(member_data: ProjectTeamMemberCreate, current_user: dict = Depends(get_current_user)):
+    member = ProjectTeamMember(**member_data.model_dump())
+    await db.project_team_members.insert_one(member.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="add_project_team_member",
+        entity_type="project_team_member",
+        entity_id=member.id,
+        entity_name=member_data.employee_name,
+        details=f"إضافة عضو للمشروع: {member_data.employee_name} - {member_data.project_name}"
+    )
+    
+    return member
+
+@api_router.get("/projects/{project_id}/team")
+async def get_project_team(project_id: str, current_user: dict = Depends(get_current_user)):
+    members = await db.project_team_members.find({"project_id": project_id, "is_active": True}, {"_id": 0}).to_list(100)
+    return members
+
+@api_router.delete("/projects/team/{member_id}")
+async def remove_project_team_member(member_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.project_team_members.update_one(
+        {"id": member_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Team member not found")
+    return {"message": "Team member removed"}
+
+# Project Milestones
+@api_router.post("/projects/milestones", response_model=ProjectMilestone)
+async def create_project_milestone(milestone_data: ProjectMilestoneCreate, current_user: dict = Depends(get_current_user)):
+    milestone = ProjectMilestone(**milestone_data.model_dump())
+    await db.project_milestones.insert_one(milestone.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_project_milestone",
+        entity_type="project_milestone",
+        entity_id=milestone.id,
+        entity_name=milestone_data.name,
+        details=f"مرحلة جديدة: {milestone_data.name} - {milestone_data.project_name}"
+    )
+    
+    return milestone
+
+@api_router.get("/projects/{project_id}/milestones")
+async def get_project_milestones(project_id: str, current_user: dict = Depends(get_current_user)):
+    milestones = await db.project_milestones.find({"project_id": project_id}, {"_id": 0}).sort("due_date", 1).to_list(100)
+    return milestones
+
+@api_router.put("/projects/milestones/{milestone_id}/achieve")
+async def achieve_milestone(milestone_id: str, notes: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    result = await db.project_milestones.update_one(
+        {"id": milestone_id},
+        {"$set": {
+            "status": "achieved",
+            "achieved_date": datetime.now(timezone.utc).isoformat(),
+            "notes": notes
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    
+    milestone = await db.project_milestones.find_one({"id": milestone_id}, {"_id": 0})
+    return milestone
+
+# Projects Dashboard
+@api_router.get("/projects/dashboard/stats")
+async def get_projects_dashboard(current_user: dict = Depends(get_current_user)):
+    total_projects = await db.projects.count_documents({})
+    active_projects = await db.projects.count_documents({"status": "in_progress"})
+    completed_projects = await db.projects.count_documents({"status": "completed"})
+    overdue_tasks = await db.project_tasks.count_documents({
+        "status": {"$ne": "completed"},
+        "due_date": {"$lt": datetime.now(timezone.utc).isoformat()}
+    })
+    
+    # Get projects with budget
+    projects = await db.projects.find({}, {"_id": 0, "budget": 1, "actual_cost": 1}).to_list(1000)
+    total_budget = sum(p.get("budget", 0) for p in projects)
+    total_actual_cost = sum(p.get("actual_cost", 0) for p in projects)
+    
+    return {
+        "total_projects": total_projects,
+        "active_projects": active_projects,
+        "completed_projects": completed_projects,
+        "overdue_tasks": overdue_tasks,
+        "total_budget": total_budget,
+        "total_actual_cost": total_actual_cost
+    }
+
+# ==================== OPERATIONS MODULE ROUTES (قسم العمليات) ====================
+
+# Daily Operations
+@api_router.post("/operations/daily", response_model=DailyOperation)
+async def create_daily_operation(operation_data: DailyOperationCreate, current_user: dict = Depends(get_current_user)):
+    operation = DailyOperation(**operation_data.model_dump())
+    operation_dict = operation.model_dump()
+    operation_dict["created_by"] = current_user["id"]
+    
+    await db.daily_operations.insert_one(operation_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_daily_operation",
+        entity_type="daily_operation",
+        entity_id=operation.id,
+        entity_name=f"{operation_data.operation_date} - {operation_data.shift}",
+        details=f"عملية يومية: {operation_data.operation_date} - {operation_data.shift}"
+    )
+    
+    return DailyOperation(**operation_dict)
+
+@api_router.get("/operations/daily")
+async def get_daily_operations(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    center_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if start_date:
+        query["operation_date"] = {"$gte": start_date}
+    if end_date:
+        if "operation_date" in query:
+            query["operation_date"]["$lte"] = end_date
+        else:
+            query["operation_date"] = {"$lte": end_date}
+    if center_id:
+        query["center_id"] = center_id
+    
+    operations = await db.daily_operations.find(query, {"_id": 0}).sort("operation_date", -1).to_list(1000)
+    return operations
+
+@api_router.put("/operations/daily/{operation_id}", response_model=DailyOperation)
+async def update_daily_operation(operation_id: str, operation_data: DailyOperationCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.daily_operations.update_one(
+        {"id": operation_id},
+        {"$set": operation_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Operation not found")
+    
+    operation = await db.daily_operations.find_one({"id": operation_id}, {"_id": 0})
+    return operation
+
+# Equipment
+@api_router.post("/operations/equipment", response_model=Equipment)
+async def create_equipment(equipment_data: EquipmentCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.equipment.count_documents({})
+    equipment_code = f"EQP-{count + 1:04d}"
+    
+    equipment = Equipment(**equipment_data.model_dump())
+    equipment_dict = equipment.model_dump()
+    equipment_dict["equipment_code"] = equipment_code
+    
+    await db.equipment.insert_one(equipment_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_equipment",
+        entity_type="equipment",
+        entity_id=equipment.id,
+        entity_name=equipment_data.name,
+        details=f"معدة جديدة: {equipment_data.name}"
+    )
+    
+    return Equipment(**equipment_dict)
+
+@api_router.get("/operations/equipment")
+async def get_equipment(
+    equipment_type: Optional[str] = None,
+    status: Optional[str] = None,
+    center_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if equipment_type:
+        query["equipment_type"] = equipment_type
+    if status:
+        query["status"] = status
+    if center_id:
+        query["center_id"] = center_id
+    
+    equipment = await db.equipment.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return equipment
+
+@api_router.put("/operations/equipment/{equipment_id}", response_model=Equipment)
+async def update_equipment(equipment_id: str, equipment_data: EquipmentCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.equipment.update_one(
+        {"id": equipment_id},
+        {"$set": equipment_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+    
+    equipment = await db.equipment.find_one({"id": equipment_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_equipment",
+        entity_type="equipment",
+        entity_id=equipment_id,
+        entity_name=equipment.get("name"),
+        details=f"تعديل معدة: {equipment.get('name')}"
+    )
+    
+    return equipment
+
+@api_router.put("/operations/equipment/{equipment_id}/status")
+async def update_equipment_status(equipment_id: str, status: str, current_user: dict = Depends(get_current_user)):
+    result = await db.equipment.update_one(
+        {"id": equipment_id},
+        {"$set": {"status": status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+    
+    equipment = await db.equipment.find_one({"id": equipment_id}, {"_id": 0})
+    return equipment
+
+# Maintenance Records
+@api_router.post("/operations/maintenance", response_model=MaintenanceRecord)
+async def create_maintenance_record(maintenance_data: MaintenanceRecordCreate, current_user: dict = Depends(get_current_user)):
+    maintenance = MaintenanceRecord(**maintenance_data.model_dump())
+    maintenance_dict = maintenance.model_dump()
+    maintenance_dict["created_by"] = current_user["id"]
+    
+    await db.maintenance_records.insert_one(maintenance_dict)
+    
+    # Update equipment last maintenance date
+    await db.equipment.update_one(
+        {"id": maintenance_data.equipment_id},
+        {"$set": {
+            "last_maintenance_date": maintenance_data.maintenance_date,
+            "next_maintenance_date": maintenance_data.next_maintenance_date
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_maintenance_record",
+        entity_type="maintenance_record",
+        entity_id=maintenance.id,
+        entity_name=maintenance_data.equipment_name,
+        details=f"صيانة: {maintenance_data.equipment_name} - {maintenance_data.maintenance_type}"
+    )
+    
+    return MaintenanceRecord(**maintenance_dict)
+
+@api_router.get("/operations/maintenance")
+async def get_maintenance_records(
+    equipment_id: Optional[str] = None,
+    maintenance_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if equipment_id:
+        query["equipment_id"] = equipment_id
+    if maintenance_type:
+        query["maintenance_type"] = maintenance_type
+    
+    records = await db.maintenance_records.find(query, {"_id": 0}).sort("maintenance_date", -1).to_list(1000)
+    return records
+
+# Incident Reports
+@api_router.post("/operations/incidents", response_model=IncidentReport)
+async def create_incident_report(incident_data: IncidentReportCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.incident_reports.count_documents({})
+    year = datetime.now().year
+    incident_number = f"INC-{year}-{count + 1:04d}"
+    
+    incident = IncidentReport(**incident_data.model_dump())
+    incident_dict = incident.model_dump()
+    incident_dict["incident_number"] = incident_number
+    
+    await db.incident_reports.insert_one(incident_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_incident_report",
+        entity_type="incident_report",
+        entity_id=incident.id,
+        entity_name=incident_data.title,
+        details=f"تقرير حادث: {incident_data.title} - {incident_data.severity}"
+    )
+    
+    return IncidentReport(**incident_dict)
+
+@api_router.get("/operations/incidents")
+async def get_incident_reports(
+    incident_type: Optional[str] = None,
+    status: Optional[str] = None,
+    severity: Optional[str] = None,
+    center_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if incident_type:
+        query["incident_type"] = incident_type
+    if status:
+        query["status"] = status
+    if severity:
+        query["severity"] = severity
+    if center_id:
+        query["center_id"] = center_id
+    
+    incidents = await db.incident_reports.find(query, {"_id": 0}).sort("incident_date", -1).to_list(1000)
+    return incidents
+
+@api_router.put("/operations/incidents/{incident_id}/resolve")
+async def resolve_incident(incident_id: str, resolution_notes: str, current_user: dict = Depends(get_current_user)):
+    result = await db.incident_reports.update_one(
+        {"id": incident_id},
+        {"$set": {
+            "status": "resolved",
+            "resolved_at": datetime.now(timezone.utc).isoformat(),
+            "resolution_notes": resolution_notes,
+            "investigated_by": current_user["full_name"]
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    incident = await db.incident_reports.find_one({"id": incident_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="resolve_incident",
+        entity_type="incident_report",
+        entity_id=incident_id,
+        entity_name=incident.get("title"),
+        details=f"حل حادث: {incident.get('title')}"
+    )
+    
+    return incident
+
+# Vehicle Fleet
+@api_router.post("/operations/vehicles", response_model=Vehicle)
+async def create_vehicle(vehicle_data: VehicleCreate, current_user: dict = Depends(get_current_user)):
+    count = await db.vehicles.count_documents({})
+    vehicle_code = f"VEH-{count + 1:04d}"
+    
+    vehicle = Vehicle(**vehicle_data.model_dump())
+    vehicle_dict = vehicle.model_dump()
+    vehicle_dict["vehicle_code"] = vehicle_code
+    
+    await db.vehicles.insert_one(vehicle_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_vehicle",
+        entity_type="vehicle",
+        entity_id=vehicle.id,
+        entity_name=f"{vehicle_data.brand} {vehicle_data.model}",
+        details=f"مركبة جديدة: {vehicle_data.brand} {vehicle_data.model} - {vehicle_data.plate_number}"
+    )
+    
+    return Vehicle(**vehicle_dict)
+
+@api_router.get("/operations/vehicles")
+async def get_vehicles(
+    vehicle_type: Optional[str] = None,
+    status: Optional[str] = None,
+    center_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if vehicle_type:
+        query["vehicle_type"] = vehicle_type
+    if status:
+        query["status"] = status
+    if center_id:
+        query["center_id"] = center_id
+    
+    vehicles = await db.vehicles.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return vehicles
+
+@api_router.put("/operations/vehicles/{vehicle_id}", response_model=Vehicle)
+async def update_vehicle(vehicle_id: str, vehicle_data: VehicleCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.vehicles.update_one(
+        {"id": vehicle_id},
+        {"$set": vehicle_data.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    
+    vehicle = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_vehicle",
+        entity_type="vehicle",
+        entity_id=vehicle_id,
+        entity_name=f"{vehicle.get('brand')} {vehicle.get('model')}",
+        details=f"تعديل مركبة: {vehicle.get('plate_number')}"
+    )
+    
+    return vehicle
+
+# Operations Dashboard
+@api_router.get("/operations/dashboard")
+async def get_operations_dashboard(current_user: dict = Depends(get_current_user)):
+    equipment_operational = await db.equipment.count_documents({"status": "operational"})
+    equipment_maintenance = await db.equipment.count_documents({"status": "maintenance"})
+    equipment_out_of_order = await db.equipment.count_documents({"status": "out_of_order"})
+    
+    vehicles_available = await db.vehicles.count_documents({"status": "available"})
+    vehicles_in_use = await db.vehicles.count_documents({"status": "in_use"})
+    
+    open_incidents = await db.incident_reports.count_documents({"status": {"$in": ["reported", "investigating"]}})
+    
+    # Today's operations
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_operations = await db.daily_operations.find({"operation_date": today}, {"_id": 0}).to_list(10)
+    
+    return {
+        "equipment": {
+            "operational": equipment_operational,
+            "maintenance": equipment_maintenance,
+            "out_of_order": equipment_out_of_order
+        },
+        "vehicles": {
+            "available": vehicles_available,
+            "in_use": vehicles_in_use
+        },
+        "open_incidents": open_incidents,
+        "today_operations": today_operations
+    }
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
