@@ -20,6 +20,9 @@ import Reports from "./pages/Reports";
 import FeedPurchases from "./pages/FeedPurchases";
 import Settings from "./pages/Settings";
 import HR from "./pages/HR";
+import Legal from "./pages/Legal";
+import Projects from "./pages/Projects";
+import Operations from "./pages/Operations";
 
 // Layout
 import Layout from "./components/Layout";
