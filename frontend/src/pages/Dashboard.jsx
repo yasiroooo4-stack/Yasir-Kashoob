@@ -364,6 +364,88 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Central Dashboard - All Centers */}
+      {centralDashboard && centralDashboard.centers?.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              {language === "ar" ? "ملخص مراكز التجميع" : "Collection Centers Summary"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="text-center p-4 bg-blue-50 rounded-xl">
+                <p className="text-3xl font-bold text-blue-600">
+                  {centralDashboard.summary?.total_centers || 0}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "مراكز التجميع" : "Collection Centers"}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-xl">
+                <p className="text-3xl font-bold text-green-600">
+                  {(centralDashboard.milk?.today_liters || 0).toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "حليب اليوم (لتر)" : "Today's Milk (L)"}
+                </p>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-xl">
+                <p className="text-3xl font-bold text-purple-600">
+                  {(centralDashboard.milk?.monthly_liters || 0).toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "حليب الشهر (لتر)" : "Monthly Milk (L)"}
+                </p>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="py-3 px-4 text-start font-medium">
+                      {language === "ar" ? "المركز" : "Center"}
+                    </th>
+                    <th className="py-3 px-4 text-center font-medium">
+                      {language === "ar" ? "حليب اليوم" : "Today's Milk"}
+                    </th>
+                    <th className="py-3 px-4 text-center font-medium">
+                      {language === "ar" ? "حليب الشهر" : "Monthly Milk"}
+                    </th>
+                    <th className="py-3 px-4 text-center font-medium">
+                      {language === "ar" ? "الموردين" : "Suppliers"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {centralDashboard.centers.map((center) => (
+                    <tr key={center.center_id} className="border-b hover:bg-muted/30">
+                      <td className="py-3 px-4 font-medium">
+                        {center.center_name}
+                        <span className="text-xs text-muted-foreground ms-2">
+                          ({center.center_code})
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {center.today_milk_liters.toLocaleString()} L
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {center.monthly_milk_liters.toLocaleString()} L
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {center.suppliers_count}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
