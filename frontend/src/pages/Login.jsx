@@ -89,12 +89,10 @@ const Login = () => {
                 </div>
               </div>
               <CardTitle className="text-2xl font-bold">
-                {isLogin ? t("login_title") : t("register_title")}
+                {t("login_title")}
               </CardTitle>
               <CardDescription>
-                {isLogin 
-                  ? (language === "ar" ? "أدخل بياناتك للوصول إلى النظام" : "Enter your credentials to access the system")
-                  : (language === "ar" ? "أنشئ حساباً جديداً للبدء" : "Create a new account to get started")}
+                {language === "ar" ? "أدخل بياناتك للوصول إلى النظام" : "Enter your credentials to access the system"}
               </CardDescription>
             </CardHeader>
 
@@ -113,56 +111,6 @@ const Login = () => {
                     data-testid="username-input"
                   />
                 </div>
-
-                {/* Email - Only for Register */}
-                {!isLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("email")}</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder={language === "ar" ? "أدخل البريد الإلكتروني" : "Enter email"}
-                      required
-                      data-testid="email-input"
-                    />
-                  </div>
-                )}
-
-                {/* Full Name - Only for Register */}
-                {!isLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">{t("full_name")}</Label>
-                    <Input
-                      id="full_name"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleChange}
-                      placeholder={language === "ar" ? "أدخل الاسم الكامل" : "Enter full name"}
-                      required
-                      data-testid="fullname-input"
-                    />
-                  </div>
-                )}
-
-                {/* Role - Only for Register */}
-                {!isLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="role">{t("role")}</Label>
-                    <Select value={formData.role} onValueChange={handleRoleChange}>
-                      <SelectTrigger data-testid="role-select">
-                        <SelectValue placeholder={t("role")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">{t("admin")}</SelectItem>
-                        <SelectItem value="employee">{t("employee")}</SelectItem>
-                        <SelectItem value="accountant">{t("accountant")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
 
                 {/* Password */}
                 <div className="space-y-2">
@@ -209,7 +157,7 @@ const Login = () => {
                       {t("loading")}
                     </span>
                   ) : (
-                    isLogin ? t("login") : t("register")
+                    t("login")
                   )}
                 </Button>
 
