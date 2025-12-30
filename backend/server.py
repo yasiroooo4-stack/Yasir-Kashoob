@@ -122,6 +122,7 @@ class SupplierBase(BaseModel):
     national_id: Optional[str] = None
     farm_size: Optional[float] = None
     cattle_count: Optional[int] = None
+    milk_type: Optional[str] = "cow"  # cow (أبقار), camel (إبل), goat (ماعز), mixed (مختلط)
 
 class SupplierCreate(SupplierBase):
     pass
