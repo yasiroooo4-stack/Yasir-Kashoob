@@ -616,18 +616,42 @@ const Settings = () => {
               </div>
 
               {/* Preview */}
-              <div className="mt-6 p-6 rounded-xl bg-slate-50 dark:bg-slate-800">
-                <h4 className="font-medium mb-4">{language === "ar" ? "معاينة" : "Preview"}</h4>
+              <div className="mt-6 p-6 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <h4 className="font-medium mb-4">{language === "ar" ? "معاينة الأزرار" : "Button Preview"}</h4>
                 <div className="flex flex-wrap gap-3">
-                  <Button className="gradient-primary text-white">
+                  <Button 
+                    className="text-white"
+                    style={{ background: `linear-gradient(135deg, var(--theme-primary, #2563eb), var(--theme-primary-dark, #1d4ed8))` }}
+                  >
                     {language === "ar" ? "زر أساسي" : "Primary Button"}
                   </Button>
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline"
+                    style={{ borderColor: 'var(--theme-primary)', color: 'var(--theme-primary)' }}
+                  >
                     {language === "ar" ? "زر ثانوي" : "Secondary Button"}
                   </Button>
-                  <Button variant="ghost">
+                  <Button 
+                    variant="ghost"
+                    style={{ color: 'var(--theme-primary)' }}
+                  >
                     {language === "ar" ? "زر شفاف" : "Ghost Button"}
                   </Button>
+                </div>
+                
+                {/* Color Preview */}
+                <div className="mt-4 flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">{language === "ar" ? "الألوان:" : "Colors:"}</span>
+                  <div 
+                    className="w-8 h-8 rounded-full shadow-md border-2 border-white"
+                    style={{ backgroundColor: 'var(--theme-primary)' }}
+                    title="Primary"
+                  />
+                  <div 
+                    className="w-8 h-8 rounded-full shadow-md border-2 border-white"
+                    style={{ backgroundColor: 'var(--theme-primary-dark)' }}
+                    title="Secondary"
+                  />
                 </div>
               </div>
             </CardContent>
