@@ -264,6 +264,21 @@ function App() {
                     <HR />
                   </ProtectedRoute>
                 } />
+                <Route path="legal" element={
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["legal", "admin", "it"]}>
+                    <Legal />
+                  </ProtectedRoute>
+                } />
+                <Route path="projects" element={
+                  <ProtectedRoute allowedDepartments={["projects", "admin", "it"]}>
+                    <Projects />
+                  </ProtectedRoute>
+                } />
+                <Route path="operations" element={
+                  <ProtectedRoute allowedDepartments={["operations", "admin", "it"]}>
+                    <Operations />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
