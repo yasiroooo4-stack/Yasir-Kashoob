@@ -653,7 +653,7 @@ const HR = () => {
         
         <div class="signature">
           <p><strong>مدير الموارد البشرية</strong></p>
-          <p>${letter.approved_by_name || ''}</p>
+          <p>HASSAN SALIM KASHOOB</p>
           <div class="signature-code">
             <strong>كود التصديق الإلكتروني:</strong><br>
             ${letter.signature_code || 'N/A'}
