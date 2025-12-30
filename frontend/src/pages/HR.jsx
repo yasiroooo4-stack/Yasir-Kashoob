@@ -106,6 +106,10 @@ const HR = () => {
   const [importLoading, setImportLoading] = useState(false);
   const fileInputRef = useState(null);
   
+  // Attendance search/filter
+  const [attendanceSearch, setAttendanceSearch] = useState("");
+  const [selectedAttendanceEmployee, setSelectedAttendanceEmployee] = useState("");
+  
   // Attendance form
   const [attendanceForm, setAttendanceForm] = useState({
     employee_id: "",
