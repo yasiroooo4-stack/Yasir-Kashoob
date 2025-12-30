@@ -997,6 +997,25 @@ const HR = () => {
                   <Plus className="w-4 h-4" />
                   {language === "ar" ? "إضافة حضور" : "Add Attendance"}
                 </Button>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleImportExcel}
+                    className="hidden"
+                    disabled={importLoading}
+                  />
+                  <Button variant="outline" className="gap-1" asChild disabled={importLoading}>
+                    <span>
+                      {importLoading ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 text-blue-600" />
+                      )}
+                      {language === "ar" ? "استيراد Excel" : "Import Excel"}
+                    </span>
+                  </Button>
+                </label>
                 <Select value={attendanceMonth.toString()} onValueChange={(v) => setAttendanceMonth(parseInt(v))}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
