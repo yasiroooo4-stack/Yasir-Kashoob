@@ -24,6 +24,7 @@ import {
   Scale,
   FolderKanban,
   Activity,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -57,6 +58,7 @@ const Layout = () => {
     { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
     { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
+    { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
     { path: "/employees", icon: UserCog, label: "employees", roles: ["admin"], departments: ["hr", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/settings", icon: Settings, label: "settings" },
