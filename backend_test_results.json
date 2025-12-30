@@ -4,97 +4,125 @@
     "success": true,
     "message": "Successfully logged in as yasir",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.062458"
+    "timestamp": "2025-12-30T05:41:01.336038"
+  },
+  {
+    "test": "Forgot Password API",
+    "success": true,
+    "message": "Successfully requested password reset for testadmin@test.com",
+    "details": null,
+    "timestamp": "2025-12-30T05:41:02.471921"
+  },
+  {
+    "test": "Verify Reset Token API",
+    "success": true,
+    "message": "Successfully verified invalid token returns valid=false",
+    "details": null,
+    "timestamp": "2025-12-30T05:41:02.482098"
+  },
+  {
+    "test": "Reset Password API",
+    "success": true,
+    "message": "Successfully rejected invalid token with proper error message",
+    "details": null,
+    "timestamp": "2025-12-30T05:41:02.496688"
+  },
+  {
+    "test": "Password Recovery Workflow",
+    "success": true,
+    "message": "Complete password recovery workflow tested successfully for recovery_test@test.com (email sent)",
+    "details": null,
+    "timestamp": "2025-12-30T05:41:03.497112"
   },
   {
     "test": "Legal Dashboard API",
     "success": true,
     "message": "Legal dashboard retrieved with all expected fields: ['contracts_active', 'contracts_expiring_soon', 'cases_open', 'consultations_pending']",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.119894"
+    "timestamp": "2025-12-30T05:41:03.527614"
   },
   {
     "test": "Legal Contracts CRUD",
     "success": true,
-    "message": "Successfully created contract 'عقد توريد' with auto-generated number CTR-2025-0001",
+    "message": "Successfully created contract 'عقد توريد' with auto-generated number CTR-2025-0002",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.172598"
+    "timestamp": "2025-12-30T05:41:03.598000"
   },
   {
     "test": "Legal Cases CRUD",
     "success": true,
-    "message": "Successfully created case 'قضية تعويض' with auto-generated number CASE-2025-0001",
+    "message": "Successfully created case 'قضية تعويض' with auto-generated number CASE-2025-0002",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.298661"
+    "timestamp": "2025-12-30T05:41:03.668155"
   },
   {
     "test": "Projects Dashboard Stats",
     "success": true,
     "message": "Projects dashboard retrieved with all expected fields: ['total_projects', 'active_projects', 'completed_projects', 'overdue_tasks', 'total_budget', 'total_actual_cost']",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.354788"
+    "timestamp": "2025-12-30T05:41:03.690577"
   },
   {
     "test": "Projects CRUD",
     "success": true,
-    "message": "Successfully created project 'مشروع توسعة المصنع' with auto-generated code PRJ-2025-0001",
+    "message": "Successfully created project 'مشروع توسعة المصنع' with auto-generated code PRJ-2025-0003",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.394026"
+    "timestamp": "2025-12-30T05:41:03.761304"
   },
   {
     "test": "Projects CRUD",
     "success": true,
-    "message": "Successfully created project 'مشروع توسعة المصنع' with auto-generated code PRJ-2025-0002",
+    "message": "Successfully created project 'مشروع توسعة المصنع' with auto-generated code PRJ-2025-0004",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.460847"
+    "timestamp": "2025-12-30T05:41:03.779933"
   },
   {
     "test": "Project Tasks CRUD",
     "success": true,
     "message": "Successfully created task 'تصميم المخططات' for project",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.548769"
+    "timestamp": "2025-12-30T05:41:03.843323"
   },
   {
     "test": "Operations Dashboard",
     "success": true,
     "message": "Operations dashboard retrieved with all expected fields and structure",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.567598"
+    "timestamp": "2025-12-30T05:41:03.913700"
   },
   {
     "test": "Operations Equipment CRUD",
     "success": true,
-    "message": "Successfully created equipment 'خزان تبريد' with auto-generated code EQP-0001",
+    "message": "Successfully created equipment 'خزان تبريد' with auto-generated code EQP-0002",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.694562"
+    "timestamp": "2025-12-30T05:41:03.938879"
   },
   {
     "test": "Operations Vehicles CRUD",
     "success": true,
-    "message": "Successfully created vehicle 'Isuzu NPR' with auto-generated code VEH-0001",
+    "message": "Successfully created vehicle 'Isuzu NPR' with auto-generated code VEH-0002",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.736709"
+    "timestamp": "2025-12-30T05:41:04.008894"
   },
   {
     "test": "Operations Incidents CRUD",
     "success": true,
-    "message": "Successfully created incident 'عطل في خزان التبريد' with auto-generated number INC-2025-0001",
+    "message": "Successfully created incident 'عطل في خزان التبريد' with auto-generated number INC-2025-0002",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.823784"
+    "timestamp": "2025-12-30T05:41:04.076005"
   },
   {
     "test": "Activity Logs - New Modules",
     "success": true,
     "message": "New module operations properly logged: Legal, Projects, Operations",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.898271"
+    "timestamp": "2025-12-30T05:41:04.144927"
   },
   {
     "test": "Activity Log - API Filters",
     "success": true,
     "message": "Activity logs API filters working correctly (limit=5, action filter, sorting)",
     "details": null,
-    "timestamp": "2025-12-30T04:46:23.934765"
+    "timestamp": "2025-12-30T05:41:04.175787"
   }
 ]
