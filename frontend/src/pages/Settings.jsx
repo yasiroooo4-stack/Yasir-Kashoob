@@ -380,7 +380,7 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
             {t("profile_settings")}
@@ -388,6 +388,10 @@ const Settings = () => {
           <TabsTrigger value="password" className="gap-2">
             <Lock className="w-4 h-4" />
             {t("change_password")}
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-2">
+            <Palette className="w-4 h-4" />
+            {language === "ar" ? "المظهر" : "Appearance"}
           </TabsTrigger>
           <TabsTrigger value="centers" className="gap-2">
             <Building className="w-4 h-4" />
