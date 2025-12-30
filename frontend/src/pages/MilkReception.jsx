@@ -85,6 +85,31 @@ const MilkReception = () => {
       supplier_id: supplierId,
       supplier_name: supplier?.name || "",
     });
+    setSupplierCode(supplier?.supplier_code || "");
+    setSupplierFound(supplier);
+  };
+
+  // Search supplier by code
+  const handleSupplierCodeChange = (code) => {
+    setSupplierCode(code);
+    if (code.length >= 2) {
+      const supplier = suppliers.find(
+        (s) => s.supplier_code?.toLowerCase() === code.toLowerCase() ||
+               s.supplier_code?.toLowerCase().includes(code.toLowerCase())
+      );
+      if (supplier) {
+        setSupplierFound(supplier);
+        setFormData({
+          ...formData,
+          supplier_id: supplier.id,
+          supplier_name: supplier.name,
+        });
+      } else {
+        setSupplierFound(null);
+      }
+    } else {
+      setSupplierFound(null);
+    }
   };
 
   const handleSubmit = async (e) => {
