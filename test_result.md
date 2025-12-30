@@ -63,6 +63,7 @@ user_problem_statement: |
   نظام ERP كامل لمركز تجميع الحليب يتضمن:
   - مراكز تجميع متعددة (حجيف، زيك، غدو)
   - قسم الموارد البشرية الشامل مع ربط جهاز البصمة Hikvision
+  - سجل النشاطات (Activity Logging) لجميع العمليات
 
 backend:
   - task: "Auto-create collection centers on startup"
@@ -76,6 +77,18 @@ backend:
       - working: true
         agent: "main"
         comment: "Implemented and verified - 3 centers created (حجيف، زيك، غدو)"
+
+  - task: "Activity Logging for all CRUD operations"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added log_activity calls to: suppliers CRUD, customers CRUD, milk-receptions, sales, payments, centers CRUD, feed-purchases, HR employees CRUD, leave-requests, expense-requests, car-contracts, official-letters, fingerprint-devices"
 
   - task: "HR Employee Management APIs"
     implemented: true
@@ -186,37 +199,60 @@ frontend:
         agent: "main"
         comment: "HR page with 7 tabs: employees, attendance, leaves, expenses, cars, letters, devices"
 
+  - task: "Activity Log UI in Settings"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Settings.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Activity Log tab displays all actions with translated labels for 40+ action types"
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: true
 
 test_plan:
   current_focus:
-    - "HR Employee Management APIs"
-    - "Leave Request APIs"
-    - "Expense Request APIs"
-    - "Official Letter APIs"
-    - "Create Employee Account API"
+    - "Activity Logging for all CRUD operations"
+    - "Activity Log UI in Settings"
   stuck_tasks: []
   test_all: false
 
 agent_communication:
   - agent: "main"
     message: |
-      Please test the HR module backend APIs:
+      تم تنفيذ ميزة سجل النشاطات (Activity Logging) بنجاح!
       
-      **Credentials:**
+      **ما تم إضافته:**
+      1. إضافة log_activity لجميع عمليات CRUD في:
+         - الموردين (create, update, delete)
+         - العملاء (create, update, delete)
+         - استلام الحليب (create)
+         - المبيعات (create)
+         - المدفوعات (create)
+         - مراكز التجميع (create, update, delete)
+         - مشتريات الأعلاف (create, delete)
+         - موظفي HR (create, update, delete)
+         - طلبات الإجازة (create, approve, reject)
+         - طلبات المصاريف (create, approve, reject, pay)
+         - عقود السيارات (create, cancel)
+         - الرسائل الرسمية (create, issue)
+         - أجهزة البصمة (create, delete)
+      
+      2. تحديث واجهة Activity Log في Settings:
+         - إضافة ترجمة لـ 40+ نوع من الإجراءات
+         - عرض التفاصيل باللغة العربية
+      
+      **للاختبار:**
+      - POST /api/suppliers - إنشاء مورد جديد
+      - GET /api/activity-logs - التحقق من تسجيل النشاط
+      
+      **بيانات الدخول:**
       - Username: yasir
       - Password: admin123
-      
-      **Test the following:**
-      1. GET /api/hr/employees - should return 4 employees
-      2. GET /api/hr/dashboard - should return HR stats
-      3. POST /api/hr/leave-requests - create leave request
-      4. PUT /api/hr/leave-requests/{id}/approve - approve leave
-      5. POST /api/hr/expense-requests - create expense request
-      6. POST /api/hr/official-letters - create official letter
-      7. GET /api/hr/fingerprint-devices - should return 2 devices
-      8. POST /api/hr/employees/{id}/create-account - create account for Ahmed
