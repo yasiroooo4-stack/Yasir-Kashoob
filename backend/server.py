@@ -355,10 +355,16 @@ class OfficialLetterBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     employee_id: str
     employee_name: str
-    letter_type: str  # salary_certificate, employment_letter, experience_letter, mission_letter, no_objection
+    department: Optional[str] = None
+    position: Optional[str] = None
+    letter_type: str  # salary_certificate, employment_letter, experience_letter, mission_letter, no_objection, leave_request
     purpose: Optional[str] = None
     recipient: Optional[str] = None
     content: Optional[str] = None
+    # For leave requests
+    leave_start_date: Optional[str] = None
+    leave_end_date: Optional[str] = None
+    leave_type: Optional[str] = None  # annual, sick, unpaid, emergency
 
 class OfficialLetterCreate(OfficialLetterBase):
     pass
@@ -366,9 +372,18 @@ class OfficialLetterCreate(OfficialLetterBase):
 class OfficialLetter(OfficialLetterBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     letter_number: Optional[str] = None
-    status: str = "pending"  # pending, issued, delivered
-    issued_by: Optional[str] = None
-    issued_at: Optional[str] = None
+    status: str = "pending"  # pending, approved, rejected, issued
+    requested_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    # HR Manager approval (electronic signature)
+    is_approved: bool = False
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    signature_code: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    # Printing info
+    is_printed: bool = False
+    printed_at: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # Fingerprint Device Models (نماذج أجهزة البصمة)
