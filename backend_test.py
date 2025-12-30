@@ -1753,7 +1753,7 @@ class BackendTester:
     
     def run_all_tests(self):
         """Run all backend tests"""
-        print(f"🧪 Starting Backend API Tests")
+        print(f"🧪 Starting Backend API Tests for New Modules (Legal, Projects, Operations)")
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Test User: {TEST_USERNAME}")
         print("=" * 60)
@@ -1766,21 +1766,26 @@ class BackendTester:
                 print("❌ Cannot proceed without authentication")
                 return False
         
-        # Run all HR API tests and Activity Logging tests
+        # Run tests for the three new modules as requested
         tests = [
-            self.test_hr_employees_api,
-            self.test_hr_dashboard_api,
-            self.test_hr_fingerprint_devices_api,
-            self.test_hr_leave_request_workflow,
-            self.test_hr_expense_request_api,
-            self.test_hr_official_letter_api,
-            self.test_hr_car_contract_api,
-            self.test_hr_attendance_report_api,
-            # Activity Logging Tests
-            self.test_activity_logs_login_logged,
-            self.test_activity_logs_supplier_crud,
-            self.test_activity_logs_customer_crud,
-            self.test_activity_logs_hr_leave_request,
+            # Legal Module Tests
+            self.test_legal_dashboard_api,
+            self.test_legal_contracts_crud,
+            self.test_legal_cases_crud,
+            
+            # Projects Module Tests
+            self.test_projects_dashboard_stats,
+            self.test_projects_crud,
+            self.test_project_tasks_crud,
+            
+            # Operations Module Tests
+            self.test_operations_dashboard,
+            self.test_operations_equipment_crud,
+            self.test_operations_vehicles_crud,
+            self.test_operations_incidents_crud,
+            
+            # Activity Logging for New Modules
+            self.test_activity_logs_new_modules,
             self.test_activity_logs_api_filters
         ]
         
