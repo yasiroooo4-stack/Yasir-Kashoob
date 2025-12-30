@@ -570,6 +570,107 @@ const HR = () => {
     }
   };
 
+  // Approve official letter
+  const handleApproveLetter = async (letterId) => {
+    try {
+      const response = await axios.post(`${API}/hr/official-letters/${letterId}/approve`);
+      toast.success(
+        language === "ar" 
+          ? `تم تصديق الرسالة - كود التصديق: ${response.data.signature_code}`
+          : `Letter approved - Code: ${response.data.signature_code}`
+      );
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // Reject official letter
+  const handleRejectLetter = async (letterId) => {
+    const reason = prompt(language === "ar" ? "سبب الرفض:" : "Rejection reason:");
+    if (reason === null) return;
+    
+    try {
+      await axios.post(`${API}/hr/official-letters/${letterId}/reject?reason=${encodeURIComponent(reason)}`);
+      toast.success(language === "ar" ? "تم رفض الرسالة" : "Letter rejected");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // Print official letter
+  const handlePrintLetter = (letter) => {
+    // Mark as printed in backend
+    axios.post(`${API}/hr/official-letters/${letter.id}/print`).catch(() => {});
+    
+    // Generate printable content
+    const printWindow = window.open('', '_blank');
+    const letterTypeName = LETTER_TYPES.find(t => t.id === letter.letter_type);
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>رسالة رسمية - ${letter.letter_number}</title>
+        <style>
+          body { font-family: 'Arial', sans-serif; padding: 40px; direction: rtl; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+          .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
+          .letter-number { margin-top: 20px; text-align: left; }
+          .content { margin: 30px 0; line-height: 2; }
+          .signature { margin-top: 50px; }
+          .signature-code { background: #f3f4f6; padding: 10px; border-radius: 5px; font-family: monospace; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
+          .stamp { border: 2px solid #2563eb; padding: 15px; display: inline-block; border-radius: 50%; text-align: center; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">شركة المروج للألبان</div>
+          <div>Al Morooj Dairy Company</div>
+          <div style="font-size: 12px; margin-top: 10px;">سلطنة عمان</div>
+        </div>
+        
+        <div class="letter-number">
+          <strong>رقم الرسالة:</strong> ${letter.letter_number}<br>
+          <strong>التاريخ:</strong> ${new Date(letter.approved_at || letter.created_at).toLocaleDateString('ar-SA')}
+        </div>
+        
+        <h2 style="text-align: center; margin: 30px 0;">${letterTypeName?.name || letter.letter_type}</h2>
+        
+        <div class="content">
+          <p><strong>إلى من يهمه الأمر،</strong></p>
+          <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
+          ${letter.department ? `<p>القسم: ${letter.department}</p>` : ''}
+          ${letter.position ? `<p>المسمى الوظيفي: ${letter.position}</p>` : ''}
+          ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
+          ${letter.content ? `<p>${letter.content}</p>` : ''}
+          <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
+        </div>
+        
+        <div class="signature">
+          <p><strong>مدير الموارد البشرية</strong></p>
+          <p>${letter.approved_by_name || ''}</p>
+          <div class="signature-code">
+            <strong>كود التصديق الإلكتروني:</strong><br>
+            ${letter.signature_code || 'N/A'}
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>تم طباعة هذه الرسالة إلكترونياً - ${new Date().toLocaleString('ar-SA')}</p>
+          <p>للتحقق من صحة الرسالة، يرجى التواصل مع قسم الموارد البشرية</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   // Device handlers
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [deleteDeviceDialogOpen, setDeleteDeviceDialogOpen] = useState(false);
