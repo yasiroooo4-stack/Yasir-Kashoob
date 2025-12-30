@@ -62,8 +62,11 @@
 user_problem_statement: |
   نظام ERP كامل لمركز تجميع الحليب يتضمن:
   - مراكز تجميع متعددة (حجيف، زيك، غدو)
-  - قسم الموارد البشرية الشامل مع ربط جهاز البصمة Hikvision
+  - قسم الموارد البشرية الشامل مع ربط جهاز البصمة ZKTeco
   - سجل النشاطات (Activity Logging) لجميع العمليات
+  - قسم القانون (Legal) - العقود، القضايا، الاستشارات، المستندات
+  - قسم المشاريع (Projects) - المشاريع، المهام، فرق العمل
+  - قسم العمليات (Operations) - العمليات اليومية، المعدات، الصيانة، الحوادث، المركبات
 
 backend:
   - task: "Auto-create collection centers on startup"
@@ -88,237 +91,142 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Added log_activity calls to: suppliers CRUD, customers CRUD, milk-receptions, sales, payments, centers CRUD, feed-purchases, HR employees CRUD, leave-requests, expense-requests, car-contracts, official-letters, fingerprint-devices"
-      - working: true
-        agent: "testing"
-        comment: "✅ COMPREHENSIVE TESTING COMPLETED - All Activity Logging scenarios verified: 1) Login actions properly logged with user details and timestamps 2) Supplier CRUD operations (create/update) logged with entity names and Arabic details 3) Customer CRUD operations logged with proper entity tracking 4) HR leave request creation logged with employee names 5) Activity Logs API filters working (limit, action, sorting by timestamp desc) 6) All log entries contain required fields: user_id, user_name, action, entity_type, entity_id, entity_name, details, timestamp 7) Fixed minor backend issues: car_contract logging field reference and leave_request entity_name missing. All 18 backend tests passing (100% success rate)."
+        comment: "Added log_activity calls to 30+ CRUD operations"
 
-  - task: "HR Employee Management APIs"
+  - task: "Legal Module APIs"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "CRUD APIs for HR employees with department-based permissions"
       - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - HR Employee APIs working correctly: GET /api/hr/employees returns 4 employees, all CRUD operations functional, employee account creation working, department-based role assignment implemented."
+        agent: "main"
+        comment: "APIs for contracts, cases, consultations, documents with dashboard"
 
-  - task: "Attendance Management APIs"
+  - task: "Projects Module APIs"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "APIs for attendance tracking and monthly reports"
       - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Attendance Management APIs working: GET /api/hr/attendance/report returns proper monthly reports with year/month parameters, attendance tracking functional."
+        agent: "main"
+        comment: "APIs for projects, tasks, team members, milestones with dashboard"
 
-  - task: "Leave Request APIs"
+  - task: "Operations Module APIs"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "APIs for leave requests with approve/reject"
       - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Leave Request APIs working: POST /api/hr/leave-requests creates requests, GET retrieves them, PUT approve/reject workflow functional, activity logging working."
-
-  - task: "Expense Request APIs"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
         agent: "main"
-        comment: "APIs for expense requests with approve/reject/pay"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Expense Request APIs working: POST /api/hr/expense-requests creates requests with proper status tracking (pending), all required fields captured correctly."
-
-  - task: "Car Contract APIs"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "CRUD APIs for small car contracts"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Car Contract APIs working: POST /api/hr/car-contracts creates contracts with proper status (active), all contract details captured. Fixed backend logging issue (car_model -> car_type)."
-
-  - task: "Official Letter APIs"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "APIs for official letters with auto letter number"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Official Letter APIs working: POST /api/hr/official-letters creates letters (salary certificates, etc.) with proper status tracking (pending), all letter types supported."
-
-  - task: "Fingerprint Device APIs"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "APIs for Hikvision fingerprint device management and sync"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Fingerprint Device APIs working: GET /api/hr/fingerprint-devices returns 2 configured devices with expected IPs (192.168.100.201, 192.168.100.214), device management functional."
-
-  - task: "Create Employee Account API"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "API to create login account for employee with department-based role"
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED - Employee Account Creation API working: POST /api/hr/employees/{id}/create-account creates user accounts with department-based roles (admin, accountant, employee), username generation functional."
+        comment: "APIs for daily operations, equipment, maintenance, incidents, vehicles with dashboard"
 
 frontend:
-  - task: "HR Page with all tabs"
+  - task: "Legal Page"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/HR.jsx"
+    file: "/app/frontend/src/pages/Legal.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "HR page with 7 tabs: employees, attendance, leaves, expenses, cars, letters, devices"
+        comment: "Full page with 4 tabs: Contracts, Cases, Consultations, Documents"
 
-  - task: "Activity Log UI in Settings"
+  - task: "Projects Page"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/Settings.jsx"
+    file: "/app/frontend/src/pages/Projects.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Full page with 2 tabs: Projects, Tasks"
+
+  - task: "Operations Page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Operations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Full page with 5 tabs: Daily, Equipment, Maintenance, Incidents, Vehicles"
+
+  - task: "Navigation Links for new modules"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/Layout.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Activity Log tab displays all actions with translated labels for 40+ action types"
+        comment: "Added Legal, Projects, Operations to sidebar with department-based permissions"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 3
+  test_sequence: 4
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Legal Module APIs"
+    - "Projects Module APIs"
+    - "Operations Module APIs"
   stuck_tasks: []
   test_all: false
 
 agent_communication:
   - agent: "main"
     message: |
-      تم تنفيذ ميزة سجل النشاطات (Activity Logging) بنجاح!
+      تم إضافة 3 أقسام جديدة بنجاح:
       
-      **ما تم إضافته:**
-      1. إضافة log_activity لجميع عمليات CRUD في:
-         - الموردين (create, update, delete)
-         - العملاء (create, update, delete)
-         - استلام الحليب (create)
-         - المبيعات (create)
-         - المدفوعات (create)
-         - مراكز التجميع (create, update, delete)
-         - مشتريات الأعلاف (create, delete)
-         - موظفي HR (create, update, delete)
-         - طلبات الإجازة (create, approve, reject)
-         - طلبات المصاريف (create, approve, reject, pay)
-         - عقود السيارات (create, cancel)
-         - الرسائل الرسمية (create, issue)
-         - أجهزة البصمة (create, delete)
+      **1. قسم القانون (Legal):**
+      - العقود القانونية (CRUD)
+      - القضايا (CRUD + close)
+      - الاستشارات القانونية (CRUD + respond)
+      - المستندات القانونية (CRUD)
+      - Dashboard مع إحصائيات
       
-      2. تحديث واجهة Activity Log في Settings:
-         - إضافة ترجمة لـ 40+ نوع من الإجراءات
-         - عرض التفاصيل باللغة العربية
+      **2. قسم المشاريع (Projects):**
+      - المشاريع (CRUD + status update)
+      - المهام (CRUD + complete)
+      - أعضاء الفريق (CRUD)
+      - المراحل (CRUD + achieve)
+      - Dashboard مع إحصائيات والميزانية
+      
+      **3. قسم العمليات (Operations):**
+      - العمليات اليومية (CRUD)
+      - المعدات (CRUD + status)
+      - سجلات الصيانة (CRUD)
+      - تقارير الحوادث (CRUD + resolve)
+      - أسطول المركبات (CRUD)
+      - Dashboard مع إحصائيات
       
       **للاختبار:**
-      - POST /api/suppliers - إنشاء مورد جديد
-      - GET /api/activity-logs - التحقق من تسجيل النشاط
+      - GET /api/legal/dashboard
+      - GET /api/projects/dashboard/stats
+      - GET /api/operations/dashboard
+      - POST /api/legal/contracts
+      - POST /api/projects
+      - POST /api/operations/daily
       
       **بيانات الدخول:**
       - Username: yasir
       - Password: admin123
-
-  - agent: "testing"
-    message: |
-      🎉 **ACTIVITY LOGGING TESTING COMPLETED SUCCESSFULLY** 🎉
-      
-      **✅ ALL SCENARIOS VERIFIED:**
-      
-      **1. Login Activity Logging:**
-      - ✅ Login actions properly logged with user details and timestamps
-      - ✅ GET /api/activity-logs?action=login returns login history
-      
-      **2. Supplier CRUD Activity Logging:**
-      - ✅ POST /api/suppliers creates supplier and logs "create_supplier" action
-      - ✅ PUT /api/suppliers/{id} updates supplier and logs "update_supplier" action
-      - ✅ All logs contain: user_id, user_name, action, entity_type, entity_id, entity_name, details
-      
-      **3. Customer CRUD Activity Logging:**
-      - ✅ POST /api/customers creates customer and logs "create_customer" action
-      - ✅ Entity names properly captured in Arabic
-      
-      **4. HR Leave Request Activity Logging:**
-      - ✅ POST /api/hr/leave-requests creates request and logs "create_leave_request" action
-      - ✅ Employee names properly captured in logs
-      
-      **5. Activity Logs API Filters:**
-      - ✅ GET /api/activity-logs?limit=5 respects limit parameter
-      - ✅ GET /api/activity-logs?action=login filters by action type
-      - ✅ Logs sorted by timestamp descending (newest first)
-      
-      **🔧 ISSUES FIXED:**
-      - Fixed car contract logging error (car_model -> car_type field reference)
-      - Fixed leave request logging missing entity_name parameter
-      
-      **📊 TEST RESULTS:**
-      - Total Backend Tests: 18
-      - Passed: 18 (100% success rate)
-      - All HR APIs verified and working
-      - All Activity Logging scenarios verified and working
-      
-      **🏁 RECOMMENDATION:**
-      Activity Logging feature is fully functional and ready for production use. All backend APIs are working correctly.
