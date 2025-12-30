@@ -64,7 +64,15 @@ const Suppliers = () => {
     national_id: "",
     farm_size: "",
     cattle_count: "",
+    milk_type: "cow",
   });
+
+  const MILK_TYPES = [
+    { id: "cow", name: "أبقار", name_en: "Cow" },
+    { id: "camel", name: "إبل", name_en: "Camel" },
+    { id: "goat", name: "ماعز", name_en: "Goat" },
+    { id: "mixed", name: "مختلط", name_en: "Mixed" },
+  ];
 
   useEffect(() => {
     fetchData();
