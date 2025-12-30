@@ -201,6 +201,10 @@ const HR = () => {
     { id: "milk_reception", name: "استلام الحليب", name_en: "Milk Reception" },
     { id: "sales", name: "المبيعات", name_en: "Sales" },
     { id: "inventory", name: "المخازن", name_en: "Inventory" },
+    { id: "legal", name: "القسم القانوني", name_en: "Legal" },
+    { id: "projects", name: "المشاريع", name_en: "Projects" },
+    { id: "operations", name: "العمليات", name_en: "Operations" },
+    { id: "marketing", name: "التسويق", name_en: "Marketing" },
   ];
 
   const LEAVE_TYPES = [
