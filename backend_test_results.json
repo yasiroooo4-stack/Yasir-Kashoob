@@ -4,125 +4,125 @@
     "success": true,
     "message": "Successfully logged in as yasir",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.288842"
+    "timestamp": "2025-12-30T04:09:04.771800"
   },
   {
     "test": "HR Employees API",
     "success": true,
     "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Salim Said Faraj Aghreeb Al Shahri', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.316582"
+    "timestamp": "2025-12-30T04:09:04.792132"
   },
   {
     "test": "HR Dashboard API",
     "success": true,
     "message": "Dashboard retrieved with fields: ['total_employees', 'today_attendance', 'pending_leaves', 'pending_expenses', 'active_car_contracts', 'recent_leave_requests', 'recent_expense_requests']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.350287"
+    "timestamp": "2025-12-30T04:09:04.819606"
   },
   {
     "test": "HR Fingerprint Devices API",
     "success": true,
     "message": "Found 2 devices with expected IPs: ['192.168.100.201', '192.168.100.214']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.369896"
+    "timestamp": "2025-12-30T04:09:04.872208"
   },
   {
     "test": "HR Employees API",
     "success": true,
     "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Salim Said Faraj Aghreeb Al Shahri', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.381350"
+    "timestamp": "2025-12-30T04:09:04.883137"
   },
   {
     "test": "HR Leave Request Workflow",
     "success": true,
     "message": "Successfully created, retrieved, and approved leave request for Yasir Kashoob IT",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.521543"
+    "timestamp": "2025-12-30T04:09:04.962172"
   },
   {
     "test": "HR Employees API",
     "success": true,
     "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Salim Said Faraj Aghreeb Al Shahri', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.533461"
+    "timestamp": "2025-12-30T04:09:04.974202"
   },
   {
     "test": "HR Expense Request API",
     "success": true,
     "message": "Successfully created expense request for Yasir Kashoob IT",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.594724"
+    "timestamp": "2025-12-30T04:09:05.028654"
   },
   {
     "test": "HR Employees API",
     "success": true,
     "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Salim Said Faraj Aghreeb Al Shahri', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.607119"
+    "timestamp": "2025-12-30T04:09:05.042445"
   },
   {
     "test": "HR Official Letter API",
     "success": true,
     "message": "Successfully created salary certificate for Yasir Kashoob IT",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.627801"
+    "timestamp": "2025-12-30T04:09:05.059019"
   },
   {
     "test": "HR Employees API",
     "success": true,
     "message": "Successfully retrieved 4 employees: ['Yasir Kashoob IT', 'Salim Said Faraj Aghreeb Al Shahri', 'Salim', 'Said']",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.639146"
+    "timestamp": "2025-12-30T04:09:05.070125"
   },
   {
     "test": "HR Car Contract API",
-    "success": false,
-    "message": "Car contract creation failed with status 520",
-    "details": "Internal Server Error",
-    "timestamp": "2025-12-30T04:08:02.678394"
+    "success": true,
+    "message": "Successfully created car contract for Yasir Kashoob IT",
+    "details": null,
+    "timestamp": "2025-12-30T04:09:05.082328"
   },
   {
     "test": "HR Attendance Report API",
     "success": true,
     "message": "Successfully retrieved attendance report for December 2025",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.691666"
+    "timestamp": "2025-12-30T04:09:05.133563"
   },
   {
     "test": "Activity Log - Login Logged",
     "success": true,
     "message": "Login action properly logged for user Yasir Kashoob IT",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.705378"
+    "timestamp": "2025-12-30T04:09:05.145307"
   },
   {
     "test": "Activity Log - Supplier CRUD",
     "success": true,
     "message": "Supplier CRUD operations properly logged (create & update) for مزرعة الخير للألبان",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.837678"
+    "timestamp": "2025-12-30T04:09:05.318731"
   },
   {
     "test": "Activity Log - Customer CRUD",
     "success": true,
     "message": "Customer create operation properly logged for شركة الألبان المتقدمة",
     "details": null,
-    "timestamp": "2025-12-30T04:08:02.935825"
+    "timestamp": "2025-12-30T04:09:05.381672"
   },
   {
     "test": "Activity Log - HR Leave Request",
-    "success": false,
-    "message": "Create leave request action not logged for Yasir Kashoob IT",
-    "details": "Available logs: ['create_leave_request - None', 'create_leave_request - None', 'create_leave_request - None', 'create_leave_request - None']",
-    "timestamp": "2025-12-30T04:08:02.969624"
+    "success": true,
+    "message": "HR leave request creation properly logged for Yasir Kashoob IT",
+    "details": null,
+    "timestamp": "2025-12-30T04:09:05.529521"
   },
   {
     "test": "Activity Log - API Filters",
     "success": true,
     "message": "Activity logs API filters working correctly (limit=5, action filter, sorting)",
     "details": null,
-    "timestamp": "2025-12-30T04:08:03.015317"
+    "timestamp": "2025-12-30T04:09:05.573040"
   }
 ]
