@@ -1080,6 +1080,74 @@ async def log_activity(user_id: str, user_name: str, action: str, entity_type: s
     )
     await db.activity_logs.insert_one(activity.model_dump())
 
+# Email sending helper
+async def send_email(to_email: str, subject: str, html_content: str):
+    """Send email using SMTP"""
+    try:
+        message = MIMEMultipart("alternative")
+        message["From"] = SMTP_FROM_EMAIL
+        message["To"] = to_email
+        message["Subject"] = subject
+        
+        html_part = MIMEText(html_content, "html", "utf-8")
+        message.attach(html_part)
+        
+        await aiosmtplib.send(
+            message,
+            hostname=SMTP_HOST,
+            port=SMTP_PORT,
+            username=SMTP_USER,
+            password=SMTP_PASSWORD,
+            start_tls=True
+        )
+        return True
+    except Exception as e:
+        logging.error(f"Error sending email: {e}")
+        return False
+
+async def send_password_reset_email(email: str, token: str, full_name: str):
+    """Send password reset email"""
+    reset_link = f"{os.environ.get('FRONTEND_URL', 'https://morooj-milk.preview.emergentagent.com')}/reset-password?token={token}"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #8B4513, #D2691E); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+            .button {{ display: inline-block; background: #8B4513; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+            .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>المروج للألبان</h1>
+            </div>
+            <div class="content">
+                <h2>مرحباً {full_name}</h2>
+                <p>تم طلب استرجاع كلمة المرور لحسابك في نظام المروج للألبان.</p>
+                <p>اضغط على الزر أدناه لإعادة تعيين كلمة المرور:</p>
+                <p style="text-align: center;">
+                    <a href="{reset_link}" class="button">إعادة تعيين كلمة المرور</a>
+                </p>
+                <p><strong>ملاحظة:</strong> هذا الرابط صالح لمدة ساعة واحدة فقط.</p>
+                <p>إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد.</p>
+            </div>
+            <div class="footer">
+                <p>© 2025 المروج للألبان - جميع الحقوق محفوظة</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return await send_email(email, "إعادة تعيين كلمة المرور - المروج للألبان", html_content)
+
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register", response_model=Token)
