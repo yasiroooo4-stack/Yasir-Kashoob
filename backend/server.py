@@ -1954,6 +1954,17 @@ async def mark_expense_paid(request_id: str, current_user: dict = Depends(requir
 async def create_car_contract(contract_data: CarContractCreate, current_user: dict = Depends(get_current_user)):
     contract = CarContract(**contract_data.model_dump())
     await db.hr_car_contracts.insert_one(contract.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_car_contract",
+        entity_type="car_contract",
+        entity_id=contract.id,
+        entity_name=contract_data.employee_name,
+        details=f"عقد سيارة جديد: {contract_data.employee_name} - {contract_data.car_model}"
+    )
+    
     return contract
 
 @api_router.get("/hr/car-contracts")
@@ -1985,12 +1996,25 @@ async def update_car_contract(contract_id: str, contract_data: CarContractCreate
 
 @api_router.delete("/hr/car-contracts/{contract_id}")
 async def delete_car_contract(contract_id: str, current_user: dict = Depends(get_current_user)):
+    contract = await db.hr_car_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Car contract not found")
+    
     result = await db.hr_car_contracts.update_one(
         {"id": contract_id},
         {"$set": {"status": "cancelled"}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Car contract not found")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="cancel_car_contract",
+        entity_type="car_contract",
+        entity_id=contract_id,
+        entity_name=contract.get("employee_name"),
+        details=f"إلغاء عقد سيارة: {contract.get('employee_name')}"
+    )
+    
     return {"message": "Car contract cancelled"}
 
 # ==================== HR - OFFICIAL LETTERS (الرسائل الرسمية) ====================
@@ -2007,6 +2031,17 @@ async def create_official_letter(letter_data: OfficialLetterCreate, current_user
     letter_dict["letter_number"] = letter_number
     
     await db.hr_official_letters.insert_one(letter_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_official_letter",
+        entity_type="official_letter",
+        entity_id=letter.id,
+        entity_name=letter_data.employee_name,
+        details=f"رسالة رسمية: {letter_data.letter_type} - {letter_data.employee_name}"
+    )
+    
     return OfficialLetter(**letter_dict)
 
 @api_router.get("/hr/official-letters")
@@ -2041,6 +2076,17 @@ async def issue_official_letter(letter_id: str, current_user: dict = Depends(get
         raise HTTPException(status_code=404, detail="Official letter not found")
     
     letter = await db.hr_official_letters.find_one({"id": letter_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="issue_official_letter",
+        entity_type="official_letter",
+        entity_id=letter_id,
+        entity_name=letter.get("employee_name"),
+        details=f"إصدار رسالة رسمية: {letter.get('letter_number')} - {letter.get('employee_name')}"
+    )
+    
     return letter
 
 # ==================== HR - FINGERPRINT DEVICES (أجهزة البصمة) ====================
@@ -2049,6 +2095,17 @@ async def issue_official_letter(letter_id: str, current_user: dict = Depends(get
 async def create_fingerprint_device(device_data: FingerprintDeviceCreate, current_user: dict = Depends(require_role(["admin"]))):
     device = FingerprintDevice(**device_data.model_dump())
     await db.hr_fingerprint_devices.insert_one(device.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_fingerprint_device",
+        entity_type="fingerprint_device",
+        entity_id=device.id,
+        entity_name=device_data.name,
+        details=f"إضافة جهاز بصمة: {device_data.name} - {device_data.ip_address}"
+    )
+    
     return device
 
 @api_router.get("/hr/fingerprint-devices")
@@ -2069,12 +2126,25 @@ async def update_fingerprint_device(device_id: str, device_data: FingerprintDevi
 
 @api_router.delete("/hr/fingerprint-devices/{device_id}")
 async def delete_fingerprint_device(device_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    device = await db.hr_fingerprint_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
     result = await db.hr_fingerprint_devices.update_one(
         {"id": device_id},
         {"$set": {"is_active": False}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Device not found")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_fingerprint_device",
+        entity_type="fingerprint_device",
+        entity_id=device_id,
+        entity_name=device.get("name"),
+        details=f"حذف جهاز بصمة: {device.get('name')}"
+    )
+    
     return {"message": "Device deleted successfully"}
 
 @api_router.post("/hr/fingerprint-devices/{device_id}/sync")
