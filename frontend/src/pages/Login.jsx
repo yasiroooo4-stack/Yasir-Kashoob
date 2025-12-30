@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth, useLanguage } from "../App";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Milk, Globe, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
@@ -227,20 +226,15 @@ const Login = () => {
                   )}
                 </Button>
 
-                {/* Toggle Login/Register */}
+                {/* Forgot Password Link */}
                 <div className="text-center pt-4">
-                  <span className="text-muted-foreground">
-                    {isLogin ? t("no_account") : t("have_account")}
-                  </span>{" "}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="p-0 h-auto text-primary"
-                    onClick={() => setIsLogin(!isLogin)}
-                    data-testid="toggle-auth-mode"
+                  <Link
+                    to="/forgot-password"
+                    className="text-primary hover:underline"
+                    data-testid="forgot-password-link"
                   >
-                    {isLogin ? t("register") : t("login")}
-                  </Button>
+                    {language === "ar" ? "نسيت كلمة المرور؟" : "Forgot Password?"}
+                  </Link>
                 </div>
               </form>
             </CardContent>
