@@ -176,14 +176,55 @@ const Settings = () => {
 
   const getActionLabel = (action) => {
     const actions = {
+      // Auth
       login: language === "ar" ? "تسجيل دخول" : "Login",
       logout: language === "ar" ? "تسجيل خروج" : "Logout",
-      create_supplier: language === "ar" ? "إضافة مورد" : "Add Supplier",
-      create_reception: language === "ar" ? "استلام حليب" : "Milk Reception",
-      create_sale: language === "ar" ? "إضافة مبيعة" : "Add Sale",
-      create_payment: language === "ar" ? "إضافة دفعة" : "Add Payment",
-      create_center: language === "ar" ? "إضافة مركز" : "Add Center",
       password_change: language === "ar" ? "تغيير كلمة المرور" : "Password Change",
+      // Suppliers
+      create_supplier: language === "ar" ? "إضافة مورد" : "Add Supplier",
+      update_supplier: language === "ar" ? "تعديل مورد" : "Update Supplier",
+      delete_supplier: language === "ar" ? "حذف مورد" : "Delete Supplier",
+      // Milk Reception
+      create_milk_reception: language === "ar" ? "استلام حليب" : "Milk Reception",
+      // Customers
+      create_customer: language === "ar" ? "إضافة عميل" : "Add Customer",
+      update_customer: language === "ar" ? "تعديل عميل" : "Update Customer",
+      delete_customer: language === "ar" ? "حذف عميل" : "Delete Customer",
+      // Sales
+      create_sale: language === "ar" ? "عملية بيع" : "Create Sale",
+      // Payments
+      create_payment: language === "ar" ? "دفعة مالية" : "Create Payment",
+      // Centers
+      create_center: language === "ar" ? "إضافة مركز" : "Add Center",
+      update_center: language === "ar" ? "تعديل مركز" : "Update Center",
+      delete_center: language === "ar" ? "حذف مركز" : "Delete Center",
+      // Feed
+      create_feed_purchase: language === "ar" ? "شراء علف" : "Feed Purchase",
+      delete_feed_purchase: language === "ar" ? "حذف شراء علف" : "Delete Feed Purchase",
+      // HR - Employees
+      create_employee: language === "ar" ? "إضافة موظف" : "Add Employee",
+      update_employee: language === "ar" ? "تعديل موظف" : "Update Employee",
+      delete_employee: language === "ar" ? "إيقاف موظف" : "Deactivate Employee",
+      // HR - Attendance
+      create_attendance: language === "ar" ? "تسجيل حضور" : "Record Attendance",
+      // HR - Leave Requests
+      create_leave_request: language === "ar" ? "طلب إجازة" : "Leave Request",
+      approve_leave_request: language === "ar" ? "الموافقة على إجازة" : "Approve Leave",
+      reject_leave_request: language === "ar" ? "رفض إجازة" : "Reject Leave",
+      // HR - Expense Requests
+      create_expense_request: language === "ar" ? "طلب مصاريف" : "Expense Request",
+      approve_expense_request: language === "ar" ? "الموافقة على مصاريف" : "Approve Expense",
+      reject_expense_request: language === "ar" ? "رفض مصاريف" : "Reject Expense",
+      pay_expense_request: language === "ar" ? "صرف مصاريف" : "Pay Expense",
+      // HR - Car Contracts
+      create_car_contract: language === "ar" ? "عقد سيارة" : "Car Contract",
+      cancel_car_contract: language === "ar" ? "إلغاء عقد سيارة" : "Cancel Car Contract",
+      // HR - Official Letters
+      create_official_letter: language === "ar" ? "رسالة رسمية" : "Official Letter",
+      issue_official_letter: language === "ar" ? "إصدار رسالة" : "Issue Letter",
+      // HR - Fingerprint Devices
+      create_fingerprint_device: language === "ar" ? "إضافة جهاز بصمة" : "Add Device",
+      delete_fingerprint_device: language === "ar" ? "حذف جهاز بصمة" : "Delete Device",
     };
     return actions[action] || action;
   };
