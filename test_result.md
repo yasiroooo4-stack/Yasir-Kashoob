@@ -138,7 +138,43 @@ backend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: Operations Dashboard ✅, Equipment CRUD with auto-generated EQP- codes ✅, Vehicles CRUD with auto-generated VEH- codes ✅, Incidents CRUD with auto-generated INC- codes ✅. All endpoints working correctly with proper activity logging."
 
+  - task: "Password Recovery System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Backend APIs for forgot-password, reset-password, verify-reset-token implemented with SSL email support"
+
 frontend:
+  - task: "Password Recovery Pages"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/ForgotPassword.jsx, /app/frontend/src/pages/ResetPassword.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Created ForgotPassword.jsx and ResetPassword.jsx pages with proper UI and validation"
+
+  - task: "Login Page - Forgot Password Link"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Login.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Replaced 'Create Account' link with 'Forgot Password' link"
+
   - task: "Legal Page"
     implemented: true
     working: true
