@@ -193,6 +193,150 @@ const FeedPurchases = () => {
     }
   };
 
+  // Approve feed purchase invoice
+  const handleApproveInvoice = async (purchaseId) => {
+    try {
+      const response = await axios.post(`${API}/feed-purchases/${purchaseId}/approve`);
+      toast.success(
+        language === "ar" 
+          ? `تم تصديق الفاتورة - كود: ${response.data.signature_code}`
+          : `Invoice approved - Code: ${response.data.signature_code}`
+      );
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل التصديق" : "Approval failed"));
+    }
+  };
+
+  // Print feed purchase invoice
+  const handlePrintInvoice = async (purchase) => {
+    const printWindow = window.open('', '_blank');
+    const printTime = new Date().toLocaleString('ar-SA');
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>فاتورة شراء أعلاف - ${purchase.invoice_number || purchase.id.slice(0,8)}</title>
+        <style>
+          body { font-family: 'Arial', sans-serif; padding: 30px; direction: rtl; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 20px; }
+          .logo { font-size: 28px; font-weight: bold; color: #2563eb; }
+          .invoice-title { text-align: center; font-size: 24px; margin: 20px 0; background: #f3f4f6; padding: 10px; border-radius: 8px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+          .info-box { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+          .info-box h3 { margin: 0 0 10px 0; color: #2563eb; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
+          .info-label { color: #666; }
+          .info-value { font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+          th { background: #2563eb; color: white; }
+          .total-row { background: #f3f4f6; font-weight: bold; font-size: 18px; }
+          .signature-section { margin-top: 40px; display: flex; justify-content: space-between; }
+          .signature-box { text-align: center; width: 200px; }
+          .signature-line { border-top: 1px solid #333; margin-top: 60px; padding-top: 10px; }
+          .stamp { border: 3px solid #2563eb; padding: 20px; display: inline-block; border-radius: 10px; margin-top: 20px; }
+          .stamp-approved { background: #dcfce7; border-color: #22c55e; }
+          .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
+          @media print { body { padding: 15px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">شركة المروج للألبان</div>
+            <div>Al Morooj Dairy Company</div>
+            <div style="font-size: 12px;">سلطنة عمان</div>
+          </div>
+          <div style="text-align: left;">
+            <strong>رقم الفاتورة:</strong> ${purchase.invoice_number || 'FP-' + purchase.id.slice(0,8)}<br>
+            <strong>التاريخ:</strong> ${new Date(purchase.purchase_date).toLocaleDateString('ar-SA')}
+          </div>
+        </div>
+        
+        <div class="invoice-title">فاتورة استلام أعلاف</div>
+        
+        <div class="info-grid">
+          <div class="info-box">
+            <h3>بيانات المورد</h3>
+            <div class="info-row"><span class="info-label">الاسم:</span> <span class="info-value">${purchase.supplier_name}</span></div>
+            <div class="info-row"><span class="info-label">الهاتف:</span> <span class="info-value">${purchase.supplier_phone || '-'}</span></div>
+            <div class="info-row"><span class="info-label">العنوان:</span> <span class="info-value">${purchase.supplier_address || '-'}</span></div>
+          </div>
+          <div class="info-box">
+            <h3>بيانات الشراء</h3>
+            <div class="info-row"><span class="info-label">الشركة المصنعة:</span> <span class="info-value">${purchase.company_name}</span></div>
+            <div class="info-row"><span class="info-label">نوع العلف:</span> <span class="info-value">${purchase.feed_type_name}</span></div>
+            <div class="info-row"><span class="info-label">منشئ الفاتورة:</span> <span class="info-value">${purchase.created_by_name || '-'}</span></div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>البند</th>
+              <th>الكمية</th>
+              <th>الوحدة</th>
+              <th>سعر الوحدة</th>
+              <th>الإجمالي</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${purchase.feed_type_name}</td>
+              <td>${purchase.quantity.toLocaleString()}</td>
+              <td>${purchase.unit}</td>
+              <td>${purchase.price_per_unit.toLocaleString()} ر.ع</td>
+              <td>${purchase.total_amount.toLocaleString()} ر.ع</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="4">المجموع الكلي</td>
+              <td>${purchase.total_amount.toLocaleString()} ر.ع</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        ${purchase.notes ? `<p><strong>ملاحظات:</strong> ${purchase.notes}</p>` : ''}
+        
+        <div class="signature-section">
+          <div class="signature-box">
+            <strong>توقيع المستلم</strong>
+            <div class="signature-line">${purchase.supplier_name}</div>
+          </div>
+          <div class="signature-box">
+            ${purchase.is_approved ? `
+              <div class="stamp stamp-approved">
+                <strong>مصدق إلكترونياً</strong><br>
+                <span style="font-size: 11px;">كود التصديق:</span><br>
+                <code style="font-size: 14px;">${purchase.signature_code}</code><br>
+                <span style="font-size: 10px;">${purchase.approved_by_name}</span><br>
+                <span style="font-size: 10px;">${new Date(purchase.approved_at).toLocaleDateString('ar-SA')}</span>
+              </div>
+            ` : `
+              <div class="stamp">
+                <strong>في انتظار التصديق</strong>
+              </div>
+            `}
+          </div>
+          <div class="signature-box">
+            <strong>ختم الشركة</strong>
+            <div class="signature-line">شركة المروج للألبان</div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>تم طباعة هذه الفاتورة بتاريخ: ${printTime}</p>
+          <p>هذه الفاتورة صادرة من نظام إدارة مراكز تجميع الحليب - شركة المروج للألبان</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   // Submit company
   const handleCompanySubmit = async (e) => {
     e.preventDefault();
