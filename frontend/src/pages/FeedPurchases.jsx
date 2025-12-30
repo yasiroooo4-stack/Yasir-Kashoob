@@ -646,17 +646,28 @@ const FeedPurchases = () => {
                             language === "ar" ? "ar-SA" : "en-US"
                           )}
                         </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{purchase.invoice_number || '-'}</Badge>
+                        </TableCell>
                         <TableCell className="font-medium">{purchase.supplier_name}</TableCell>
                         <TableCell>{purchase.feed_type_name}</TableCell>
                         <TableCell>{purchase.company_name}</TableCell>
                         <TableCell>
                           {purchase.quantity} {getUnitLabel(purchase.unit)}
                         </TableCell>
-                        <TableCell>
-                          {purchase.price_per_unit} {t("currency")}
-                        </TableCell>
                         <TableCell className="font-semibold text-amber-600">
                           {purchase.total_amount?.toLocaleString()} {t("currency")}
+                        </TableCell>
+                        <TableCell>
+                          {purchase.is_approved ? (
+                            <Badge className="bg-green-100 text-green-700">
+                              {language === "ar" ? "مصدق" : "Approved"}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              {language === "ar" ? "في الانتظار" : "Pending"}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
