@@ -928,6 +928,16 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
         {"$inc": {"quantity_liters": -sale.quantity_liters}, "$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
     )
     
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_sale",
+        entity_type="sale",
+        entity_id=sale.id,
+        entity_name=sale.customer_name,
+        details=f"عملية بيع: {sale.quantity_liters} لتر إلى {sale.customer_name} - {sale.total_amount} ر.ع"
+    )
+    
     return sale
 
 @api_router.get("/sales", response_model=List[Sale])
@@ -989,16 +999,31 @@ async def create_payment(payment_data: PaymentCreate, current_user: dict = Depen
     await db.payments.insert_one(payment.model_dump())
     
     # Update balances
+    entity_name = ""
     if payment.payment_type == "supplier_payment":
+        supplier = await db.suppliers.find_one({"id": payment.related_id}, {"_id": 0})
+        entity_name = supplier.get("name", "") if supplier else ""
         await db.suppliers.update_one(
             {"id": payment.related_id},
             {"$inc": {"balance": -payment.amount}}
         )
     elif payment.payment_type == "customer_receipt":
+        customer = await db.customers.find_one({"id": payment.related_id}, {"_id": 0})
+        entity_name = customer.get("name", "") if customer else ""
         await db.customers.update_one(
             {"id": payment.related_id},
             {"$inc": {"balance": -payment.amount}}
         )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_payment",
+        entity_type="payment",
+        entity_id=payment.id,
+        entity_name=entity_name,
+        details=f"دفعة مالية: {payment.amount} ر.ع - {entity_name}"
+    )
     
     return payment
 
@@ -1154,6 +1179,16 @@ async def create_feed_purchase(purchase_data: FeedPurchaseCreate, current_user: 
         {"$inc": {"balance": -total_amount}}
     )
     
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_feed_purchase",
+        entity_type="feed_purchase",
+        entity_id=purchase.id,
+        entity_name=supplier.get("name"),
+        details=f"شراء علف: {purchase.feed_type_name} - {total_amount} ر.ع من رصيد {supplier.get('name')}"
+    )
+    
     return purchase
 
 @api_router.get("/feed-purchases", response_model=List[FeedPurchase])
@@ -1239,6 +1274,10 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
     if not existing:
         raise HTTPException(status_code=404, detail="Feed purchase not found")
     
+    # Get supplier name for logging
+    supplier = await db.suppliers.find_one({"id": existing["supplier_id"]}, {"_id": 0})
+    supplier_name = supplier.get("name", "") if supplier else ""
+    
     # Refund supplier balance
     await db.suppliers.update_one(
         {"id": existing["supplier_id"]},
@@ -1247,6 +1286,16 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
     
     # Delete purchase
     await db.feed_purchases.delete_one({"id": purchase_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_feed_purchase",
+        entity_type="feed_purchase",
+        entity_id=purchase_id,
+        entity_name=supplier_name,
+        details=f"حذف شراء علف وإرجاع {existing.get('total_amount', 0)} ر.ع لرصيد {supplier_name}"
+    )
     
     return {"message": "Feed purchase deleted and amount refunded to supplier"}
 
