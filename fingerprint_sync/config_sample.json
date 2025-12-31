@@ -1,0 +1,24 @@
+{
+  "api_url": "https://milk-erp.preview.emergentagent.com",
+  "username": "yasir",
+  "password": "YOUR_PASSWORD_HERE",
+  "sync_interval": 3600,
+  "mdb_paths": [
+    "C:/ZKTeco/att2000.mdb",
+    "D:/Fingerprint/attendance.mdb"
+  ],
+  "devices": [
+    {
+      "name": "جهاز البصمة الرئيسي - Main Entrance",
+      "ip": "192.168.1.100",
+      "port": 4370,
+      "location": "المدخل الرئيسي"
+    },
+    {
+      "name": "جهاز البصمة الفرعي - Back Entrance",
+      "ip": "192.168.1.101",
+      "port": 4370,
+      "location": "المدخل الخلفي"
+    }
+  ]
+}
