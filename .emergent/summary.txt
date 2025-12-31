@@ -1,199 +1,115 @@
 <analysis>**original_problem_statement:**
-The user initially requested an ERP system for a milk collection center. The project has evolved into a full-stack application with modules for Suppliers, Milk Reception, Finance, comprehensive Human Resources (HR), Reporting, and Activity Logging.
+The user initially requested an ERP system for a milk collection center. The project has expanded to include comprehensive modules for Suppliers, Milk Reception, Finance, an advanced Human Resources (HR) system, Inventory, a fully integrated Treasury (Khazina), and robust Reporting.
+
+Key features implemented include role-based access control (RBAC), PDF generation for receipts, a data wipe functionality, customizable UI themes with background images, and an approval workflow for financial transactions.
+
+The user's most recent requests are to fix newly emerged bugs related to employee attendance statistics and data import from ZKTeco devices, and to significantly expand the HR module with features like shift management, overtime, loans, and more.
 
 **PRODUCT REQUIREMENTS:**
-- **Core ERP Modules:** Suppliers, Milk Reception, Finance, Employees, Reports.
-- **HR Module:** Employee management, attendance, leave, expenses, car contracts, department-based permissions, and integration with ZKTeco fingerprint scanners.
-- **New Departments:** Legal, Projects, Operations, and Marketing modules.
-- **Authentication:** Role-based login, password recovery via email, and multiple specific roles (, , ).
-- **Data Import:** Import attendance from Excel and ZKTeco  files.
-- **UI/UX:** A modern UI with theme customization, support for Arabic and English, a header widget for employee stats, and a quick-access button for official letter requests.
-- **Invoicing & Letters:** Generate PDF invoices and a system for official letter requests with an approval workflow.
-- **AI Analysis:** A page for users to ask natural language questions about business data (HR, sales, milk reception) and get AI-generated answers.
-- **Deployment & Networking:** A solution for connecting fingerprint scanners from multiple sites.
+- **Core ERP Modules:** Suppliers, Milk Reception, Finance, Employees, Reports, Inventory, Treasury.
+- **HR Module Expansion:** Add management for Shifts, Overtime, Advances & Loans, End-of-Service benefits, Employee Documents, Organizational Structure, Training, and Performance Evaluation.
+- **Fingerprint Scanner Sync:** Create a desktop-based software agent to automatically sync attendance data from ZKTeco devices across different sites, replacing the manual file upload.
+- **Bug Fixes:** Resolve issues with the employee attendance stats widget and the ZKTeco data import functionality.
+- **Data Integrity:** The system must ensure financial transactions (sales, purchases, payments) are integrated and reflect accurately in the Treasury and financial reports.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
-A comprehensive full-stack ERP application (FastAPI, React, MongoDB) with modules for Suppliers, Milk Reception, HR, Finance, and more. The system features a sophisticated RBAC model with user-specific permissions controlling UI visibility and route access. Recent additions include a full payroll management system, an employee statistics widget in the header, a quick-access button for letter requests, and an AI-powered analysis page. The application has an extensive user base, with accounts and specific roles/permissions configured for over 70 employees. The theming system and password recovery are fully functional.
+A full-stack ERP application built with FastAPI, React, and MongoDB. It features a sophisticated, permission-based access control system. The application includes modules for Suppliers, Milk Reception, HR, Finance (with payment approval workflows), Payroll, Inventory, and a newly added integrated Treasury (). The UI supports customization, including changing the main background image. All transactional data was recently wiped at the user's request to start with a clean slate. The AI analysis feature was built and then completely removed per user instructions, replaced by a standard analytics dashboard.
 
 **Last working item**:
-- **Last item agent was working:** Debugging a critical frontend bug where the application displays a blank white screen after user  logs in. Other users, like  (admin), can log in without issue. The agent determined the backend APIs and user data (including permissions) are correct. The issue is likely a JavaScript rendering error in the frontend, possibly within the  component in  or the  component, triggered by 's specific combination of role () and permissions. The agent's last action was a full service restart, which did not solve the problem.
-- **Status:** IN PROGRESS
+- **Last item agent was working:** The user reported two new, critical bugs simultaneously. The agent was acknowledging these reports and preparing to investigate.
+    1.  The **Employee Stats widget** in the header, which shows the current user's monthly attendance and absence, is not working correctly.
+    2.  The **ZKTeco  file import** for attendance is failing or not updating the database.
+- **Status:** NOT STARTED
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** Frontend testing agent. Instruct the agent to log in as user  (password: ) and inspect the browser's console for React rendering errors. The agent should then compare this with a successful login from user  (password: ).
+- **Which testing method agent to use?**
+    1.  For the **Stats Widget**, use the **backend testing agent** to check the API endpoint that serves the statistics and use the **screenshot tool** to verify the frontend component.
+    2.  For the **ZKTeco import**, use the **backend testing agent** to test the file upload and processing endpoint.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** Blank screen after login for specific users. (P0)
-- **Issue 2:** AI Analysis feature is not working. (P1)
-- **Issue 3:** Fingerprint device synchronization fails. (P2)
+- **Issue 1:** Employee monthly stats (attendance/absence) widget is not working. (P0)
+- **Issue 2:** ZKTeco attendance  file import is broken. (P0)
 
 **Issues Detail:**
-- **Issue 1:**
-    - **Attempted fixes:** The agent confirmed backend data is correct via API calls. Verified user permissions are returned correctly in the login and  responses. Restarted all services. The problem persists, pointing to a frontend-specific rendering bug.
+- **Issue 1:** Employee stats widget not working
+    - **Attempted fixes:** None. This is a newly reported bug.
     - **Next debug checklist:**
-        1.  Examine , specifically the  component logic, to see how it handles the combination of roles and the  array.
-        2.  Add  statements within  and  to trace the user object and component state during rendering for user .
-        3.  Check for infinite loops or unhandled exceptions in the React component lifecycle methods ().
-        4.  Temporarily simplify the  component to see if a specific API call or sub-component is causing the crash.
-    - **Why fix this issue and what will be achieved with the fix?** This is a critical bug preventing a key user () from accessing the application. Fixing it will restore core functionality.
-    - **Status:** IN PROGRESS
+        1.  Examine the frontend component: .
+        2.  Identify and test the backend API endpoint it calls to fetch statistics.
+        3.  Debug the backend logic for calculating attendance/absence for the current month.
+        4.  Add  in the frontend component to inspect the raw API response and state.
+    - **Why fix this issue and what will be achieved with the fix?** This is a key UI element for employees to monitor their attendance. Fixing it restores important user-facing functionality.
+    - **Status:** NOT STARTED
     - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue:** None.
+    - **Should Test frontend/backend/both after fix?** Both
 
-- **Issue 2:**
-    - **Attempted fixes:** The agent tried to install  but the package was not found. The agent then added usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit to  and hardcoded the  into . However, API calls to the  endpoint fail with a 401  error.
+- **Issue 2:** ZKTeco import broken
+    - **Attempted fixes:** None. This is a newly reported bug, although fingerprint sync has been a recurring theme.
     - **Next debug checklist:**
-        1.  Verify the  is being read correctly from the  file in .
-        2.  Confirm the correct usage of the OpenAI Python client with the Emergent LLM Key. The base URL might need to be configured.
-        3.  Call the  again for OpenAI with Emergent LLM Key to get the precise, up-to-date implementation playbook.
-    - **Why fix this issue and what will be achieved with the fix?** This will enable the AI-powered analytics feature requested by the user.
+        1.  Review the backend endpoint responsible for ZKTeco  file uploads (likely under ).
+        2.  Verify the library used for reading  files and its dependencies.
+        3.  Add extensive logging to the import function in  to trace the file reading, data parsing, and database insertion steps.
+        4.  Attempt to manually upload a file and check the backend logs for specific errors.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical function for automating attendance recording.
     - **Status:** NOT STARTED
     - **Is recurring issue?** Y
     - **Should Test frontend/backend/both after fix?** Backend
-    - **Blocked on other issue:** None.
-
-- **Issue 3:**
-    - **Attempted fixes:** This is a known network architecture limitation. A VPN solution was previously documented in .
-    - **Next debug checklist:** No agent action required. This is blocked on the user's infrastructure setup.
-    - **Why fix this issue and what will be achieved with the fix?** Enables automatic attendance syncing from hardware across all company sites.
-    - **Status:** BLOCKED
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend
-    - **Blocked on other issue:** Blocked on user's infrastructure.
 
 **In progress Task List**:
-  - None.
+  - Task 1: Comprehensive HR Module Expansion (P1)
+     - **Where to resume:** The agent had begun planning by reviewing existing data models in . The next step is to define and add the new Pydantic models for Shifts, Overtime, Loans, Documents, etc., before creating the corresponding APIs.
+     - **What will be achieved with this?** A full-featured HR system as per the detailed user requirements.
+     - **Status:** IN PROGRESS (Blocked by the P0 bugs)
+     - **Should Test frontend/backend/both after fix?** Both
+     - **Blocked on something:** Blocked by Employee stats widget not working and ZKTeco import broken issues.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - (P2) Integrate with physical hardware (Ekomilk scales via RS232).
+    - (P1) **Desktop Agent for ZKTeco Sync:** Design and build a standalone desktop application that can be installed on a local PC, connect to fingerprint scanners, read attendance data, and push it to the main ERP's API.
 - **Future Tasks:**
-  - (P2) Develop the AI camera feature for automated QR code scanning.
-  - (P3) Integrate with other physical hardware like milk quality testing devices.
+    - (P2) Integrate with Ekomilk scales via RS232.
+    - (P2) Develop AI camera feature for automated QR code scanning.
+    - (P3) Integrate with other physical hardware like milk quality testing devices.
 
 **Completed work in this session**
-- **Payroll System (DONE):** Implemented a complete payroll module with a dedicated page (), APIs to create payroll periods and calculate salaries based on attendance, and new database models (, ).
-- **User Permissions & Roles (DONE):**
-    - Fixed a critical bug where editing an employee would deactivate their login ().
-    - Implemented a  array on the  model to allow for granular access control beyond just .
-    - Updated  and  to render UI and control routing based on the new  array.
-    - Configured roles and permissions for multiple key users, including the General Manager ( role), Finance Manager ( role), and others.
-- **Employee & User Management (DONE):**
-    - Fixed a bug causing employee accounts to show as Inactive in the UI despite being active in the DB, by changing the UI to check  instead of .
-    - Added a  field to the employee table, edit form, and database model.
-    - Created user accounts with login credentials for all 60+ employees.
-    - Fixed a critical login API bug () by using the correct  field.
-    - Resolved data duplication issues in the  collection.
-- **UI Enhancements (DONE):**
-    - **Employee Stats Widget:** Added a new component to the header displaying the logged-in employee's attendance, absence, and leave balance.
-    - **Quick Letter Request:** Added a Request Letter button to the header and modified the form to be pre-filled and non-editable for regular employees.
-- **AI Analysis Page (Partially Done - Blocked):** Created the frontend page () and backend API () for the natural language query feature. The UI is complete, but the backend API call to the LLM is failing.
-- **Bug Fixes (DONE):**
-    - Fixed a crash in the Add Car Contract form caused by an empty  value.
-    - Verified and confirmed the theme customization system works correctly.
-
-**Earlier issues found/mentioned but not fixed**
-   - None.
+- **Critical Bug Fix:** Resolved a blank screen rendering issue for the  user by implementing React Error Boundaries and robust error handling in header widgets.
+- **Supplier Payment Receipts:** Implemented a feature to generate and download PDF payment receipts for suppliers from the Finance page.
+- **Approval Workflow:** Created a complete approval system for payments. New payments are  until an  approves or rejects them via new UI controls on the Finance page.
+- **Integrated Treasury (الخزينة):** Built a new Treasury module to track the main cash balance, with all transactions logged. It is integrated with the payment approval system.
+- **Financial Analytics Page:** Created a new, non-AI Analytics page with dashboards summarizing key financial metrics like revenue, expenses, and profit, drawing data from the integrated Treasury and sales/purchase modules.
+- **CRUD Operations:** Added Edit and Delete functionality to the Treasury and Inventory modules.
+- **UI/UX Enhancements:**
+    - Added a user-provided image to the login page.
+    - Implemented a customizable background feature, allowing users to change the application's wallpaper from their profile menu.
+- **Data & User Management:**
+    - Performed a full wipe of all transactional data at the user's request.
+    - Reset the password for a locked-out user ().
+- **Feature Removal:** Completely removed the AI-powered Smart Analysis page, its associated backend API, and UI links, as requested by the user.
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence:** Fingerprint device synchronization failure.
-  - **Recurrence count:** 2+
-  - **Status:** BLOCKED
+  - **Issue recurrence in previous fork:** Fingerprint device synchronization failure.
+  - **Recurrence count:** 3+
+  - **Status:** IN PROGRESS (The approach has changed from a network solution to building a dedicated software agent).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Granular Permissions:** The auth system now uses a  array on the user object, checked in  () and , to control access to routes and sidebar links. This is a major enhancement over the previous role-only system.
-- **Dynamic Payroll Generation:** A backend API () iterates through employees, fetches their attendance records within a date range, and calculates salary details based on rules derived from a user-provided Excel sheet.
-- **LLM Integration (Attempted):** The system attempts to use the usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit library to send natural language queries to an LLM. An API endpoint () was created to abstract this, but it is currently failing due to an API key authentication error.
-- **State-Driven UI:** The letter request form () and employee stats widget () use the logged-in user's context to conditionally render UI elements (e.g., showing a disabled employee field for non-admins).
+- **Integrated Financial Model:** The Treasury system acts as a central ledger. It is updated automatically when financial transactions like supplier payments are approved, providing a real-time financial overview.
+- **Stateful Approval Workflow:** Implemented a  -> / state machine for payments, controlled by role-protected APIs and reflected in the UI with badges and conditional actions.
+- **Dynamic PDF Generation:** Utilized the  library on the backend to dynamically generate PDF payment receipts with supplier and payment details.
+- **Dynamic UI Customization:** User-specific settings (like preferred background) are fetched from a  endpoint and applied client-side in .
 
 **key DB schema**
-- ****: Added , .
-- ****: Added .
+- ****: Added fields , , .
 - ** (NEW)**: 
 - ** (NEW)**: 
+- ** (NEW/modified collection)**: A generic collection to hold user-specific UI preferences like .
 
 **changes in tech stack**
-- **Backend:** usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+-  was installed for a Gemini integration, but the feature was later removed. The usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
               [-o ORGANIZATION] [-t {openai,azure}]
               [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
               [--azure-ad-token AZURE_AD_TOKEN] [-V]
@@ -230,190 +146,74 @@ options:
                         https://www.microsoft.com/en-
                         us/security/business/identity-access/microsoft-entra-
                         id
-  -V, --version         show program's version number and exit library added for LLM integration.
+  -V, --version         show program's version number and exit library was uninstalled.  is a key dependency for PDF generation.
 
 **All files of reference**
 - **New Files:**
-    - : UI for payroll management.
-    - : UI for AI-powered analysis.
-    - : Header widget for employee stats.
-    - : Header button for quick letter requests.
+    - 
+    - 
+    - 
+- **Deleted Files:**
+    - 
 - **Heavily Modified Files:**
-    - : Added entire Payroll and Analysis API logic, plus numerous bug fixes and model updates.
-    - : Major changes to routing and the  component to handle .
-    - : Reworked sidebar filtering to use  and added new header widgets.
-    - : Added  column/field and fixed multiple UI bugs related to employee status and forms.
+    - 
+    - 
+    - 
+    - 
+    - 
 
 **Areas that need refactoring**:
-- **:** CRITICAL. Now exceeds 6000 lines. Must be broken down into modular  files (e.g., , , ).
-- **:** Remains a massive component. Should be split into sub-components for each tab (Employees, Contracts, Letters, etc.).
-- **:** The  logic is becoming complex and could be extracted into its own file for better readability and maintenance.
+- **:** CRITICAL. This file has become extremely large and difficult to maintain. It must be broken down into smaller, feature-specific  files (e.g., , , ).
+- **:** The component is now very complex due to the addition of tabs, modals, and state logic for the approval workflow. It should be broken into smaller sub-components.
 
 **key api endpoints**
-- ****: Creates a new payroll period.
-- ****: Calculates the payroll for all employees for a given period.
-- ****: Sends a natural language query to the LLM for analysis (Currently failing).
-- ****: Updated to prevent deactivation of users on edit.
-- ****: Updated to return the  array in the token payload.
-- ****: Updated to return the  array for the current user.
+- ****: Approves/rejects a payment and updates the Treasury.
+- ****: Generates a PDF receipt for a payment.
+- ****: A new set of CRUD endpoints for managing the Treasury balance and transactions.
+- ****: Updated with  and  methods.
+- ****: A new endpoint that provides an aggregated financial overview.
+- ****: Endpoints for managing user-specific UI settings like backgrounds.
 
 **Critical Info for New Agent**
-- **Top Priority is the Blank Screen Bug:** The application is unusable for the Finance Manager (). Your first task is to debug the frontend rendering issue that appears only for this user. The root cause is almost certainly in  or .
-- **Permissions are Key:** The application's access control logic was significantly changed. Almost all UI and routing now depends on the  array. When debugging access issues, always verify the  array for the user in the backend DB and the frontend's decoded token.
-- **LLM Integration is Broken:** The AI Analysis page is a key new feature but does not work. You will need to correctly implement the API call using the . Referencing the  is the recommended next step.
-- **Refactoring Urgency:** The monolithic  and  files are a major source of technical debt and are making development and debugging increasingly difficult. Propose a refactoring plan to the user once the critical bugs are resolved.
-
-**documents and test reports created in this job**
-- User uploaded multiple artifacts (spreadsheets, screenshots) which are available via the URLs in the message history.
+- **Address Bugs First:** Your immediate priority must be to fix the two new bugs reported by the user: the non-functional Employee Stats widget and the broken ZKTeco attendance import. Do not proceed with new features until these are resolved.
+- **Plan for HR Module & Desktop Agent:** The next major tasks are the HR module expansion and the creation of a desktop agent for fingerprint scanner synchronization. These are large, multi-step projects that will require careful planning after the current bugs are fixed.
+- **AI Feature is Gone:** The AI analysis feature was intentionally removed at the user's request. Do not re-introduce it. The Analytics page is the designated replacement for traditional BI.
+- **Refactoring is Urgent:** The  file is now a significant source of technical debt. After fixing the critical bugs, you should strongly propose a refactoring plan to the user to break it into smaller, manageable routers.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Analysis page doesn't work for Hassan Hamdi.
-2.  **User:** Give Hassan Hamdi all Finance Manager permissions.
-3.  **User:** Remove HR permissions from Hassan Hamdi.
-4.  **User:** Give GM Ahmed and Hassan Hamdi access to the new Analysis page.
-5.  **User:** Letter request form should only show the current user's name, not a list of all employees.
-6.  **User:** The AI Analysis query is failing. (Agent sees API key error).
-7.  **User:** Please add Analysis functionality (provides screenshot of an AI chat interface). Wants to query attendance, performance, sales, and milk data.
-8.  **User:** Car contract creation form is not working. Add Analysis feature.
-9.  **User:** My permissions as Khalid are not showing up in the sidebar. Also, editing an employee deactivates their account.
-10. **User:** Khalid Shanfari cannot log in. I want all employees to be able to log in and reset their passwords via email.
+10. **User:**  (This month's statistics for attendance and absence are not working.)
+9. **User:**  (ZKTeco import is not working and not updating.)
+8. **User:**  (I want an intermediary program - install a small program on a computer connected to the devices.)
+7. **User:** Detailed the features for the HR module expansion (shifts, overtime, loans, etc.).
+6. **User:**  (I want a solution to connect all fingerprint devices for automatic download.)
+5. **User:**  (Delete the smart analysis field from the system.)
+4. **User:**  (Hassan Salim Mohammad Kashoob cannot log into the site after a password change.)
+3. **User:**  (Delete all recorded data from milk reception, customers...)
+2. **User:**  (I want analysis without AI support.)
+1. **User:**  (Add edit/delete to treasury/inventory. Question: Is my smart analysis free?)
 
 **Project Health Check:**
 - **Broken:**
-    - Frontend rendering for specific users (e.g., ), resulting in a blank screen.
-    - AI Analysis feature (backend API call fails with 401 Unauthorized).
-    - Fingerprint device synchronization (network limitation).
-- **Mocked:** None.
+    - Employee Stats Widget (Header).
+    - ZKTeco attendance file import.
 
 **3rd Party Integrations**
-- **ZKTeco Fingerprint Scanners:** Integrated via  file import.
-- **SMTP Server:**  configured for password recovery emails.
-- **OpenAI (via Emergent LLM Key):** Attempted integration for the AI Analysis page. The usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit library is installed, but the implementation is non-functional due to an API key error.
+- **ZKTeco Fingerprint Scanners:** Integrated via  file import, but this functionality is currently **broken**.
+- **reportlab:** Used on the backend for PDF generation.
+- **aiosmtplib:** Used for sending password recovery emails.
 
 **Testing status**
-- **Testing agent used after significant changes:** NO
-- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Testing agent used after significant changes:** YES
+- **Troubleshoot agent used after agent stuck in loop:** YES
 - **Test files created:** None
 - **Known regressions:**
-    - The application is not rendering for at least one user role/permission combination, which is a major regression.
+    - Employee attendance stats widget is now broken.
+    - ZKTeco attendance import is now broken.
 
 **Credentials to test flow:**
 - **General Manager (Admin):**  / 
-- **Finance Manager:**  /  (Login leads to blank screen)
 - **HR Manager:**  / 
-- **Regular Employee:**  / 
-- **Original Admin:**  / 
+- **Finance Manager:**  / 
 
 **What agent forgot to execute**
-- The agent failed to correctly follow through on the LLM integration. After multiple failed attempts to install , it pivoted to using the usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit library directly but did not complete the implementation, leaving it in a broken state with an API key error. It did not consult the  for the correct usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit usage pattern with the Emergent LLM Key.</analysis>
+The agent was about to begin implementation of the large HR module expansion but was interrupted by the user reporting two new critical bugs. The agent has correctly identified these bugs as the new priority but has not yet taken any steps to debug or fix them. The plan for the HR module is effectively on hold.</analysis>
