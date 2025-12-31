@@ -27,7 +27,6 @@ import {
   Activity,
   Megaphone,
   Calculator,
-  Brain,
   Image,
   PiggyBank,
 } from "lucide-react";
