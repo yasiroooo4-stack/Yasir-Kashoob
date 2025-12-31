@@ -114,6 +114,7 @@ const Layout = () => {
     { path: "/inventory", icon: Package, label: "inventory", departments: ["inventory", "sales", "admin", "it"] },
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/treasury", icon: PiggyBank, label: "treasury", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
+    { path: "/analytics", icon: BarChart3, label: "analytics" },
     { path: "/hr", icon: Building2, label: "hr", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/payroll", icon: Calculator, label: "payroll", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/analysis", icon: Brain, label: "analysis", roles: ["admin", "hr_manager"], departments: ["admin", "it", "hr", "finance"] },
