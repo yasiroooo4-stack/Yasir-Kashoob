@@ -1846,7 +1846,6 @@ const HR = () => {
                   onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
                 />
               </div>
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{language === "ar" ? "القسم" : "Department"} *</Label>
                 <Select
