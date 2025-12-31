@@ -254,11 +254,13 @@ function App() {
               <Route path="/reset-password" element={user ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
               
               <Route path="/" element={
-                <ProtectedRoute allowedRoles={["admin", "employee", "accountant", "hr_manager"]} allowedDepartments={["admin", "it", "finance", "hr", "purchasing", "milk_reception", "sales", "inventory", "legal", "projects", "operations", "marketing"]}>
+                user ? (
                   <ErrorBoundary>
                     <Layout />
                   </ErrorBoundary>
-                </ProtectedRoute>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
