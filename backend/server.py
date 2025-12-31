@@ -4556,6 +4556,436 @@ async def export_attendance_pdf(
         headers={"Content-Disposition": f"attachment; filename=attendance_{year}_{month}.pdf"}
     )
 
+# ==================== HR - SHIFTS (الورديات) ====================
+
+@api_router.get("/hr/shifts")
+async def get_shifts(current_user: dict = Depends(get_current_user)):
+    """Get all shifts"""
+    shifts = await db.hr_shifts.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return shifts
+
+@api_router.post("/hr/shifts", response_model=Shift)
+async def create_shift(shift_data: ShiftCreate, current_user: dict = Depends(require_role(["admin", "hr"]))):
+    """Create a new shift"""
+    shift = Shift(**shift_data.model_dump())
+    await db.hr_shifts.insert_one(shift.model_dump())
+    return shift
+
+@api_router.put("/hr/shifts/{shift_id}", response_model=Shift)
+async def update_shift(shift_id: str, shift_data: ShiftCreate, current_user: dict = Depends(require_role(["admin", "hr"]))):
+    """Update a shift"""
+    await db.hr_shifts.update_one(
+        {"id": shift_id},
+        {"$set": shift_data.model_dump()}
+    )
+    shift = await db.hr_shifts.find_one({"id": shift_id}, {"_id": 0})
+    return shift
+
+@api_router.delete("/hr/shifts/{shift_id}")
+async def delete_shift(shift_id: str, current_user: dict = Depends(require_role(["admin", "hr"]))):
+    """Delete (deactivate) a shift"""
+    await db.hr_shifts.update_one(
+        {"id": shift_id},
+        {"$set": {"is_active": False}}
+    )
+    return {"message": "تم حذف الوردية بنجاح"}
+
+# Employee Shift Assignments
+@api_router.get("/hr/employee-shifts")
+async def get_employee_shifts(
+    employee_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get employee shift assignments"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if start_date and end_date:
+        query["date"] = {"$gte": start_date, "$lte": end_date}
+    elif start_date:
+        query["date"] = {"$gte": start_date}
+    
+    shifts = await db.hr_employee_shifts.find(query, {"_id": 0}).to_list(1000)
+    return shifts
+
+@api_router.post("/hr/employee-shifts", response_model=EmployeeShift)
+async def assign_employee_shift(
+    shift_data: EmployeeShiftCreate,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Assign shift to employee"""
+    assignment = EmployeeShift(**shift_data.model_dump(), created_by=current_user["full_name"])
+    await db.hr_employee_shifts.insert_one(assignment.model_dump())
+    return assignment
+
+@api_router.post("/hr/employee-shifts/bulk")
+async def bulk_assign_shifts(
+    assignments: List[EmployeeShiftCreate],
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Bulk assign shifts to multiple employees"""
+    created = []
+    for shift_data in assignments:
+        assignment = EmployeeShift(**shift_data.model_dump(), created_by=current_user["full_name"])
+        await db.hr_employee_shifts.insert_one(assignment.model_dump())
+        created.append(assignment.model_dump())
+    return {"message": f"تم تعيين {len(created)} وردية بنجاح", "assignments": created}
+
+@api_router.delete("/hr/employee-shifts/{assignment_id}")
+async def delete_employee_shift(assignment_id: str, current_user: dict = Depends(require_role(["admin", "hr"]))):
+    """Delete shift assignment"""
+    await db.hr_employee_shifts.delete_one({"id": assignment_id})
+    return {"message": "تم حذف التعيين بنجاح"}
+
+# ==================== HR - OVERTIME (العمل الإضافي) ====================
+
+@api_router.get("/hr/overtime")
+async def get_overtime(
+    employee_id: Optional[str] = None,
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get overtime records"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if status:
+        query["status"] = status
+    if start_date and end_date:
+        query["date"] = {"$gte": start_date, "$lte": end_date}
+    
+    overtime = await db.hr_overtime.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    return overtime
+
+@api_router.post("/hr/overtime", response_model=Overtime)
+async def create_overtime(
+    overtime_data: OvertimeCreate,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Create overtime record"""
+    # Calculate total amount if hourly_rate provided
+    data = overtime_data.model_dump()
+    if data.get("hourly_rate") and data.get("hours"):
+        data["total_amount"] = data["hourly_rate"] * data["hours"] * data.get("rate", 1.5)
+    
+    overtime = Overtime(**data)
+    await db.hr_overtime.insert_one(overtime.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_overtime",
+        entity_type="overtime",
+        details=f"تسجيل {overtime.hours} ساعات عمل إضافي للموظف {overtime.employee_name}"
+    )
+    
+    return overtime
+
+@api_router.put("/hr/overtime/{overtime_id}/approve")
+async def approve_overtime(
+    overtime_id: str,
+    approved: bool = True,
+    rejection_reason: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Approve or reject overtime"""
+    update_data = {
+        "status": "approved" if approved else "rejected",
+        "approved_by": current_user["full_name"],
+        "approved_at": datetime.now(timezone.utc).isoformat()
+    }
+    if not approved and rejection_reason:
+        update_data["rejection_reason"] = rejection_reason
+    
+    await db.hr_overtime.update_one(
+        {"id": overtime_id},
+        {"$set": update_data}
+    )
+    
+    overtime = await db.hr_overtime.find_one({"id": overtime_id}, {"_id": 0})
+    return overtime
+
+@api_router.delete("/hr/overtime/{overtime_id}")
+async def delete_overtime(overtime_id: str, current_user: dict = Depends(require_role(["admin", "hr"]))):
+    """Delete overtime record"""
+    await db.hr_overtime.delete_one({"id": overtime_id})
+    return {"message": "تم حذف سجل العمل الإضافي"}
+
+# Get overtime summary for payroll
+@api_router.get("/hr/overtime/summary/{employee_id}")
+async def get_overtime_summary(
+    employee_id: str,
+    start_date: str,
+    end_date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get overtime summary for an employee in a date range"""
+    overtime_records = await db.hr_overtime.find({
+        "employee_id": employee_id,
+        "status": "approved",
+        "date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(100)
+    
+    total_hours = sum(r.get("hours", 0) for r in overtime_records)
+    total_amount = sum(r.get("total_amount", 0) for r in overtime_records)
+    
+    return {
+        "employee_id": employee_id,
+        "period": f"{start_date} - {end_date}",
+        "total_hours": total_hours,
+        "total_amount": total_amount,
+        "records_count": len(overtime_records),
+        "records": overtime_records
+    }
+
+# ==================== HR - LOANS & ADVANCES (السلف والقروض) ====================
+
+@api_router.get("/hr/loans")
+async def get_loans(
+    employee_id: Optional[str] = None,
+    status: Optional[str] = None,
+    loan_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get loans and advances"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if status:
+        query["status"] = status
+    if loan_type:
+        query["loan_type"] = loan_type
+    
+    loans = await db.hr_loans.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return loans
+
+@api_router.post("/hr/loans", response_model=Loan)
+async def create_loan(
+    loan_data: LoanCreate,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Create loan or advance request"""
+    data = loan_data.model_dump()
+    
+    # Calculate installment amount if not provided
+    if data.get("installments") and data.get("amount"):
+        data["installment_amount"] = data["amount"] / data["installments"]
+    data["remaining_amount"] = data["amount"]
+    
+    loan = Loan(**data)
+    await db.hr_loans.insert_one(loan.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_loan",
+        entity_type="loan",
+        details=f"إنشاء طلب {'سلفة' if loan.loan_type == 'advance' else 'قرض'} بمبلغ {loan.amount} للموظف {loan.employee_name}"
+    )
+    
+    return loan
+
+@api_router.put("/hr/loans/{loan_id}/approve")
+async def approve_loan(
+    loan_id: str,
+    approved: bool = True,
+    rejection_reason: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Approve or reject loan"""
+    update_data = {
+        "status": "approved" if approved else "rejected",
+        "approved_by": current_user["full_name"],
+        "approved_at": datetime.now(timezone.utc).isoformat()
+    }
+    if approved:
+        update_data["status"] = "active"  # Active means approved and deduction can start
+    if not approved and rejection_reason:
+        update_data["rejection_reason"] = rejection_reason
+    
+    await db.hr_loans.update_one(
+        {"id": loan_id},
+        {"$set": update_data}
+    )
+    
+    loan = await db.hr_loans.find_one({"id": loan_id}, {"_id": 0})
+    return loan
+
+@api_router.post("/hr/loans/{loan_id}/payment")
+async def record_loan_payment(
+    loan_id: str,
+    amount: float,
+    payment_method: str = "salary_deduction",
+    notes: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Record a loan payment"""
+    loan = await db.hr_loans.find_one({"id": loan_id}, {"_id": 0})
+    if not loan:
+        raise HTTPException(status_code=404, detail="القرض غير موجود")
+    
+    # Create payment record
+    payment = LoanPayment(
+        loan_id=loan_id,
+        employee_id=loan["employee_id"],
+        amount=amount,
+        payment_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        payment_method=payment_method,
+        notes=notes
+    )
+    await db.hr_loan_payments.insert_one(payment.model_dump())
+    
+    # Update loan
+    new_paid = loan.get("paid_amount", 0) + amount
+    new_remaining = loan["amount"] - new_paid
+    new_installments = loan.get("paid_installments", 0) + 1
+    
+    update_data = {
+        "paid_amount": new_paid,
+        "remaining_amount": new_remaining,
+        "paid_installments": new_installments
+    }
+    
+    # Check if loan is fully paid
+    if new_remaining <= 0:
+        update_data["status"] = "completed"
+        update_data["remaining_amount"] = 0
+    
+    await db.hr_loans.update_one({"id": loan_id}, {"$set": update_data})
+    
+    return {"message": "تم تسجيل الدفعة بنجاح", "payment": payment.model_dump()}
+
+@api_router.get("/hr/loans/{loan_id}/payments")
+async def get_loan_payments(loan_id: str, current_user: dict = Depends(get_current_user)):
+    """Get payment history for a loan"""
+    payments = await db.hr_loan_payments.find({"loan_id": loan_id}, {"_id": 0}).to_list(100)
+    return payments
+
+@api_router.get("/hr/loans/employee/{employee_id}/active")
+async def get_employee_active_loans(employee_id: str, current_user: dict = Depends(get_current_user)):
+    """Get active loans for an employee (for payroll deduction)"""
+    loans = await db.hr_loans.find({
+        "employee_id": employee_id,
+        "status": "active"
+    }, {"_id": 0}).to_list(100)
+    
+    total_deduction = sum(l.get("installment_amount", 0) for l in loans)
+    
+    return {
+        "employee_id": employee_id,
+        "active_loans": loans,
+        "monthly_deduction": total_deduction
+    }
+
+# ==================== HR - EMPLOYEE DOCUMENTS (وثائق الموظفين) ====================
+
+@api_router.get("/hr/documents")
+async def get_employee_documents(
+    employee_id: Optional[str] = None,
+    document_type: Optional[str] = None,
+    expiring_soon: bool = False,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get employee documents"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if document_type:
+        query["document_type"] = document_type
+    
+    documents = await db.hr_documents.find(query, {"_id": 0}).to_list(1000)
+    
+    # Update expiry status
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    for doc in documents:
+        if doc.get("expiry_date"):
+            expiry = doc["expiry_date"]
+            doc["is_expired"] = expiry < today
+            # Calculate days to expiry
+            from datetime import datetime as dt
+            try:
+                expiry_dt = dt.strptime(expiry, "%Y-%m-%d")
+                today_dt = dt.strptime(today, "%Y-%m-%d")
+                doc["days_to_expiry"] = (expiry_dt - today_dt).days
+            except:
+                doc["days_to_expiry"] = None
+    
+    if expiring_soon:
+        # Filter documents expiring in next 30 days
+        documents = [d for d in documents if d.get("days_to_expiry") is not None and 0 < d["days_to_expiry"] <= 30]
+    
+    return documents
+
+@api_router.post("/hr/documents", response_model=EmployeeDocument)
+async def create_employee_document(
+    document_data: EmployeeDocumentCreate,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Create employee document record"""
+    document = EmployeeDocument(**document_data.model_dump(), uploaded_by=current_user["full_name"])
+    await db.hr_documents.insert_one(document.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_document",
+        entity_type="document",
+        details=f"إضافة وثيقة {document.document_name} للموظف {document.employee_name}"
+    )
+    
+    return document
+
+@api_router.put("/hr/documents/{document_id}", response_model=EmployeeDocument)
+async def update_employee_document(
+    document_id: str,
+    document_data: EmployeeDocumentCreate,
+    current_user: dict = Depends(require_role(["admin", "hr"]))
+):
+    """Update employee document"""
+    await db.hr_documents.update_one(
+        {"id": document_id},
+        {"$set": document_data.model_dump()}
+    )
+    document = await db.hr_documents.find_one({"id": document_id}, {"_id": 0})
+    return document
+
+@api_router.delete("/hr/documents/{document_id}")
+async def delete_employee_document(document_id: str, current_user: dict = Depends(require_role(["admin", "hr"]))):
+    """Delete employee document"""
+    await db.hr_documents.delete_one({"id": document_id})
+    return {"message": "تم حذف الوثيقة بنجاح"}
+
+@api_router.get("/hr/documents/expiring")
+async def get_expiring_documents(days: int = 30, current_user: dict = Depends(get_current_user)):
+    """Get documents expiring within specified days"""
+    documents = await db.hr_documents.find({}, {"_id": 0}).to_list(5000)
+    
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from datetime import datetime as dt, timedelta
+    future_date = (dt.now() + timedelta(days=days)).strftime("%Y-%m-%d")
+    
+    expiring = []
+    for doc in documents:
+        if doc.get("expiry_date"):
+            expiry = doc["expiry_date"]
+            if today <= expiry <= future_date:
+                try:
+                    expiry_dt = dt.strptime(expiry, "%Y-%m-%d")
+                    today_dt = dt.strptime(today, "%Y-%m-%d")
+                    doc["days_to_expiry"] = (expiry_dt - today_dt).days
+                    expiring.append(doc)
+                except:
+                    pass
+    
+    # Sort by days to expiry
+    expiring.sort(key=lambda x: x.get("days_to_expiry", 999))
+    
+    return expiring
+
 # ==================== HR - DEPARTMENTS & PERMISSIONS ====================
 
 DEPARTMENTS = [
