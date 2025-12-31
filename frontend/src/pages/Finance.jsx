@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { API, useLanguage } from "../App";
+import { API, useLanguage, useAuth } from "../App";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -33,16 +33,22 @@ import {
 import { Textarea } from "../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
-import { Plus, Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Building, Users, FileText, Download } from "lucide-react";
+import { Badge } from "../components/ui/badge";
+import { Plus, Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Building, Users, FileText, Download, Check, X, Clock } from "lucide-react";
 
 const Finance = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [payments, setPayments] = useState([]);
+  const [pendingPayments, setPendingPayments] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [filterMode, setFilterMode] = useState("all"); // "all" or "supplier"
   const [selectedFilterSupplier, setSelectedFilterSupplier] = useState("");
