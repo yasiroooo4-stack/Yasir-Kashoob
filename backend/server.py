@@ -255,6 +255,7 @@ class EmployeeBase(BaseModel):
     permissions: Optional[List[str]] = None  # الصلاحيات
     manager_id: Optional[str] = None  # معرف المسؤول
     manager_name: Optional[str] = None  # اسم المسؤول
+    username: Optional[str] = None  # اسم المستخدم للدخول
 
 class EmployeeCreate(EmployeeBase):
     pass
