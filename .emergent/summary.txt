@@ -1,180 +1,419 @@
 <analysis>**original_problem_statement:**
-The user initially requested an ERP system for a milk collection center. The project has evolved into a full-stack application with modules for Suppliers, Milk Reception, Finance, comprehensive Human Resources (HR), Reporting, and Activity Logging. Most recently, the user requested the addition of three new departments (Legal, Projects, Operations), followed by another request for a Marketing module, a password recovery system, a solution for connecting fingerprint scanners across multiple sites, and an Excel import feature for attendance.
+The user initially requested an ERP system for a milk collection center. The project has evolved into a full-stack application with modules for Suppliers, Milk Reception, Finance, comprehensive Human Resources (HR), Reporting, and Activity Logging.
 
 **PRODUCT REQUIREMENTS:**
 - **Core ERP Modules:** Suppliers, Milk Reception, Finance, Employees, Reports.
 - **HR Module:** Employee management, attendance, leave, expenses, car contracts, department-based permissions, and integration with ZKTeco fingerprint scanners.
-- **New Departments:** Legal, Projects, Operations, and Marketing modules, each with comprehensive fields and CRUD functionality.
-- **Authentication:** Role-based login, with a new requirement to replace Create Account with a Forgot Password flow that uses email for password recovery.
-- **Reporting & Dashboards:** Export reports to PDF/Excel. A new requirement for a centralized dashboard to view aggregated data from all collection centers.
-- **Data Import:** A new requirement to import attendance records from an Excel file.
-- **Deployment & Networking:** The system must be deployable on a local server. A new requirement is to find a solution (proposed: VPN) to connect fingerprint scanners from multiple centers on different local networks to a central server.
-- **Localization & UI:** Support for Arabic and English with a modern UI.
+- **New Departments:** Legal, Projects, Operations, and Marketing modules.
+- **Authentication:** Role-based login, password recovery via email, and multiple specific roles (, , ).
+- **Data Import:** Import attendance from Excel and ZKTeco  files.
+- **UI/UX:** A modern UI with theme customization, support for Arabic and English, a header widget for employee stats, and a quick-access button for official letter requests.
+- **Invoicing & Letters:** Generate PDF invoices and a system for official letter requests with an approval workflow.
+- **AI Analysis:** A page for users to ask natural language questions about business data (HR, sales, milk reception) and get AI-generated answers.
+- **Deployment & Networking:** A solution for connecting fingerprint scanners from multiple sites.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
-A full-stack ERP application built with FastAPI, React, and MongoDB. It includes the core ERP modules, a complete HR module with Role-Based Access Control (RBAC), and recently completed modules for Legal, Projects, and Operations. A full-featured activity logging system has also been implemented and tested.
-
-The agent has just begun work on the latest set of user requests. The backend has been prepared by installing  and , adding new Pydantic models for the Marketing module and password recovery, creating stub API endpoints for marketing, password reset, a central dashboard, and Excel import, and updating the  file with email server placeholders. A placeholder frontend page () has also been created.
+A comprehensive full-stack ERP application (FastAPI, React, MongoDB) with modules for Suppliers, Milk Reception, HR, Finance, and more. The system features a sophisticated RBAC model with user-specific permissions controlling UI visibility and route access. Recent additions include a full payroll management system, an employee statistics widget in the header, a quick-access button for letter requests, and an AI-powered analysis page. The application has an extensive user base, with accounts and specific roles/permissions configured for over 70 employees. The theming system and password recovery are fully functional.
 
 **Last working item**:
-- **Last item agent was working:** The agent was in the initial phase of implementing a large set of new features requested by the user. It had just created the backend models and API stubs for a new Marketing module and a password recovery system. The immediate next step was to build the frontend pages for password recovery.
+- **Last item agent was working:** Debugging a critical frontend bug where the application displays a blank white screen after user  logs in. Other users, like  (admin), can log in without issue. The agent determined the backend APIs and user data (including permissions) are correct. The issue is likely a JavaScript rendering error in the frontend, possibly within the  component in  or the  component, triggered by 's specific combination of role () and permissions. The agent's last action was a full service restart, which did not solve the problem.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** both
+- **Which testing method agent to use?** Frontend testing agent. Instruct the agent to log in as user  (password: ) and inspect the browser's console for React rendering errors. The agent should then compare this with a successful login from user  (password: ).
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** Fingerprint device synchronization fails. (P0)
+- **Issue 1:** Blank screen after login for specific users. (P0)
+- **Issue 2:** AI Analysis feature is not working. (P1)
+- **Issue 3:** Fingerprint device synchronization fails. (P2)
 
-  **Issues Detail:**
-  - **Issue 1:**
-     - **Attempted fixes:** This is a known network limitation, as the cloud server cannot reach the local devices. The user has a new requirement to connect devices from multiple centers on different networks. The proposed solution is to use a VPN.
-     - **Next debug checklist:** Update the  file with instructions on how to set up a central server and configure a VPN to allow all centers to connect to it. This is a documentation task, not a code fix.
-     - **Why fix this issue and what will be achieved with the fix?** To enable the key feature of automatic attendance syncing from hardware across all company sites.
-     - **Status:** BLOCKED
-     - **Is recurring issue?** Y
-     - **Should Test frontend/backend/both after fix?** Backend
-     - **Blocked on other issue:** Blocked on local deployment and VPN setup by the user.
+**Issues Detail:**
+- **Issue 1:**
+    - **Attempted fixes:** The agent confirmed backend data is correct via API calls. Verified user permissions are returned correctly in the login and  responses. Restarted all services. The problem persists, pointing to a frontend-specific rendering bug.
+    - **Next debug checklist:**
+        1.  Examine , specifically the  component logic, to see how it handles the combination of roles and the  array.
+        2.  Add  statements within  and  to trace the user object and component state during rendering for user .
+        3.  Check for infinite loops or unhandled exceptions in the React component lifecycle methods ().
+        4.  Temporarily simplify the  component to see if a specific API call or sub-component is causing the crash.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical bug preventing a key user () from accessing the application. Fixing it will restore core functionality.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Frontend
+    - **Blocked on other issue:** None.
+
+- **Issue 2:**
+    - **Attempted fixes:** The agent tried to install  but the package was not found. The agent then added usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit to  and hardcoded the  into . However, API calls to the  endpoint fail with a 401  error.
+    - **Next debug checklist:**
+        1.  Verify the  is being read correctly from the  file in .
+        2.  Confirm the correct usage of the OpenAI Python client with the Emergent LLM Key. The base URL might need to be configured.
+        3.  Call the  again for OpenAI with Emergent LLM Key to get the precise, up-to-date implementation playbook.
+    - **Why fix this issue and what will be achieved with the fix?** This will enable the AI-powered analytics feature requested by the user.
+    - **Status:** NOT STARTED
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Backend
+    - **Blocked on other issue:** None.
+
+- **Issue 3:**
+    - **Attempted fixes:** This is a known network architecture limitation. A VPN solution was previously documented in .
+    - **Next debug checklist:** No agent action required. This is blocked on the user's infrastructure setup.
+    - **Why fix this issue and what will be achieved with the fix?** Enables automatic attendance syncing from hardware across all company sites.
+    - **Status:** BLOCKED
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Backend
+    - **Blocked on other issue:** Blocked on user's infrastructure.
 
 **In progress Task List**:
-- **Task 1:** Implement Password Recovery via Email. (P0)
-   - **Where to resume:** The backend API stubs (, ) and email sending logic have been added to . The agent needs to create the frontend Forgot Password and Reset Password pages, and update the  page to replace the Create Account link with a Forgot Password link. The  file must be configured with the user's mail server details ().
-   - **What will be achieved with this?** Fulfills the user's request for a more secure and appropriate user account management flow.
-   - **Status:** IN PROGRESS
-   - **Should Test frontend/backend/both after fix?** Both
-   - **Blocked on something:** No.
-
-- **Task 2:** Build the new Marketing Module. (P1)
-   - **Where to resume:** Backend models and API stubs have been created in . The frontend page  exists but is a placeholder. The agent needs to implement the full CRUD functionality in the backend and build the complete UI (dashboard, tables, forms for campaigns, leads, social media, sales, and returns) on the frontend.
-   - **What will be achieved with this?** Adds a new core department to the ERP system as requested.
-   - **Status:** IN PROGRESS
-   - **Should Test frontend/backend/both after fix?** Both
-   - **Blocked on something:** No.
-
-- **Task 3:** Implement Excel Attendance Import. (P1)
-   - **Where to resume:** A backend endpoint () has been created. The agent needs to add a file upload button/component to the attendance tab in  and connect it to the API.
-   - **What will be achieved with this?** Provides a bulk data entry method for attendance records.
-   - **Status:** IN PROGRESS
-   - **Should Test frontend/backend/both after fix?** Both
-   - **Blocked on something:** No.
-
-- **Task 4:** Build the Centralized Dashboard. (P1)
-   - **Where to resume:** A backend endpoint () has been created. The agent needs to create a new UI component or page to display this aggregated data from all collection centers.
-   - **What will be achieved with this?** Gives management a high-level overview of the entire operation.
-   - **Status:** IN PROGRESS
-   - **Should Test frontend/backend/both after fix?** Frontend
-   - **Blocked on something:** No.
+  - None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - (P1) Integrate the new Legal, Projects, Operations, and Marketing modules into the Role-Based Access Control (RBAC) system so access can be managed via employee permissions.
-    - (P1) Update  with instructions for setting up a VPN to solve the multi-site fingerprint scanner issue.
+  - (P2) Integrate with physical hardware (Ekomilk scales via RS232).
 - **Future Tasks:**
-    - (P3) Integrate with other physical hardware like milk scales and quality testing devices.
-    - (P3) Develop the AI camera feature for automated QR code scanning.
+  - (P2) Develop the AI camera feature for automated QR code scanning.
+  - (P3) Integrate with other physical hardware like milk quality testing devices.
 
 **Completed work in this session**
-- **Activity Logging (DONE):**
-  - Backend function  integrated into all relevant CRUD endpoints.
-  - Frontend UI created in the Settings page to display a complete audit trail.
-  - Fully tested via testing agent.
-- **New Departments (Legal, Projects, Operations) (DONE):**
-  - Full backend CRUD APIs and Pydantic models created.
-  - Dedicated frontend pages (, , ) built with dashboards, tables, and forms.
-  - Routes, sidebar links, and translations were added.
-  - Fully tested via testing agent.
+- **Payroll System (DONE):** Implemented a complete payroll module with a dedicated page (), APIs to create payroll periods and calculate salaries based on attendance, and new database models (, ).
+- **User Permissions & Roles (DONE):**
+    - Fixed a critical bug where editing an employee would deactivate their login ().
+    - Implemented a  array on the  model to allow for granular access control beyond just .
+    - Updated  and  to render UI and control routing based on the new  array.
+    - Configured roles and permissions for multiple key users, including the General Manager ( role), Finance Manager ( role), and others.
+- **Employee & User Management (DONE):**
+    - Fixed a bug causing employee accounts to show as Inactive in the UI despite being active in the DB, by changing the UI to check  instead of .
+    - Added a  field to the employee table, edit form, and database model.
+    - Created user accounts with login credentials for all 60+ employees.
+    - Fixed a critical login API bug () by using the correct  field.
+    - Resolved data duplication issues in the  collection.
+- **UI Enhancements (DONE):**
+    - **Employee Stats Widget:** Added a new component to the header displaying the logged-in employee's attendance, absence, and leave balance.
+    - **Quick Letter Request:** Added a Request Letter button to the header and modified the form to be pre-filled and non-editable for regular employees.
+- **AI Analysis Page (Partially Done - Blocked):** Created the frontend page () and backend API () for the natural language query feature. The UI is complete, but the backend API call to the LLM is failing.
+- **Bug Fixes (DONE):**
+    - Fixed a crash in the Add Car Contract form caused by an empty  value.
+    - Verified and confirmed the theme customization system works correctly.
 
 **Earlier issues found/mentioned but not fixed**
    - None.
 
 **Known issue recurrence from previous fork**
-  - The fingerprint device synchronization failure is a known network limitation of the cloud environment, not a bug. The path to resolution is local deployment.
+  - **Issue recurrence:** Fingerprint device synchronization failure.
+  - **Recurrence count:** 2+
+  - **Status:** BLOCKED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Email:** Using  for asynchronous email sending for password recovery.
-- **File Upload:** Using FastAPI's  and  to handle Excel file imports.
-- **Monolithic Backend:** The  file continues to grow, making maintenance and debugging increasingly difficult.
+- **Granular Permissions:** The auth system now uses a  array on the user object, checked in  () and , to control access to routes and sidebar links. This is a major enhancement over the previous role-only system.
+- **Dynamic Payroll Generation:** A backend API () iterates through employees, fetches their attendance records within a date range, and calculates salary details based on rules derived from a user-provided Excel sheet.
+- **LLM Integration (Attempted):** The system attempts to use the usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit library to send natural language queries to an LLM. An API endpoint () was created to abstract this, but it is currently failing due to an API key authentication error.
+- **State-Driven UI:** The letter request form () and employee stats widget () use the logged-in user's context to conditionally render UI elements (e.g., showing a disabled employee field for non-admins).
 
 **key DB schema**
-- **New Collections (pending implementation):**
-  - : {token, user_id, expiry_date}
-  - : {name, start_date, end_date, budget, status}
-  - : {name, email, phone, source, status}
-  - : {platform, content, scheduled_date, status}
-  - : {product, quantity, amount, date}
-  - : {market, quantity, reason, date}
+- ****: Added , .
+- ****: Added .
+- ** (NEW)**: 
+- ** (NEW)**: 
 
 **changes in tech stack**
-- **New Libraries (Backend):** , .
+- **Backend:** usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit library added for LLM integration.
 
 **All files of reference**
-- : Heavily modified to add backend logic for Activity Logs, Legal, Projects, Operations, and stubs for Marketing, Password Reset, and data imports.
-- : Updated with  variables.
-- , , : New, functional pages.
-- : New placeholder page.
-- : Updated with routes for all new pages.
-- : Updated with sidebar links for all new pages.
-- : Updated with translations for all new pages.
+- **New Files:**
+    - : UI for payroll management.
+    - : UI for AI-powered analysis.
+    - : Header widget for employee stats.
+    - : Header button for quick letter requests.
+- **Heavily Modified Files:**
+    - : Added entire Payroll and Analysis API logic, plus numerous bug fixes and model updates.
+    - : Major changes to routing and the  component to handle .
+    - : Reworked sidebar filtering to use  and added new header widgets.
+    - : Added  column/field and fixed multiple UI bugs related to employee status and forms.
 
 **Areas that need refactoring**:
-- **:** Refactoring is now critical. The file is unmanageably large. It must be broken down into a modular structure (e.g., routers, models, services).
-- **:** Remains a very large component that should be decomposed.
-- **, , :** These new pages are also single-file monoliths and should be broken into smaller, reusable components.
+- **:** CRITICAL. Now exceeds 6000 lines. Must be broken down into modular  files (e.g., , , ).
+- **:** Remains a massive component. Should be split into sub-components for each tab (Employees, Contracts, Letters, etc.).
+- **:** The  logic is becoming complex and could be extracted into its own file for better readability and maintenance.
 
 **key api endpoints**
-- **New Stubs (Need Implementation & Testing):**
-  -  (POST)
-  -  (POST)
-  -  (CRUD endpoints for all marketing sub-modules)
-  -  (GET)
-  -  (POST)
+- ****: Creates a new payroll period.
+- ****: Calculates the payroll for all employees for a given period.
+- ****: Sends a natural language query to the LLM for analysis (Currently failing).
+- ****: Updated to prevent deactivation of users on edit.
+- ****: Updated to return the  array in the token payload.
+- ****: Updated to return the  array for the current user.
 
 **Critical Info for New Agent**
-- The agent's work was interrupted mid-task. You must resume the implementation of the password recovery flow, starting with the frontend.
-- The user's mail server is . Use this when configuring the  file for the email service.
-- The solution for the multi-site fingerprint scanner issue is to recommend a VPN setup in the  guide. Do not attempt to code a solution, as it is a network architecture problem.
-- A key pending task from the user is to integrate the new departments (Legal, Projects, Operations, and the upcoming Marketing) into the RBAC permissions system. This was missed in the last implementation cycle.
+- **Top Priority is the Blank Screen Bug:** The application is unusable for the Finance Manager (). Your first task is to debug the frontend rendering issue that appears only for this user. The root cause is almost certainly in  or .
+- **Permissions are Key:** The application's access control logic was significantly changed. Almost all UI and routing now depends on the  array. When debugging access issues, always verify the  array for the user in the backend DB and the frontend's decoded token.
+- **LLM Integration is Broken:** The AI Analysis page is a key new feature but does not work. You will need to correctly implement the API call using the . Referencing the  is the recommended next step.
+- **Refactoring Urgency:** The monolithic  and  files are a major source of technical debt and are making development and debugging increasingly difficult. Propose a refactoring plan to the user once the critical bugs are resolved.
 
 **documents and test reports created in this job**
--  was updated multiple times.
+- User uploaded multiple artifacts (spreadsheets, screenshots) which are available via the URLs in the message history.
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **10. User:**  (Continue and link these departments to the current permissions system).
-- **9. User:** Agreed to the agent's plan which included setting up a central server with a VPN for fingerprint scanners, using their mail server, and defining the scope for the marketing module and central dashboard.
-- **8. User:** Confirmed the agent's plan for the three new modules (Legal, Projects, Operations).
-- **7. User:**  (Fingerprint sync isn't working, is there a solution? I have devices in each center on different networks. Add a marketing department. [Change login to] password recovery...).
-- **6. User:** Confirmed the completion of the new departments and asked to proceed.
-- **5. User:** Replied Continue to the agent's completion summary for the Activity Logging feature.
-- **4. User:** Requested adding Legal, Projects, and Operations departments with all required fields.
-- **3. User:** Asked about upcoming tasks and mentioned the fingerprint sync issue again.
-- **2. User:** Confirmed agent's plan to start on the Activity Logging feature.
-- **1. User:** Provided the list of upcoming/future tasks.
+1.  **User:** Analysis page doesn't work for Hassan Hamdi.
+2.  **User:** Give Hassan Hamdi all Finance Manager permissions.
+3.  **User:** Remove HR permissions from Hassan Hamdi.
+4.  **User:** Give GM Ahmed and Hassan Hamdi access to the new Analysis page.
+5.  **User:** Letter request form should only show the current user's name, not a list of all employees.
+6.  **User:** The AI Analysis query is failing. (Agent sees API key error).
+7.  **User:** Please add Analysis functionality (provides screenshot of an AI chat interface). Wants to query attendance, performance, sales, and milk data.
+8.  **User:** Car contract creation form is not working. Add Analysis feature.
+9.  **User:** My permissions as Khalid are not showing up in the sidebar. Also, editing an employee deactivates their account.
+10. **User:** Khalid Shanfari cannot log in. I want all employees to be able to log in and reset their passwords via email.
 
 **Project Health Check:**
-- **Broken:** Fingerprint device synchronization (expected network limitation).
+- **Broken:**
+    - Frontend rendering for specific users (e.g., ), resulting in a blank screen.
+    - AI Analysis feature (backend API call fails with 401 Unauthorized).
+    - Fingerprint device synchronization (network limitation).
 - **Mocked:** None.
 
 **3rd Party Integrations**
-- **ZKTeco Fingerprint Scanners:** Custom integration via local network HTTP.
-- **SMTP Server:** A new integration for sending email via . Requires configuration for .
+- **ZKTeco Fingerprint Scanners:** Integrated via  file import.
+- **SMTP Server:**  configured for password recovery emails.
+- **OpenAI (via Emergent LLM Key):** Attempted integration for the AI Analysis page. The usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit library is installed, but the implementation is non-functional due to an API key error.
 
 **Testing status**
-  - **Testing agent used after significant changes:** YES (for Activity Log and new departments).
-  - **Troubleshoot agent used after agent stuck in loop:** NO
-  - **Test files created:** None
-  - **Known regressions:** None
+- **Testing agent used after significant changes:** NO
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None
+- **Known regressions:**
+    - The application is not rendering for at least one user role/permission combination, which is a major regression.
 
 **Credentials to test flow:**
-- **Admin:**  / 
-- **Purchasing Dept:**  / 
-- **Finance Dept:**  / 
-- **Milk Reception Dept:**  / 
+- **General Manager (Admin):**  / 
+- **Finance Manager:**  /  (Login leads to blank screen)
+- **HR Manager:**  / 
+- **Regular Employee:**  / 
 - **Original Admin:**  / 
 
 **What agent forgot to execute**
-- After creating the new Legal, Projects, and Operations modules, the agent did not implement the user's follow-up request to integrate them into the existing Role-Based Access Control (RBAC) / permissions system. This is a high-priority pending task.</analysis>
+- The agent failed to correctly follow through on the LLM integration. After multiple failed attempts to install , it pivoted to using the usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit library directly but did not complete the implementation, leaving it in a broken state with an API key error. It did not consult the  for the correct usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
+              [-o ORGANIZATION] [-t {openai,azure}]
+              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
+              [--azure-ad-token AZURE_AD_TOKEN] [-V]
+              {api,tools,migrate,grit} ...
+
+positional arguments:
+  {api,tools,migrate,grit}
+    api                 Direct API calls
+    tools               Client side tools for convenience
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Set verbosity.
+  -b API_BASE, --api-base API_BASE
+                        What API base url to use.
+  -k API_KEY, --api-key API_KEY
+                        What API key to use.
+  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
+                        What proxy to use.
+  -o ORGANIZATION, --organization ORGANIZATION
+                        Which organization to run as (will use your default
+                        organization if not specified)
+  -t {openai,azure}, --api-type {openai,azure}
+                        The backend API to call, must be `openai` or `azure`
+  --api-version API_VERSION
+                        The Azure API version, e.g.
+                        'https://learn.microsoft.com/en-us/azure/ai-
+                        services/openai/reference#rest-api-versioning'
+  --azure-endpoint AZURE_ENDPOINT
+                        The Azure endpoint, e.g.
+                        'https://endpoint.openai.azure.com'
+  --azure-ad-token AZURE_AD_TOKEN
+                        A token from Azure Active Directory,
+                        https://www.microsoft.com/en-
+                        us/security/business/identity-access/microsoft-entra-
+                        id
+  -V, --version         show program's version number and exit usage pattern with the Emergent LLM Key.</analysis>
