@@ -54,7 +54,6 @@ import Projects from "./pages/Projects";
 import Operations from "./pages/Operations";
 import Marketing from "./pages/Marketing";
 import Payroll from "./pages/Payroll";
-import Analysis from "./pages/Analysis";
 import Treasury from "./pages/Treasury";
 import Analytics from "./pages/Analytics";
 
