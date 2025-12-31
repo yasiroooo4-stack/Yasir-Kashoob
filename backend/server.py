@@ -1863,7 +1863,39 @@ async def update_inventory(inventory_id: str, inventory_data: InventoryUpdate, c
         raise HTTPException(status_code=404, detail="Inventory item not found")
     
     inventory = await db.inventory.find_one({"id": inventory_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_inventory",
+        entity_type="inventory",
+        entity_id=inventory_id,
+        entity_name=inventory.get("product_name", ""),
+        details=f"تعديل مخزون: {inventory.get('product_name', '')} - الكمية: {inventory.get('quantity_liters', 0)} لتر"
+    )
+    
     return inventory
+
+@api_router.delete("/inventory/{inventory_id}")
+async def delete_inventory(inventory_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    """Delete an inventory item (admin only)"""
+    existing = await db.inventory.find_one({"id": inventory_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="المخزون غير موجود")
+    
+    await db.inventory.delete_one({"id": inventory_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_inventory",
+        entity_type="inventory",
+        entity_id=inventory_id,
+        entity_name=existing.get("product_name", ""),
+        details=f"حذف مخزون: {existing.get('product_name', '')} - الكمية: {existing.get('quantity_liters', 0)} لتر"
+    )
+    
+    return {"message": "تم حذف المخزون بنجاح"}
 
 # ==================== PAYMENT ROUTES ====================
 
