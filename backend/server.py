@@ -2382,12 +2382,20 @@ async def get_hr_employee(employee_id: str, current_user: dict = Depends(get_cur
 
 @api_router.put("/hr/employees/{employee_id}", response_model=Employee)
 async def update_hr_employee(employee_id: str, employee_data: EmployeeCreate, current_user: dict = Depends(get_current_user)):
+    # Get existing employee to preserve is_active status
+    existing_employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not existing_employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Update only the fields from employee_data, preserving is_active and other fields
+    update_data = employee_data.model_dump()
+    # Preserve is_active status
+    update_data["is_active"] = existing_employee.get("is_active", True)
+    
     result = await db.hr_employees.update_one(
         {"id": employee_id},
-        {"$set": employee_data.model_dump()}
+        {"$set": update_data}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Employee not found")
     employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
     
     await log_activity(
