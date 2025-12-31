@@ -29,6 +29,7 @@ import {
   Calculator,
   Brain,
   Image,
+  PiggyBank,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
