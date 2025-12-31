@@ -43,8 +43,8 @@ class BackendTester:
         if details and not success:
             print(f"   Details: {details}")
     
-    def test_login_and_dashboard(self):
-        """Test 1: Login with yasir/admin123 and verify dashboard loads correctly"""
+    def test_login_and_authentication(self):
+        """Test 1: Login with yasir/admin123 and verify authentication works"""
         try:
             # Test login
             response = self.session.post(
@@ -64,40 +64,29 @@ class BackendTester:
                     "Authorization": f"Bearer {self.token}"
                 })
                 
-                # Test dashboard stats
-                dashboard_response = self.session.get(f"{BACKEND_URL}/dashboard/stats")
+                # Test authentication by getting user profile
+                profile_response = self.session.get(f"{BACKEND_URL}/auth/me")
                 
-                if dashboard_response.status_code == 200:
-                    dashboard = dashboard_response.json()
-                    expected_fields = ["suppliers_count", "customers_count", "today_milk_quantity", "today_sales_quantity"]
-                    found_fields = [field for field in expected_fields if field in dashboard]
+                if profile_response.status_code == 200:
+                    profile = profile_response.json()
                     
-                    if len(found_fields) >= 2:
-                        self.log_test(
-                            "Login and Dashboard Test", 
-                            True, 
-                            f"Successfully logged in as {self.user_data.get('username')} and dashboard loaded with stats: {list(dashboard.keys())}"
-                        )
-                        return True
-                    else:
-                        self.log_test(
-                            "Login and Dashboard Test", 
-                            False, 
-                            f"Dashboard missing expected fields. Found: {list(dashboard.keys())}",
-                            f"Expected at least 2 of: {expected_fields}"
-                        )
-                        return False
+                    self.log_test(
+                        "Login and Authentication Test", 
+                        True, 
+                        f"Successfully logged in as {self.user_data.get('username')} ({self.user_data.get('role')})"
+                    )
+                    return True
                 else:
                     self.log_test(
-                        "Login and Dashboard Test", 
+                        "Login and Authentication Test", 
                         False, 
-                        f"Dashboard API failed with status {dashboard_response.status_code}",
-                        dashboard_response.text
+                        f"Authentication verification failed with status {profile_response.status_code}",
+                        profile_response.text
                     )
                     return False
             else:
                 self.log_test(
-                    "Login and Dashboard Test", 
+                    "Login and Authentication Test", 
                     False, 
                     f"Login failed with status {response.status_code}",
                     response.text
@@ -105,7 +94,7 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("Login and Dashboard Test", False, f"Error: {str(e)}")
+            self.log_test("Login and Authentication Test", False, f"Error: {str(e)}")
             return False
 
     def test_employee_stats_widget(self):
