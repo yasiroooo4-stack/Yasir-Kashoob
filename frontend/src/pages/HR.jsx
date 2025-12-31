@@ -2991,6 +2991,329 @@ const HR = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Shift Dialog */}
+      <Dialog open={shiftDialogOpen} onOpenChange={setShiftDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedShift ? (language === "ar" ? "تعديل وردية" : "Edit Shift") : (language === "ar" ? "وردية جديدة" : "New Shift")}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              if (selectedShift) {
+                await axios.put(`${API}/hr/shifts/${selectedShift.id}`, shiftForm);
+              } else {
+                await axios.post(`${API}/hr/shifts`, shiftForm);
+              }
+              setShiftDialogOpen(false);
+              fetchData();
+              toast.success(language === "ar" ? "تم الحفظ" : "Saved");
+            } catch (error) {
+              toast.error(error.response?.data?.detail || "Error");
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "اسم الوردية" : "Shift Name"} *</Label>
+              <Input value={shiftForm.name} onChange={(e) => setShiftForm({ ...shiftForm, name: e.target.value })} required placeholder={language === "ar" ? "مثال: الوردية الصباحية" : "e.g., Morning Shift"} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "وقت البداية" : "Start Time"} *</Label>
+                <Input type="time" value={shiftForm.start_time} onChange={(e) => setShiftForm({ ...shiftForm, start_time: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "وقت النهاية" : "End Time"} *</Label>
+                <Input type="time" value={shiftForm.end_time} onChange={(e) => setShiftForm({ ...shiftForm, end_time: e.target.value })} required />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "ساعات العمل" : "Working Hours"}</Label>
+                <Input type="number" step="0.5" value={shiftForm.working_hours} onChange={(e) => setShiftForm({ ...shiftForm, working_hours: parseFloat(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "الاستراحة (دقيقة)" : "Break (min)"}</Label>
+                <Input type="number" value={shiftForm.break_duration} onChange={(e) => setShiftForm({ ...shiftForm, break_duration: parseInt(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "اللون" : "Color"}</Label>
+                <Input type="color" value={shiftForm.color} onChange={(e) => setShiftForm({ ...shiftForm, color: e.target.value })} />
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <input type="checkbox" id="nightShift" checked={shiftForm.is_night_shift} onChange={(e) => setShiftForm({ ...shiftForm, is_night_shift: e.target.checked })} />
+                <Label htmlFor="nightShift">{language === "ar" ? "وردية ليلية" : "Night Shift"}</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShiftDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{t("save")}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Shift Dialog */}
+      <Dialog open={assignShiftDialogOpen} onOpenChange={setAssignShiftDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "تعيين وردية لموظف" : "Assign Shift to Employee"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              await axios.post(`${API}/hr/employee-shifts`, assignShiftForm);
+              setAssignShiftDialogOpen(false);
+              toast.success(language === "ar" ? "تم التعيين" : "Assigned");
+            } catch (error) {
+              toast.error(error.response?.data?.detail || "Error");
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+              <Select value={assignShiftForm.employee_id} onValueChange={(val) => { const emp = employees.find(e => e.id === val); setAssignShiftForm({ ...assignShiftForm, employee_id: val, employee_name: emp?.name || "" }); }}>
+                <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر موظف" : "Select employee"} /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الوردية" : "Shift"} *</Label>
+              <Select value={assignShiftForm.shift_id} onValueChange={(val) => { const shift = shifts.find(s => s.id === val); setAssignShiftForm({ ...assignShiftForm, shift_id: val, shift_name: shift?.name || "" }); }}>
+                <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر وردية" : "Select shift"} /></SelectTrigger>
+                <SelectContent>
+                  {shifts.map((shift) => <SelectItem key={shift.id} value={shift.id}>{shift.name} ({shift.start_time}-{shift.end_time})</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "من تاريخ" : "From Date"} *</Label>
+                <Input type="date" value={assignShiftForm.date} onChange={(e) => setAssignShiftForm({ ...assignShiftForm, date: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "إلى تاريخ" : "To Date"}</Label>
+                <Input type="date" value={assignShiftForm.end_date} onChange={(e) => setAssignShiftForm({ ...assignShiftForm, end_date: e.target.value })} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAssignShiftDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{language === "ar" ? "تعيين" : "Assign"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Overtime Dialog */}
+      <Dialog open={overtimeDialogOpen} onOpenChange={setOvertimeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "تسجيل عمل إضافي" : "Record Overtime"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              // Calculate hours
+              const [sh, sm] = overtimeForm.start_time.split(':').map(Number);
+              const [eh, em] = overtimeForm.end_time.split(':').map(Number);
+              const hours = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+              
+              await axios.post(`${API}/hr/overtime`, { ...overtimeForm, hours: hours > 0 ? hours : 0 });
+              setOvertimeDialogOpen(false);
+              fetchData();
+              toast.success(language === "ar" ? "تم التسجيل" : "Recorded");
+            } catch (error) {
+              toast.error(error.response?.data?.detail || "Error");
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+              <Select value={overtimeForm.employee_id} onValueChange={(val) => { const emp = employees.find(e => e.id === val); setOvertimeForm({ ...overtimeForm, employee_id: val, employee_name: emp?.name || "" }); }}>
+                <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر موظف" : "Select employee"} /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "التاريخ" : "Date"} *</Label>
+              <Input type="date" value={overtimeForm.date} onChange={(e) => setOvertimeForm({ ...overtimeForm, date: e.target.value })} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "من الساعة" : "From"} *</Label>
+                <Input type="time" value={overtimeForm.start_time} onChange={(e) => setOvertimeForm({ ...overtimeForm, start_time: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "إلى الساعة" : "To"} *</Label>
+                <Input type="time" value={overtimeForm.end_time} onChange={(e) => setOvertimeForm({ ...overtimeForm, end_time: e.target.value })} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "معدل الأجر" : "Rate"}</Label>
+              <Select value={String(overtimeForm.rate)} onValueChange={(val) => setOvertimeForm({ ...overtimeForm, rate: parseFloat(val) })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1.5">1.5x ({language === "ar" ? "عادي" : "Normal"})</SelectItem>
+                  <SelectItem value="2">2x ({language === "ar" ? "عطلة" : "Holiday"})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "السبب" : "Reason"}</Label>
+              <Textarea value={overtimeForm.reason} onChange={(e) => setOvertimeForm({ ...overtimeForm, reason: e.target.value })} placeholder={language === "ar" ? "سبب العمل الإضافي" : "Overtime reason"} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOvertimeDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{t("save")}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Loan Dialog */}
+      <Dialog open={loanDialogOpen} onOpenChange={setLoanDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "سلفة / قرض جديد" : "New Advance / Loan"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              await axios.post(`${API}/hr/loans`, loanForm);
+              setLoanDialogOpen(false);
+              fetchData();
+              toast.success(language === "ar" ? "تم الإنشاء" : "Created");
+            } catch (error) {
+              toast.error(error.response?.data?.detail || "Error");
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+              <Select value={loanForm.employee_id} onValueChange={(val) => { const emp = employees.find(e => e.id === val); setLoanForm({ ...loanForm, employee_id: val, employee_name: emp?.name || "" }); }}>
+                <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر موظف" : "Select employee"} /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "النوع" : "Type"} *</Label>
+              <Select value={loanForm.loan_type} onValueChange={(val) => setLoanForm({ ...loanForm, loan_type: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="advance">{language === "ar" ? "سلفة" : "Advance"}</SelectItem>
+                  <SelectItem value="loan">{language === "ar" ? "قرض" : "Loan"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "المبلغ" : "Amount"} *</Label>
+                <Input type="number" step="0.01" value={loanForm.amount} onChange={(e) => setLoanForm({ ...loanForm, amount: parseFloat(e.target.value) || 0 })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "عدد الأقساط" : "Installments"}</Label>
+                <Input type="number" min="1" value={loanForm.installments} onChange={(e) => setLoanForm({ ...loanForm, installments: parseInt(e.target.value) || 1 })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "بداية الخصم" : "Deduction Start"}</Label>
+              <Input type="date" value={loanForm.start_deduction_date} onChange={(e) => setLoanForm({ ...loanForm, start_deduction_date: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "السبب" : "Reason"}</Label>
+              <Textarea value={loanForm.reason} onChange={(e) => setLoanForm({ ...loanForm, reason: e.target.value })} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setLoanDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{t("save")}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Dialog */}
+      <Dialog open={documentDialogOpen} onOpenChange={setDocumentDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDocument ? (language === "ar" ? "تعديل وثيقة" : "Edit Document") : (language === "ar" ? "وثيقة جديدة" : "New Document")}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              if (selectedDocument) {
+                await axios.put(`${API}/hr/documents/${selectedDocument.id}`, documentForm);
+              } else {
+                await axios.post(`${API}/hr/documents`, documentForm);
+              }
+              setDocumentDialogOpen(false);
+              fetchData();
+              toast.success(language === "ar" ? "تم الحفظ" : "Saved");
+            } catch (error) {
+              toast.error(error.response?.data?.detail || "Error");
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+              <Select value={documentForm.employee_id} onValueChange={(val) => { const emp = employees.find(e => e.id === val); setDocumentForm({ ...documentForm, employee_id: val, employee_name: emp?.name || "" }); }}>
+                <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر موظف" : "Select employee"} /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "نوع الوثيقة" : "Document Type"} *</Label>
+              <Select value={documentForm.document_type} onValueChange={(val) => setDocumentForm({ ...documentForm, document_type: val })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="passport">{language === "ar" ? "جواز سفر" : "Passport"}</SelectItem>
+                  <SelectItem value="id_card">{language === "ar" ? "بطاقة هوية" : "ID Card"}</SelectItem>
+                  <SelectItem value="visa">{language === "ar" ? "تأشيرة" : "Visa"}</SelectItem>
+                  <SelectItem value="contract">{language === "ar" ? "عقد عمل" : "Contract"}</SelectItem>
+                  <SelectItem value="certificate">{language === "ar" ? "شهادة" : "Certificate"}</SelectItem>
+                  <SelectItem value="medical">{language === "ar" ? "شهادة طبية" : "Medical"}</SelectItem>
+                  <SelectItem value="other">{language === "ar" ? "أخرى" : "Other"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "اسم الوثيقة" : "Document Name"} *</Label>
+              <Input value={documentForm.document_name} onChange={(e) => setDocumentForm({ ...documentForm, document_name: e.target.value })} required placeholder={language === "ar" ? "مثال: جواز سفر هندي" : "e.g., Indian Passport"} />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "رقم الوثيقة" : "Document Number"}</Label>
+              <Input value={documentForm.document_number} onChange={(e) => setDocumentForm({ ...documentForm, document_number: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "تاريخ الإصدار" : "Issue Date"}</Label>
+                <Input type="date" value={documentForm.issue_date} onChange={(e) => setDocumentForm({ ...documentForm, issue_date: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "تاريخ الانتهاء" : "Expiry Date"}</Label>
+                <Input type="date" value={documentForm.expiry_date} onChange={(e) => setDocumentForm({ ...documentForm, expiry_date: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
+              <Textarea value={documentForm.notes} onChange={(e) => setDocumentForm({ ...documentForm, notes: e.target.value })} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDocumentDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{t("save")}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
