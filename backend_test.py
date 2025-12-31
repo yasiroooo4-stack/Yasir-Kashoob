@@ -369,58 +369,90 @@ class BackendTester:
             self.log_test("Loans & Advances Test", False, f"Error: {str(e)}")
             return False
 
-    def test_other_key_endpoints(self):
-        """Test 5: Other Key Endpoints - suppliers, dashboard stats, treasury balance"""
+    def test_employee_documents(self):
+        """Test 5: Employee Documents APIs"""
         try:
             if not self.token:
-                self.log_test("Other Key Endpoints Test", False, "No authentication token available")
+                self.log_test("Employee Documents Test", False, "No authentication token available")
                 return False
             
-            key_endpoints = [
-                ("suppliers", "/suppliers"),
-                ("dashboard_stats", "/dashboard/stats"),
-                ("treasury_balance", "/treasury/balance")
-            ]
+            # Get list of employees to use valid employee_id
+            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            if employees_response.status_code != 200:
+                self.log_test("Employee Documents Test", False, "Failed to get employees list")
+                return False
             
-            results = {}
+            employees = employees_response.json()
+            if not employees:
+                self.log_test("Employee Documents Test", False, "No employees found for testing")
+                return False
             
-            for name, endpoint in key_endpoints:
-                try:
-                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        if isinstance(data, list):
-                            results[name] = f"✅ {len(data)} records"
-                        elif isinstance(data, dict):
-                            results[name] = f"✅ {len(data.keys())} fields"
-                        else:
-                            results[name] = "✅ Success"
-                    else:
-                        results[name] = f"❌ Status {response.status_code}"
-                except Exception as e:
-                    results[name] = f"❌ Error: {str(e)}"
+            employee_id = employees[0]["id"]
+            employee_name = employees[0]["name"]
             
-            failed_endpoints = [name for name, result in results.items() if "❌" in result]
+            # Test 1: Create a document
+            document_data = {
+                "employee_id": employee_id,
+                "employee_name": employee_name,
+                "document_type": "passport",
+                "document_name": "جواز سفر",
+                "document_number": "A1234567",
+                "expiry_date": "2026-12-31"
+            }
             
-            if not failed_endpoints:
+            create_response = self.session.post(
+                f"{BACKEND_URL}/hr/documents",
+                json=document_data
+            )
+            
+            if create_response.status_code != 200:
                 self.log_test(
-                    "Other Key Endpoints Test", 
-                    True, 
-                    f"All key endpoints working: {results}"
-                )
-                return True
-            else:
-                self.log_test(
-                    "Other Key Endpoints Test", 
+                    "Employee Documents Test", 
                     False, 
-                    f"Some key endpoints failed: {failed_endpoints}",
-                    f"Results: {results}"
+                    f"Failed to create document: {create_response.status_code}",
+                    create_response.text
                 )
                 return False
+            
+            created_document = create_response.json()
+            
+            # Test 2: Get all documents
+            get_response = self.session.get(f"{BACKEND_URL}/hr/documents")
+            
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Employee Documents Test", 
+                    False, 
+                    f"Failed to get documents: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            documents = get_response.json()
+            
+            # Test 3: Get expiring documents
+            expiring_response = self.session.get(f"{BACKEND_URL}/hr/documents/expiring?days=365")
+            
+            if expiring_response.status_code != 200:
+                self.log_test(
+                    "Employee Documents Test", 
+                    False, 
+                    f"Failed to get expiring documents: {expiring_response.status_code}",
+                    expiring_response.text
+                )
+                return False
+            
+            expiring_documents = expiring_response.json()
+            
+            self.log_test(
+                "Employee Documents Test", 
+                True, 
+                f"Successfully created document, retrieved {len(documents)} documents, and found {len(expiring_documents)} expiring documents"
+            )
+            return True
                 
         except Exception as e:
-            self.log_test("Other Key Endpoints Test", False, f"Error: {str(e)}")
+            self.log_test("Employee Documents Test", False, f"Error: {str(e)}")
             return False
 
     def run_all_tests(self):
