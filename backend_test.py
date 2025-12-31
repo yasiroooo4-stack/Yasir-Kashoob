@@ -318,18 +318,21 @@ class BackendTester:
             results = {}
             
             for name, endpoint in key_endpoints:
-                response = self.session.get(f"{BACKEND_URL}{endpoint}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list):
-                        results[name] = f"✅ {len(data)} records"
-                    elif isinstance(data, dict):
-                        results[name] = f"✅ {len(data.keys())} fields"
+                try:
+                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        if isinstance(data, list):
+                            results[name] = f"✅ {len(data)} records"
+                        elif isinstance(data, dict):
+                            results[name] = f"✅ {len(data.keys())} fields"
+                        else:
+                            results[name] = "✅ Success"
                     else:
-                        results[name] = "✅ Success"
-                else:
-                    results[name] = f"❌ Status {response.status_code}"
+                        results[name] = f"❌ Status {response.status_code}"
+                except Exception as e:
+                    results[name] = f"❌ Error: {str(e)}"
             
             failed_endpoints = [name for name, result in results.items() if "❌" in result]
             
