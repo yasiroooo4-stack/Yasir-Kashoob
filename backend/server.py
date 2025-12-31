@@ -2668,7 +2668,7 @@ async def create_treasury_transaction(
         details=f"{'إيداع' if transaction_type == 'deposit' else 'سحب'}: {amount} ر.ع - {description}"
     )
     
-    return transaction
+    return transaction.model_dump()
 
 # Helper function to update treasury
 async def update_treasury(transaction_type: str, amount: float, source_type: str, description: str, source_id: str = None, user_id: str = None, user_name: str = None):
