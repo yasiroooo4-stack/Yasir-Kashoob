@@ -102,12 +102,45 @@ const HR = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   
+  // New dialogs for HR features
+  const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
+  const [assignShiftDialogOpen, setAssignShiftDialogOpen] = useState(false);
+  const [overtimeDialogOpen, setOvertimeDialogOpen] = useState(false);
+  const [loanDialogOpen, setLoanDialogOpen] = useState(false);
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  
   // Selected items
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [selectedCar, setSelectedCar] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [selectedShift, setSelectedShift] = useState(null);
+  const [selectedOvertime, setSelectedOvertime] = useState(null);
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  
+  // Forms for new features
+  const [shiftForm, setShiftForm] = useState({
+    name: "", start_time: "08:00", end_time: "16:00",
+    break_duration: 60, working_hours: 8, is_night_shift: false, color: "#3B82F6"
+  });
+  const [overtimeForm, setOvertimeForm] = useState({
+    employee_id: "", employee_name: "", date: new Date().toISOString().split('T')[0],
+    start_time: "", end_time: "", hours: 0, rate: 1.5, reason: ""
+  });
+  const [loanForm, setLoanForm] = useState({
+    employee_id: "", employee_name: "", loan_type: "advance",
+    amount: 0, reason: "", installments: 1, start_deduction_date: ""
+  });
+  const [documentForm, setDocumentForm] = useState({
+    employee_id: "", employee_name: "", document_type: "passport",
+    document_name: "", document_number: "", issue_date: "", expiry_date: "", notes: ""
+  });
+  const [assignShiftForm, setAssignShiftForm] = useState({
+    employee_id: "", employee_name: "", shift_id: "", shift_name: "",
+    date: new Date().toISOString().split('T')[0], end_date: "", is_recurring: false
+  });
   
   // Excel import
   const [importLoading, setImportLoading] = useState(false);
