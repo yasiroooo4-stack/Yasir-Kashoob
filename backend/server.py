@@ -1911,8 +1911,19 @@ async def approve_payment(payment_id: str, approval: PaymentApproval, current_us
         raise HTTPException(status_code=400, detail="هذه الدفعة تمت معالجتها مسبقاً")
     
     entity_name = payment.get("related_name", "")
+    amount = payment.get("amount", 0)
     
     if approval.action == "approve":
+        # For supplier payment, check treasury balance
+        if payment.get("payment_type") == "supplier_payment":
+            treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+            treasury_balance = treasury.get("current_balance", 0) if treasury else 0
+            if amount > treasury_balance:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"رصيد الخزينة غير كافٍ. الرصيد الحالي: {treasury_balance} ر.ع، المطلوب: {amount} ر.ع"
+                )
+        
         # Update payment status
         await db.payments.update_one(
             {"id": payment_id},
@@ -1926,16 +1937,39 @@ async def approve_payment(payment_id: str, approval: PaymentApproval, current_us
             }
         )
         
-        # Update balances after approval
+        # Update balances and treasury after approval
         if payment.get("payment_type") == "supplier_payment":
+            # Deduct from supplier balance
             await db.suppliers.update_one(
                 {"id": payment.get("related_id")},
-                {"$inc": {"balance": -payment.get("amount", 0)}}
+                {"$inc": {"balance": -amount}}
             )
+            # Deduct from treasury (withdrawal)
+            await update_treasury(
+                transaction_type="withdrawal",
+                amount=amount,
+                source_type="supplier_payment",
+                description=f"دفعة للمورد: {entity_name}",
+                source_id=payment_id,
+                user_id=current_user["id"],
+                user_name=current_user.get("full_name", "")
+            )
+            
         elif payment.get("payment_type") == "customer_receipt":
+            # Deduct from customer balance (receivables)
             await db.customers.update_one(
                 {"id": payment.get("related_id")},
-                {"$inc": {"balance": -payment.get("amount", 0)}}
+                {"$inc": {"balance": -amount}}
+            )
+            # Add to treasury (deposit)
+            await update_treasury(
+                transaction_type="deposit",
+                amount=amount,
+                source_type="customer_receipt",
+                description=f"استلام من العميل: {entity_name}",
+                source_id=payment_id,
+                user_id=current_user["id"],
+                user_name=current_user.get("full_name", "")
             )
         
         await log_activity(
@@ -1945,7 +1979,7 @@ async def approve_payment(payment_id: str, approval: PaymentApproval, current_us
             entity_type="payment",
             entity_id=payment_id,
             entity_name=entity_name,
-            details=f"تمت الموافقة على دفعة: {payment.get('amount')} ر.ع - {entity_name}"
+            details=f"تمت الموافقة على دفعة: {amount} ر.ع - {entity_name}"
         )
         
         return {"message": "تمت الموافقة على الدفعة بنجاح", "status": "approved"}
@@ -1971,7 +2005,7 @@ async def approve_payment(payment_id: str, approval: PaymentApproval, current_us
             entity_type="payment",
             entity_id=payment_id,
             entity_name=entity_name,
-            details=f"تم رفض دفعة: {payment.get('amount')} ر.ع - {entity_name} - السبب: {approval.reason or 'غير محدد'}"
+            details=f"تم رفض دفعة: {amount} ر.ع - {entity_name} - السبب: {approval.reason or 'غير محدد'}"
         )
         
         return {"message": "تم رفض الدفعة", "status": "rejected"}
