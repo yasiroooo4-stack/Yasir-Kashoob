@@ -25,6 +25,7 @@ import {
   FolderKanban,
   Activity,
   Megaphone,
+  Calculator,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
