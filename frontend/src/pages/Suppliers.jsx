@@ -81,8 +81,8 @@ const Suppliers = () => {
   const fetchData = async () => {
     try {
       const [suppliersRes, centersRes] = await Promise.all([
-        axios.get(`${API}/suppliers`),
-        axios.get(`${API}/centers`),
+        axios.get(`${API}/api/suppliers`),
+        axios.get(`${API}/api/centers`),
       ]);
       setSuppliers(suppliersRes.data);
       setCenters(centersRes.data);
@@ -112,10 +112,10 @@ const Suppliers = () => {
       };
 
       if (selectedSupplier) {
-        await axios.put(`${API}/suppliers/${selectedSupplier.id}`, data);
+        await axios.put(`${API}/api/suppliers/${selectedSupplier.id}`, data);
         toast.success(t("success"));
       } else {
-        await axios.post(`${API}/suppliers`, data);
+        await axios.post(`${API}/api/suppliers`, data);
         toast.success(t("success"));
       }
       setDialogOpen(false);
@@ -128,7 +128,7 @@ const Suppliers = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API}/suppliers/${selectedSupplier.id}`);
+      await axios.delete(`${API}/api/suppliers/${selectedSupplier.id}`);
       toast.success(t("success"));
       setDeleteDialogOpen(false);
       setSelectedSupplier(null);

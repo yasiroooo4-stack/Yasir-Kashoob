@@ -102,10 +102,10 @@ const FeedPurchases = () => {
   const fetchAllData = async () => {
     try {
       const [purchasesRes, companiesRes, feedTypesRes, suppliersRes] = await Promise.all([
-        axios.get(`${API}/feed-purchases`),
-        axios.get(`${API}/feed-companies`),
-        axios.get(`${API}/feed-types`),
-        axios.get(`${API}/suppliers`),
+        axios.get(`${API}/api/feed-purchases`),
+        axios.get(`${API}/api/feed-companies`),
+        axios.get(`${API}/api/feed-types`),
+        axios.get(`${API}/api/suppliers`),
       ]);
       setPurchases(purchasesRes.data);
       setCompanies(companiesRes.data);
@@ -178,10 +178,10 @@ const FeedPurchases = () => {
       };
       
       if (editingPurchase) {
-        await axios.put(`${API}/feed-purchases/${editingPurchase.id}`, data);
+        await axios.put(`${API}/api/feed-purchases/${editingPurchase.id}`, data);
         toast.success(t("success"));
       } else {
-        await axios.post(`${API}/feed-purchases`, data);
+        await axios.post(`${API}/api/feed-purchases`, data);
         toast.success(t("success"));
       }
       
@@ -196,7 +196,7 @@ const FeedPurchases = () => {
   // Approve feed purchase invoice
   const handleApproveInvoice = async (purchaseId) => {
     try {
-      const response = await axios.post(`${API}/feed-purchases/${purchaseId}/approve`);
+      const response = await axios.post(`${API}/api/feed-purchases/${purchaseId}/approve`);
       toast.success(
         language === "ar" 
           ? `تم تصديق الفاتورة - كود: ${response.data.signature_code}`
@@ -342,9 +342,9 @@ const FeedPurchases = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/feed-companies/${selectedItem.id}`, companyForm);
+        await axios.put(`${API}/api/feed-companies/${selectedItem.id}`, companyForm);
       } else {
-        await axios.post(`${API}/feed-companies`, companyForm);
+        await axios.post(`${API}/api/feed-companies`, companyForm);
       }
       toast.success(t("success"));
       setCompanyDialogOpen(false);
@@ -365,9 +365,9 @@ const FeedPurchases = () => {
         kg_per_unit: feedTypeForm.kg_per_unit ? parseFloat(feedTypeForm.kg_per_unit) : null,
       };
       if (selectedItem) {
-        await axios.put(`${API}/feed-types/${selectedItem.id}`, data);
+        await axios.put(`${API}/api/feed-types/${selectedItem.id}`, data);
       } else {
-        await axios.post(`${API}/feed-types`, data);
+        await axios.post(`${API}/api/feed-types`, data);
       }
       toast.success(t("success"));
       setFeedTypeDialogOpen(false);
@@ -382,11 +382,11 @@ const FeedPurchases = () => {
   const handleDelete = async () => {
     try {
       if (deleteType === "company") {
-        await axios.delete(`${API}/feed-companies/${selectedItem.id}`);
+        await axios.delete(`${API}/api/feed-companies/${selectedItem.id}`);
       } else if (deleteType === "feedType") {
-        await axios.delete(`${API}/feed-types/${selectedItem.id}`);
+        await axios.delete(`${API}/api/feed-types/${selectedItem.id}`);
       } else if (deleteType === "purchase") {
-        await axios.delete(`${API}/feed-purchases/${selectedItem.id}`);
+        await axios.delete(`${API}/api/feed-purchases/${selectedItem.id}`);
       }
       toast.success(t("success"));
       setDeleteDialogOpen(false);

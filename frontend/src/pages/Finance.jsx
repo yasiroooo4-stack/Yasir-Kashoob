@@ -72,9 +72,9 @@ const Finance = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const [paymentsRes, suppliersRes, customersRes] = await Promise.all([
-        axios.get(`${API}/payments`, { headers }),
-        axios.get(`${API}/suppliers`, { headers }),
-        axios.get(`${API}/customers`, { headers }),
+        axios.get(`${API}/api/payments`, { headers }),
+        axios.get(`${API}/api/suppliers`, { headers }),
+        axios.get(`${API}/api/customers`, { headers }),
       ]);
       setPayments(paymentsRes.data);
       setSuppliers(suppliersRes.data);
@@ -83,7 +83,7 @@ const Finance = () => {
       // Fetch pending payments if user is admin
       if (user?.role === "admin") {
         try {
-          const pendingRes = await axios.get(`${API}/payments/pending`, { headers });
+          const pendingRes = await axios.get(`${API}/api/payments/pending`, { headers });
           setPendingPayments(pendingRes.data);
         } catch (e) {
           console.log("Could not fetch pending payments");
@@ -101,7 +101,7 @@ const Finance = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${API}/payments/${paymentId}/approve`,
+        `${API}/api/payments/${paymentId}/approve`,
         { action, reason: rejectionReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -143,7 +143,7 @@ const Finance = () => {
         notes: formData.notes,
       };
 
-      await axios.post(`${API}/payments`, data);
+      await axios.post(`${API}/api/payments`, data);
       toast.success(t("success"));
       setDialogOpen(false);
       resetForm();
@@ -169,7 +169,7 @@ const Finance = () => {
   const downloadReceipt = async (paymentId, supplierName) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/payments/${paymentId}/receipt`, {
+      const response = await axios.get(`${API}/api/payments/${paymentId}/receipt`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });
