@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAuth, useLanguage } from "../App";
+import { useAuth, useLanguage, API } from "../App";
+import axios from "axios";
 import {
   LayoutDashboard,
   Users,
@@ -27,6 +28,7 @@ import {
   Megaphone,
   Calculator,
   Brain,
+  Image,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -37,6 +39,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import LetterRequestButton from "./LetterRequestButton";
 import EmployeeStatsWidget from "./EmployeeStatsWidget";
@@ -48,6 +57,51 @@ const Layout = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [backgroundUrl, setBackgroundUrl] = useState("");
+  const [backgrounds, setBackgrounds] = useState([]);
+  const [backgroundDialogOpen, setBackgroundDialogOpen] = useState(false);
+
+  // Fetch user settings and backgrounds
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        // Fetch user settings
+        const settingsRes = await axios.get(`${API}/user/settings`, { headers });
+        if (settingsRes.data?.background_url) {
+          setBackgroundUrl(settingsRes.data.background_url);
+        }
+        
+        // Fetch available backgrounds
+        const bgRes = await axios.get(`${API}/system/backgrounds`, { headers });
+        setBackgrounds(bgRes.data || []);
+      } catch (error) {
+        console.log("Could not fetch settings");
+      }
+    };
+    
+    fetchSettings();
+  }, []);
+
+  // Update background
+  const updateBackground = async (bgId, bgUrl) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/user/settings`,
+        { background_id: bgId, background_url: bgUrl },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setBackgroundUrl(bgUrl);
+      setBackgroundDialogOpen(false);
+    } catch (error) {
+      console.log("Could not update background");
+    }
+  };
 
   const navItems = [
     { path: "/dashboard", icon: LayoutDashboard, label: "dashboard" },
