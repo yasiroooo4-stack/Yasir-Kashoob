@@ -41,6 +41,7 @@ const LetterRequestButton = ({ currentUser }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [fetchError, setFetchError] = useState(false);
   
   // Check if user is admin or hr_manager
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'hr_manager';
@@ -66,32 +67,42 @@ const LetterRequestButton = ({ currentUser }) => {
         fetchCurrentEmployee();
       }
     }
-  }, [dialogOpen]);
+  }, [dialogOpen, isAdmin]);
 
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
+      
       const response = await axios.get(`${API}/api/hr/employees`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setEmployees(response.data);
+      if (Array.isArray(response.data)) {
+        setEmployees(response.data);
+      }
     } catch (error) {
       console.error("Error fetching employees:", error);
+      setFetchError(true);
     }
   };
 
   const fetchCurrentEmployee = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
+      
       const response = await axios.get(`${API}/api/hr/employees`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      if (!Array.isArray(response.data)) return;
       
       // Find the employee that matches the current user
       const myEmployee = response.data.find(
         emp => emp.username === currentUser?.username || 
                emp.name === currentUser?.full_name ||
-               emp.id === currentUser?.employee_id
+               emp.id === currentUser?.employee_id ||
+               emp.id === currentUser?.id
       );
       
       if (myEmployee) {
@@ -104,11 +115,32 @@ const LetterRequestButton = ({ currentUser }) => {
           department: myEmployee.department || "",
           position: myEmployee.position || "",
         }));
+      } else {
+        // If no employee found, use current user data
+        setLetterForm(prev => ({
+          ...prev,
+          employee_id: currentUser?.id || "",
+          employee_name: currentUser?.full_name || "",
+          department: currentUser?.department || "",
+          position: "",
+        }));
       }
     } catch (error) {
       console.error("Error fetching current employee:", error);
+      // On error, still populate with current user data
+      setLetterForm(prev => ({
+        ...prev,
+        employee_id: currentUser?.id || "",
+        employee_name: currentUser?.full_name || "",
+        department: currentUser?.department || "",
+      }));
     }
   };
+  
+  // Don't render if no user
+  if (!currentUser) {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
