@@ -200,25 +200,37 @@ const LetterRequestButton = ({ currentUser }) => {
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Employee Selection */}
-            <div className="space-y-2">
-              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
-              <Select
-                value={letterForm.employee_id}
-                onValueChange={handleEmployeeSelect}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select Employee"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.name} - {emp.employee_code || emp.id.slice(0, 8)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Employee Selection - Only for Admin/HR Manager */}
+            {isAdmin ? (
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+                <Select
+                  value={letterForm.employee_id}
+                  onValueChange={handleEmployeeSelect}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select Employee"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.name} - {emp.employee_code || emp.id.slice(0, 8)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              // For regular employees - show their own name (read-only)
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "الموظف" : "Employee"}</Label>
+                <Input 
+                  value={letterForm.employee_name || currentUser?.full_name || ""} 
+                  disabled 
+                  className="bg-muted font-medium"
+                />
+              </div>
+            )}
 
             {/* Department (Auto-filled) */}
             {letterForm.department && (
