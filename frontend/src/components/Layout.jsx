@@ -144,6 +144,7 @@ const Layout = () => {
       '/employees': 'employees',
       '/reports': 'reports',
       '/finance': 'finance',
+      '/treasury': 'finance',
       '/suppliers': 'suppliers',
       '/milk-reception': 'milk_reception',
       '/inventory': 'inventory',
