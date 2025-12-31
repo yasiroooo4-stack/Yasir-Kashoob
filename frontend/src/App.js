@@ -238,6 +238,7 @@ function App() {
   };
 
   return (
+    <ErrorBoundary>
     <AuthContext.Provider value={{ user, login, register, logout, loading }}>
       <LanguageContext.Provider value={{ language, toggleLanguage }}>
         <div className="min-h-screen bg-background" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -254,11 +255,13 @@ function App() {
               
               <Route path="/" element={
                 <ProtectedRoute>
-                  <Layout />
+                  <ErrorBoundary>
+                    <Layout />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }>
                 <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
                 <Route path="suppliers" element={
                   <ProtectedRoute allowedDepartments={["purchasing", "milk_reception", "admin", "it"]}>
                     <Suppliers />
