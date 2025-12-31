@@ -236,6 +236,18 @@ class Payment(PaymentBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     payment_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+    # Approval workflow fields
+    status: str = "pending"  # pending, approved, rejected
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+
+# Approval request model
+class PaymentApproval(BaseModel):
+    action: str  # approve, reject
+    reason: Optional[str] = None
 
 # Employee Models (نماذج الموظفين المُحسّنة)
 class EmployeeBase(BaseModel):
