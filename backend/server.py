@@ -5775,6 +5775,274 @@ async def import_attendance_from_excel(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")
 
+# ==================== PAYROLL ROUTES (الرواتب) ====================
+
+@api_router.post("/hr/payroll/periods")
+async def create_payroll_period(
+    name: str = Form(...),
+    start_date: str = Form(...),
+    end_date: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new payroll period (e.g., 16 Nov - 15 Dec)"""
+    # Calculate total days
+    from datetime import datetime as dt
+    start = dt.strptime(start_date, "%Y-%m-%d")
+    end = dt.strptime(end_date, "%Y-%m-%d")
+    total_days = (end - start).days + 1
+    
+    period = PayrollPeriod(
+        name=name,
+        start_date=start_date,
+        end_date=end_date,
+        total_days=total_days
+    )
+    
+    await db.payroll_periods.insert_one(period.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_payroll_period",
+        entity_type="payroll",
+        entity_id=period.id,
+        entity_name=name,
+        details=f"إنشاء فترة رواتب: {name}"
+    )
+    
+    return period.model_dump()
+
+@api_router.get("/hr/payroll/periods")
+async def get_payroll_periods(current_user: dict = Depends(get_current_user)):
+    """Get all payroll periods"""
+    periods = await db.payroll_periods.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return periods
+
+@api_router.get("/hr/payroll/periods/{period_id}")
+async def get_payroll_period(period_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a specific payroll period with its records"""
+    period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+    
+    records = await db.payroll_records.find({"period_id": period_id}, {"_id": 0}).to_list(1000)
+    
+    return {
+        "period": period,
+        "records": records,
+        "summary": {
+            "total_employees": len(records),
+            "total_gross": sum(r.get("gross_salary", 0) for r in records),
+            "total_deductions": sum(r.get("deductions", 0) for r in records),
+            "total_net": sum(r.get("net_salary", 0) for r in records)
+        }
+    }
+
+@api_router.post("/hr/payroll/periods/{period_id}/calculate")
+async def calculate_payroll(period_id: str, current_user: dict = Depends(get_current_user)):
+    """Calculate payroll for all employees based on attendance"""
+    period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+    
+    # Get all active employees
+    employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    # Get attendance records for the period
+    start_date = period["start_date"]
+    end_date = period["end_date"]
+    
+    attendance_records = await db.hr_attendance.find({
+        "date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(10000)
+    
+    # Delete existing payroll records for this period
+    await db.payroll_records.delete_many({"period_id": period_id})
+    
+    payroll_records = []
+    
+    for emp in employees:
+        # Filter attendance for this employee
+        emp_attendance = [a for a in attendance_records if a.get("employee_id") == emp.get("id") or a.get("employee_name") == emp.get("name")]
+        
+        # Count attendance types
+        working_days = len([a for a in emp_attendance if a.get("status") == "present"])
+        day_off = len([a for a in emp_attendance if a.get("status") in ["off", "weekend"]])
+        sick_leave = len([a for a in emp_attendance if a.get("status") == "sick_leave"])
+        annual_leave = len([a for a in emp_attendance if a.get("status") == "annual_leave"])
+        public_holiday = len([a for a in emp_attendance if a.get("status") == "public_holiday"])
+        emergency_leave = len([a for a in emp_attendance if a.get("status") == "emergency_leave"])
+        on_duty = len([a for a in emp_attendance if a.get("status") == "on_duty"])
+        absent_days = len([a for a in emp_attendance if a.get("status") == "absent"])
+        unpaid_leave = len([a for a in emp_attendance if a.get("status") == "unpaid_leave"])
+        
+        # Calculate salary
+        basic_salary = emp.get("salary", 0)
+        daily_rate = basic_salary / 30 if basic_salary > 0 else 0
+        
+        # Total pay days = working + paid leaves
+        total_pay_days = working_days + day_off + sick_leave + annual_leave + public_holiday + emergency_leave + on_duty
+        
+        # Gross salary
+        gross_salary = daily_rate * total_pay_days
+        
+        # Deductions for unpaid leave and absences
+        deductions = daily_rate * (absent_days + unpaid_leave)
+        
+        # Net salary
+        net_salary = gross_salary - deductions
+        
+        record = PayrollRecord(
+            period_id=period_id,
+            employee_id=emp.get("id"),
+            employee_name=emp.get("name"),
+            employee_code=emp.get("employee_code"),
+            department=emp.get("department"),
+            position=emp.get("position"),
+            working_days=working_days,
+            day_off=day_off,
+            sick_leave=sick_leave,
+            annual_leave=annual_leave,
+            public_holiday=public_holiday,
+            emergency_leave=emergency_leave,
+            on_duty=on_duty,
+            absent_days=absent_days,
+            unpaid_leave=unpaid_leave,
+            basic_salary=basic_salary,
+            daily_rate=round(daily_rate, 3),
+            total_pay_days=total_pay_days,
+            gross_salary=round(gross_salary, 3),
+            deductions=round(deductions, 3),
+            net_salary=round(net_salary, 3)
+        )
+        
+        await db.payroll_records.insert_one(record.model_dump())
+        payroll_records.append(record.model_dump())
+    
+    # Update period status
+    await db.payroll_periods.update_one(
+        {"id": period_id},
+        {"$set": {
+            "status": "calculated",
+            "calculated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="calculate_payroll",
+        entity_type="payroll",
+        entity_id=period_id,
+        entity_name=period["name"],
+        details=f"حساب رواتب {len(payroll_records)} موظف"
+    )
+    
+    return {
+        "message": f"تم حساب رواتب {len(payroll_records)} موظف",
+        "period_id": period_id,
+        "records_count": len(payroll_records)
+    }
+
+@api_router.get("/hr/payroll/records")
+async def get_payroll_records(
+    period_id: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get payroll records with optional filters"""
+    query = {}
+    if period_id:
+        query["period_id"] = period_id
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    records = await db.payroll_records.find(query, {"_id": 0}).to_list(1000)
+    return records
+
+@api_router.put("/hr/payroll/records/{record_id}")
+async def update_payroll_record(
+    record_id: str,
+    deductions: Optional[float] = Form(None),
+    overtime_pay: Optional[float] = Form(None),
+    allowances: Optional[float] = Form(None),
+    notes: Optional[str] = Form(None),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a payroll record with manual adjustments"""
+    record = await db.payroll_records.find_one({"id": record_id}, {"_id": 0})
+    if not record:
+        raise HTTPException(status_code=404, detail="Payroll record not found")
+    
+    update_data = {}
+    if deductions is not None:
+        update_data["deductions"] = deductions
+    if overtime_pay is not None:
+        update_data["overtime_pay"] = overtime_pay
+    if allowances is not None:
+        update_data["allowances"] = allowances
+    if notes is not None:
+        update_data["notes"] = notes
+    
+    if update_data:
+        # Recalculate net salary
+        gross = record.get("gross_salary", 0)
+        ded = update_data.get("deductions", record.get("deductions", 0))
+        ot = update_data.get("overtime_pay", record.get("overtime_pay", 0))
+        allow = update_data.get("allowances", record.get("allowances", 0))
+        update_data["net_salary"] = round(gross - ded + ot + allow, 3)
+        
+        await db.payroll_records.update_one(
+            {"id": record_id},
+            {"$set": update_data}
+        )
+    
+    updated_record = await db.payroll_records.find_one({"id": record_id}, {"_id": 0})
+    return updated_record
+
+@api_router.post("/hr/payroll/periods/{period_id}/approve")
+async def approve_payroll(period_id: str, current_user: dict = Depends(get_current_user)):
+    """Approve a payroll period"""
+    period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+    
+    await db.payroll_periods.update_one(
+        {"id": period_id},
+        {"$set": {
+            "status": "approved",
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "approved_by": current_user["full_name"]
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_payroll",
+        entity_type="payroll",
+        entity_id=period_id,
+        entity_name=period["name"],
+        details=f"اعتماد كشف رواتب: {period['name']}"
+    )
+    
+    return {"message": "تم اعتماد كشف الرواتب بنجاح"}
+
+@api_router.delete("/hr/payroll/periods/{period_id}")
+async def delete_payroll_period(period_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a payroll period and its records"""
+    period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+    
+    if period.get("status") == "approved":
+        raise HTTPException(status_code=400, detail="لا يمكن حذف كشف رواتب معتمد")
+    
+    await db.payroll_records.delete_many({"period_id": period_id})
+    await db.payroll_periods.delete_one({"id": period_id})
+    
+    return {"message": "تم حذف فترة الرواتب بنجاح"}
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
