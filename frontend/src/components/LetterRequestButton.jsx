@@ -40,6 +40,10 @@ const LetterRequestButton = ({ currentUser }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState(null);
+  
+  // Check if user is admin or hr_manager
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'hr_manager';
   
   const [letterForm, setLetterForm] = useState({
     employee_id: "",
@@ -55,7 +59,12 @@ const LetterRequestButton = ({ currentUser }) => {
   // Fetch employees when dialog opens
   useEffect(() => {
     if (dialogOpen) {
-      fetchEmployees();
+      if (isAdmin) {
+        fetchEmployees();
+      } else {
+        // For regular employees, fetch only their own data
+        fetchCurrentEmployee();
+      }
     }
   }, [dialogOpen]);
 
@@ -68,6 +77,36 @@ const LetterRequestButton = ({ currentUser }) => {
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
+    }
+  };
+
+  const fetchCurrentEmployee = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/api/hr/employees`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Find the employee that matches the current user
+      const myEmployee = response.data.find(
+        emp => emp.username === currentUser?.username || 
+               emp.name === currentUser?.full_name ||
+               emp.id === currentUser?.employee_id
+      );
+      
+      if (myEmployee) {
+        setCurrentEmployee(myEmployee);
+        // Auto-fill the form with current employee data
+        setLetterForm(prev => ({
+          ...prev,
+          employee_id: myEmployee.id,
+          employee_name: myEmployee.name,
+          department: myEmployee.department || "",
+          position: myEmployee.position || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching current employee:", error);
     }
   };
 
