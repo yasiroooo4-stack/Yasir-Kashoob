@@ -4,27 +4,27 @@
     "success": true,
     "message": "Successfully logged in as hassan.hamdi with role accountant",
     "details": null,
-    "timestamp": "2025-12-31T07:17:57.713134"
+    "timestamp": "2025-12-31T07:19:29.571205"
   },
   {
     "test": "Dashboard Access",
     "success": true,
     "message": "Dashboard accessible with fields: ['suppliers_count', 'customers_count', 'today_milk_quantity', 'today_milk_value', 'today_sales_quantity', 'today_sales_value', 'current_stock', 'avg_fat_percentage', 'avg_protein_percentage', 'total_supplier_dues', 'total_customer_dues']",
     "details": null,
-    "timestamp": "2025-12-31T07:17:57.737415"
+    "timestamp": "2025-12-31T07:19:29.596855"
   },
   {
     "test": "User Profile Access",
     "success": true,
     "message": "Profile accessible for hassan.hamdi (accountant)",
     "details": null,
-    "timestamp": "2025-12-31T07:17:57.751950"
+    "timestamp": "2025-12-31T07:19:29.649524"
   },
   {
     "test": "Payment Receipt PDF Workflow",
     "success": true,
-    "message": "Successfully generated PDF receipt for payment 6768edfa-a376-4fcc-aed6-a92fe74c3308 (Size: 28790 bytes)",
+    "message": "Successfully generated PDF receipt for payment 0b19fa4e-3f9c-4355-8bf3-e74e8805275e (Size: 28790 bytes)",
     "details": null,
-    "timestamp": "2025-12-31T07:17:58.095766"
+    "timestamp": "2025-12-31T07:19:29.951229"
   }
 ]
