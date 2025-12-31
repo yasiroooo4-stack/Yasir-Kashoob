@@ -132,453 +132,195 @@ class BackendTester:
             self.log_test("User Registration", False, f"Registration error: {str(e)}")
             return False
     
-    def test_hr_employees_api(self):
-        """Test GET /api/hr/employees - should return 4 employees"""
+    def test_payment_receipt_pdf_workflow(self):
+        """Test Payment Receipt PDF API workflow"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            # First, create a supplier for the payment
+            supplier_data = {
+                "name": "مزرعة الأمل للألبان",
+                "phone": "+968 9876 5432",
+                "address": "صلالة، ظفار، عُمان",
+                "supplier_code": "SUP-TEST-001",
+                "bank_account": "1234567890123456",
+                "center_id": None,
+                "center_name": None,
+                "national_id": "87654321",
+                "farm_size": 45.5,
+                "cattle_count": 30
+            }
             
-            if response.status_code == 200:
-                employees = response.json()
-                if len(employees) == 4:
-                    self.log_test(
-                        "HR Employees API", 
-                        True, 
-                        f"Successfully retrieved 4 employees: {[emp.get('name') for emp in employees]}"
-                    )
-                    return True, employees
-                else:
-                    self.log_test(
-                        "HR Employees API", 
-                        False, 
-                        f"Expected 4 employees, found {len(employees)}",
-                        f"Employees: {[emp.get('name') for emp in employees]}"
-                    )
-                    return False, employees
-            else:
-                self.log_test(
-                    "HR Employees API", 
-                    False, 
-                    f"API call failed with status {response.status_code}",
-                    response.text
-                )
-                return False, []
-                
-        except Exception as e:
-            self.log_test("HR Employees API", False, f"Error: {str(e)}")
-            return False, []
-
-    def test_hr_dashboard_api(self):
-        """Test GET /api/hr/dashboard - should return HR statistics"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/hr/dashboard")
+            supplier_response = self.session.post(
+                f"{BACKEND_URL}/suppliers",
+                json=supplier_data,
+                headers={"Content-Type": "application/json"}
+            )
             
-            if response.status_code == 200:
-                dashboard = response.json()
-                # Check if dashboard contains expected fields
-                expected_fields = ["total_employees", "present_today", "absent_today", "pending_leaves", "pending_expenses"]
-                found_fields = [field for field in expected_fields if field in dashboard]
-                
-                if len(found_fields) >= 3:  # At least 3 expected fields
-                    self.log_test(
-                        "HR Dashboard API", 
-                        True, 
-                        f"Dashboard retrieved with fields: {list(dashboard.keys())}"
-                    )
-                    return True
-                else:
-                    self.log_test(
-                        "HR Dashboard API", 
-                        False, 
-                        f"Dashboard missing expected fields. Found: {list(dashboard.keys())}",
-                        f"Expected at least 3 of: {expected_fields}"
-                    )
-                    return False
-            else:
+            if supplier_response.status_code != 200:
                 self.log_test(
-                    "HR Dashboard API", 
+                    "Payment Receipt PDF Workflow", 
                     False, 
-                    f"API call failed with status {response.status_code}",
-                    response.text
+                    f"Failed to create test supplier: {supplier_response.status_code}",
+                    supplier_response.text
                 )
                 return False
-                
-        except Exception as e:
-            self.log_test("HR Dashboard API", False, f"Error: {str(e)}")
-            return False
-
-    def test_hr_fingerprint_devices_api(self):
-        """Test GET /api/hr/fingerprint-devices - should return 2 devices"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/hr/fingerprint-devices")
             
-            if response.status_code == 200:
-                devices = response.json()
-                expected_ips = ["192.168.100.201", "192.168.100.214"]
+            supplier = supplier_response.json()
+            supplier_id = supplier.get("id")
+            
+            # Create a supplier payment
+            payment_data = {
+                "payment_type": "supplier_payment",
+                "related_id": supplier_id,
+                "related_name": supplier_data["name"],
+                "amount": 1500.0,
+                "payment_method": "bank_transfer",
+                "notes": "دفعة شهرية لمورد الحليب - اختبار PDF"
+            }
+            
+            payment_response = self.session.post(
+                f"{BACKEND_URL}/payments",
+                json=payment_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if payment_response.status_code != 200:
+                self.log_test(
+                    "Payment Receipt PDF Workflow", 
+                    False, 
+                    f"Failed to create payment: {payment_response.status_code}",
+                    payment_response.text
+                )
+                return False
+            
+            payment = payment_response.json()
+            payment_id = payment.get("id")
+            
+            # Test the PDF receipt endpoint
+            pdf_response = self.session.get(
+                f"{BACKEND_URL}/payments/{payment_id}/receipt",
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+            
+            if pdf_response.status_code == 200:
+                # Check if response is PDF
+                content_type = pdf_response.headers.get("Content-Type", "")
+                content_disposition = pdf_response.headers.get("Content-Disposition", "")
                 
-                if len(devices) == 2:
-                    device_ips = [device.get("ip_address") for device in devices]
-                    missing_ips = [ip for ip in expected_ips if ip not in device_ips]
-                    
-                    if not missing_ips:
+                if "application/pdf" in content_type and "attachment" in content_disposition:
+                    # Check PDF content length
+                    pdf_size = len(pdf_response.content)
+                    if pdf_size > 1000:  # PDF should be at least 1KB
                         self.log_test(
-                            "HR Fingerprint Devices API", 
+                            "Payment Receipt PDF Workflow", 
                             True, 
-                            f"Found 2 devices with expected IPs: {device_ips}"
+                            f"Successfully generated PDF receipt for payment {payment_id} (Size: {pdf_size} bytes)"
                         )
                         return True
                     else:
                         self.log_test(
-                            "HR Fingerprint Devices API", 
+                            "Payment Receipt PDF Workflow", 
                             False, 
-                            f"Missing device IPs: {missing_ips}. Found: {device_ips}"
+                            f"PDF file too small: {pdf_size} bytes",
+                            f"Headers: {dict(pdf_response.headers)}"
                         )
                         return False
                 else:
                     self.log_test(
-                        "HR Fingerprint Devices API", 
+                        "Payment Receipt PDF Workflow", 
                         False, 
-                        f"Expected 2 devices, found {len(devices)}",
-                        f"Devices: {[d.get('ip_address') for d in devices]}"
+                        f"Response not a PDF file. Content-Type: {content_type}",
+                        f"Headers: {dict(pdf_response.headers)}"
                     )
                     return False
             else:
                 self.log_test(
-                    "HR Fingerprint Devices API", 
+                    "Payment Receipt PDF Workflow", 
                     False, 
-                    f"API call failed with status {response.status_code}",
-                    response.text
+                    f"PDF receipt API failed with status {pdf_response.status_code}",
+                    pdf_response.text
                 )
                 return False
                 
         except Exception as e:
-            self.log_test("HR Fingerprint Devices API", False, f"Error: {str(e)}")
+            self.log_test("Payment Receipt PDF Workflow", False, f"Error: {str(e)}")
             return False
 
-    def test_hr_leave_request_workflow(self):
-        """Test POST /api/hr/leave-requests and approval workflow"""
+    def test_dashboard_access(self):
+        """Test dashboard access for hassan.hamdi - should not show white screen"""
         try:
-            # First get employees to find Ahmed
-            employees_success, employees = self.test_hr_employees_api()
-            if not employees_success:
-                self.log_test("HR Leave Request Workflow", False, "Cannot test without employees data")
-                return False
-            
-            # Find Ahmed employee
-            ahmed_employee = None
-            for emp in employees:
-                if "ahmed" in emp.get("name", "").lower():
-                    ahmed_employee = emp
-                    break
-            
-            if not ahmed_employee:
-                # Use first employee if Ahmed not found
-                ahmed_employee = employees[0] if employees else None
-                
-            if not ahmed_employee:
-                self.log_test("HR Leave Request Workflow", False, "No employees found to create leave request")
-                return False
-            
-            # Create leave request
-            leave_data = {
-                "employee_id": ahmed_employee["id"],
-                "employee_name": ahmed_employee["name"],
-                "leave_type": "annual",
-                "start_date": "2025-01-15",
-                "end_date": "2025-01-17",
-                "reason": "Personal vacation",
-                "days_count": 3
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/hr/leave-requests",
-                json=leave_data,
-                headers={"Content-Type": "application/json"}
-            )
+            # Test dashboard stats endpoint
+            response = self.session.get(f"{BACKEND_URL}/dashboard/stats")
             
             if response.status_code == 200:
-                leave_request = response.json()
-                request_id = leave_request.get("id")
+                dashboard = response.json()
+                # Check if dashboard contains expected fields for accountant role
+                expected_fields = ["total_suppliers", "total_customers", "total_milk_received", "total_sales"]
+                found_fields = [field for field in expected_fields if field in dashboard]
                 
-                # Test GET leave requests
-                get_response = self.session.get(f"{BACKEND_URL}/hr/leave-requests")
-                if get_response.status_code == 200:
-                    requests = get_response.json()
-                    found_request = any(req.get("id") == request_id for req in requests)
-                    
-                    if found_request:
-                        # Test approval
-                        approve_response = self.session.put(f"{BACKEND_URL}/hr/leave-requests/{request_id}/approve")
-                        if approve_response.status_code == 200:
-                            approved_request = approve_response.json()
-                            if approved_request.get("status") == "approved":
-                                self.log_test(
-                                    "HR Leave Request Workflow", 
-                                    True, 
-                                    f"Successfully created, retrieved, and approved leave request for {ahmed_employee['name']}"
-                                )
-                                return True
-                            else:
-                                self.log_test(
-                                    "HR Leave Request Workflow", 
-                                    False, 
-                                    "Leave request not properly approved",
-                                    f"Status: {approved_request.get('status')}"
-                                )
-                                return False
-                        else:
-                            self.log_test(
-                                "HR Leave Request Workflow", 
-                                False, 
-                                f"Approval failed with status {approve_response.status_code}",
-                                approve_response.text
-                            )
-                            return False
-                    else:
-                        self.log_test(
-                            "HR Leave Request Workflow", 
-                            False, 
-                            "Created request not found in GET requests"
-                        )
-                        return False
-                else:
+                if len(found_fields) >= 2:  # At least 2 expected fields
                     self.log_test(
-                        "HR Leave Request Workflow", 
-                        False, 
-                        f"GET requests failed with status {get_response.status_code}",
-                        get_response.text
-                    )
-                    return False
-            else:
-                self.log_test(
-                    "HR Leave Request Workflow", 
-                    False, 
-                    f"Leave request creation failed with status {response.status_code}",
-                    response.text
-                )
-                return False
-                
-        except Exception as e:
-            self.log_test("HR Leave Request Workflow", False, f"Error: {str(e)}")
-            return False
-
-    def test_hr_expense_request_api(self):
-        """Test POST /api/hr/expense-requests - create expense request"""
-        try:
-            # Get first employee for expense request
-            employees_success, employees = self.test_hr_employees_api()
-            if not employees_success or not employees:
-                self.log_test("HR Expense Request API", False, "Cannot test without employees data")
-                return False
-            
-            employee = employees[0]
-            
-            # Create expense request
-            expense_data = {
-                "employee_id": employee["id"],
-                "employee_name": employee["name"],
-                "expense_type": "travel",
-                "amount": 150.0,
-                "description": "Business trip to Muscat",
-                "receipt_url": "https://example.com/receipt.pdf"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/hr/expense-requests",
-                json=expense_data,
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 200:
-                expense_request = response.json()
-                if (expense_request.get("employee_name") == employee["name"] and 
-                    expense_request.get("amount") == 150.0 and
-                    expense_request.get("status") == "pending"):
-                    self.log_test(
-                        "HR Expense Request API", 
+                        "Dashboard Access", 
                         True, 
-                        f"Successfully created expense request for {employee['name']}"
+                        f"Dashboard accessible with fields: {list(dashboard.keys())}"
                     )
                     return True
                 else:
                     self.log_test(
-                        "HR Expense Request API", 
+                        "Dashboard Access", 
                         False, 
-                        "Expense request data not correct",
-                        f"Response: {expense_request}"
+                        f"Dashboard missing expected fields. Found: {list(dashboard.keys())}",
+                        f"Expected at least 2 of: {expected_fields}"
                     )
                     return False
             else:
                 self.log_test(
-                    "HR Expense Request API", 
+                    "Dashboard Access", 
                     False, 
-                    f"Expense request creation failed with status {response.status_code}",
+                    f"Dashboard API failed with status {response.status_code}",
                     response.text
                 )
                 return False
                 
         except Exception as e:
-            self.log_test("HR Expense Request API", False, f"Error: {str(e)}")
+            self.log_test("Dashboard Access", False, f"Error: {str(e)}")
             return False
 
-    def test_hr_official_letter_api(self):
-        """Test POST /api/hr/official-letters - create official letter (salary certificate)"""
+    def test_user_profile_access(self):
+        """Test user profile access - verify user data is accessible"""
         try:
-            # Get first employee for official letter
-            employees_success, employees = self.test_hr_employees_api()
-            if not employees_success or not employees:
-                self.log_test("HR Official Letter API", False, "Cannot test without employees data")
-                return False
-            
-            employee = employees[0]
-            
-            # Create official letter (salary certificate)
-            letter_data = {
-                "employee_id": employee["id"],
-                "employee_name": employee["name"],
-                "letter_type": "salary_certificate",
-                "purpose": "Bank loan application",
-                "recipient": "National Bank of Oman",
-                "content": f"This is to certify that {employee['name']} is employed with our organization."
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/hr/official-letters",
-                json=letter_data,
-                headers={"Content-Type": "application/json"}
-            )
+            response = self.session.get(f"{BACKEND_URL}/auth/me")
             
             if response.status_code == 200:
-                letter = response.json()
-                if (letter.get("employee_name") == employee["name"] and 
-                    letter.get("letter_type") == "salary_certificate" and
-                    letter.get("status") == "pending"):
+                profile = response.json()
+                required_fields = ["id", "username", "full_name", "role"]
+                missing_fields = [field for field in required_fields if not profile.get(field)]
+                
+                if not missing_fields:
                     self.log_test(
-                        "HR Official Letter API", 
+                        "User Profile Access", 
                         True, 
-                        f"Successfully created salary certificate for {employee['name']}"
+                        f"Profile accessible for {profile.get('username')} ({profile.get('role')})"
                     )
                     return True
                 else:
                     self.log_test(
-                        "HR Official Letter API", 
+                        "User Profile Access", 
                         False, 
-                        "Official letter data not correct",
-                        f"Response: {letter}"
+                        f"Profile missing required fields: {missing_fields}",
+                        f"Profile: {profile}"
                     )
                     return False
             else:
                 self.log_test(
-                    "HR Official Letter API", 
+                    "User Profile Access", 
                     False, 
-                    f"Official letter creation failed with status {response.status_code}",
+                    f"Profile API failed with status {response.status_code}",
                     response.text
                 )
                 return False
                 
         except Exception as e:
-            self.log_test("HR Official Letter API", False, f"Error: {str(e)}")
-            return False
-
-    def test_hr_car_contract_api(self):
-        """Test POST /api/hr/car-contracts - create car contract"""
-        try:
-            # Get first employee for car contract
-            employees_success, employees = self.test_hr_employees_api()
-            if not employees_success or not employees:
-                self.log_test("HR Car Contract API", False, "Cannot test without employees data")
-                return False
-            
-            employee = employees[0]
-            
-            # Create car contract
-            contract_data = {
-                "employee_id": employee["id"],
-                "employee_name": employee["name"],
-                "car_type": "Toyota Camry",
-                "plate_number": "12345-OM",
-                "model_year": "2023",
-                "color": "White",
-                "start_date": "2025-01-01",
-                "end_date": "2025-12-31",
-                "monthly_rent": 300.0,
-                "total_value": 3600.0,
-                "contract_type": "rent",
-                "notes": "Company car for business use"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/hr/car-contracts",
-                json=contract_data,
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 200:
-                contract = response.json()
-                if (contract.get("employee_name") == employee["name"] and 
-                    contract.get("car_type") == "Toyota Camry" and
-                    contract.get("status") == "active"):
-                    self.log_test(
-                        "HR Car Contract API", 
-                        True, 
-                        f"Successfully created car contract for {employee['name']}"
-                    )
-                    return True
-                else:
-                    self.log_test(
-                        "HR Car Contract API", 
-                        False, 
-                        "Car contract data not correct",
-                        f"Response: {contract}"
-                    )
-                    return False
-            else:
-                self.log_test(
-                    "HR Car Contract API", 
-                    False, 
-                    f"Car contract creation failed with status {response.status_code}",
-                    response.text
-                )
-                return False
-                
-        except Exception as e:
-            self.log_test("HR Car Contract API", False, f"Error: {str(e)}")
-            return False
-
-    def test_hr_attendance_report_api(self):
-        """Test GET /api/hr/attendance/report?year=2025&month=12 - attendance report"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/hr/attendance/report?year=2025&month=12")
-            
-            if response.status_code == 200:
-                report = response.json()
-                if (report.get("year") == 2025 and 
-                    report.get("month") == 12 and
-                    "report" in report):
-                    self.log_test(
-                        "HR Attendance Report API", 
-                        True, 
-                        f"Successfully retrieved attendance report for December 2025"
-                    )
-                    return True
-                else:
-                    self.log_test(
-                        "HR Attendance Report API", 
-                        False, 
-                        "Attendance report structure not correct",
-                        f"Response: {report}"
-                    )
-                    return False
-            else:
-                self.log_test(
-                    "HR Attendance Report API", 
-                    False, 
-                    f"Attendance report failed with status {response.status_code}",
-                    response.text
-                )
-                return False
-                
-        except Exception as e:
-            self.log_test("HR Attendance Report API", False, f"Error: {str(e)}")
+            self.log_test("User Profile Access", False, f"Error: {str(e)}")
             return False
 
     # ==================== ACTIVITY LOGGING TESTS ====================
