@@ -256,12 +256,15 @@ const Inventory = () => {
                   <TableHead>{t("quantity_liters")}</TableHead>
                   <TableHead>{t("temperature")}</TableHead>
                   <TableHead>{t("last_updated")}</TableHead>
+                  {user?.role === "admin" && (
+                    <TableHead className="text-center">{language === "ar" ? "إجراءات" : "Actions"}</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {inventory.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -297,6 +300,28 @@ const Inventory = () => {
                           )}
                         </span>
                       </TableCell>
+                      {user?.role === "admin" && (
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item)}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(item)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
