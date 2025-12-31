@@ -192,8 +192,8 @@ const Finance = () => {
 
   const supplierPayments = payments.filter((p) => p.payment_type === "supplier_payment");
   const customerReceipts = payments.filter((p) => p.payment_type === "customer_receipt");
-  const totalSupplierPayments = supplierPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-  const totalCustomerReceipts = customerReceipts.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalSupplierPayments = supplierPayments.filter(p => p.status === "approved").reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalCustomerReceipts = customerReceipts.filter(p => p.status === "approved").reduce((sum, p) => sum + (p.amount || 0), 0);
 
   // Apply tab filter first
   let filteredPayments =
@@ -201,6 +201,8 @@ const Finance = () => {
       ? payments
       : activeTab === "supplier"
       ? supplierPayments
+      : activeTab === "pending"
+      ? pendingPayments
       : customerReceipts;
 
   // Apply supplier filter if in supplier mode
@@ -223,6 +225,18 @@ const Finance = () => {
     }
   };
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100"><Check className="w-3 h-3 mr-1" />{language === "ar" ? "معتمد" : "Approved"}</Badge>;
+      case "rejected":
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100"><X className="w-3 h-3 mr-1" />{language === "ar" ? "مرفوض" : "Rejected"}</Badge>;
+      case "pending":
+      default:
+        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100"><Clock className="w-3 h-3 mr-1" />{language === "ar" ? "في الانتظار" : "Pending"}</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -233,6 +247,32 @@ const Finance = () => {
 
   return (
     <div className="space-y-6" data-testid="finance-page">
+      {/* Pending Approvals Alert for Admin */}
+      {user?.role === "admin" && pendingPayments.length > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-yellow-600" />
+                <span className="font-medium text-yellow-800">
+                  {language === "ar" 
+                    ? `لديك ${pendingPayments.length} طلب دفع في انتظار الموافقة`
+                    : `You have ${pendingPayments.length} pending payment requests`}
+                </span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setActiveTab("pending")}
+                className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+              >
+                {language === "ar" ? "عرض الطلبات" : "View Requests"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
