@@ -1849,43 +1849,125 @@ async def update_inventory(inventory_id: str, inventory_data: InventoryUpdate, c
 
 @api_router.post("/payments", response_model=Payment)
 async def create_payment(payment_data: PaymentCreate, current_user: dict = Depends(require_role(["admin", "accountant"]))):
+    """Create a payment request (requires approval from admin/IT)"""
     payment = Payment(**payment_data.model_dump())
     payment.created_by = current_user["id"]
+    payment.created_by_name = current_user.get("full_name", "")
+    payment.status = "pending"  # All payments start as pending
     
     await db.payments.insert_one(payment.model_dump())
     
-    # Update balances
+    # Get entity name for logging
     entity_name = ""
     if payment.payment_type == "supplier_payment":
         supplier = await db.suppliers.find_one({"id": payment.related_id}, {"_id": 0})
         entity_name = supplier.get("name", "") if supplier else ""
-        await db.suppliers.update_one(
-            {"id": payment.related_id},
-            {"$inc": {"balance": -payment.amount}}
-        )
     elif payment.payment_type == "customer_receipt":
         customer = await db.customers.find_one({"id": payment.related_id}, {"_id": 0})
         entity_name = customer.get("name", "") if customer else ""
-        await db.customers.update_one(
-            {"id": payment.related_id},
-            {"$inc": {"balance": -payment.amount}}
-        )
     
     await log_activity(
         user_id=current_user["id"],
         user_name=current_user["full_name"],
-        action="create_payment",
+        action="create_payment_request",
         entity_type="payment",
         entity_id=payment.id,
         entity_name=entity_name,
-        details=f"دفعة مالية: {payment.amount} ر.ع - {entity_name}"
+        details=f"طلب دفعة مالية: {payment.amount} ر.ع - {entity_name} (في انتظار الموافقة)"
     )
     
     return payment
 
+@api_router.post("/payments/{payment_id}/approve")
+async def approve_payment(payment_id: str, approval: PaymentApproval, current_user: dict = Depends(require_role(["admin"]))):
+    """Approve or reject a payment request (admin/IT only)"""
+    
+    # Get the payment
+    payment = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    if not payment:
+        raise HTTPException(status_code=404, detail="الدفعة غير موجودة")
+    
+    if payment.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="هذه الدفعة تمت معالجتها مسبقاً")
+    
+    entity_name = payment.get("related_name", "")
+    
+    if approval.action == "approve":
+        # Update payment status
+        await db.payments.update_one(
+            {"id": payment_id},
+            {
+                "$set": {
+                    "status": "approved",
+                    "approved_by": current_user["id"],
+                    "approved_by_name": current_user.get("full_name", ""),
+                    "approved_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        # Update balances after approval
+        if payment.get("payment_type") == "supplier_payment":
+            await db.suppliers.update_one(
+                {"id": payment.get("related_id")},
+                {"$inc": {"balance": -payment.get("amount", 0)}}
+            )
+        elif payment.get("payment_type") == "customer_receipt":
+            await db.customers.update_one(
+                {"id": payment.get("related_id")},
+                {"$inc": {"balance": -payment.get("amount", 0)}}
+            )
+        
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="approve_payment",
+            entity_type="payment",
+            entity_id=payment_id,
+            entity_name=entity_name,
+            details=f"تمت الموافقة على دفعة: {payment.get('amount')} ر.ع - {entity_name}"
+        )
+        
+        return {"message": "تمت الموافقة على الدفعة بنجاح", "status": "approved"}
+    
+    elif approval.action == "reject":
+        await db.payments.update_one(
+            {"id": payment_id},
+            {
+                "$set": {
+                    "status": "rejected",
+                    "approved_by": current_user["id"],
+                    "approved_by_name": current_user.get("full_name", ""),
+                    "approved_at": datetime.now(timezone.utc).isoformat(),
+                    "rejection_reason": approval.reason or "لم يتم تحديد السبب"
+                }
+            }
+        )
+        
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="reject_payment",
+            entity_type="payment",
+            entity_id=payment_id,
+            entity_name=entity_name,
+            details=f"تم رفض دفعة: {payment.get('amount')} ر.ع - {entity_name} - السبب: {approval.reason or 'غير محدد'}"
+        )
+        
+        return {"message": "تم رفض الدفعة", "status": "rejected"}
+    
+    raise HTTPException(status_code=400, detail="الإجراء غير صالح")
+
+@api_router.get("/payments/pending", response_model=List[Payment])
+async def get_pending_payments(current_user: dict = Depends(require_role(["admin"]))):
+    """Get all pending payments awaiting approval (admin only)"""
+    payments = await db.payments.find({"status": "pending"}, {"_id": 0}).sort("payment_date", -1).to_list(1000)
+    return payments
+
 @api_router.get("/payments", response_model=List[Payment])
 async def get_payments(
     payment_type: Optional[str] = None,
+    status: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
@@ -1893,6 +1975,8 @@ async def get_payments(
     query = {}
     if payment_type:
         query["payment_type"] = payment_type
+    if status:
+        query["status"] = status
     if start_date:
         query["payment_date"] = {"$gte": start_date}
     if end_date:
