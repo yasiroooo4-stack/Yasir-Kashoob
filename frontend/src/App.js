@@ -56,6 +56,7 @@ import Marketing from "./pages/Marketing";
 import Payroll from "./pages/Payroll";
 import Analysis from "./pages/Analysis";
 import Treasury from "./pages/Treasury";
+import Analytics from "./pages/Analytics";
 
 // Layout
 import Layout from "./components/Layout";
