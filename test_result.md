@@ -38,15 +38,15 @@ backend:
 frontend:
   - task: "Login Page Image"
     implemented: true
-    working: "NA"
-    file: "frontend/src/components/Login.js"
+    working: true
+    file: "frontend/src/pages/Login.jsx"
     stuck_count: 0
     priority: "low"
     needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "testing"
-        comment: "Frontend testing not performed as per system limitations. Image URL verification requires frontend testing."
+        comment: "✅ VERIFIED: Login page image URL correctly implemented. Using exact URL: https://customer-assets.emergentagent.com/job_agrodairy/artifacts/w3qzpk27_Milk-Bottle-2.png on line 46 of Login.jsx"
 
 metadata:
   created_by: "testing_agent"
