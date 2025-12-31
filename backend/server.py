@@ -2670,6 +2670,122 @@ async def create_treasury_transaction(
     
     return transaction.model_dump()
 
+@api_router.put("/treasury/transaction/{transaction_id}")
+async def update_treasury_transaction(
+    transaction_id: str,
+    amount: Optional[float] = None,
+    description: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Update a treasury transaction (admin only)"""
+    # Get existing transaction
+    existing = await db.treasury_transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="العملية غير موجودة")
+    
+    # Calculate balance adjustment
+    old_amount = existing.get("amount", 0)
+    new_amount = amount if amount is not None else old_amount
+    amount_diff = new_amount - old_amount
+    
+    # Update transaction
+    update_data = {}
+    if amount is not None:
+        update_data["amount"] = amount
+    if description is not None:
+        update_data["description"] = description
+    
+    if update_data:
+        await db.treasury_transactions.update_one(
+            {"id": transaction_id},
+            {"$set": update_data}
+        )
+    
+    # Update treasury balance if amount changed
+    if amount_diff != 0:
+        treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+        current_balance = treasury.get("current_balance", 0) if treasury else 0
+        
+        if existing.get("transaction_type") == "deposit":
+            new_balance = current_balance + amount_diff
+            new_deposits = treasury.get("total_deposits", 0) + amount_diff
+            await db.treasury.update_one(
+                {"type": "main"},
+                {"$set": {"current_balance": new_balance, "total_deposits": new_deposits, "last_updated": datetime.now(timezone.utc).isoformat()}}
+            )
+        else:
+            new_balance = current_balance - amount_diff
+            new_withdrawals = treasury.get("total_withdrawals", 0) + amount_diff
+            await db.treasury.update_one(
+                {"type": "main"},
+                {"$set": {"current_balance": new_balance, "total_withdrawals": new_withdrawals, "last_updated": datetime.now(timezone.utc).isoformat()}}
+            )
+        
+        # Update balance_after for this and subsequent transactions
+        await db.treasury_transactions.update_one(
+            {"id": transaction_id},
+            {"$set": {"balance_after": new_balance if existing.get("transaction_type") == "deposit" else current_balance - amount_diff}}
+        )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_treasury_transaction",
+        entity_type="treasury",
+        entity_id=transaction_id,
+        details=f"تعديل عملية خزينة: {new_amount} ر.ع"
+    )
+    
+    updated = await db.treasury_transactions.find_one({"id": transaction_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/treasury/transaction/{transaction_id}")
+async def delete_treasury_transaction(
+    transaction_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Delete a treasury transaction and reverse its effect (admin only)"""
+    # Get existing transaction
+    existing = await db.treasury_transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="العملية غير موجودة")
+    
+    amount = existing.get("amount", 0)
+    transaction_type = existing.get("transaction_type")
+    
+    # Reverse the transaction effect on treasury
+    treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+    current_balance = treasury.get("current_balance", 0) if treasury else 0
+    
+    if transaction_type == "deposit":
+        new_balance = current_balance - amount
+        new_deposits = max(0, treasury.get("total_deposits", 0) - amount)
+        await db.treasury.update_one(
+            {"type": "main"},
+            {"$set": {"current_balance": new_balance, "total_deposits": new_deposits, "last_updated": datetime.now(timezone.utc).isoformat()}}
+        )
+    else:
+        new_balance = current_balance + amount
+        new_withdrawals = max(0, treasury.get("total_withdrawals", 0) - amount)
+        await db.treasury.update_one(
+            {"type": "main"},
+            {"$set": {"current_balance": new_balance, "total_withdrawals": new_withdrawals, "last_updated": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    # Delete the transaction
+    await db.treasury_transactions.delete_one({"id": transaction_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_treasury_transaction",
+        entity_type="treasury",
+        entity_id=transaction_id,
+        details=f"حذف عملية خزينة: {amount} ر.ع - {existing.get('description', '')}"
+    )
+    
+    return {"message": "تم حذف العملية وعكس تأثيرها على الخزينة", "new_balance": new_balance}
+
 # Helper function to update treasury
 async def update_treasury(transaction_type: str, amount: float, source_type: str, description: str, source_id: str = None, user_id: str = None, user_name: str = None):
     """Helper to update treasury balance from other operations"""
