@@ -43,11 +43,11 @@ const Login = () => {
       {/* Left Side - Hero Image */}
       <div className="hidden lg:flex lg:w-1/2 relative">
         <img
-          src="https://customer-assets.emergentagent.com/job_dairysystem/artifacts/9vg9jfp2_%D8%A7%D9%84%D8%A7%D8%A8%D9%84.jpg"
-          alt="الإبل"
-          className="w-full h-full object-cover"
+          src="https://customer-assets.emergentagent.com/job_agrodairy/artifacts/w3qzpk27_Milk-Bottle-2.png"
+          alt="الحليب"
+          className="w-full h-full object-contain bg-gradient-to-br from-sky-100 to-sky-200"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         <div className="absolute bottom-12 start-12 end-12 text-white">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
