@@ -1103,6 +1103,7 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
                       <TableHead>{language === "ar" ? "المسؤول" : "Manager"}</TableHead>
                       <TableHead>{language === "ar" ? "الراتب" : "Salary"}</TableHead>
+                      <TableHead>{language === "ar" ? "اسم المستخدم" : "Username"}</TableHead>
                       <TableHead>{language === "ar" ? "حساب النظام" : "Account"}</TableHead>
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
