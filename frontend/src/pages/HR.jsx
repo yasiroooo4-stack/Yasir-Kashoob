@@ -1820,6 +1820,15 @@ const HR = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>{language === "ar" ? "اسم المستخدم" : "Username"}</Label>
+                <Input
+                  value={employeeForm.username}
+                  onChange={(e) => setEmployeeForm({ ...employeeForm, username: e.target.value })}
+                  placeholder={language === "ar" ? "للدخول للنظام" : "For system login"}
+                  className="font-mono"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>{language === "ar" ? "الهاتف" : "Phone"} *</Label>
                 <Input
                   value={employeeForm.phone}
@@ -1827,6 +1836,8 @@ const HR = () => {
                   required
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{language === "ar" ? "البريد الإلكتروني" : "Email"}</Label>
                 <Input
@@ -1835,7 +1846,6 @@ const HR = () => {
                   onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
                 />
               </div>
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{language === "ar" ? "القسم" : "Department"} *</Label>
