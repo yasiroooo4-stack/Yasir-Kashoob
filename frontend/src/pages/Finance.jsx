@@ -122,6 +122,31 @@ const Finance = () => {
     });
   };
 
+  // Download payment receipt PDF
+  const downloadReceipt = async (paymentId, supplierName) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/payments/${paymentId}/receipt`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `receipt_${supplierName}_${paymentId.slice(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === "ar" ? "تم تحميل الإيصال" : "Receipt downloaded");
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل تحميل الإيصال" : "Failed to download receipt");
+    }
+  };
+
   const supplierPayments = payments.filter((p) => p.payment_type === "supplier_payment");
   const customerReceipts = payments.filter((p) => p.payment_type === "customer_receipt");
   const totalSupplierPayments = supplierPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
