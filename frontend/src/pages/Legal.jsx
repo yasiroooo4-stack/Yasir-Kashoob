@@ -66,11 +66,11 @@ const Legal = () => {
   const fetchAllData = async () => {
     try {
       const [contractsRes, casesRes, consultationsRes, documentsRes, dashboardRes] = await Promise.all([
-        axios.get(`${API}/api/legal/contracts`),
-        axios.get(`${API}/api/legal/cases`),
-        axios.get(`${API}/api/legal/consultations`),
-        axios.get(`${API}/api/legal/documents`),
-        axios.get(`${API}/api/legal/dashboard`)
+        axios.get(`${API}/legal/contracts`),
+        axios.get(`${API}/legal/cases`),
+        axios.get(`${API}/legal/consultations`),
+        axios.get(`${API}/legal/documents`),
+        axios.get(`${API}/legal/dashboard`)
       ]);
       setContracts(contractsRes.data);
       setCases(casesRes.data);
@@ -89,9 +89,9 @@ const Legal = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/legal/contracts/${selectedItem.id}`, contractForm);
+        await axios.put(`${API}/legal/contracts/${selectedItem.id}`, contractForm);
       } else {
-        await axios.post(`${API}/api/legal/contracts`, contractForm);
+        await axios.post(`${API}/legal/contracts`, contractForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setContractDialogOpen(false);
@@ -115,9 +115,9 @@ const Legal = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/legal/cases/${selectedItem.id}`, caseForm);
+        await axios.put(`${API}/legal/cases/${selectedItem.id}`, caseForm);
       } else {
-        await axios.post(`${API}/api/legal/cases`, caseForm);
+        await axios.post(`${API}/legal/cases`, caseForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setCaseDialogOpen(false);
@@ -140,7 +140,7 @@ const Legal = () => {
   const handleConsultationSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/legal/consultations`, consultationForm);
+      await axios.post(`${API}/legal/consultations`, consultationForm);
       toast.success(language === "ar" ? "تم إرسال الاستشارة" : "Consultation submitted");
       setConsultationDialogOpen(false);
       fetchAllData();
@@ -153,7 +153,7 @@ const Legal = () => {
   const handleDocumentSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/legal/documents`, documentForm);
+      await axios.post(`${API}/legal/documents`, documentForm);
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setDocumentDialogOpen(false);
       fetchAllData();

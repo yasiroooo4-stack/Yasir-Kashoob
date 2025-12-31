@@ -61,11 +61,11 @@ const Marketing = () => {
   const fetchAllData = async () => {
     try {
       const [campaignsRes, leadsRes, offersRes, returnsRes, dashboardRes] = await Promise.all([
-        axios.get(`${API}/api/marketing/campaigns`),
-        axios.get(`${API}/api/marketing/leads`),
-        axios.get(`${API}/api/marketing/offers`),
-        axios.get(`${API}/api/marketing/returns`),
-        axios.get(`${API}/api/marketing/dashboard`)
+        axios.get(`${API}/marketing/campaigns`),
+        axios.get(`${API}/marketing/leads`),
+        axios.get(`${API}/marketing/offers`),
+        axios.get(`${API}/marketing/returns`),
+        axios.get(`${API}/marketing/dashboard`)
       ]);
       setCampaigns(campaignsRes.data);
       setLeads(leadsRes.data);
@@ -84,9 +84,9 @@ const Marketing = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/marketing/campaigns/${selectedItem.id}`, campaignForm);
+        await axios.put(`${API}/marketing/campaigns/${selectedItem.id}`, campaignForm);
       } else {
-        await axios.post(`${API}/api/marketing/campaigns`, campaignForm);
+        await axios.post(`${API}/marketing/campaigns`, campaignForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setCampaignDialogOpen(false);
@@ -101,9 +101,9 @@ const Marketing = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/marketing/leads/${selectedItem.id}`, leadForm);
+        await axios.put(`${API}/marketing/leads/${selectedItem.id}`, leadForm);
       } else {
-        await axios.post(`${API}/api/marketing/leads`, leadForm);
+        await axios.post(`${API}/marketing/leads`, leadForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setLeadDialogOpen(false);
@@ -117,7 +117,7 @@ const Marketing = () => {
   const handleOfferSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/marketing/offers`, offerForm);
+      await axios.post(`${API}/marketing/offers`, offerForm);
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setOfferDialogOpen(false);
       fetchAllData();
@@ -130,7 +130,7 @@ const Marketing = () => {
   const handleReturnSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/marketing/returns`, returnForm);
+      await axios.post(`${API}/marketing/returns`, returnForm);
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setReturnDialogOpen(false);
       fetchAllData();

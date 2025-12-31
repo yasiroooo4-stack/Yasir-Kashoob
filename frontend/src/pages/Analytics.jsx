@@ -81,14 +81,14 @@ const Analytics = () => {
         attendanceRes,
         paymentsRes
       ] = await Promise.all([
-        axios.get(`${API}/api/reports/financial-summary?start_date=${dateRange.start}&end_date=${dateRange.end}`, { headers }),
-        axios.get(`${API}/api/milk-receptions`, { headers }),
-        axios.get(`${API}/api/sales`, { headers }),
-        axios.get(`${API}/api/suppliers`, { headers }),
-        axios.get(`${API}/api/customers`, { headers }),
-        axios.get(`${API}/api/hr/employees`, { headers }),
-        axios.get(`${API}/api/hr/attendance?month=${new Date().getMonth() + 1}&year=${new Date().getFullYear()}`, { headers }),
-        axios.get(`${API}/api/payments`, { headers }),
+        axios.get(`${API}/reports/financial-summary?start_date=${dateRange.start}&end_date=${dateRange.end}`, { headers }),
+        axios.get(`${API}/milk-receptions`, { headers }),
+        axios.get(`${API}/sales`, { headers }),
+        axios.get(`${API}/suppliers`, { headers }),
+        axios.get(`${API}/customers`, { headers }),
+        axios.get(`${API}/hr/employees`, { headers }),
+        axios.get(`${API}/hr/attendance?month=${new Date().getMonth() + 1}&year=${new Date().getFullYear()}`, { headers }),
+        axios.get(`${API}/payments`, { headers }),
       ]);
       
       setFinancialSummary(summaryRes.data);

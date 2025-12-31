@@ -54,8 +54,8 @@ const Sales = () => {
   const fetchData = async () => {
     try {
       const [salesRes, customersRes] = await Promise.all([
-        axios.get(`${API}/api/sales`),
-        axios.get(`${API}/api/customers`),
+        axios.get(`${API}/sales`),
+        axios.get(`${API}/customers`),
       ]);
       setSales(salesRes.data);
       setCustomers(customersRes.data);
@@ -84,7 +84,7 @@ const Sales = () => {
         price_per_liter: parseFloat(formData.price_per_liter),
       };
 
-      await axios.post(`${API}/api/sales`, data);
+      await axios.post(`${API}/sales`, data);
       toast.success(t("success"));
       setDialogOpen(false);
       resetForm();
