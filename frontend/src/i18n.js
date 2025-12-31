@@ -232,6 +232,7 @@ const resources = {
       
       // Analysis
       "analysis": "التحليل الذكي",
+      "analytics": "التحليلات",
       
       // Legal
       "legal": "القسم القانوني",
