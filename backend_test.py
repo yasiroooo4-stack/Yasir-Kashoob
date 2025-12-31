@@ -458,18 +458,18 @@ class BackendTester:
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("=" * 60)
-        print("MILK COLLECTION CENTER ERP - BUG FIX TESTING")
+        print("MILK COLLECTION CENTER ERP - HR FEATURES TESTING")
         print("=" * 60)
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Test Credentials: {TEST_USERNAME}/{TEST_PASSWORD}")
         print("=" * 60)
         
         tests = [
-            self.test_login_and_dashboard,
-            self.test_employee_stats_widget,
-            self.test_zkteco_import_api,
-            self.test_hr_page_apis,
-            self.test_other_key_endpoints
+            self.test_login_and_authentication,
+            self.test_shifts_management,
+            self.test_overtime_management,
+            self.test_loans_and_advances,
+            self.test_employee_documents
         ]
         
         passed = 0
