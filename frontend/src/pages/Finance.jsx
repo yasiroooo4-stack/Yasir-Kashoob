@@ -68,18 +68,55 @@ const Finance = () => {
 
   const fetchData = async () => {
     try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+      
       const [paymentsRes, suppliersRes, customersRes] = await Promise.all([
-        axios.get(`${API}/payments`),
-        axios.get(`${API}/suppliers`),
-        axios.get(`${API}/customers`),
+        axios.get(`${API}/payments`, { headers }),
+        axios.get(`${API}/suppliers`, { headers }),
+        axios.get(`${API}/customers`, { headers }),
       ]);
       setPayments(paymentsRes.data);
       setSuppliers(suppliersRes.data);
       setCustomers(customersRes.data);
+      
+      // Fetch pending payments if user is admin
+      if (user?.role === "admin") {
+        try {
+          const pendingRes = await axios.get(`${API}/payments/pending`, { headers });
+          setPendingPayments(pendingRes.data);
+        } catch (e) {
+          console.log("Could not fetch pending payments");
+        }
+      }
     } catch (error) {
       toast.error(t("error"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle payment approval
+  const handleApprovePayment = async (paymentId, action) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API}/payments/${paymentId}/approve`,
+        { action, reason: rejectionReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(action === "approve" 
+        ? (language === "ar" ? "تمت الموافقة على الدفعة" : "Payment approved")
+        : (language === "ar" ? "تم رفض الدفعة" : "Payment rejected")
+      );
+      
+      setApprovalDialogOpen(false);
+      setSelectedPayment(null);
+      setRejectionReason("");
+      fetchData();
+    } catch (error) {
+      toast.error(language === "ar" ? "حدث خطأ" : "Error occurred");
     }
   };
 
