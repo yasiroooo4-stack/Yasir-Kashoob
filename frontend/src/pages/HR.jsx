@@ -268,7 +268,7 @@ const HR = () => {
         axios.get(`${API}/api/hr/official-letters`),
         axios.get(`${API}/api/hr/fingerprint-devices`),
         axios.get(`${API}/api/hr/dashboard`),
-        axios.get(`${API}/centers`),
+        axios.get(`${API}/api/centers`),
         axios.get(`${API}/api/hr/available-permissions`),
         axios.get(`${API}/api/hr/managers`),
       ]);
