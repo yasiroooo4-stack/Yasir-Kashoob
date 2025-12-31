@@ -78,16 +78,75 @@ const Inventory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem("token");
       const data = {
         ...formData,
         quantity_liters: parseFloat(formData.quantity_liters),
         temperature: parseFloat(formData.temperature),
       };
 
-      await axios.post(`${API}/inventory`, data);
+      await axios.post(`${API}/inventory`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success(t("success"));
       setDialogOpen(false);
       resetForm();
+      fetchInventory();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // Edit inventory item
+  const handleEdit = (item) => {
+    setSelectedItem(item);
+    setEditFormData({
+      quantity_liters: item.quantity_liters,
+      storage_tank: item.storage_tank || "",
+      temperature: item.temperature || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const data = {
+        quantity_liters: parseFloat(editFormData.quantity_liters),
+        storage_tank: editFormData.storage_tank,
+        temperature: editFormData.temperature ? parseFloat(editFormData.temperature) : null,
+      };
+      
+      await axios.put(`${API}/inventory/${selectedItem.id}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(language === "ar" ? "تم تعديل المخزون بنجاح" : "Inventory updated");
+      setEditDialogOpen(false);
+      setSelectedItem(null);
+      fetchInventory();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // Delete inventory item
+  const handleDelete = (item) => {
+    setSelectedItem(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API}/inventory/${selectedItem.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(language === "ar" ? "تم حذف المخزون بنجاح" : "Inventory deleted");
+      setDeleteDialogOpen(false);
+      setSelectedItem(null);
       fetchInventory();
     } catch (error) {
       toast.error(error.response?.data?.detail || t("error"));
