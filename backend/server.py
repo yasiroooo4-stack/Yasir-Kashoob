@@ -1892,6 +1892,198 @@ async def get_payments(
     payments = await db.payments.find(query, {"_id": 0}).sort("payment_date", -1).to_list(1000)
     return payments
 
+# Payment Receipt PDF Generation
+@api_router.get("/payments/{payment_id}/receipt")
+async def get_payment_receipt_pdf(payment_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate PDF receipt for a supplier payment"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.units import cm
+    from io import BytesIO
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    
+    # Register Arabic font
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    try:
+        pdfmetrics.registerFont(TTFont('Arabic', font_path))
+    except:
+        pass
+    
+    # Get payment details
+    payment = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    # Get supplier details
+    supplier = await db.suppliers.find_one({"id": payment.get("related_id")}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    
+    def reshape_arabic(text):
+        try:
+            reshaped = arabic_reshaper.reshape(str(text))
+            return get_display(reshaped)
+        except:
+            return str(text)
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Title'],
+        fontName='Arabic',
+        fontSize=24,
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    header_style = ParagraphStyle(
+        'Header',
+        parent=styles['Normal'],
+        fontName='Arabic',
+        fontSize=14,
+        alignment=TA_CENTER,
+        spaceAfter=10
+    )
+    normal_style = ParagraphStyle(
+        'Normal',
+        parent=styles['Normal'],
+        fontName='Arabic',
+        fontSize=12,
+        alignment=TA_RIGHT,
+        spaceAfter=5
+    )
+    
+    elements = []
+    
+    # Company Header
+    elements.append(Paragraph(reshape_arabic("المروج للألبان"), title_style))
+    elements.append(Paragraph(reshape_arabic("Al-Morooj Dairy"), header_style))
+    elements.append(Spacer(1, 20))
+    
+    # Receipt Title
+    elements.append(Paragraph(reshape_arabic("إيصال دفع"), title_style))
+    elements.append(Spacer(1, 20))
+    
+    # Payment Date
+    payment_date = payment.get("payment_date", "")[:10]
+    elements.append(Paragraph(reshape_arabic(f"التاريخ: {payment_date}"), normal_style))
+    elements.append(Spacer(1, 10))
+    
+    # Supplier Information Table
+    supplier_data = [
+        [reshape_arabic("القيمة"), reshape_arabic("البيان")],
+        [reshape_arabic(supplier.get("name", "")), reshape_arabic("اسم المورد")],
+        [reshape_arabic(supplier.get("supplier_code", "-")), reshape_arabic("كود المورد")],
+        [reshape_arabic(supplier.get("phone", "-")), reshape_arabic("رقم الهاتف")],
+        [reshape_arabic(supplier.get("address", "-")), reshape_arabic("العنوان")],
+        [reshape_arabic(supplier.get("bank_account", "-")), reshape_arabic("الحساب البنكي")],
+        [reshape_arabic(supplier.get("national_id", "-")), reshape_arabic("رقم الهوية")],
+    ]
+    
+    supplier_table = Table(supplier_data, colWidths=[10*cm, 5*cm])
+    supplier_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2563eb")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Arabic'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('FONTSIZE', (0, 1), (-1, -1), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#f8fafc")),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor("#e2e8f0")),
+    ]))
+    elements.append(supplier_table)
+    elements.append(Spacer(1, 20))
+    
+    # Payment Details Table
+    payment_method_map = {
+        "cash": "نقداً",
+        "bank_transfer": "تحويل بنكي",
+        "check": "شيك"
+    }
+    payment_method = payment_method_map.get(payment.get("payment_method", "cash"), payment.get("payment_method", ""))
+    
+    payment_data = [
+        [reshape_arabic("القيمة"), reshape_arabic("تفاصيل الدفع")],
+        [reshape_arabic(f"{payment.get('amount', 0):,.2f} ر.ع"), reshape_arabic("المبلغ المدفوع")],
+        [reshape_arabic(payment_method), reshape_arabic("طريقة الدفع")],
+        [reshape_arabic(payment.get("notes", "-") or "-"), reshape_arabic("ملاحظات")],
+    ]
+    
+    payment_table = Table(payment_data, colWidths=[10*cm, 5*cm])
+    payment_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#059669")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Arabic'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('FONTSIZE', (0, 1), (-1, -1), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#f0fdf4")),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor("#d1fae5")),
+    ]))
+    elements.append(payment_table)
+    elements.append(Spacer(1, 30))
+    
+    # Signature Section
+    sig_data = [
+        [reshape_arabic("توقيع المستلم"), reshape_arabic(""), reshape_arabic("توقيع المسؤول")],
+        ["________________", "", "________________"],
+    ]
+    sig_table = Table(sig_data, colWidths=[5*cm, 5*cm, 5*cm])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Arabic'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 20),
+    ]))
+    elements.append(sig_table)
+    
+    # Footer
+    elements.append(Spacer(1, 40))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontName='Arabic',
+        fontSize=9,
+        alignment=TA_CENTER,
+        textColor=colors.gray
+    )
+    elements.append(Paragraph(reshape_arabic(f"رقم الإيصال: {payment_id[:8].upper()}"), footer_style))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Log activity
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="generate_payment_receipt",
+        entity_type="payment",
+        entity_id=payment_id,
+        entity_name=supplier.get("name"),
+        details=f"طباعة إيصال دفع للمورد: {supplier.get('name')} - المبلغ: {payment.get('amount')}"
+    )
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=payment_receipt_{payment_id[:8]}.pdf"}
+    )
+
 # ==================== EMPLOYEE ROUTES ====================
 
 @api_router.post("/employees", response_model=Employee)
