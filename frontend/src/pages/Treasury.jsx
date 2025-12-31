@@ -138,6 +138,61 @@ const Treasury = () => {
     }
   };
 
+  // Edit transaction
+  const handleEdit = (tx) => {
+    setSelectedTransaction(tx);
+    setEditFormData({
+      amount: tx.amount,
+      description: tx.description,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/treasury/transaction/${selectedTransaction.id}`,
+        null,
+        {
+          params: editFormData,
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      toast.success(language === "ar" ? "تم تعديل العملية بنجاح" : "Transaction updated");
+      setEditDialogOpen(false);
+      setSelectedTransaction(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "Error occurred"));
+    }
+  };
+
+  // Delete transaction
+  const handleDelete = (tx) => {
+    setSelectedTransaction(tx);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `${API}/treasury/transaction/${selectedTransaction.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === "ar" ? "تم حذف العملية بنجاح" : "Transaction deleted");
+      setDeleteDialogOpen(false);
+      setSelectedTransaction(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "Error occurred"));
+    }
+  };
+
   const getSourceTypeLabel = (type) => {
     const labels = {
       milk_sale: language === "ar" ? "بيع حليب" : "Milk Sale",
