@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Milk Collection Center ERP - Bug Fix Review
-Tests the specific bug fixes requested in the review:
-1. Login and Dashboard Test (yasir/admin123)
-2. Employee Stats Widget Test
-3. ZKTeco Import API Test
-4. HR Page API Tests
-5. Other Key Endpoints
+Backend API Testing for Milk Collection Center ERP - HR Features Testing
+Tests the new HR features as requested in the review:
+1. Login and Authentication Test (yasir/admin123)
+2. Shifts Management APIs
+3. Overtime Management APIs  
+4. Loans & Advances APIs
+5. Employee Documents APIs
 """
 
 import requests
