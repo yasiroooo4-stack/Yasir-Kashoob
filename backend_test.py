@@ -282,53 +282,91 @@ class BackendTester:
             self.log_test("Overtime Management Test", False, f"Error: {str(e)}")
             return False
 
-    def test_hr_page_apis(self):
-        """Test 4: HR Page API Tests - verify all HR endpoints work"""
+    def test_loans_and_advances(self):
+        """Test 4: Loans & Advances APIs"""
         try:
             if not self.token:
-                self.log_test("HR Page API Tests", False, "No authentication token available")
+                self.log_test("Loans & Advances Test", False, "No authentication token available")
                 return False
             
-            hr_endpoints = [
-                ("employees", "/hr/employees"),
-                ("departments", "/hr/departments"), 
-                ("attendance", "/hr/attendance")
-            ]
+            # Get list of employees to use valid employee_id
+            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            if employees_response.status_code != 200:
+                self.log_test("Loans & Advances Test", False, "Failed to get employees list")
+                return False
             
-            results = {}
+            employees = employees_response.json()
+            if not employees:
+                self.log_test("Loans & Advances Test", False, "No employees found for testing")
+                return False
             
-            for name, endpoint in hr_endpoints:
-                response = self.session.get(f"{BACKEND_URL}{endpoint}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list):
-                        results[name] = f"✅ {len(data)} records"
-                    else:
-                        results[name] = "✅ Success"
-                else:
-                    results[name] = f"❌ Status {response.status_code}"
+            employee_id = employees[0]["id"]
+            employee_name = employees[0]["name"]
             
-            failed_endpoints = [name for name, result in results.items() if "❌" in result]
+            # Test 1: Create a loan
+            loan_data = {
+                "employee_id": employee_id,
+                "employee_name": employee_name,
+                "loan_type": "advance",
+                "amount": 500.0,
+                "installments": 5,
+                "reason": "حاجة شخصية"
+            }
             
-            if not failed_endpoints:
+            create_response = self.session.post(
+                f"{BACKEND_URL}/hr/loans",
+                json=loan_data
+            )
+            
+            if create_response.status_code != 200:
                 self.log_test(
-                    "HR Page API Tests", 
-                    True, 
-                    f"All HR endpoints working: {results}"
-                )
-                return True
-            else:
-                self.log_test(
-                    "HR Page API Tests", 
+                    "Loans & Advances Test", 
                     False, 
-                    f"Some HR endpoints failed: {failed_endpoints}",
-                    f"Results: {results}"
+                    f"Failed to create loan: {create_response.status_code}",
+                    create_response.text
                 )
                 return False
+            
+            created_loan = create_response.json()
+            loan_id = created_loan["id"]
+            
+            # Test 2: Get all loans
+            get_response = self.session.get(f"{BACKEND_URL}/hr/loans")
+            
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Loans & Advances Test", 
+                    False, 
+                    f"Failed to get loans: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            loans = get_response.json()
+            
+            # Test 3: Approve loan
+            approve_response = self.session.put(
+                f"{BACKEND_URL}/hr/loans/{loan_id}/approve?approved=true"
+            )
+            
+            if approve_response.status_code != 200:
+                self.log_test(
+                    "Loans & Advances Test", 
+                    False, 
+                    f"Failed to approve loan: {approve_response.status_code}",
+                    approve_response.text
+                )
+                return False
+            
+            self.log_test(
+                "Loans & Advances Test", 
+                True, 
+                f"Successfully created loan, retrieved {len(loans)} loans, and approved loan"
+            )
+            return True
                 
         except Exception as e:
-            self.log_test("HR Page API Tests", False, f"Error: {str(e)}")
+            self.log_test("Loans & Advances Test", False, f"Error: {str(e)}")
             return False
 
     def test_other_key_endpoints(self):
