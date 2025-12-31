@@ -136,16 +136,30 @@ const LetterRequestButton = ({ currentUser }) => {
   };
 
   const resetForm = () => {
-    setLetterForm({
-      employee_id: "",
-      employee_name: "",
-      department: "",
-      position: "",
-      letter_type: "salary_certificate",
-      purpose: "",
-      recipient: "",
-      content: "",
-    });
+    if (isAdmin) {
+      setLetterForm({
+        employee_id: "",
+        employee_name: "",
+        department: "",
+        position: "",
+        letter_type: "salary_certificate",
+        purpose: "",
+        recipient: "",
+        content: "",
+      });
+    } else if (currentEmployee) {
+      // Keep current employee data for regular employees
+      setLetterForm({
+        employee_id: currentEmployee.id,
+        employee_name: currentEmployee.name,
+        department: currentEmployee.department || "",
+        position: currentEmployee.position || "",
+        letter_type: "salary_certificate",
+        purpose: "",
+        recipient: "",
+        content: "",
+      });
+    }
   };
 
   const handleEmployeeSelect = (employeeId) => {
