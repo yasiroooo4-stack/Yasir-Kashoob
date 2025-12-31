@@ -30,33 +30,48 @@ const EmployeeStatsWidget = ({ currentUser }) => {
     total_working_days: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (currentUser?.id) {
       fetchEmployeeStats();
+    } else {
+      setLoading(false);
     }
   }, [currentUser]);
 
   const fetchEmployeeStats = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       
       // Get current month attendance
       const currentDate = new Date();
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
       
-      // Fetch attendance data
-      const attendanceRes = await axios.get(
-        `${API}/api/hr/attendance?month=${month}&year=${year}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      // Filter attendance for current user
-      const userAttendance = attendanceRes.data.filter(
-        a => a.employee_id === currentUser.id || 
-             a.employee_name === currentUser.full_name
-      );
+      // Fetch attendance data with error handling
+      let userAttendance = [];
+      try {
+        const attendanceRes = await axios.get(
+          `${API}/api/hr/attendance?month=${month}&year=${year}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        // Filter attendance for current user
+        if (Array.isArray(attendanceRes.data)) {
+          userAttendance = attendanceRes.data.filter(
+            a => a.employee_id === currentUser?.id || 
+                 a.employee_name === currentUser?.full_name ||
+                 a.employee_id === currentUser?.username
+          );
+        }
+      } catch (attendanceError) {
+        console.log("Could not fetch attendance:", attendanceError.message);
+      }
       
       // Calculate stats
       const presentDays = userAttendance.filter(a => a.status === "present").length;
@@ -69,11 +84,15 @@ const EmployeeStatsWidget = ({ currentUser }) => {
           `${API}/api/hr/employees`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const employee = employeesRes.data.find(
-          e => e.id === currentUser.id || e.name === currentUser.full_name
-        );
-        if (employee?.leave_balance !== undefined) {
-          leaveBalance = employee.leave_balance;
+        if (Array.isArray(employeesRes.data)) {
+          const employee = employeesRes.data.find(
+            e => e.id === currentUser?.id || 
+                 e.name === currentUser?.full_name ||
+                 e.username === currentUser?.username
+          );
+          if (employee?.leave_balance !== undefined) {
+            leaveBalance = employee.leave_balance;
+          }
         }
       } catch (e) {
         console.log("Could not fetch leave balance");
@@ -105,10 +124,16 @@ const EmployeeStatsWidget = ({ currentUser }) => {
       });
     } catch (error) {
       console.error("Error fetching employee stats:", error);
+      setError(true);
     } finally {
       setLoading(false);
     }
   };
+  
+  // Don't render if there's an error or no user
+  if (error || !currentUser) {
+    return null;
+  }
 
   const getPerformanceColor = (rate) => {
     if (rate >= 90) return "text-green-600";
