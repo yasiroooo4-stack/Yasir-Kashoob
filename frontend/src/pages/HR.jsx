@@ -1857,6 +1857,294 @@ const HR = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Shifts Tab */}
+        <TabsContent value="shifts">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "إدارة الورديات" : "Shift Management"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إنشاء وتعيين ورديات العمل للموظفين" : "Create and assign work shifts to employees"}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => { setSelectedShift(null); setShiftForm({ name: "", start_time: "08:00", end_time: "16:00", break_duration: 60, working_hours: 8, is_night_shift: false, color: "#3B82F6" }); setShiftDialogOpen(true); }}>
+                  <Plus className="w-4 h-4 ml-2" />
+                  {language === "ar" ? "وردية جديدة" : "New Shift"}
+                </Button>
+                <Button variant="outline" onClick={() => setAssignShiftDialogOpen(true)}>
+                  <UserPlus className="w-4 h-4 ml-2" />
+                  {language === "ar" ? "تعيين وردية" : "Assign Shift"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {shifts.map((shift) => (
+                  <Card key={shift.id} className="border-r-4" style={{ borderRightColor: shift.color }}>
+                    <CardContent className="pt-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold">{shift.name}</h3>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => { setSelectedShift(shift); setShiftForm(shift); setShiftDialogOpen(true); }}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="text-red-500" onClick={async () => { await axios.delete(`${API}/hr/shifts/${shift.id}`); fetchData(); toast.success(language === "ar" ? "تم الحذف" : "Deleted"); }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p><Clock className="w-3 h-3 inline ml-1" /> {shift.start_time} - {shift.end_time}</p>
+                        <p>{language === "ar" ? "ساعات العمل:" : "Working hours:"} {shift.working_hours}h</p>
+                        <p>{language === "ar" ? "الاستراحة:" : "Break:"} {shift.break_duration} {language === "ar" ? "دقيقة" : "min"}</p>
+                        {shift.is_night_shift && <Badge variant="secondary">{language === "ar" ? "وردية ليلية" : "Night Shift"}</Badge>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {shifts.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    {language === "ar" ? "لا توجد ورديات. قم بإنشاء وردية جديدة." : "No shifts. Create a new shift."}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Overtime Tab */}
+        <TabsContent value="overtime">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "العمل الإضافي" : "Overtime"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تسجيل وإدارة ساعات العمل الإضافي" : "Record and manage overtime hours"}
+                </CardDescription>
+              </div>
+              <Button onClick={() => { setSelectedOvertime(null); setOvertimeForm({ employee_id: "", employee_name: "", date: new Date().toISOString().split('T')[0], start_time: "", end_time: "", hours: 0, rate: 1.5, reason: "" }); setOvertimeDialogOpen(true); }}>
+                <Plus className="w-4 h-4 ml-2" />
+                {language === "ar" ? "تسجيل عمل إضافي" : "Record Overtime"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                    <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                    <TableHead>{language === "ar" ? "الوقت" : "Time"}</TableHead>
+                    <TableHead>{language === "ar" ? "الساعات" : "Hours"}</TableHead>
+                    <TableHead>{language === "ar" ? "المعدل" : "Rate"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                    <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {overtime.map((ot) => (
+                    <TableRow key={ot.id}>
+                      <TableCell className="font-medium">{ot.employee_name}</TableCell>
+                      <TableCell>{ot.date}</TableCell>
+                      <TableCell>{ot.start_time} - {ot.end_time}</TableCell>
+                      <TableCell>{ot.hours}h</TableCell>
+                      <TableCell>{ot.rate}x</TableCell>
+                      <TableCell>
+                        <Badge variant={ot.status === "approved" ? "success" : ot.status === "rejected" ? "destructive" : "secondary"}>
+                          {ot.status === "pending" ? (language === "ar" ? "معلق" : "Pending") : ot.status === "approved" ? (language === "ar" ? "معتمد" : "Approved") : (language === "ar" ? "مرفوض" : "Rejected")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {ot.status === "pending" && (
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="text-green-600" onClick={async () => { await axios.put(`${API}/hr/overtime/${ot.id}/approve?approved=true`); fetchData(); toast.success(language === "ar" ? "تمت الموافقة" : "Approved"); }}>
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="text-red-600" onClick={async () => { await axios.put(`${API}/hr/overtime/${ot.id}/approve?approved=false`); fetchData(); toast.success(language === "ar" ? "تم الرفض" : "Rejected"); }}>
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {overtime.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        {language === "ar" ? "لا توجد سجلات عمل إضافي" : "No overtime records"}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Loans Tab */}
+        <TabsContent value="loans">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "السلف والقروض" : "Advances & Loans"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة السلف والقروض للموظفين" : "Manage employee advances and loans"}
+                </CardDescription>
+              </div>
+              <Button onClick={() => { setSelectedLoan(null); setLoanForm({ employee_id: "", employee_name: "", loan_type: "advance", amount: 0, reason: "", installments: 1, start_deduction_date: "" }); setLoanDialogOpen(true); }}>
+                <Plus className="w-4 h-4 ml-2" />
+                {language === "ar" ? "سلفة/قرض جديد" : "New Loan"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                    <TableHead>{language === "ar" ? "النوع" : "Type"}</TableHead>
+                    <TableHead>{language === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                    <TableHead>{language === "ar" ? "الأقساط" : "Installments"}</TableHead>
+                    <TableHead>{language === "ar" ? "المسدد" : "Paid"}</TableHead>
+                    <TableHead>{language === "ar" ? "المتبقي" : "Remaining"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                    <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loans.map((loan) => (
+                    <TableRow key={loan.id}>
+                      <TableCell className="font-medium">{loan.employee_name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {loan.loan_type === "advance" ? (language === "ar" ? "سلفة" : "Advance") : (language === "ar" ? "قرض" : "Loan")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{loan.amount?.toFixed(2)} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
+                      <TableCell>{loan.paid_installments || 0} / {loan.installments}</TableCell>
+                      <TableCell className="text-green-600">{(loan.paid_amount || 0).toFixed(2)}</TableCell>
+                      <TableCell className="text-orange-600">{(loan.remaining_amount || loan.amount).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant={loan.status === "active" ? "default" : loan.status === "completed" ? "success" : loan.status === "rejected" ? "destructive" : "secondary"}>
+                          {loan.status === "pending" ? (language === "ar" ? "معلق" : "Pending") : loan.status === "active" ? (language === "ar" ? "نشط" : "Active") : loan.status === "completed" ? (language === "ar" ? "مكتمل" : "Completed") : (language === "ar" ? "مرفوض" : "Rejected")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {loan.status === "pending" && (
+                            <>
+                              <Button size="icon" variant="ghost" className="text-green-600" onClick={async () => { await axios.put(`${API}/hr/loans/${loan.id}/approve?approved=true`); fetchData(); toast.success(language === "ar" ? "تمت الموافقة" : "Approved"); }}>
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="text-red-600" onClick={async () => { await axios.put(`${API}/hr/loans/${loan.id}/approve?approved=false`); fetchData(); toast.success(language === "ar" ? "تم الرفض" : "Rejected"); }}>
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {loan.status === "active" && (
+                            <Button size="sm" variant="outline" onClick={async () => { await axios.post(`${API}/hr/loans/${loan.id}/payment?amount=${loan.installment_amount || loan.amount / loan.installments}`); fetchData(); toast.success(language === "ar" ? "تم تسجيل الدفعة" : "Payment recorded"); }}>
+                              {language === "ar" ? "سداد قسط" : "Pay"}
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {loans.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        {language === "ar" ? "لا توجد سلف أو قروض" : "No loans or advances"}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "وثائق الموظفين" : "Employee Documents"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة وثائق ومستندات الموظفين" : "Manage employee documents and certificates"}
+                </CardDescription>
+              </div>
+              <Button onClick={() => { setSelectedDocument(null); setDocumentForm({ employee_id: "", employee_name: "", document_type: "passport", document_name: "", document_number: "", issue_date: "", expiry_date: "", notes: "" }); setDocumentDialogOpen(true); }}>
+                <Plus className="w-4 h-4 ml-2" />
+                {language === "ar" ? "وثيقة جديدة" : "New Document"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                    <TableHead>{language === "ar" ? "نوع الوثيقة" : "Type"}</TableHead>
+                    <TableHead>{language === "ar" ? "اسم الوثيقة" : "Document"}</TableHead>
+                    <TableHead>{language === "ar" ? "الرقم" : "Number"}</TableHead>
+                    <TableHead>{language === "ar" ? "تاريخ الانتهاء" : "Expiry"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                    <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {documents.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell className="font-medium">{doc.employee_name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {doc.document_type === "passport" ? (language === "ar" ? "جواز سفر" : "Passport") : 
+                           doc.document_type === "id_card" ? (language === "ar" ? "بطاقة هوية" : "ID Card") :
+                           doc.document_type === "visa" ? (language === "ar" ? "تأشيرة" : "Visa") :
+                           doc.document_type === "contract" ? (language === "ar" ? "عقد عمل" : "Contract") :
+                           doc.document_type === "certificate" ? (language === "ar" ? "شهادة" : "Certificate") :
+                           doc.document_type === "medical" ? (language === "ar" ? "طبي" : "Medical") : (language === "ar" ? "أخرى" : "Other")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{doc.document_name}</TableCell>
+                      <TableCell>{doc.document_number || "-"}</TableCell>
+                      <TableCell>{doc.expiry_date || "-"}</TableCell>
+                      <TableCell>
+                        {doc.expiry_date ? (
+                          doc.is_expired ? (
+                            <Badge variant="destructive">{language === "ar" ? "منتهي" : "Expired"}</Badge>
+                          ) : doc.days_to_expiry <= 30 ? (
+                            <Badge variant="warning" className="bg-orange-100 text-orange-800">{language === "ar" ? `ينتهي خلال ${doc.days_to_expiry} يوم` : `Expires in ${doc.days_to_expiry} days`}</Badge>
+                          ) : (
+                            <Badge variant="success" className="bg-green-100 text-green-800">{language === "ar" ? "ساري" : "Valid"}</Badge>
+                          )
+                        ) : (
+                          <Badge variant="secondary">{language === "ar" ? "بدون تاريخ" : "No expiry"}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => { setSelectedDocument(doc); setDocumentForm(doc); setDocumentDialogOpen(true); }}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="text-red-500" onClick={async () => { await axios.delete(`${API}/hr/documents/${doc.id}`); fetchData(); toast.success(language === "ar" ? "تم الحذف" : "Deleted"); }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {documents.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        {language === "ar" ? "لا توجد وثائق مسجلة" : "No documents recorded"}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Employee Dialog */}
