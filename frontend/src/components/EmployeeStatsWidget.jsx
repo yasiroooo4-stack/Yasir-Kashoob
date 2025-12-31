@@ -58,6 +58,28 @@ const EmployeeStatsWidget = ({ currentUser }) => {
       const lastDay = new Date(year, month, 0).getDate();
       const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       
+      // First get the employee record to find their employee_id
+      let employeeRecord = null;
+      let leaveBalance = 30; // Default
+      try {
+        const employeesRes = await axios.get(
+          `${API}/api/hr/employees`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (Array.isArray(employeesRes.data)) {
+          employeeRecord = employeesRes.data.find(
+            e => e.id === currentUser?.id || 
+                 e.name === currentUser?.full_name ||
+                 e.username === currentUser?.username
+          );
+          if (employeeRecord?.leave_balance !== undefined) {
+            leaveBalance = employeeRecord.leave_balance;
+          }
+        }
+      } catch (e) {
+        console.log("Could not fetch employee data");
+      }
+      
       // Fetch attendance data with error handling
       let userAttendance = [];
       try {
@@ -65,28 +87,6 @@ const EmployeeStatsWidget = ({ currentUser }) => {
           `${API}/api/hr/attendance?start_date=${startDate}&end_date=${endDate}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
-        // First get the employee record to find their employee_id
-        let employeeRecord = null;
-        let leaveBalance = 30; // Default
-        try {
-          const employeesRes = await axios.get(
-            `${API}/api/hr/employees`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (Array.isArray(employeesRes.data)) {
-            employeeRecord = employeesRes.data.find(
-              e => e.id === currentUser?.id || 
-                   e.name === currentUser?.full_name ||
-                   e.username === currentUser?.username
-            );
-            if (employeeRecord?.leave_balance !== undefined) {
-              leaveBalance = employeeRecord.leave_balance;
-            }
-          }
-        } catch (e) {
-          console.log("Could not fetch employee data");
-        }
         
         // Filter attendance for current user - match by multiple fields
         if (Array.isArray(attendanceRes.data)) {
