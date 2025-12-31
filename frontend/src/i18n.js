@@ -477,6 +477,7 @@ const resources = {
       
       // Analysis
       "analysis": "Smart Analysis",
+      "analytics": "Analytics",
       
       // Legal
       "legal": "Legal",
