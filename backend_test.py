@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Milk Collection Center ERP - HR Module
-Tests the HR backend functionality as requested in Arabic review
-Testing HR APIs with credentials: yasir/admin123
+Backend API Testing for Milk Collection Center ERP - Review Request Features
+Tests the specific features requested in the review:
+1. White Screen Bug Fix for hassan.hamdi
+2. Payment Receipt PDF API
+3. Login Page Image verification
+Testing with credentials: hassan.hamdi/Hassan@123
 """
 
 import requests
@@ -14,8 +17,8 @@ from datetime import datetime
 BACKEND_URL = "https://agrodairy.preview.emergentagent.com/api"
 
 # Test credentials (as specified in review request)
-TEST_USERNAME = "yasir"
-TEST_PASSWORD = "admin123"
+TEST_USERNAME = "hassan.hamdi"
+TEST_PASSWORD = "Hassan@123"
 
 class BackendTester:
     def __init__(self):
