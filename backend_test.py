@@ -2763,61 +2763,29 @@ class BackendTester:
             return False
     
     def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting Backend API Testing...")
+        """Run all backend tests for review request features"""
+        print("🚀 Starting Backend API Testing for Review Request...")
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Test User: {TEST_USERNAME}")
         print("=" * 60)
         
-        # Authentication
-        if not self.test_login():
-            if not self.test_register_if_needed():
-                print("❌ Cannot proceed without authentication")
-                return False
+        # Test 1: Hassan Hamdi Login (White Screen Bug Fix)
+        print("\n1️⃣ Testing Hassan Hamdi Login (White Screen Bug Fix)...")
+        if not self.test_hassan_hamdi_login():
+            print("❌ Cannot proceed without authentication")
+            return False
         
-        print("\n🆕 Testing NEW FEATURES (Review Request)...")
-        self.test_feed_purchase_invoice_with_signature()
-        self.test_supplier_milk_type()
-        self.test_official_letters_workflow()
-        self.test_departments_api()
-        self.test_permissions_api()
-        self.test_hr_attendance_import_excel()
-        self.test_central_dashboard_api()
+        # Test 2: Dashboard Access (should not show white screen)
+        print("\n2️⃣ Testing Dashboard Access (No White Screen)...")
+        self.test_dashboard_access()
         
-        # Password Recovery Tests (as requested in review)
-        print("\n🔐 Testing Password Recovery System...")
-        self.test_forgot_password_api()
-        self.test_verify_reset_token_api()
-        self.test_reset_password_api()
-        self.test_password_recovery_workflow()
+        # Test 3: User Profile Access
+        print("\n3️⃣ Testing User Profile Access...")
+        self.test_user_profile_access()
         
-        # Run tests for the three new modules as well
-        print("\n⚖️ Testing Legal Module...")
-        self.test_legal_dashboard_api()
-        self.test_legal_contracts_crud()
-        self.test_legal_cases_crud()
-        
-        print("\n🏗️ Testing Projects Module...")
-        self.test_projects_dashboard_stats()
-        self.test_projects_crud()
-        self.test_project_tasks_crud()
-        
-        print("\n🔧 Testing Operations Module...")
-        self.test_operations_dashboard()
-        self.test_operations_equipment_crud()
-        self.test_operations_vehicles_crud()
-        self.test_operations_incidents_crud()
-        
-        print("\n📈 Testing Marketing Module...")
-        self.test_marketing_dashboard_api()
-        self.test_marketing_campaigns_crud()
-        self.test_marketing_leads_crud()
-        self.test_marketing_offers_crud()
-        self.test_marketing_returns_crud()
-        
-        print("\n📝 Testing Activity Logging...")
-        self.test_activity_logs_new_modules()
-        self.test_activity_logs_api_filters()
+        # Test 4: Payment Receipt PDF API
+        print("\n4️⃣ Testing Payment Receipt PDF API...")
+        self.test_payment_receipt_pdf_workflow()
         
         # Summary
         print("\n" + "=" * 60)
@@ -2837,6 +2805,11 @@ class BackendTester:
             for result in self.test_results:
                 if not result["success"]:
                     print(f"  - {result['test']}: {result['message']}")
+        
+        print("\n📝 DETAILED RESULTS:")
+        for result in self.test_results:
+            status = "✅ PASS" if result["success"] else "❌ FAIL"
+            print(f"  {status}: {result['test']} - {result['message']}")
         
         return passed == total
 
