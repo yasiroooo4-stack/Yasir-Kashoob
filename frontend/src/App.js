@@ -85,7 +85,7 @@ export const useLanguage = () => {
 };
 
 // Protected Route Component with Department-based permissions
-const ProtectedRoute = ({ children, allowedRoles, allowedDepartments }) => {
+const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPermissions }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -106,17 +106,24 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments }) => {
     return children;
   }
 
+  // Check user permissions first (if user has specific permission, allow access)
+  const userPermissions = user.permissions || [];
+  if (allowedPermissions && allowedPermissions.some(p => userPermissions.includes(p))) {
+    return children;
+  }
+
   // Check role-based access
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+  if (allowedRoles && allowedRoles.includes(user.role)) {
+    return children;
   }
 
   // Check department-based access
-  if (allowedDepartments && !allowedDepartments.includes(user.department)) {
-    return <Navigate to="/dashboard" replace />;
+  if (allowedDepartments && allowedDepartments.includes(user.department)) {
+    return children;
   }
 
-  return children;
+  // If no access granted, redirect to dashboard
+  return <Navigate to="/dashboard" replace />;
 };
 
 function App() {
