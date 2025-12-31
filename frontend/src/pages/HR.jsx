@@ -141,6 +141,7 @@ const HR = () => {
     permissions: [],
     manager_id: "",
     manager_name: "",
+    username: "",
   });
   
   const [leaveForm, setLeaveForm] = useState({
