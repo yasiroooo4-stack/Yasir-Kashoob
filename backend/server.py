@@ -6257,19 +6257,40 @@ class AnalysisRequest(BaseModel):
     question: str
     category: Optional[str] = "general"  # general, hr, attendance, sales, milk
 
-# Initialize OpenAI client with Emergent key
-def get_openai_client():
+# Initialize Gemini chat with Emergent key
+def get_llm_chat(session_id: str = "analysis"):
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
-    return AsyncOpenAI(
+    
+    system_message = """أنت مساعد تحليل بيانات ذكي لنظام ERP لمركز تجميع الحليب "المروج للألبان".
+    
+مهمتك هي تحليل البيانات والإجابة على أسئلة المستخدم بشكل واضح ومفيد.
+
+البيانات المتاحة:
+- بيانات الموظفين والحضور والانصراف
+- بيانات المبيعات والعملاء
+- بيانات استلام الحليب من الموردين
+- بيانات الرواتب والمدفوعات
+
+قواعد مهمة:
+1. أجب باللغة العربية إذا كان السؤال بالعربية
+2. قدم إحصائيات وأرقام محددة عند توفرها
+3. اقترح تحسينات إذا كانت مناسبة
+4. كن موجزاً ومفيداً
+5. استخدم التنسيق المناسب (قوائم، جداول) لتوضيح البيانات"""
+
+    chat = LlmChat(
         api_key=api_key,
-        base_url="https://api.openai.com/v1"
-    )
+        session_id=session_id,
+        system_message=system_message
+    ).with_model("gemini", "gemini-2.5-flash")
+    
+    return chat
 
 @api_router.post("/analysis/query")
 async def analyze_query(request: AnalysisRequest, current_user: dict = Depends(get_current_user)):
-    """Analyze natural language query and return data insights"""
+    """Analyze natural language query and return data insights using Gemini 2.5 Flash"""
     
     try:
         # Get data context based on category
@@ -6278,27 +6299,29 @@ async def analyze_query(request: AnalysisRequest, current_user: dict = Depends(g
         # Fetch relevant data for context
         if request.category in ["general", "hr", "attendance"]:
             # Get attendance summary
-            current_month = datetime.now().month
-            current_year = datetime.now().year
             attendance = await db.hr_attendance.find({}).to_list(1000)
             employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
             
             present_count = len([a for a in attendance if a.get("status") == "present"])
             absent_count = len([a for a in attendance if a.get("status") == "absent"])
+            leave_count = len([a for a in attendance if a.get("status") == "leave"])
             
             context_data["attendance"] = {
                 "total_employees": len(employees),
                 "present_days_total": present_count,
                 "absent_days_total": absent_count,
+                "leave_days_total": leave_count,
                 "departments": list(set([e.get("department", "unknown") for e in employees]))
             }
         
         if request.category in ["general", "sales"]:
             # Get sales summary
             sales = await db.sales.find({}, {"_id": 0}).to_list(1000)
+            customers = await db.customers.find({"is_active": True}, {"_id": 0}).to_list(1000)
             context_data["sales"] = {
                 "total_sales": len(sales),
                 "total_amount": sum([s.get("total_amount", 0) for s in sales]),
+                "total_customers": len(customers),
             }
         
         if request.category in ["general", "milk"]:
@@ -6307,7 +6330,8 @@ async def analyze_query(request: AnalysisRequest, current_user: dict = Depends(g
             suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(1000)
             context_data["milk"] = {
                 "total_receptions": len(receptions),
-                "total_quantity": sum([r.get("quantity", 0) for r in receptions]),
+                "total_quantity_liters": sum([r.get("quantity", 0) for r in receptions]),
+                "total_amount": sum([r.get("total_amount", 0) for r in receptions]),
                 "total_suppliers": len(suppliers),
             }
         
@@ -6320,43 +6344,18 @@ async def analyze_query(request: AnalysisRequest, current_user: dict = Depends(g
                 "total_net": sum([p.get("net_salary", 0) for p in payroll_records]),
             }
         
-        # Create prompt for AI
-        system_prompt = """أنت مساعد تحليل بيانات ذكي لنظام ERP لمركز تجميع الحليب.
-        
-مهمتك هي تحليل البيانات والإجابة على أسئلة المستخدم بشكل واضح ومفيد.
-
-البيانات المتاحة:
-- بيانات الموظفين والحضور والانصراف
-- بيانات المبيعات
-- بيانات استلام الحليب
-- بيانات الرواتب
-
-قواعد مهمة:
-1. أجب باللغة العربية إذا كان السؤال بالعربية
-2. قدم إحصائيات وأرقام محددة
-3. اقترح تحسينات إذا كانت مناسبة
-4. كن موجزاً ومفيداً"""
-
+        # Create user message with context
         user_prompt = f"""السؤال: {request.question}
 
-البيانات الحالية:
+البيانات الحالية من النظام:
 {context_data}
 
-قدم إجابة تحليلية مفصلة."""
+قدم إجابة تحليلية مفصلة بناءً على البيانات المتاحة."""
 
-        # Call OpenAI API
-        client = get_openai_client()
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=1000
-        )
-        
-        answer = response.choices[0].message.content
+        # Call Gemini API using emergentintegrations
+        chat = get_llm_chat(session_id=f"analysis_{current_user['id']}")
+        user_message = UserMessage(text=user_prompt)
+        answer = await chat.send_message(user_message)
         
         # Log the analysis
         await log_activity(
