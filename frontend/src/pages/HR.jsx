@@ -2250,7 +2250,7 @@ const HR = () => {
                   <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select Employee"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{language === "ar" ? "بدون تعيين" : "Not Assigned"}</SelectItem>
+                  <SelectItem value="none">{language === "ar" ? "بدون تعيين" : "Not Assigned"}</SelectItem>
                   {employees.map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
                   ))}
