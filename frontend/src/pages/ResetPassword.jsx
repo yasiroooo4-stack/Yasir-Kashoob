@@ -37,7 +37,7 @@ const ResetPassword = () => {
       }
 
       try {
-        const response = await axios.get(`${API}/auth/verify-reset-token?token=${token}`);
+        const response = await axios.get(`${API}/api/auth/verify-reset-token?token=${token}`);
         setTokenValid(response.data.valid);
         setUserEmail(response.data.email || "");
       } catch (error) {
@@ -78,7 +78,7 @@ const ResetPassword = () => {
       formData.append("token", token);
       formData.append("new_password", password);
       
-      await axios.post(`${API}/auth/reset-password`, formData);
+      await axios.post(`${API}/api/auth/reset-password`, formData);
       setSuccess(true);
       toast.success(
         language === "ar" 

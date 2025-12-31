@@ -59,7 +59,7 @@ const Employees = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get(`${API}/employees`);
+      const response = await axios.get(`${API}/api/employees`);
       setEmployees(response.data);
     } catch (error) {
       toast.error(t("error"));
@@ -77,10 +77,10 @@ const Employees = () => {
       };
 
       if (selectedEmployee) {
-        await axios.put(`${API}/employees/${selectedEmployee.id}`, data);
+        await axios.put(`${API}/api/employees/${selectedEmployee.id}`, data);
         toast.success(t("success"));
       } else {
-        await axios.post(`${API}/employees`, data);
+        await axios.post(`${API}/api/employees`, data);
         toast.success(t("success"));
       }
       setDialogOpen(false);
@@ -93,7 +93,7 @@ const Employees = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API}/employees/${selectedEmployee.id}`);
+      await axios.delete(`${API}/api/employees/${selectedEmployee.id}`);
       toast.success(t("success"));
       setDeleteDialogOpen(false);
       setSelectedEmployee(null);
