@@ -347,6 +347,7 @@ function App() {
         </div>
       </LanguageContext.Provider>
     </AuthContext.Provider>
+    </ErrorBoundary>
   );
 }
 
