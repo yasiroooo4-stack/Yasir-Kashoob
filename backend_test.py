@@ -254,7 +254,7 @@ class BackendTester:
             if response.status_code == 200:
                 dashboard = response.json()
                 # Check if dashboard contains expected fields for accountant role
-                expected_fields = ["total_suppliers", "total_customers", "total_milk_received", "total_sales"]
+                expected_fields = ["suppliers_count", "customers_count", "today_milk_quantity", "today_sales_quantity"]
                 found_fields = [field for field in expected_fields if field in dashboard]
                 
                 if len(found_fields) >= 2:  # At least 2 expected fields
