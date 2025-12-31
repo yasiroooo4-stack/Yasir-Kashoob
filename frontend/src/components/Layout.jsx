@@ -68,16 +68,39 @@ const Layout = () => {
     { path: "/settings", icon: Settings, label: "settings" },
   ];
 
-  // Filter nav items based on role and department
+  // Filter nav items based on role, department, and permissions
   const filteredNavItems = navItems.filter((item) => {
     // Admin and IT have access to everything
     if (user?.role === 'admin' || user?.department === 'it' || user?.department === 'admin') {
       return true;
     }
     
-    // HR Manager has access to HR only
+    // HR Manager has access to HR related pages
     if (user?.role === 'hr_manager') {
-      return item.path === '/hr' || item.path === '/employees' || item.path === '/dashboard' || item.path === '/settings';
+      return item.path === '/hr' || item.path === '/payroll' || item.path === '/employees' || item.path === '/dashboard' || item.path === '/settings' || item.path === '/reports';
+    }
+    
+    // Check user permissions for specific pages
+    const userPermissions = user?.permissions || [];
+    const pathToPermission = {
+      '/hr': 'hr',
+      '/payroll': 'hr',
+      '/employees': 'employees',
+      '/reports': 'reports',
+      '/finance': 'finance',
+      '/suppliers': 'suppliers',
+      '/milk-reception': 'milk_reception',
+      '/inventory': 'inventory',
+      '/legal': 'legal',
+      '/projects': 'projects',
+      '/operations': 'operations',
+      '/marketing': 'marketing',
+    };
+    
+    // If user has specific permission for this path, allow access
+    const requiredPermission = pathToPermission[item.path];
+    if (requiredPermission && userPermissions.includes(requiredPermission)) {
+      return true;
     }
     
     // Check role access
