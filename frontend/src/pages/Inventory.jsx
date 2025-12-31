@@ -389,6 +389,78 @@ const Inventory = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "تعديل المخزون" : "Edit Inventory"}</DialogTitle>
+            <DialogDescription>
+              {language === "ar" ? "تعديل بيانات الخزان" : "Edit tank details"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>{t("quantity_liters")}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editFormData.quantity_liters}
+                  onChange={(e) => setEditFormData({ ...editFormData, quantity_liters: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("storage_tank")}</Label>
+                <Input
+                  value={editFormData.storage_tank}
+                  onChange={(e) => setEditFormData({ ...editFormData, storage_tank: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("temperature")} (°C)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={editFormData.temperature}
+                  onChange={(e) => setEditFormData({ ...editFormData, temperature: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                {t("cancel")}
+              </Button>
+              <Button type="submit">
+                {language === "ar" ? "حفظ التعديلات" : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ar" ? "تأكيد الحذف" : "Confirm Delete"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ar" 
+                ? `هل أنت متأكد من حذف هذا المخزون؟ الخزان: ${selectedItem?.storage_tank} - الكمية: ${selectedItem?.quantity_liters?.toLocaleString()} لتر`
+                : `Are you sure you want to delete this inventory? Tank: ${selectedItem?.storage_tank} - Quantity: ${selectedItem?.quantity_liters?.toLocaleString()} liters`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === "ar" ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              {language === "ar" ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
