@@ -406,6 +406,57 @@ class FingerprintDevice(FingerprintDeviceBase):
     last_sync: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# Payroll Models (نماذج الرواتب)
+class PayrollPeriod(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # e.g., "نوفمبر-ديسمبر 2025"
+    start_date: str  # e.g., "2025-11-16"
+    end_date: str  # e.g., "2025-12-15"
+    total_days: int = 31
+    status: str = "draft"  # draft, calculated, approved, paid
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    calculated_at: Optional[str] = None
+    approved_at: Optional[str] = None
+    approved_by: Optional[str] = None
+
+class PayrollRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    period_id: str
+    employee_id: str
+    employee_name: str
+    employee_code: Optional[str] = None
+    department: Optional[str] = None
+    position: Optional[str] = None
+    nationality: Optional[str] = None
+    # Attendance summary
+    working_days: int = 0  # أيام العمل الفعلية
+    day_off: int = 0  # أيام الإجازة الأسبوعية
+    sick_leave: int = 0  # إجازة مرضية SL
+    compensation_leave: int = 0  # إجازة تعويضية CL
+    public_holiday: int = 0  # عطلة رسمية PH
+    annual_leave: int = 0  # إجازة سنوية AL
+    emergency_leave: int = 0  # إجازة طارئة EL
+    on_duty: int = 0  # في مهمة OD
+    exam_leave: int = 0  # إجازة امتحانات DL/EX-L
+    father_leave: int = 0  # إجازة أبوة FL
+    accompanying_leave: int = 0  # إجازة مرافقة ACOL
+    unpaid_leave: int = 0  # إجازة بدون راتب LWP
+    absent_days: int = 0  # غياب AB
+    otp_days: int = 0  # عطل بصمة OTP
+    # Salary calculation
+    basic_salary: float = 0.0
+    daily_rate: float = 0.0
+    total_pay_days: int = 0  # إجمالي الأيام المستحقة
+    gross_salary: float = 0.0  # الراتب الإجمالي
+    deductions: float = 0.0  # الخصومات
+    overtime_pay: float = 0.0  # بدل العمل الإضافي
+    allowances: float = 0.0  # البدلات
+    net_salary: float = 0.0  # صافي الراتب
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Collection Center Models (مراكز التجميع)
 class CollectionCenterBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
