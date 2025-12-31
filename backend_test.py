@@ -193,76 +193,93 @@ class BackendTester:
             self.log_test("Shifts Management Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_import_api(self):
-        """Test 3: ZKTeco Import API - verify mdbtools and import endpoint"""
+    def test_overtime_management(self):
+        """Test 3: Overtime Management APIs"""
         try:
-            # First check if mdbtools is installed
-            import subprocess
-            try:
-                result = subprocess.run(['which', 'mdb-export'], capture_output=True, text=True)
-                mdbtools_installed = result.returncode == 0
-            except:
-                mdbtools_installed = False
-            
-            if not mdbtools_installed:
-                self.log_test(
-                    "ZKTeco Import API Test", 
-                    False, 
-                    "mdbtools not installed - mdb-export command not found"
-                )
-                return False
-            
-            # Test the import endpoint exists
             if not self.token:
-                self.log_test("ZKTeco Import API Test", False, "No authentication token available")
+                self.log_test("Overtime Management Test", False, "No authentication token available")
                 return False
             
-            # Test POST endpoint (without actual file for now)
-            response = self.session.post(
-                f"{BACKEND_URL}/hr/attendance/import-zkteco",
-                headers={"Authorization": f"Bearer {self.token}"}
+            # Get list of employees to use valid employee_id
+            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            if employees_response.status_code != 200:
+                self.log_test("Overtime Management Test", False, "Failed to get employees list")
+                return False
+            
+            employees = employees_response.json()
+            if not employees:
+                self.log_test("Overtime Management Test", False, "No employees found for testing")
+                return False
+            
+            employee_id = employees[0]["id"]
+            employee_name = employees[0]["name"]
+            
+            # Test 1: Create overtime record
+            overtime_data = {
+                "employee_id": employee_id,
+                "employee_name": employee_name,
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "start_time": "18:00",
+                "end_time": "20:00",
+                "hours": 2.0,
+                "rate": 1.5,
+                "reason": "مشروع عاجل"
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/hr/overtime",
+                json=overtime_data
             )
             
-            # We expect either 400 (missing file) or 422 (validation error), not 404
-            if response.status_code in [400, 422]:
-                # Check if there are existing ZKTeco records
-                attendance_response = self.session.get(f"{BACKEND_URL}/hr/attendance")
-                
-                if attendance_response.status_code == 200:
-                    attendance_records = attendance_response.json()
-                    zkteco_records = [r for r in attendance_records if r.get("source") == "fingerprint"]
-                    
-                    self.log_test(
-                        "ZKTeco Import API Test", 
-                        True, 
-                        f"Import endpoint exists and mdbtools installed. Found {len(zkteco_records)} ZKTeco records in database"
-                    )
-                    return True
-                else:
-                    self.log_test(
-                        "ZKTeco Import API Test", 
-                        True, 
-                        "Import endpoint exists and mdbtools installed (attendance records check failed)"
-                    )
-                    return True
-            elif response.status_code == 404:
+            if create_response.status_code != 200:
                 self.log_test(
-                    "ZKTeco Import API Test", 
+                    "Overtime Management Test", 
                     False, 
-                    "Import endpoint not found",
-                    response.text
+                    f"Failed to create overtime record: {create_response.status_code}",
+                    create_response.text
                 )
                 return False
-            else:
+            
+            created_overtime = create_response.json()
+            overtime_id = created_overtime["id"]
+            
+            # Test 2: Get all overtime records
+            get_response = self.session.get(f"{BACKEND_URL}/hr/overtime")
+            
+            if get_response.status_code != 200:
                 self.log_test(
-                    "ZKTeco Import API Test", 
-                    True, 
-                    f"Import endpoint exists and mdbtools installed (status: {response.status_code})"
+                    "Overtime Management Test", 
+                    False, 
+                    f"Failed to get overtime records: {get_response.status_code}",
+                    get_response.text
                 )
-                return True
+                return False
+            
+            overtime_records = get_response.json()
+            
+            # Test 3: Approve overtime
+            approve_response = self.session.put(
+                f"{BACKEND_URL}/hr/overtime/{overtime_id}/approve?approved=true"
+            )
+            
+            if approve_response.status_code != 200:
+                self.log_test(
+                    "Overtime Management Test", 
+                    False, 
+                    f"Failed to approve overtime: {approve_response.status_code}",
+                    approve_response.text
+                )
+                return False
+            
+            self.log_test(
+                "Overtime Management Test", 
+                True, 
+                f"Successfully created overtime record, retrieved {len(overtime_records)} records, and approved overtime"
+            )
+            return True
                 
         except Exception as e:
-            self.log_test("ZKTeco Import API Test", False, f"Error: {str(e)}")
+            self.log_test("Overtime Management Test", False, f"Error: {str(e)}")
             return False
 
     def test_hr_page_apis(self):
