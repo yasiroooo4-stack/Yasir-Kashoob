@@ -161,8 +161,8 @@ const Settings = () => {
   const fetchData = async () => {
     try {
       const [centersRes, logsRes] = await Promise.all([
-        axios.get(`${API}/centers`),
-        axios.get(`${API}/activity-logs?limit=50`),
+        axios.get(`${API}/api/centers`),
+        axios.get(`${API}/api/activity-logs?limit=50`),
       ]);
       setCenters(centersRes.data);
       setActivityLogs(logsRes.data);
@@ -263,7 +263,7 @@ const Settings = () => {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API}/auth/profile`, profileData);
+      await axios.put(`${API}/api/auth/profile`, profileData);
       toast.success(t("success"));
     } catch (error) {
       toast.error(error.response?.data?.detail || t("error"));
@@ -277,7 +277,7 @@ const Settings = () => {
       return;
     }
     try {
-      await axios.put(`${API}/auth/password`, {
+      await axios.put(`${API}/api/auth/password`, {
         current_password: passwordData.current_password,
         new_password: passwordData.new_password,
       });
@@ -292,9 +292,9 @@ const Settings = () => {
     e.preventDefault();
     try {
       if (selectedCenter) {
-        await axios.put(`${API}/centers/${selectedCenter.id}`, centerForm);
+        await axios.put(`${API}/api/centers/${selectedCenter.id}`, centerForm);
       } else {
-        await axios.post(`${API}/centers`, centerForm);
+        await axios.post(`${API}/api/centers`, centerForm);
       }
       toast.success(t("success"));
       setCenterDialogOpen(false);
@@ -307,7 +307,7 @@ const Settings = () => {
 
   const handleDeleteCenter = async (centerId) => {
     try {
-      await axios.delete(`${API}/centers/${centerId}`);
+      await axios.delete(`${API}/api/centers/${centerId}`);
       toast.success(t("success"));
       fetchData();
     } catch (error) {

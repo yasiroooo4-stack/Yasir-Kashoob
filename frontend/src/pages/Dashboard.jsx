@@ -41,9 +41,9 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [statsRes, monthlyRes, centralRes] = await Promise.all([
-        axios.get(`${API}/dashboard/stats`),
-        axios.get(`${API}/reports/monthly?year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
-        axios.get(`${API}/dashboard/central`),
+        axios.get(`${API}/api/dashboard/stats`),
+        axios.get(`${API}/api/reports/monthly?year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
+        axios.get(`${API}/api/dashboard/central`),
       ]);
       setStats(statsRes.data);
       setMonthlyData(monthlyRes.data.daily_data || []);

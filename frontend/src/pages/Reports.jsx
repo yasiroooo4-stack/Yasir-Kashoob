@@ -63,7 +63,7 @@ const Reports = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await axios.get(`${API}/suppliers`);
+      const response = await axios.get(`${API}/api/suppliers`);
       setSuppliers(response.data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
@@ -73,7 +73,7 @@ const Reports = () => {
   const fetchDailyReport = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API}/reports/daily?date=${selectedDate}`);
+      const response = await axios.get(`${API}/api/reports/daily?date=${selectedDate}`);
       setDailyReport(response.data);
     } catch (error) {
       toast.error(t("error"));
@@ -86,7 +86,7 @@ const Reports = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${API}/reports/monthly?year=${selectedYear}&month=${selectedMonth}`
+        `${API}/api/reports/monthly?year=${selectedYear}&month=${selectedMonth}`
       );
       setMonthlyReport(response.data);
     } catch (error) {
@@ -103,7 +103,7 @@ const Reports = () => {
     }
     setLoading(true);
     try {
-      const response = await axios.get(`${API}/reports/supplier/${selectedSupplier}`);
+      const response = await axios.get(`${API}/api/reports/supplier/${selectedSupplier}`);
       setSupplierReport(response.data);
     } catch (error) {
       toast.error(t("error"));

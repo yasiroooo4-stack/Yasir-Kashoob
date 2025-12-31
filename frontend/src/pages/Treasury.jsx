@@ -95,9 +95,9 @@ const Treasury = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const [balanceRes, transactionsRes, summaryRes] = await Promise.all([
-        axios.get(`${API}/treasury/balance`, { headers }),
-        axios.get(`${API}/treasury/transactions?limit=50`, { headers }),
-        axios.get(`${API}/reports/financial-summary`, { headers }),
+        axios.get(`${API}/api/treasury/balance`, { headers }),
+        axios.get(`${API}/api/treasury/transactions?limit=50`, { headers }),
+        axios.get(`${API}/api/reports/financial-summary`, { headers }),
       ]);
       
       setBalance(balanceRes.data);
@@ -116,7 +116,7 @@ const Treasury = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${API}/treasury/transaction`,
+        `${API}/api/treasury/transaction`,
         null,
         {
           params: formData,
@@ -153,7 +153,7 @@ const Treasury = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${API}/treasury/transaction/${selectedTransaction.id}`,
+        `${API}/api/treasury/transaction/${selectedTransaction.id}`,
         null,
         {
           params: editFormData,
@@ -180,7 +180,7 @@ const Treasury = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `${API}/treasury/transaction/${selectedTransaction.id}`,
+        `${API}/api/treasury/transaction/${selectedTransaction.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
