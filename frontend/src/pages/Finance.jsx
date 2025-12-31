@@ -479,21 +479,53 @@ const Finance = () => {
                             : t("check")}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                      <TableCell>
+                        {getStatusBadge(payment.status || "pending")}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[150px] truncate">
                         {payment.notes || "-"}
                       </TableCell>
                       <TableCell className="text-center">
-                        {payment.payment_type === "supplier_payment" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => downloadReceipt(payment.id, payment.related_name)}
-                            title={language === "ar" ? "تحميل الإيصال" : "Download Receipt"}
-                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-center gap-1">
+                          {/* Approval buttons for admin on pending payments */}
+                          {user?.role === "admin" && payment.status === "pending" && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleApprovePayment(payment.id, "approve")}
+                                title={language === "ar" ? "موافقة" : "Approve"}
+                                className="text-green-600 hover:text-green-800 hover:bg-green-50"
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPayment(payment);
+                                  setApprovalDialogOpen(true);
+                                }}
+                                title={language === "ar" ? "رفض" : "Reject"}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {/* Receipt download for approved supplier payments */}
+                          {payment.payment_type === "supplier_payment" && payment.status === "approved" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => downloadReceipt(payment.id, payment.related_name)}
+                              title={language === "ar" ? "تحميل الإيصال" : "Download Receipt"}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -503,6 +535,42 @@ const Finance = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Rejection Dialog */}
+      <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "رفض الدفعة" : "Reject Payment"}</DialogTitle>
+            <DialogDescription>
+              {language === "ar" 
+                ? `هل أنت متأكد من رفض دفعة ${selectedPayment?.amount?.toLocaleString()} ر.ع للمورد ${selectedPayment?.related_name}؟`
+                : `Are you sure you want to reject payment of ${selectedPayment?.amount?.toLocaleString()} OMR to ${selectedPayment?.related_name}?`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "سبب الرفض" : "Rejection Reason"}</Label>
+              <Textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder={language === "ar" ? "أدخل سبب الرفض..." : "Enter rejection reason..."}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setApprovalDialogOpen(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => handleApprovePayment(selectedPayment?.id, "reject")}
+            >
+              {language === "ar" ? "تأكيد الرفض" : "Confirm Rejection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
