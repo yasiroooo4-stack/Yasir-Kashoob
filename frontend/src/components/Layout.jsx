@@ -79,7 +79,7 @@ const Layout = () => {
     
     // HR Manager has access to HR related pages
     if (user?.role === 'hr_manager') {
-      return item.path === '/hr' || item.path === '/payroll' || item.path === '/employees' || item.path === '/dashboard' || item.path === '/settings' || item.path === '/reports';
+      return item.path === '/hr' || item.path === '/payroll' || item.path === '/employees' || item.path === '/dashboard' || item.path === '/settings' || item.path === '/reports' || item.path === '/analysis';
     }
     
     // Check user permissions for specific pages
@@ -97,6 +97,7 @@ const Layout = () => {
       '/projects': 'projects',
       '/operations': 'operations',
       '/marketing': 'marketing',
+      '/analysis': 'analysis',
     };
     
     // If user has specific permission for this path, allow access
