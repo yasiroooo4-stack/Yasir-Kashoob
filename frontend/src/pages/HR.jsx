@@ -1133,6 +1133,13 @@ const HR = () => {
                           </TableCell>
                           <TableCell>{emp.salary} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
                           <TableCell>
+                            {emp.username ? (
+                              <Badge variant="outline" className="font-mono">{emp.username}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             {emp.can_login ? (
                               <Badge variant="success">{language === "ar" ? "مفعل" : "Active"}</Badge>
                             ) : (
