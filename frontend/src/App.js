@@ -348,6 +348,11 @@ function App() {
                     <Analysis />
                   </ProtectedRoute>
                 } />
+                <Route path="analytics" element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
