@@ -394,7 +394,7 @@ const Finance = () => {
       <Card>
         <CardHeader>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className={`grid w-full max-w-lg ${user?.role === "admin" ? "grid-cols-4" : "grid-cols-3"}`}>
               <TabsTrigger value="all" data-testid="tab-all">
                 {language === "ar" ? "الكل" : "All"}
               </TabsTrigger>
@@ -404,6 +404,16 @@ const Finance = () => {
               <TabsTrigger value="customer" data-testid="tab-customer">
                 {t("customer_receipt")}
               </TabsTrigger>
+              {user?.role === "admin" && (
+                <TabsTrigger value="pending" data-testid="tab-pending" className="relative">
+                  {language === "ar" ? "في الانتظار" : "Pending"}
+                  {pendingPayments.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {pendingPayments.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -417,14 +427,15 @@ const Finance = () => {
                   <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
                   <TableHead>{t("amount")}</TableHead>
                   <TableHead>{t("payment_method")}</TableHead>
+                  <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
                   <TableHead>{t("notes")}</TableHead>
-                  <TableHead className="text-center">{language === "ar" ? "إيصال" : "Receipt"}</TableHead>
+                  <TableHead className="text-center">{language === "ar" ? "إجراءات" : "Actions"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
