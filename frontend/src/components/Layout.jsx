@@ -71,13 +71,13 @@ const Layout = () => {
         const headers = { Authorization: `Bearer ${token}` };
         
         // Fetch user settings
-        const settingsRes = await axios.get(`${API}/api/user/settings`, { headers });
+        const settingsRes = await axios.get(`${API}/user/settings`, { headers });
         if (settingsRes.data?.background_url) {
           setBackgroundUrl(settingsRes.data.background_url);
         }
         
         // Fetch available backgrounds
-        const bgRes = await axios.get(`${API}/api/system/backgrounds`, { headers });
+        const bgRes = await axios.get(`${API}/system/backgrounds`, { headers });
         setBackgrounds(bgRes.data || []);
       } catch (error) {
         console.log("Could not fetch settings");
@@ -92,7 +92,7 @@ const Layout = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${API}/api/user/settings`,
+        `${API}/user/settings`,
         { background_id: bgId, background_url: bgUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );

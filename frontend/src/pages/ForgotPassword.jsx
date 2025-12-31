@@ -27,7 +27,7 @@ const ForgotPassword = () => {
       const formData = new FormData();
       formData.append("email", email);
       
-      await axios.post(`${API}/api/auth/forgot-password`, formData);
+      await axios.post(`${API}/auth/forgot-password`, formData);
       setSent(true);
       toast.success(
         language === "ar" 
