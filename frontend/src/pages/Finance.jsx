@@ -335,12 +335,13 @@ const Finance = () => {
                   <TableHead>{t("amount")}</TableHead>
                   <TableHead>{t("payment_method")}</TableHead>
                   <TableHead>{t("notes")}</TableHead>
+                  <TableHead className="text-center">{language === "ar" ? "إيصال" : "Receipt"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -386,6 +387,19 @@ const Finance = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground max-w-[200px] truncate">
                         {payment.notes || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {payment.payment_type === "supplier_payment" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => downloadReceipt(payment.id, payment.related_name)}
+                            title={language === "ar" ? "تحميل الإيصال" : "Download Receipt"}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
