@@ -466,6 +466,9 @@ const resources = {
       // HR
       "hr": "Human Resources",
       
+      // Payroll
+      "payroll": "Payroll",
+      
       // Legal
       "legal": "Legal",
       
