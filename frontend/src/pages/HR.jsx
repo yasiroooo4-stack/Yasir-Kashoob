@@ -898,7 +898,7 @@ const HR = () => {
     formData.append('file', file);
     
     try {
-      const response = await axios.post(`${API}/hr/attendance/import-zkteco`, formData, {
+      const response = await axios.post(`${API}/api/hr/attendance/import-zkteco`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
