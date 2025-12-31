@@ -69,12 +69,12 @@ const Operations = () => {
   const fetchAllData = async () => {
     try {
       const [dailyRes, equipRes, maintRes, incRes, vehRes, dashRes] = await Promise.all([
-        axios.get(`${API}/api/operations/daily`),
-        axios.get(`${API}/api/operations/equipment`),
-        axios.get(`${API}/api/operations/maintenance`),
-        axios.get(`${API}/api/operations/incidents`),
-        axios.get(`${API}/api/operations/vehicles`),
-        axios.get(`${API}/api/operations/dashboard`)
+        axios.get(`${API}/operations/daily`),
+        axios.get(`${API}/operations/equipment`),
+        axios.get(`${API}/operations/maintenance`),
+        axios.get(`${API}/operations/incidents`),
+        axios.get(`${API}/operations/vehicles`),
+        axios.get(`${API}/operations/dashboard`)
       ]);
       setDailyOps(dailyRes.data);
       setEquipment(equipRes.data);
@@ -94,9 +94,9 @@ const Operations = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/operations/daily/${selectedItem.id}`, dailyOpForm);
+        await axios.put(`${API}/operations/daily/${selectedItem.id}`, dailyOpForm);
       } else {
-        await axios.post(`${API}/api/operations/daily`, dailyOpForm);
+        await axios.post(`${API}/operations/daily`, dailyOpForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setDailyOpDialogOpen(false);
@@ -111,9 +111,9 @@ const Operations = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/operations/equipment/${selectedItem.id}`, equipmentForm);
+        await axios.put(`${API}/operations/equipment/${selectedItem.id}`, equipmentForm);
       } else {
-        await axios.post(`${API}/api/operations/equipment`, equipmentForm);
+        await axios.post(`${API}/operations/equipment`, equipmentForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setEquipmentDialogOpen(false);
@@ -127,7 +127,7 @@ const Operations = () => {
   const handleMaintenanceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/operations/maintenance`, maintenanceForm);
+      await axios.post(`${API}/operations/maintenance`, maintenanceForm);
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setMaintenanceDialogOpen(false);
       fetchAllData();
@@ -140,7 +140,7 @@ const Operations = () => {
   const handleIncidentSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/operations/incidents`, incidentForm);
+      await axios.post(`${API}/operations/incidents`, incidentForm);
       toast.success(language === "ar" ? "تم الإبلاغ بنجاح" : "Reported successfully");
       setIncidentDialogOpen(false);
       fetchAllData();
@@ -154,9 +154,9 @@ const Operations = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/operations/vehicles/${selectedItem.id}`, vehicleForm);
+        await axios.put(`${API}/operations/vehicles/${selectedItem.id}`, vehicleForm);
       } else {
-        await axios.post(`${API}/api/operations/vehicles`, vehicleForm);
+        await axios.post(`${API}/operations/vehicles`, vehicleForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setVehicleDialogOpen(false);

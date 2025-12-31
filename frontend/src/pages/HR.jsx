@@ -260,17 +260,17 @@ const HR = () => {
         permissionsRes,
         managersRes,
       ] = await Promise.all([
-        axios.get(`${API}/api/hr/employees`),
-        axios.get(`${API}/api/hr/departments`),
-        axios.get(`${API}/api/hr/leave-requests`),
-        axios.get(`${API}/api/hr/expense-requests`),
-        axios.get(`${API}/api/hr/car-contracts`),
-        axios.get(`${API}/api/hr/official-letters`),
-        axios.get(`${API}/api/hr/fingerprint-devices`),
-        axios.get(`${API}/api/hr/dashboard`),
-        axios.get(`${API}/api/centers`),
-        axios.get(`${API}/api/hr/available-permissions`),
-        axios.get(`${API}/api/hr/managers`),
+        axios.get(`${API}/hr/employees`),
+        axios.get(`${API}/hr/departments`),
+        axios.get(`${API}/hr/leave-requests`),
+        axios.get(`${API}/hr/expense-requests`),
+        axios.get(`${API}/hr/car-contracts`),
+        axios.get(`${API}/hr/official-letters`),
+        axios.get(`${API}/hr/fingerprint-devices`),
+        axios.get(`${API}/hr/dashboard`),
+        axios.get(`${API}/centers`),
+        axios.get(`${API}/hr/available-permissions`),
+        axios.get(`${API}/hr/managers`),
       ]);
       
       setEmployees(employeesRes.data);
@@ -293,13 +293,13 @@ const HR = () => {
 
   const fetchAttendance = async () => {
     try {
-      const res = await axios.get(`${API}/api/hr/attendance/report`, {
+      const res = await axios.get(`${API}/hr/attendance/report`, {
         params: { year: attendanceYear, month: attendanceMonth }
       });
       setAttendance(res.data.report || []);
       
       // Also fetch raw attendance records for display
-      const recordsRes = await axios.get(`${API}/api/hr/attendance`, {
+      const recordsRes = await axios.get(`${API}/hr/attendance`, {
         params: { 
           start_date: `${attendanceYear}-${String(attendanceMonth).padStart(2, '0')}-01`,
           end_date: `${attendanceYear}-${String(attendanceMonth).padStart(2, '0')}-31`
@@ -321,7 +321,7 @@ const HR = () => {
   const handleAttendanceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/hr/attendance`, attendanceForm);
+      await axios.post(`${API}/hr/attendance`, attendanceForm);
       toast.success(t("success"));
       setAttendanceDialogOpen(false);
       resetAttendanceForm();
@@ -347,9 +347,9 @@ const HR = () => {
     e.preventDefault();
     try {
       if (selectedEmployee) {
-        await axios.put(`${API}/api/hr/employees/${selectedEmployee.id}`, employeeForm);
+        await axios.put(`${API}/hr/employees/${selectedEmployee.id}`, employeeForm);
       } else {
-        await axios.post(`${API}/api/hr/employees`, employeeForm);
+        await axios.post(`${API}/hr/employees`, employeeForm);
       }
       toast.success(t("success"));
       setEmployeeDialogOpen(false);
@@ -407,7 +407,7 @@ const HR = () => {
 
   const handleDeleteEmployee = async () => {
     try {
-      await axios.delete(`${API}/api/hr/employees/${selectedEmployee.id}`);
+      await axios.delete(`${API}/hr/employees/${selectedEmployee.id}`);
       toast.success(t("success"));
       setDeleteDialogOpen(false);
       setSelectedEmployee(null);
@@ -423,7 +423,7 @@ const HR = () => {
       return;
     }
     try {
-      await axios.post(`${API}/api/hr/employees/${selectedEmployee.id}/create-account?password=${accountPassword}`);
+      await axios.post(`${API}/hr/employees/${selectedEmployee.id}/create-account?password=${accountPassword}`);
       toast.success(language === "ar" ? "تم إنشاء الحساب بنجاح" : "Account created successfully");
       setAccountDialogOpen(false);
       setAccountPassword("");
@@ -438,7 +438,7 @@ const HR = () => {
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/hr/leave-requests`, leaveForm);
+      await axios.post(`${API}/hr/leave-requests`, leaveForm);
       toast.success(t("success"));
       setLeaveDialogOpen(false);
       resetLeaveForm();
@@ -462,7 +462,7 @@ const HR = () => {
 
   const handleLeaveAction = async (requestId, action) => {
     try {
-      await axios.put(`${API}/api/hr/leave-requests/${requestId}/${action}`);
+      await axios.put(`${API}/hr/leave-requests/${requestId}/${action}`);
       toast.success(t("success"));
       fetchData();
     } catch (error) {
@@ -474,7 +474,7 @@ const HR = () => {
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/hr/expense-requests`, expenseForm);
+      await axios.post(`${API}/hr/expense-requests`, expenseForm);
       toast.success(t("success"));
       setExpenseDialogOpen(false);
       resetExpenseForm();
@@ -496,7 +496,7 @@ const HR = () => {
 
   const handleExpenseAction = async (requestId, action) => {
     try {
-      await axios.put(`${API}/api/hr/expense-requests/${requestId}/${action}`);
+      await axios.put(`${API}/hr/expense-requests/${requestId}/${action}`);
       toast.success(t("success"));
       fetchData();
     } catch (error) {
@@ -509,9 +509,9 @@ const HR = () => {
     e.preventDefault();
     try {
       if (selectedCar) {
-        await axios.put(`${API}/api/hr/car-contracts/${selectedCar.id}`, carForm);
+        await axios.put(`${API}/hr/car-contracts/${selectedCar.id}`, carForm);
       } else {
-        await axios.post(`${API}/api/hr/car-contracts`, carForm);
+        await axios.post(`${API}/hr/car-contracts`, carForm);
       }
       toast.success(t("success"));
       setCarDialogOpen(false);
@@ -544,7 +544,7 @@ const HR = () => {
   const handleLetterSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/hr/official-letters`, letterForm);
+      await axios.post(`${API}/hr/official-letters`, letterForm);
       toast.success(t("success"));
       setLetterDialogOpen(false);
       resetLetterForm();
@@ -569,7 +569,7 @@ const HR = () => {
 
   const handleIssueLetter = async (letterId) => {
     try {
-      await axios.put(`${API}/api/hr/official-letters/${letterId}/issue`);
+      await axios.put(`${API}/hr/official-letters/${letterId}/issue`);
       toast.success(t("success"));
       fetchData();
     } catch (error) {
@@ -580,7 +580,7 @@ const HR = () => {
   // Approve official letter
   const handleApproveLetter = async (letterId) => {
     try {
-      const response = await axios.post(`${API}/api/hr/official-letters/${letterId}/approve`);
+      const response = await axios.post(`${API}/hr/official-letters/${letterId}/approve`);
       toast.success(
         language === "ar" 
           ? `تم تصديق الرسالة - كود التصديق: ${response.data.signature_code}`
@@ -598,7 +598,7 @@ const HR = () => {
     if (reason === null) return;
     
     try {
-      await axios.post(`${API}/api/hr/official-letters/${letterId}/reject?reason=${encodeURIComponent(reason)}`);
+      await axios.post(`${API}/hr/official-letters/${letterId}/reject?reason=${encodeURIComponent(reason)}`);
       toast.success(language === "ar" ? "تم رفض الرسالة" : "Letter rejected");
       fetchData();
     } catch (error) {
@@ -609,7 +609,7 @@ const HR = () => {
   // Print official letter
   const handlePrintLetter = (letter) => {
     // Mark as printed in backend
-    axios.post(`${API}/api/hr/official-letters/${letter.id}/print`).catch(() => {});
+    axios.post(`${API}/hr/official-letters/${letter.id}/print`).catch(() => {});
     
     // Generate printable content with background image
     const printWindow = window.open('', '_blank');
@@ -746,9 +746,9 @@ const HR = () => {
     e.preventDefault();
     try {
       if (selectedDevice) {
-        await axios.put(`${API}/api/hr/fingerprint-devices/${selectedDevice.id}`, deviceForm);
+        await axios.put(`${API}/hr/fingerprint-devices/${selectedDevice.id}`, deviceForm);
       } else {
-        await axios.post(`${API}/api/hr/fingerprint-devices`, deviceForm);
+        await axios.post(`${API}/hr/fingerprint-devices`, deviceForm);
       }
       toast.success(t("success"));
       setDeviceDialogOpen(false);
@@ -788,7 +788,7 @@ const HR = () => {
 
   const handleDeleteDevice = async () => {
     try {
-      await axios.delete(`${API}/api/hr/fingerprint-devices/${selectedDevice.id}`);
+      await axios.delete(`${API}/hr/fingerprint-devices/${selectedDevice.id}`);
       toast.success(t("success"));
       setDeleteDeviceDialogOpen(false);
       setSelectedDevice(null);
@@ -800,7 +800,7 @@ const HR = () => {
 
   const handleSyncDevice = async (deviceId) => {
     try {
-      await axios.post(`${API}/api/hr/fingerprint-devices/${deviceId}/sync`);
+      await axios.post(`${API}/hr/fingerprint-devices/${deviceId}/sync`);
       toast.success(language === "ar" ? "تم بدء المزامنة" : "Sync started");
     } catch (error) {
       toast.error(error.response?.data?.detail || t("error"));
@@ -810,7 +810,7 @@ const HR = () => {
   // Export Attendance functions
   const handleExportAttendanceExcel = async () => {
     try {
-      const response = await axios.get(`${API}/api/hr/attendance/export/excel`, {
+      const response = await axios.get(`${API}/hr/attendance/export/excel`, {
         params: { year: attendanceYear, month: attendanceMonth },
         responseType: 'blob'
       });
@@ -832,7 +832,7 @@ const HR = () => {
 
   const handleExportAttendancePDF = async () => {
     try {
-      const response = await axios.get(`${API}/api/hr/attendance/export/pdf`, {
+      const response = await axios.get(`${API}/hr/attendance/export/pdf`, {
         params: { year: attendanceYear, month: attendanceMonth },
         responseType: 'blob'
       });
@@ -862,7 +862,7 @@ const HR = () => {
     formData.append('file', file);
     
     try {
-      const response = await axios.post(`${API}/api/hr/attendance/import-excel`, formData, {
+      const response = await axios.post(`${API}/hr/attendance/import-excel`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -898,7 +898,7 @@ const HR = () => {
     formData.append('file', file);
     
     try {
-      const response = await axios.post(`${API}/api/hr/attendance/import-zkteco`, formData, {
+      const response = await axios.post(`${API}/hr/attendance/import-zkteco`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       

@@ -64,7 +64,7 @@ const Inventory = () => {
   const fetchInventory = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/inventory`, {
+      const response = await axios.get(`${API}/inventory`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setInventory(response.data);
@@ -85,7 +85,7 @@ const Inventory = () => {
         temperature: parseFloat(formData.temperature),
       };
 
-      await axios.post(`${API}/api/inventory`, data, {
+      await axios.post(`${API}/inventory`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success(t("success"));
@@ -118,7 +118,7 @@ const Inventory = () => {
         temperature: editFormData.temperature ? parseFloat(editFormData.temperature) : null,
       };
       
-      await axios.put(`${API}/api/inventory/${selectedItem.id}`, data, {
+      await axios.put(`${API}/inventory/${selectedItem.id}`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -140,7 +140,7 @@ const Inventory = () => {
   const confirmDelete = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${API}/api/inventory/${selectedItem.id}`, {
+      await axios.delete(`${API}/inventory/${selectedItem.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

@@ -51,8 +51,8 @@ const Projects = () => {
   const fetchAllData = async () => {
     try {
       const [projectsRes, dashboardRes] = await Promise.all([
-        axios.get(`${API}/api/projects`),
-        axios.get(`${API}/api/projects/dashboard/stats`)
+        axios.get(`${API}/projects`),
+        axios.get(`${API}/projects/dashboard/stats`)
       ]);
       setProjects(projectsRes.data);
       setDashboard(dashboardRes.data);
@@ -65,7 +65,7 @@ const Projects = () => {
 
   const fetchProjectTasks = async (projectId) => {
     try {
-      const response = await axios.get(`${API}/api/projects/${projectId}/tasks`);
+      const response = await axios.get(`${API}/projects/${projectId}/tasks`);
       setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -76,9 +76,9 @@ const Projects = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/projects/${selectedItem.id}`, projectForm);
+        await axios.put(`${API}/projects/${selectedItem.id}`, projectForm);
       } else {
-        await axios.post(`${API}/api/projects`, projectForm);
+        await axios.post(`${API}/projects`, projectForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setProjectDialogOpen(false);
@@ -102,9 +102,9 @@ const Projects = () => {
     e.preventDefault();
     try {
       if (selectedItem) {
-        await axios.put(`${API}/api/projects/tasks/${selectedItem.id}`, taskForm);
+        await axios.put(`${API}/projects/tasks/${selectedItem.id}`, taskForm);
       } else {
-        await axios.post(`${API}/api/projects/tasks`, taskForm);
+        await axios.post(`${API}/projects/tasks`, taskForm);
       }
       toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
       setTaskDialogOpen(false);
@@ -116,7 +116,7 @@ const Projects = () => {
 
   const completeTask = async (taskId) => {
     try {
-      await axios.put(`${API}/api/projects/tasks/${taskId}/complete`);
+      await axios.put(`${API}/projects/tasks/${taskId}/complete`);
       toast.success(language === "ar" ? "تم إكمال المهمة" : "Task completed");
       if (selectedProject) fetchProjectTasks(selectedProject.id);
     } catch (error) {

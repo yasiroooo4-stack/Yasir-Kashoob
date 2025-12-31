@@ -66,8 +66,8 @@ const MilkReception = () => {
   const fetchData = async () => {
     try {
       const [receptionsRes, suppliersRes] = await Promise.all([
-        axios.get(`${API}/api/milk-receptions`),
-        axios.get(`${API}/api/suppliers`),
+        axios.get(`${API}/milk-receptions`),
+        axios.get(`${API}/suppliers`),
       ]);
       setReceptions(receptionsRes.data);
       setSuppliers(suppliersRes.data);
@@ -130,7 +130,7 @@ const MilkReception = () => {
         },
       };
 
-      await axios.post(`${API}/api/milk-receptions`, data);
+      await axios.post(`${API}/milk-receptions`, data);
       toast.success(t("success"));
       setDialogOpen(false);
       resetForm();
