@@ -33,6 +33,16 @@ import {
 import { Textarea } from "../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import { 
   Wallet, 
   ArrowUpCircle, 
@@ -46,7 +56,9 @@ import {
   Receipt,
   ShoppingCart,
   Milk,
-  Users
+  Users,
+  Pencil,
+  Trash2
 } from "lucide-react";
 
 const Treasury = () => {
@@ -58,11 +70,18 @@ const Treasury = () => {
   const [financialSummary, setFinancialSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [formData, setFormData] = useState({
     transaction_type: "deposit",
     amount: "",
     source_type: "other",
+    description: "",
+  });
+  const [editFormData, setEditFormData] = useState({
+    amount: "",
     description: "",
   });
 
