@@ -397,12 +397,15 @@ const Treasury = () => {
                   <TableHead>{language === "ar" ? "الرصيد بعد" : "Balance After"}</TableHead>
                   <TableHead>{language === "ar" ? "الوصف" : "Description"}</TableHead>
                   <TableHead>{language === "ar" ? "بواسطة" : "By"}</TableHead>
+                  {user?.role === "admin" && (
+                    <TableHead className="text-center">{language === "ar" ? "إجراءات" : "Actions"}</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {transactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={user?.role === "admin" ? 8 : 7} className="text-center py-8 text-muted-foreground">
                       {language === "ar" ? "لا توجد حركات" : "No transactions"}
                     </TableCell>
                   </TableRow>
@@ -430,6 +433,28 @@ const Treasury = () => {
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">{tx.description}</TableCell>
                       <TableCell className="text-muted-foreground">{tx.created_by_name || "-"}</TableCell>
+                      {user?.role === "admin" && (
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(tx)}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(tx)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
