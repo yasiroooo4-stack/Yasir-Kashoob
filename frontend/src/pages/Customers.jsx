@@ -65,7 +65,7 @@ const Customers = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get(`${API}/customers`);
+      const response = await axios.get(`${API}/api/customers`);
       setCustomers(response.data);
     } catch (error) {
       toast.error(t("error"));
@@ -83,10 +83,10 @@ const Customers = () => {
       };
 
       if (selectedCustomer) {
-        await axios.put(`${API}/customers/${selectedCustomer.id}`, data);
+        await axios.put(`${API}/api/customers/${selectedCustomer.id}`, data);
         toast.success(t("success"));
       } else {
-        await axios.post(`${API}/customers`, data);
+        await axios.post(`${API}/api/customers`, data);
         toast.success(t("success"));
       }
       setDialogOpen(false);
@@ -99,7 +99,7 @@ const Customers = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API}/customers/${selectedCustomer.id}`);
+      await axios.delete(`${API}/api/customers/${selectedCustomer.id}`);
       toast.success(t("success"));
       setDeleteDialogOpen(false);
       setSelectedCustomer(null);
