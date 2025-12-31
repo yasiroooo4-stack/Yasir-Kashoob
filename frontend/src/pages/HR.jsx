@@ -84,6 +84,13 @@ const HR = () => {
   const [dashboard, setDashboard] = useState({});
   const [centers, setCenters] = useState([]);
   
+  // New HR features states
+  const [shifts, setShifts] = useState([]);
+  const [employeeShifts, setEmployeeShifts] = useState([]);
+  const [overtime, setOvertime] = useState([]);
+  const [loans, setLoans] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  
   // Dialog states
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
