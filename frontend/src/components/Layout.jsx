@@ -324,6 +324,13 @@ const Layout = () => {
                   <User className="w-4 h-4" />
                   {user?.username}
                 </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="gap-2 cursor-pointer"
+                  onClick={() => setBackgroundDialogOpen(true)}
+                >
+                  <Image className="w-4 h-4" />
+                  {language === "ar" ? "تغيير الخلفية" : "Change Background"}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="gap-2 text-destructive focus:text-destructive"
@@ -338,13 +345,76 @@ const Layout = () => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <div className="animate-fade-in">
+        {/* Page Content with Background */}
+        <main 
+          className="flex-1 p-4 lg:p-6 overflow-auto relative"
+          style={{
+            backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed'
+          }}
+        >
+          {backgroundUrl && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+          )}
+          <div className="animate-fade-in relative z-10">
             <Outlet />
           </div>
         </main>
       </div>
+
+      {/* Background Selection Dialog */}
+      <Dialog open={backgroundDialogOpen} onOpenChange={setBackgroundDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "اختيار خلفية النظام" : "Select System Background"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4">
+            {/* No background option */}
+            <div
+              onClick={() => updateBackground("none", "")}
+              className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                !backgroundUrl ? "border-primary ring-2 ring-primary/50" : "border-muted"
+              }`}
+            >
+              <div className="aspect-video bg-gradient-to-br from-background to-muted flex items-center justify-center">
+                <X className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="text-center text-sm py-2 font-medium">
+                {language === "ar" ? "بدون خلفية" : "No Background"}
+              </p>
+            </div>
+            
+            {/* Background options */}
+            {backgrounds.map((bg) => (
+              <div
+                key={bg.id}
+                onClick={() => updateBackground(bg.id, bg.url)}
+                className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
+                  backgroundUrl === bg.url ? "border-primary ring-2 ring-primary/50" : "border-muted"
+                }`}
+              >
+                <div className="aspect-video">
+                  <img
+                    src={bg.url}
+                    alt={bg.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-center text-sm py-2 font-medium">{bg.name}</p>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBackgroundDialogOpen(false)}>
+              {language === "ar" ? "إغلاق" : "Close"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
