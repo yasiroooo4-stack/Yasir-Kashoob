@@ -166,7 +166,7 @@ function App() {
       if (token && savedUser) {
         try {
           axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-          const response = await axios.get(`${API}/api/auth/me`);
+          const response = await axios.get(`${API}/auth/me`);
           setUser(response.data);
         } catch (error) {
           localStorage.removeItem("token");
@@ -190,7 +190,7 @@ function App() {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post(`${API}/api/auth/login`, { username, password });
+      const response = await axios.post(`${API}/auth/login`, { username, password });
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem("token", access_token);
@@ -209,7 +209,7 @@ function App() {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post(`${API}/api/auth/register`, userData);
+      const response = await axios.post(`${API}/auth/register`, userData);
       const { access_token, user: newUser } = response.data;
       
       localStorage.setItem("token", access_token);
