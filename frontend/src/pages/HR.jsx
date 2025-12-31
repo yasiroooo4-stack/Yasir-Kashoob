@@ -377,6 +377,7 @@ const HR = () => {
       permissions: [],
       manager_id: "",
       manager_name: "",
+      username: "",
     });
     setSelectedEmployee(null);
   };
@@ -399,6 +400,7 @@ const HR = () => {
       permissions: employee.permissions || [],
       manager_id: employee.manager_id || "",
       manager_name: employee.manager_name || "",
+      username: employee.username || "",
     });
     setEmployeeDialogOpen(true);
   };
