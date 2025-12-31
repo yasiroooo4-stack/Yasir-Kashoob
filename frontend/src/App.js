@@ -53,6 +53,7 @@ import Legal from "./pages/Legal";
 import Projects from "./pages/Projects";
 import Operations from "./pages/Operations";
 import Marketing from "./pages/Marketing";
+import Payroll from "./pages/Payroll";
 
 // Layout
 import Layout from "./components/Layout";
