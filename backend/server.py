@@ -6524,6 +6524,73 @@ async def get_analysis_summary(current_user: dict = Depends(get_current_user)):
         }
     }
 
+# ==================== USER SETTINGS / APPEARANCE ====================
+
+# System background images
+SYSTEM_BACKGROUNDS = [
+    {"id": "bg1", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/368sq9v2_12.jpg", "name": "خلفية 1"},
+    {"id": "bg2", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/41nbrw0w_2.jpg", "name": "خلفية 2"},
+    {"id": "bg3", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/ftlid6jo_4.jpg", "name": "خلفية 3"},
+    {"id": "bg4", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/o1tpk5s2_6.jpg", "name": "خلفية 4"},
+    {"id": "bg5", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/roy1cp0e_10.jpg", "name": "خلفية 5"},
+]
+
+class UserAppearanceSettings(BaseModel):
+    background_id: Optional[str] = "bg1"
+    background_url: Optional[str] = None
+    theme: str = "light"  # light, dark
+    sidebar_collapsed: bool = False
+
+@api_router.get("/user/settings")
+async def get_user_settings(current_user: dict = Depends(get_current_user)):
+    """Get user appearance settings"""
+    settings = await db.user_settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not settings:
+        # Return default settings
+        default_bg = SYSTEM_BACKGROUNDS[0]
+        return {
+            "user_id": current_user["id"],
+            "background_id": "bg1",
+            "background_url": default_bg["url"],
+            "theme": "light",
+            "sidebar_collapsed": False
+        }
+    return settings
+
+@api_router.put("/user/settings")
+async def update_user_settings(settings: UserAppearanceSettings, current_user: dict = Depends(get_current_user)):
+    """Update user appearance settings"""
+    
+    # Get background URL from ID
+    background_url = settings.background_url
+    if settings.background_id:
+        for bg in SYSTEM_BACKGROUNDS:
+            if bg["id"] == settings.background_id:
+                background_url = bg["url"]
+                break
+    
+    settings_data = {
+        "user_id": current_user["id"],
+        "background_id": settings.background_id,
+        "background_url": background_url,
+        "theme": settings.theme,
+        "sidebar_collapsed": settings.sidebar_collapsed,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.user_settings.update_one(
+        {"user_id": current_user["id"]},
+        {"$set": settings_data},
+        upsert=True
+    )
+    
+    return settings_data
+
+@api_router.get("/system/backgrounds")
+async def get_system_backgrounds(current_user: dict = Depends(get_current_user)):
+    """Get available system background images"""
+    return SYSTEM_BACKGROUNDS
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
