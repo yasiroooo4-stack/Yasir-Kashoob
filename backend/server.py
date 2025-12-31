@@ -440,6 +440,135 @@ class FingerprintDevice(FingerprintDeviceBase):
     last_sync: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ==================== NEW HR MODELS ====================
+
+# Shift Models (نماذج الورديات)
+class ShiftBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str  # اسم الوردية
+    start_time: str  # وقت البداية HH:MM
+    end_time: str  # وقت النهاية HH:MM
+    break_duration: int = 60  # مدة الاستراحة بالدقائق
+    working_hours: float = 8.0  # ساعات العمل
+    is_night_shift: bool = False  # وردية ليلية
+    color: Optional[str] = "#3B82F6"  # لون للعرض
+
+class ShiftCreate(ShiftBase):
+    pass
+
+class Shift(ShiftBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Employee Shift Assignment (تعيين الورديات للموظفين)
+class EmployeeShiftBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    shift_id: str
+    shift_name: str
+    date: str  # التاريخ المحدد أو بداية الفترة
+    end_date: Optional[str] = None  # نهاية الفترة (للتعيين المتكرر)
+    is_recurring: bool = False  # تكرار أسبوعي
+    weekdays: Optional[List[int]] = None  # أيام الأسبوع [0-6] الأحد=0
+
+class EmployeeShiftCreate(EmployeeShiftBase):
+    pass
+
+class EmployeeShift(EmployeeShiftBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Overtime Models (نماذج العمل الإضافي)
+class OvertimeBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    date: str
+    start_time: str  # وقت بداية الأوفرتايم
+    end_time: str  # وقت النهاية
+    hours: float  # عدد الساعات
+    rate: float = 1.5  # معدل الأجر (1.5x افتراضي)
+    reason: Optional[str] = None  # سبب العمل الإضافي
+    hourly_rate: Optional[float] = None  # أجر الساعة الأساسي
+    total_amount: Optional[float] = None  # المبلغ الإجمالي
+
+class OvertimeCreate(OvertimeBase):
+    pass
+
+class Overtime(OvertimeBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, approved, rejected, paid
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Advance/Loan Models (نماذج السلف والقروض)
+class LoanBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    loan_type: str  # advance (سلفة), loan (قرض)
+    amount: float  # المبلغ الإجمالي
+    reason: Optional[str] = None
+    installments: int = 1  # عدد الأقساط
+    installment_amount: Optional[float] = None  # قيمة القسط
+    start_deduction_date: Optional[str] = None  # تاريخ بداية الخصم
+
+class LoanCreate(LoanBase):
+    pass
+
+class Loan(LoanBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, approved, rejected, active, completed
+    paid_amount: float = 0.0  # المبلغ المسدد
+    remaining_amount: Optional[float] = None  # المبلغ المتبقي
+    paid_installments: int = 0  # الأقساط المسددة
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Loan Payment Record (سجل سداد القسط)
+class LoanPayment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    loan_id: str
+    employee_id: str
+    amount: float
+    payment_date: str
+    payment_method: str = "salary_deduction"  # salary_deduction, cash, bank_transfer
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Employee Document Models (نماذج وثائق الموظفين)
+class EmployeeDocumentBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    document_type: str  # passport, id_card, visa, contract, certificate, medical, other
+    document_name: str  # اسم الوثيقة
+    document_number: Optional[str] = None  # رقم الوثيقة
+    issue_date: Optional[str] = None  # تاريخ الإصدار
+    expiry_date: Optional[str] = None  # تاريخ الانتهاء
+    file_url: Optional[str] = None  # رابط الملف
+    notes: Optional[str] = None
+
+class EmployeeDocumentCreate(EmployeeDocumentBase):
+    pass
+
+class EmployeeDocument(EmployeeDocumentBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_expired: bool = False
+    days_to_expiry: Optional[int] = None
+    uploaded_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ==================== END NEW HR MODELS ====================
+
 # Payroll Models (نماذج الرواتب)
 class PayrollPeriod(BaseModel):
     model_config = ConfigDict(extra="ignore")
