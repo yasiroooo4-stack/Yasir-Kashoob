@@ -1303,13 +1303,14 @@ async def update_profile(profile_data: UserUpdate, current_user: dict = Depends(
 @api_router.put("/auth/password")
 async def change_password(password_data: PasswordChange, current_user: dict = Depends(get_current_user)):
     user = await db.users.find_one({"id": current_user["id"]})
-    if not verify_password(password_data.current_password, user["password"]):
+    password_field = user.get("password_hash") or user.get("password") if user else None
+    if not password_field or not verify_password(password_data.current_password, password_field):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     
     new_hash = hash_password(password_data.new_password)
     await db.users.update_one(
         {"id": current_user["id"]},
-        {"$set": {"password": new_hash}}
+        {"$set": {"password_hash": new_hash, "password": new_hash}}
     )
     
     await log_activity(
