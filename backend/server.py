@@ -6059,6 +6059,184 @@ async def delete_payroll_period(period_id: str, current_user: dict = Depends(get
     
     return {"message": "تم حذف فترة الرواتب بنجاح"}
 
+# ==================== AI ANALYSIS (التحليل الذكي) ====================
+
+class AnalysisRequest(BaseModel):
+    question: str
+    category: Optional[str] = "general"  # general, hr, attendance, sales, milk
+
+# Initialize OpenAI client with Emergent key
+def get_openai_client():
+    api_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
+    return AsyncOpenAI(
+        api_key=api_key,
+        base_url="https://api.openai.com/v1"
+    )
+
+@api_router.post("/analysis/query")
+async def analyze_query(request: AnalysisRequest, current_user: dict = Depends(get_current_user)):
+    """Analyze natural language query and return data insights"""
+    
+    try:
+        # Get data context based on category
+        context_data = {}
+        
+        # Fetch relevant data for context
+        if request.category in ["general", "hr", "attendance"]:
+            # Get attendance summary
+            current_month = datetime.now().month
+            current_year = datetime.now().year
+            attendance = await db.hr_attendance.find({}).to_list(1000)
+            employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+            
+            present_count = len([a for a in attendance if a.get("status") == "present"])
+            absent_count = len([a for a in attendance if a.get("status") == "absent"])
+            
+            context_data["attendance"] = {
+                "total_employees": len(employees),
+                "present_days_total": present_count,
+                "absent_days_total": absent_count,
+                "departments": list(set([e.get("department", "unknown") for e in employees]))
+            }
+        
+        if request.category in ["general", "sales"]:
+            # Get sales summary
+            sales = await db.sales.find({}, {"_id": 0}).to_list(1000)
+            context_data["sales"] = {
+                "total_sales": len(sales),
+                "total_amount": sum([s.get("total_amount", 0) for s in sales]),
+            }
+        
+        if request.category in ["general", "milk"]:
+            # Get milk reception summary
+            receptions = await db.milk_receptions.find({}, {"_id": 0}).to_list(1000)
+            suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(1000)
+            context_data["milk"] = {
+                "total_receptions": len(receptions),
+                "total_quantity": sum([r.get("quantity", 0) for r in receptions]),
+                "total_suppliers": len(suppliers),
+            }
+        
+        if request.category in ["general", "hr"]:
+            # Get payroll summary
+            payroll_records = await db.payroll_records.find({}, {"_id": 0}).to_list(1000)
+            context_data["payroll"] = {
+                "total_records": len(payroll_records),
+                "total_gross": sum([p.get("gross_salary", 0) for p in payroll_records]),
+                "total_net": sum([p.get("net_salary", 0) for p in payroll_records]),
+            }
+        
+        # Create prompt for AI
+        system_prompt = """أنت مساعد تحليل بيانات ذكي لنظام ERP لمركز تجميع الحليب.
+        
+مهمتك هي تحليل البيانات والإجابة على أسئلة المستخدم بشكل واضح ومفيد.
+
+البيانات المتاحة:
+- بيانات الموظفين والحضور والانصراف
+- بيانات المبيعات
+- بيانات استلام الحليب
+- بيانات الرواتب
+
+قواعد مهمة:
+1. أجب باللغة العربية إذا كان السؤال بالعربية
+2. قدم إحصائيات وأرقام محددة
+3. اقترح تحسينات إذا كانت مناسبة
+4. كن موجزاً ومفيداً"""
+
+        user_prompt = f"""السؤال: {request.question}
+
+البيانات الحالية:
+{context_data}
+
+قدم إجابة تحليلية مفصلة."""
+
+        # Call OpenAI API
+        client = get_openai_client()
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        answer = response.choices[0].message.content
+        
+        # Log the analysis
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="ai_analysis",
+            details=f"سؤال: {request.question[:100]}..."
+        )
+        
+        return {
+            "question": request.question,
+            "answer": answer,
+            "category": request.category,
+            "data_summary": context_data,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"خطأ في التحليل: {str(e)}")
+
+@api_router.get("/analysis/summary")
+async def get_analysis_summary(current_user: dict = Depends(get_current_user)):
+    """Get quick summary statistics for analysis dashboard"""
+    
+    # Attendance stats
+    employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    attendance = await db.hr_attendance.find({}).to_list(5000)
+    
+    present_count = len([a for a in attendance if a.get("status") == "present"])
+    absent_count = len([a for a in attendance if a.get("status") == "absent"])
+    
+    # Sales stats
+    sales = await db.sales.find({}, {"_id": 0}).to_list(1000)
+    total_sales_amount = sum([s.get("total_amount", 0) for s in sales])
+    
+    # Milk reception stats
+    receptions = await db.milk_receptions.find({}, {"_id": 0}).to_list(1000)
+    total_milk = sum([r.get("quantity", 0) for r in receptions])
+    
+    # Supplier stats
+    suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(500)
+    
+    # Department breakdown
+    departments = {}
+    for emp in employees:
+        dept = emp.get("department", "unknown")
+        departments[dept] = departments.get(dept, 0) + 1
+    
+    return {
+        "employees": {
+            "total": len(employees),
+            "by_department": departments
+        },
+        "attendance": {
+            "present_total": present_count,
+            "absent_total": absent_count,
+            "attendance_rate": round(present_count / (present_count + absent_count) * 100, 2) if (present_count + absent_count) > 0 else 0
+        },
+        "sales": {
+            "total_transactions": len(sales),
+            "total_amount": total_sales_amount
+        },
+        "milk": {
+            "total_receptions": len(receptions),
+            "total_quantity": total_milk
+        },
+        "suppliers": {
+            "total_active": len(suppliers)
+        }
+    }
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
