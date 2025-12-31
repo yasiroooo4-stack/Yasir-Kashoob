@@ -226,6 +226,9 @@ const resources = {
       // HR
       "hr": "الموارد البشرية",
       
+      // Payroll
+      "payroll": "كشف الرواتب",
+      
       // Legal
       "legal": "القسم القانوني",
       
