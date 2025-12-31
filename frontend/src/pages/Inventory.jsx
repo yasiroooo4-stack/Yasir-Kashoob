@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { API, useLanguage } from "../App";
+import { API, useLanguage, useAuth } from "../App";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -23,16 +23,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
-import { Plus, Package, Thermometer, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import { Plus, Package, Thermometer, Clock, Pencil, Trash2 } from "lucide-react";
 
 const Inventory = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({
     product_type: "raw_milk",
+    quantity_liters: "",
+    storage_tank: "",
+    temperature: "",
+  });
+  const [editFormData, setEditFormData] = useState({
     quantity_liters: "",
     storage_tank: "",
     temperature: "",
@@ -44,7 +63,10 @@ const Inventory = () => {
 
   const fetchInventory = async () => {
     try {
-      const response = await axios.get(`${API}/inventory`);
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/inventory`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setInventory(response.data);
     } catch (error) {
       toast.error(t("error"));
