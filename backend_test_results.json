@@ -1,212 +1,30 @@
 [
   {
-    "test": "User Login",
+    "test": "Hassan Hamdi Login",
     "success": true,
-    "message": "Successfully logged in as yasir",
+    "message": "Successfully logged in as hassan.hamdi with role accountant",
     "details": null,
-    "timestamp": "2025-12-30T06:43:01.725440"
+    "timestamp": "2025-12-31T07:17:36.551113"
   },
   {
-    "test": "Feed Purchase Invoice",
-    "success": true,
-    "message": "Successfully created feed purchase with invoice FP-2025-00003 and electronic signature EBE1AACDCF27E242",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:01.809121"
-  },
-  {
-    "test": "Supplier Milk Type",
-    "success": true,
-    "message": "Successfully created supplier 'مورد إبل الصحراء' with milk_type: camel",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:01.837622"
-  },
-  {
-    "test": "Official Letters Workflow",
+    "test": "Dashboard Access",
     "success": false,
-    "message": "Letter rejection not working properly",
-    "details": "Status: None",
-    "timestamp": "2025-12-30T06:43:02.019944"
+    "message": "Dashboard missing expected fields. Found: ['suppliers_count', 'customers_count', 'today_milk_quantity', 'today_milk_value', 'today_sales_quantity', 'today_sales_value', 'current_stock', 'avg_fat_percentage', 'avg_protein_percentage', 'total_supplier_dues', 'total_customer_dues']",
+    "details": "Expected at least 2 of: ['total_suppliers', 'total_customers', 'total_milk_received', 'total_sales']",
+    "timestamp": "2025-12-31T07:17:36.577049"
   },
   {
-    "test": "Departments API",
+    "test": "User Profile Access",
     "success": true,
-    "message": "All expected departments found: ['legal', 'projects', 'operations', 'marketing']",
+    "message": "Profile accessible for hassan.hamdi (accountant)",
     "details": null,
-    "timestamp": "2025-12-30T06:43:02.071962"
+    "timestamp": "2025-12-31T07:17:36.589457"
   },
   {
-    "test": "Permissions API",
+    "test": "Payment Receipt PDF Workflow",
     "success": true,
-    "message": "Most expected permissions found. Missing: None",
+    "message": "Successfully generated PDF receipt for payment 73a643c4-9a98-475e-a6cb-e3bdc64e7aad (Size: 28789 bytes)",
     "details": null,
-    "timestamp": "2025-12-30T06:43:02.082176"
-  },
-  {
-    "test": "HR Attendance Import Excel",
-    "success": true,
-    "message": "Excel import successful - تم استيراد 0 سجل جديد وتحديث 3 سجل",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:02.480127"
-  },
-  {
-    "test": "Central Dashboard API",
-    "success": true,
-    "message": "Central dashboard complete - Summary: 4 fields, Milk: 3 fields, Centers: 4 centers",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:02.575300"
-  },
-  {
-    "test": "Forgot Password API",
-    "success": true,
-    "message": "Successfully requested password reset for testadmin@test.com",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.197581"
-  },
-  {
-    "test": "Verify Reset Token API",
-    "success": true,
-    "message": "Successfully verified invalid token returns valid=false",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.249197"
-  },
-  {
-    "test": "Reset Password API",
-    "success": true,
-    "message": "Successfully rejected invalid token with proper error message",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.261151"
-  },
-  {
-    "test": "Password Recovery Workflow",
-    "success": false,
-    "message": "Failed to create test user: 400",
-    "details": "{\"detail\":\"Username or email already exists\"}",
-    "timestamp": "2025-12-30T06:43:03.312764"
-  },
-  {
-    "test": "Legal Dashboard API",
-    "success": true,
-    "message": "Legal dashboard retrieved with all expected fields: ['contracts_active', 'contracts_expiring_soon', 'cases_open', 'consultations_pending']",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.331623"
-  },
-  {
-    "test": "Legal Contracts CRUD",
-    "success": true,
-    "message": "Successfully created contract 'عقد توريد' with auto-generated number CTR-2025-0010",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.402215"
-  },
-  {
-    "test": "Legal Cases CRUD",
-    "success": true,
-    "message": "Successfully created case 'قضية تعويض' with auto-generated number CASE-2025-0010",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.428711"
-  },
-  {
-    "test": "Projects Dashboard Stats",
-    "success": true,
-    "message": "Projects dashboard retrieved with all expected fields: ['total_projects', 'active_projects', 'completed_projects', 'overdue_tasks', 'total_budget', 'total_actual_cost']",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.447085"
-  },
-  {
-    "test": "Projects CRUD",
-    "success": true,
-    "message": "Successfully created project 'مشروع توسعة المصنع' with auto-generated code PRJ-2025-0019",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.518740"
-  },
-  {
-    "test": "Projects CRUD",
-    "success": true,
-    "message": "Successfully created project 'مشروع توسعة المصنع' with auto-generated code PRJ-2025-0020",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.588633"
-  },
-  {
-    "test": "Project Tasks CRUD",
-    "success": true,
-    "message": "Successfully created task 'تصميم المخططات' for project",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.658032"
-  },
-  {
-    "test": "Operations Dashboard",
-    "success": true,
-    "message": "Operations dashboard retrieved with all expected fields and structure",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.692391"
-  },
-  {
-    "test": "Operations Equipment CRUD",
-    "success": true,
-    "message": "Successfully created equipment 'خزان تبريد' with auto-generated code EQP-0010",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.720387"
-  },
-  {
-    "test": "Operations Vehicles CRUD",
-    "success": true,
-    "message": "Successfully created vehicle 'Isuzu NPR' with auto-generated code VEH-0010",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.756458"
-  },
-  {
-    "test": "Operations Incidents CRUD",
-    "success": true,
-    "message": "Successfully created incident 'عطل في خزان التبريد' with auto-generated number INC-2025-0010",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.832519"
-  },
-  {
-    "test": "Marketing Dashboard API",
-    "success": true,
-    "message": "Marketing dashboard retrieved with fields: ['campaigns', 'leads', 'offers', 'returns']",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:03.858469"
-  },
-  {
-    "test": "Marketing Campaigns CRUD",
-    "success": true,
-    "message": "Successfully created campaign 'حملة ترويجية للألبان الطازجة' with auto-generated code CMP-2025-0008",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:04.010748"
-  },
-  {
-    "test": "Marketing Leads CRUD",
-    "success": true,
-    "message": "Successfully created lead 'أحمد محمد العلوي' with auto-generated code LEAD-00008",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:04.041624"
-  },
-  {
-    "test": "Marketing Offers CRUD",
-    "success": true,
-    "message": "Successfully created offer 'خصم 15% على الحليب الطازج' with auto-generated code OFFER-0008",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:04.190926"
-  },
-  {
-    "test": "Marketing Returns CRUD",
-    "success": true,
-    "message": "Successfully created return for 'متجر الأسرة السعيدة' with auto-generated code RTN-2025-0008",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:04.237776"
-  },
-  {
-    "test": "Activity Logs - New Modules",
-    "success": true,
-    "message": "New module operations properly logged: Legal, Projects, Operations",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:04.278408"
-  },
-  {
-    "test": "Activity Log - API Filters",
-    "success": true,
-    "message": "Activity logs API filters working correctly (limit=5, action filter, sorting)",
-    "details": null,
-    "timestamp": "2025-12-30T06:43:04.326297"
+    "timestamp": "2025-12-31T07:17:36.970919"
   }
 ]
