@@ -58,6 +58,7 @@ import Analysis from "./pages/Analysis";
 
 // Layout
 import Layout from "./components/Layout";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
