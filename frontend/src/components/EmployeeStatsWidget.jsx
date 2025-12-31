@@ -66,42 +66,56 @@ const EmployeeStatsWidget = ({ currentUser }) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        // Filter attendance for current user
-        if (Array.isArray(attendanceRes.data)) {
-          userAttendance = attendanceRes.data.filter(
-            a => a.employee_id === currentUser?.id || 
-                 a.employee_name === currentUser?.full_name ||
-                 a.employee_id === currentUser?.username
+        // First get the employee record to find their employee_id
+        let employeeRecord = null;
+        let leaveBalance = 30; // Default
+        try {
+          const employeesRes = await axios.get(
+            `${API}/api/hr/employees`,
+            { headers: { Authorization: `Bearer ${token}` } }
           );
+          if (Array.isArray(employeesRes.data)) {
+            employeeRecord = employeesRes.data.find(
+              e => e.id === currentUser?.id || 
+                   e.name === currentUser?.full_name ||
+                   e.username === currentUser?.username
+            );
+            if (employeeRecord?.leave_balance !== undefined) {
+              leaveBalance = employeeRecord.leave_balance;
+            }
+          }
+        } catch (e) {
+          console.log("Could not fetch employee data");
+        }
+        
+        // Filter attendance for current user - match by multiple fields
+        if (Array.isArray(attendanceRes.data)) {
+          userAttendance = attendanceRes.data.filter(a => {
+            // Match by user ID
+            if (a.employee_id === currentUser?.id) return true;
+            // Match by employee_id field from employee record
+            if (employeeRecord?.employee_id && a.employee_id === employeeRecord.employee_id) return true;
+            // Match by fingerprint_id if exists
+            if (employeeRecord?.fingerprint_id && a.employee_id === employeeRecord.fingerprint_id) return true;
+            // Match by name
+            if (a.employee_name === currentUser?.full_name) return true;
+            if (employeeRecord?.name && a.employee_name === employeeRecord.name) return true;
+            // Match by username
+            if (a.employee_id === currentUser?.username) return true;
+            return false;
+          });
         }
       } catch (attendanceError) {
         console.log("Could not fetch attendance:", attendanceError.message);
       }
       
-      // Calculate stats
-      const presentDays = userAttendance.filter(a => a.status === "present").length;
-      const absentDays = userAttendance.filter(a => a.status === "absent").length;
-      
-      // Get leave balance from employee data
-      let leaveBalance = 30; // Default
-      try {
-        const employeesRes = await axios.get(
-          `${API}/api/hr/employees`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (Array.isArray(employeesRes.data)) {
-          const employee = employeesRes.data.find(
-            e => e.id === currentUser?.id || 
-                 e.name === currentUser?.full_name ||
-                 e.username === currentUser?.username
-          );
-          if (employee?.leave_balance !== undefined) {
-            leaveBalance = employee.leave_balance;
-          }
-        }
-      } catch (e) {
-        console.log("Could not fetch leave balance");
-      }
+      // Calculate stats - check_in means present (from ZKTeco import)
+      const presentDays = userAttendance.filter(a => 
+        a.status === "present" || a.check_in
+      ).length;
+      const absentDays = userAttendance.filter(a => 
+        a.status === "absent" || (!a.check_in && !a.status)
+      ).length;
       
       // Calculate working days in month (excluding weekends)
       const daysInMonth = new Date(year, month, 0).getDate();
