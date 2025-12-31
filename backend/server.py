@@ -2532,6 +2532,245 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
     
     return {"message": "Feed purchase deleted and amount refunded to supplier"}
 
+# ==================== TREASURY ROUTES (الخزينة) ====================
+
+@api_router.get("/treasury/balance")
+async def get_treasury_balance(current_user: dict = Depends(get_current_user)):
+    """Get current treasury balance and summary"""
+    # Get or create treasury record
+    treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+    if not treasury:
+        treasury = {
+            "type": "main",
+            "current_balance": 0.0,
+            "total_deposits": 0.0,
+            "total_withdrawals": 0.0,
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }
+        await db.treasury.insert_one(treasury)
+    
+    return treasury
+
+@api_router.get("/treasury/transactions")
+async def get_treasury_transactions(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    transaction_type: Optional[str] = None,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get treasury transactions with filters"""
+    query = {}
+    if start_date:
+        query["created_at"] = {"$gte": start_date}
+    if end_date:
+        if "created_at" in query:
+            query["created_at"]["$lte"] = end_date
+        else:
+            query["created_at"] = {"$lte": end_date}
+    if transaction_type:
+        query["transaction_type"] = transaction_type
+    
+    transactions = await db.treasury_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return transactions
+
+@api_router.post("/treasury/transaction")
+async def create_treasury_transaction(
+    transaction_type: str,
+    amount: float,
+    source_type: str,
+    description: str,
+    source_id: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """Create a manual treasury transaction"""
+    # Get current balance
+    treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+    current_balance = treasury.get("current_balance", 0) if treasury else 0
+    
+    # Calculate new balance
+    if transaction_type == "deposit":
+        new_balance = current_balance + amount
+    else:  # withdrawal
+        if amount > current_balance:
+            raise HTTPException(status_code=400, detail="رصيد الخزينة غير كافٍ")
+        new_balance = current_balance - amount
+    
+    # Create transaction record
+    transaction = TreasuryTransaction(
+        transaction_type=transaction_type,
+        amount=amount,
+        source_type=source_type,
+        source_id=source_id,
+        description=description,
+        balance_after=new_balance,
+        created_by=current_user["id"],
+        created_by_name=current_user.get("full_name", "")
+    )
+    
+    await db.treasury_transactions.insert_one(transaction.model_dump())
+    
+    # Update treasury balance
+    update_data = {
+        "current_balance": new_balance,
+        "last_updated": datetime.now(timezone.utc).isoformat()
+    }
+    if transaction_type == "deposit":
+        update_data["total_deposits"] = treasury.get("total_deposits", 0) + amount if treasury else amount
+    else:
+        update_data["total_withdrawals"] = treasury.get("total_withdrawals", 0) + amount if treasury else amount
+    
+    await db.treasury.update_one(
+        {"type": "main"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action=f"treasury_{transaction_type}",
+        entity_type="treasury",
+        details=f"{'إيداع' if transaction_type == 'deposit' else 'سحب'}: {amount} ر.ع - {description}"
+    )
+    
+    return transaction
+
+# Helper function to update treasury
+async def update_treasury(transaction_type: str, amount: float, source_type: str, description: str, source_id: str = None, user_id: str = None, user_name: str = None):
+    """Helper to update treasury balance from other operations"""
+    treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+    current_balance = treasury.get("current_balance", 0) if treasury else 0
+    
+    if transaction_type == "deposit":
+        new_balance = current_balance + amount
+    else:
+        new_balance = current_balance - amount
+    
+    transaction = TreasuryTransaction(
+        transaction_type=transaction_type,
+        amount=amount,
+        source_type=source_type,
+        source_id=source_id,
+        description=description,
+        balance_after=new_balance,
+        created_by=user_id,
+        created_by_name=user_name or ""
+    )
+    
+    await db.treasury_transactions.insert_one(transaction.model_dump())
+    
+    update_data = {
+        "current_balance": new_balance,
+        "last_updated": datetime.now(timezone.utc).isoformat()
+    }
+    if transaction_type == "deposit":
+        update_data["total_deposits"] = treasury.get("total_deposits", 0) + amount if treasury else amount
+    else:
+        update_data["total_withdrawals"] = treasury.get("total_withdrawals", 0) + amount if treasury else amount
+    
+    await db.treasury.update_one({"type": "main"}, {"$set": update_data}, upsert=True)
+    
+    return new_balance
+
+# ==================== INTEGRATED FINANCIAL REPORTS (التقارير المالية المتكاملة) ====================
+
+@api_router.get("/reports/financial-summary")
+async def get_financial_summary(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get integrated financial summary report"""
+    
+    # Default to current month if no dates provided
+    if not start_date:
+        today = datetime.now(timezone.utc)
+        start_date = datetime(today.year, today.month, 1, tzinfo=timezone.utc).isoformat()
+    if not end_date:
+        end_date = datetime.now(timezone.utc).isoformat()
+    
+    date_query = {"$gte": start_date, "$lte": end_date}
+    
+    # Get milk receptions (purchases)
+    receptions = await db.milk_receptions.find(
+        {"reception_date": date_query}, {"_id": 0}
+    ).to_list(10000)
+    total_milk_purchased_liters = sum(r.get("quantity_liters", 0) for r in receptions)
+    total_milk_purchased_amount = sum(r.get("total_amount", 0) for r in receptions)
+    
+    # Get sales
+    sales = await db.sales.find(
+        {"sale_date": date_query}, {"_id": 0}
+    ).to_list(10000)
+    total_milk_sold_liters = sum(s.get("quantity_liters", 0) for s in sales)
+    total_sales_amount = sum(s.get("total_amount", 0) for s in sales)
+    
+    # Get supplier payments (approved only)
+    supplier_payments = await db.payments.find(
+        {"payment_type": "supplier_payment", "status": "approved", "payment_date": date_query}, {"_id": 0}
+    ).to_list(10000)
+    total_supplier_payments = sum(p.get("amount", 0) for p in supplier_payments)
+    
+    # Get customer receipts (approved only)
+    customer_receipts = await db.payments.find(
+        {"payment_type": "customer_receipt", "status": "approved", "payment_date": date_query}, {"_id": 0}
+    ).to_list(10000)
+    total_customer_receipts = sum(p.get("amount", 0) for p in customer_receipts)
+    
+    # Get treasury balance
+    treasury = await db.treasury.find_one({"type": "main"}, {"_id": 0})
+    treasury_balance = treasury.get("current_balance", 0) if treasury else 0
+    
+    # Get inventory
+    inventory = await db.inventory.find_one({"product_type": "raw_milk"}, {"_id": 0})
+    current_stock_liters = inventory.get("quantity_liters", 0) if inventory else 0
+    
+    # Calculate profit/loss
+    gross_profit = total_sales_amount - total_milk_purchased_amount
+    net_cash_flow = total_customer_receipts - total_supplier_payments
+    
+    # Get outstanding balances
+    suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0, "balance": 1}).to_list(1000)
+    total_supplier_dues = sum(s.get("balance", 0) for s in suppliers)
+    
+    customers = await db.customers.find({"is_active": True}, {"_id": 0, "balance": 1}).to_list(1000)
+    total_customer_dues = sum(c.get("balance", 0) for c in customers)
+    
+    return {
+        "period": {
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "purchases": {
+            "total_liters": round(total_milk_purchased_liters, 2),
+            "total_amount": round(total_milk_purchased_amount, 2),
+            "transactions_count": len(receptions),
+            "avg_price_per_liter": round(total_milk_purchased_amount / total_milk_purchased_liters, 3) if total_milk_purchased_liters > 0 else 0
+        },
+        "sales": {
+            "total_liters": round(total_milk_sold_liters, 2),
+            "total_amount": round(total_sales_amount, 2),
+            "transactions_count": len(sales),
+            "avg_price_per_liter": round(total_sales_amount / total_milk_sold_liters, 3) if total_milk_sold_liters > 0 else 0
+        },
+        "payments": {
+            "supplier_payments": round(total_supplier_payments, 2),
+            "customer_receipts": round(total_customer_receipts, 2),
+            "net_cash_flow": round(net_cash_flow, 2)
+        },
+        "profit_loss": {
+            "gross_profit": round(gross_profit, 2),
+            "profit_margin_percentage": round((gross_profit / total_sales_amount) * 100, 2) if total_sales_amount > 0 else 0
+        },
+        "balances": {
+            "treasury_balance": round(treasury_balance, 2),
+            "supplier_dues": round(total_supplier_dues, 2),
+            "customer_receivables": round(total_customer_dues, 2),
+            "inventory_liters": round(current_stock_liters, 2)
+        }
+    }
+
 # ==================== REPORTS & DASHBOARD ====================
 
 @api_router.get("/dashboard/stats")
