@@ -317,6 +317,11 @@ function App() {
                     <Marketing />
                   </ProtectedRoute>
                 } />
+                <Route path="payroll" element={
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                    <Payroll />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
