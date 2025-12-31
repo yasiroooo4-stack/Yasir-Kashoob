@@ -1072,6 +1072,22 @@ const HR = () => {
             <Fingerprint className="w-4 h-4" />
             <span className="hidden sm:inline">{language === "ar" ? "البصمة" : "Devices"}</span>
           </TabsTrigger>
+          <TabsTrigger value="shifts" className="gap-1">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === "ar" ? "الورديات" : "Shifts"}</span>
+          </TabsTrigger>
+          <TabsTrigger value="overtime" className="gap-1">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === "ar" ? "الإضافي" : "Overtime"}</span>
+          </TabsTrigger>
+          <TabsTrigger value="loans" className="gap-1">
+            <Wallet className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === "ar" ? "السلف" : "Loans"}</span>
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="gap-1">
+            <FileText className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === "ar" ? "الوثائق" : "Docs"}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Employees Tab */}
