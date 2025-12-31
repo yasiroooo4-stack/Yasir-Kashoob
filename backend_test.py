@@ -42,8 +42,8 @@ class BackendTester:
         if details and not success:
             print(f"   Details: {details}")
     
-    def test_login(self):
-        """Test user login with provided credentials"""
+    def test_hassan_hamdi_login(self):
+        """Test login with hassan.hamdi credentials - should not cause white screen"""
         try:
             response = self.session.post(
                 f"{BACKEND_URL}/auth/login",
@@ -61,15 +61,26 @@ class BackendTester:
                 self.session.headers.update({
                     "Authorization": f"Bearer {self.token}"
                 })
-                self.log_test(
-                    "User Login", 
-                    True, 
-                    f"Successfully logged in as {self.user_data.get('username')}"
-                )
-                return True
+                
+                # Verify user role is accountant
+                if self.user_data.get("role") == "accountant":
+                    self.log_test(
+                        "Hassan Hamdi Login", 
+                        True, 
+                        f"Successfully logged in as {self.user_data.get('username')} with role {self.user_data.get('role')}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Hassan Hamdi Login", 
+                        False, 
+                        f"User role is {self.user_data.get('role')}, expected 'accountant'",
+                        f"User data: {self.user_data}"
+                    )
+                    return False
             else:
                 self.log_test(
-                    "User Login", 
+                    "Hassan Hamdi Login", 
                     False, 
                     f"Login failed with status {response.status_code}",
                     response.text
@@ -77,7 +88,7 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("User Login", False, f"Login error: {str(e)}")
+            self.log_test("Hassan Hamdi Login", False, f"Login error: {str(e)}")
             return False
     
     def test_register_if_needed(self):
