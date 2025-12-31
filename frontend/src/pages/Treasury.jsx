@@ -541,6 +541,70 @@ const Treasury = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "تعديل العملية" : "Edit Transaction"}</DialogTitle>
+            <DialogDescription>
+              {language === "ar" ? "تعديل بيانات عملية الخزينة" : "Edit treasury transaction details"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "المبلغ" : "Amount"} ({t("currency")})</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={editFormData.amount}
+                onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الوصف" : "Description"}</Label>
+              <Textarea
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                placeholder={language === "ar" ? "أدخل وصف العملية..." : "Enter description..."}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button type="submit">
+                {language === "ar" ? "حفظ التعديلات" : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ar" ? "تأكيد الحذف" : "Confirm Delete"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ar" 
+                ? `هل أنت متأكد من حذف هذه العملية؟ سيتم عكس تأثيرها على رصيد الخزينة. المبلغ: ${selectedTransaction?.amount?.toLocaleString()} ر.ع`
+                : `Are you sure you want to delete this transaction? Its effect on treasury balance will be reversed. Amount: ${selectedTransaction?.amount?.toLocaleString()} OMR`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === "ar" ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              {language === "ar" ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
