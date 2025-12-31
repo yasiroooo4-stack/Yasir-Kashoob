@@ -97,77 +97,100 @@ class BackendTester:
             self.log_test("Login and Authentication Test", False, f"Error: {str(e)}")
             return False
 
-    def test_employee_stats_widget(self):
-        """Test 2: Employee Stats Widget - verify API endpoint works with start_date and end_date parameters"""
+    def test_shifts_management(self):
+        """Test 2: Shifts Management APIs"""
         try:
             if not self.token:
-                self.log_test("Employee Stats Widget Test", False, "No authentication token available")
+                self.log_test("Shifts Management Test", False, "No authentication token available")
                 return False
             
-            # Test the attendance API with date parameters
-            start_date = "2025-01-01"
-            end_date = "2025-01-31"
+            # First get list of employees to use valid employee_id
+            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
+            if employees_response.status_code != 200:
+                self.log_test("Shifts Management Test", False, "Failed to get employees list")
+                return False
             
-            response = self.session.get(
-                f"{BACKEND_URL}/hr/attendance?start_date={start_date}&end_date={end_date}"
+            employees = employees_response.json()
+            if not employees:
+                self.log_test("Shifts Management Test", False, "No employees found for testing")
+                return False
+            
+            employee_id = employees[0]["id"]
+            employee_name = employees[0]["name"]
+            
+            # Test 1: Create a shift
+            shift_data = {
+                "name": "الوردية الصباحية",
+                "start_time": "08:00",
+                "end_time": "16:00",
+                "working_hours": 8.0,
+                "break_duration": 60
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/hr/shifts",
+                json=shift_data
             )
             
-            if response.status_code == 200:
-                attendance_data = response.json()
-                
-                # Check if response is a list (attendance records)
-                if isinstance(attendance_data, list):
-                    # Test the stats calculation endpoint if it exists
-                    stats_response = self.session.get(
-                        f"{BACKEND_URL}/hr/attendance/stats?start_date={start_date}&end_date={end_date}"
-                    )
-                    
-                    if stats_response.status_code == 200:
-                        stats = stats_response.json()
-                        expected_stats = ["total_employees", "present_count", "absent_count", "attendance_percentage"]
-                        found_stats = [field for field in expected_stats if field in stats]
-                        
-                        if len(found_stats) >= 2:
-                            self.log_test(
-                                "Employee Stats Widget Test", 
-                                True, 
-                                f"Attendance API working with date params. Records: {len(attendance_data)}, Stats: {list(stats.keys())}"
-                            )
-                            return True
-                        else:
-                            self.log_test(
-                                "Employee Stats Widget Test", 
-                                True, 
-                                f"Attendance API working with date params. Records: {len(attendance_data)} (Stats endpoint may not exist)"
-                            )
-                            return True
-                    else:
-                        # Stats endpoint might not exist, but attendance endpoint works
-                        self.log_test(
-                            "Employee Stats Widget Test", 
-                            True, 
-                            f"Attendance API working with date params. Records: {len(attendance_data)}"
-                        )
-                        return True
-                else:
-                    self.log_test(
-                        "Employee Stats Widget Test", 
-                        False, 
-                        f"Unexpected response format: {type(attendance_data)}",
-                        str(attendance_data)[:200]
-                    )
-                    return False
-            else:
+            if create_response.status_code != 200:
                 self.log_test(
-                    "Employee Stats Widget Test", 
+                    "Shifts Management Test", 
                     False, 
-                    f"Attendance API failed with status {response.status_code}",
-                    response.text
+                    f"Failed to create shift: {create_response.status_code}",
+                    create_response.text
                 )
                 return False
+            
+            created_shift = create_response.json()
+            shift_id = created_shift["id"]
+            
+            # Test 2: Get all shifts
+            get_response = self.session.get(f"{BACKEND_URL}/hr/shifts")
+            
+            if get_response.status_code != 200:
+                self.log_test(
+                    "Shifts Management Test", 
+                    False, 
+                    f"Failed to get shifts: {get_response.status_code}",
+                    get_response.text
+                )
+                return False
+            
+            shifts = get_response.json()
+            
+            # Test 3: Assign shift to employee
+            assignment_data = {
+                "employee_id": employee_id,
+                "employee_name": employee_name,
+                "shift_id": shift_id,
+                "shift_name": "الوردية الصباحية",
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "is_recurring": False
+            }
+            
+            assign_response = self.session.post(
+                f"{BACKEND_URL}/hr/employee-shifts",
+                json=assignment_data
+            )
+            
+            if assign_response.status_code != 200:
+                self.log_test(
+                    "Shifts Management Test", 
+                    False, 
+                    f"Failed to assign shift: {assign_response.status_code}",
+                    assign_response.text
+                )
+                return False
+            
+            self.log_test(
+                "Shifts Management Test", 
+                True, 
+                f"Successfully created shift, retrieved {len(shifts)} shifts, and assigned shift to employee"
+            )
+            return True
                 
         except Exception as e:
-            self.log_test("Employee Stats Widget Test", False, f"Error: {str(e)}")
+            self.log_test("Shifts Management Test", False, f"Error: {str(e)}")
             return False
 
     def test_zkteco_import_api(self):
