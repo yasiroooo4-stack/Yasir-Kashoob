@@ -62,6 +62,12 @@ import {
   Download,
   FileSpreadsheet,
   Upload,
+  Wifi,
+  WifiOff,
+  Settings,
+  Play,
+  Server,
+  History,
 } from "lucide-react";
 
 const HR = () => {
