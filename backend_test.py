@@ -339,21 +339,24 @@ class BackendTester:
             if response.status_code == 200:
                 result = response.json()
                 
-                if "message" in result and "synced_devices" in result:
-                    synced_devices = result["synced_devices"]
+                # Check for the actual response format from the API
+                if "message" in result and "success" in result:
+                    success = result["success"]
                     message = result["message"]
+                    imported = result.get("imported", 0)
+                    updated = result.get("updated", 0)
                     
                     self.log_test(
                         "ZKTeco Sync Attendance Test", 
                         True, 
-                        f"Sync completed - {synced_devices} devices processed. {message}"
+                        f"Sync completed - Success: {success}, Imported: {imported}, Updated: {updated}. {message}"
                     )
                     return True
                 else:
                     self.log_test(
                         "ZKTeco Sync Attendance Test", 
                         False, 
-                        "Response missing required fields (message, synced_devices)",
+                        "Response missing required fields (success, message)",
                         result
                     )
                     return False
