@@ -5112,6 +5112,9 @@ async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
     # Today's attendance
     today_attendance = await db.hr_attendance.count_documents({"date": today})
     
+    # Today's absent (total employees - today attendance)
+    today_absent = max(0, total_employees - today_attendance)
+    
     # Pending leave requests
     pending_leaves = await db.hr_leave_requests.count_documents({"status": "pending"})
     
@@ -5120,6 +5123,9 @@ async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
     
     # Active car contracts
     active_contracts = await db.hr_car_contracts.count_documents({"status": "active"})
+    
+    # Active warnings
+    active_warnings = await db.hr_warnings.count_documents({"status": "active"})
     
     # Recent activities
     recent_leaves = await db.hr_leave_requests.find(
@@ -5133,9 +5139,11 @@ async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
     return {
         "total_employees": total_employees,
         "today_attendance": today_attendance,
+        "today_absent": today_absent,
         "pending_leaves": pending_leaves,
         "pending_expenses": pending_expenses,
         "active_car_contracts": active_contracts,
+        "active_warnings": active_warnings,
         "recent_leave_requests": recent_leaves,
         "recent_expense_requests": recent_expenses
     }
