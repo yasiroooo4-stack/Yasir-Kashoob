@@ -1095,50 +1095,50 @@ const HR = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
-          <TabsTrigger value="employees" className="gap-1">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الموظفين" : "Employees"}</span>
+        <TabsList className="flex flex-wrap gap-2 h-auto p-2 bg-muted/50">
+          <TabsTrigger value="employees" className="gap-2 px-4 py-3 text-base font-medium">
+            <Users className="w-5 h-5" />
+            <span>{language === "ar" ? "الموظفين" : "Employees"}</span>
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="gap-1">
-            <Clock className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الحضور" : "Attendance"}</span>
+          <TabsTrigger value="attendance" className="gap-2 px-4 py-3 text-base font-medium">
+            <Clock className="w-5 h-5" />
+            <span>{language === "ar" ? "الحضور" : "Attendance"}</span>
           </TabsTrigger>
-          <TabsTrigger value="leaves" className="gap-1">
-            <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الإجازات" : "Leaves"}</span>
+          <TabsTrigger value="leaves" className="gap-2 px-4 py-3 text-base font-medium">
+            <Calendar className="w-5 h-5" />
+            <span>{language === "ar" ? "الإجازات" : "Leaves"}</span>
           </TabsTrigger>
-          <TabsTrigger value="expenses" className="gap-1">
-            <Wallet className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "المصاريف" : "Expenses"}</span>
+          <TabsTrigger value="expenses" className="gap-2 px-4 py-3 text-base font-medium">
+            <Wallet className="w-5 h-5" />
+            <span>{language === "ar" ? "المصاريف" : "Expenses"}</span>
           </TabsTrigger>
-          <TabsTrigger value="cars" className="gap-1">
-            <Car className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "السيارات" : "Cars"}</span>
+          <TabsTrigger value="cars" className="gap-2 px-4 py-3 text-base font-medium">
+            <Car className="w-5 h-5" />
+            <span>{language === "ar" ? "السيارات" : "Cars"}</span>
           </TabsTrigger>
-          <TabsTrigger value="letters" className="gap-1">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الرسائل" : "Letters"}</span>
+          <TabsTrigger value="letters" className="gap-2 px-4 py-3 text-base font-medium">
+            <FileText className="w-5 h-5" />
+            <span>{language === "ar" ? "الرسائل" : "Letters"}</span>
           </TabsTrigger>
-          <TabsTrigger value="devices" className="gap-1">
-            <Fingerprint className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "البصمة" : "Devices"}</span>
+          <TabsTrigger value="devices" className="gap-2 px-4 py-3 text-base font-medium">
+            <Fingerprint className="w-5 h-5" />
+            <span>{language === "ar" ? "البصمة" : "Devices"}</span>
           </TabsTrigger>
-          <TabsTrigger value="shifts" className="gap-1">
-            <Clock className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الورديات" : "Shifts"}</span>
+          <TabsTrigger value="shifts" className="gap-2 px-4 py-3 text-base font-medium">
+            <Clock className="w-5 h-5" />
+            <span>{language === "ar" ? "الورديات" : "Shifts"}</span>
           </TabsTrigger>
-          <TabsTrigger value="overtime" className="gap-1">
-            <Clock className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الإضافي" : "Overtime"}</span>
+          <TabsTrigger value="overtime" className="gap-2 px-4 py-3 text-base font-medium">
+            <Clock className="w-5 h-5" />
+            <span>{language === "ar" ? "الإضافي" : "Overtime"}</span>
           </TabsTrigger>
-          <TabsTrigger value="loans" className="gap-1">
-            <Wallet className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "السلف" : "Loans"}</span>
+          <TabsTrigger value="loans" className="gap-2 px-4 py-3 text-base font-medium">
+            <Wallet className="w-5 h-5" />
+            <span>{language === "ar" ? "السلف" : "Loans"}</span>
           </TabsTrigger>
-          <TabsTrigger value="documents" className="gap-1">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === "ar" ? "الوثائق" : "Docs"}</span>
+          <TabsTrigger value="documents" className="gap-2 px-4 py-3 text-base font-medium">
+            <FileText className="w-5 h-5" />
+            <span>{language === "ar" ? "الوثائق" : "Documents"}</span>
           </TabsTrigger>
         </TabsList>
 
