@@ -99,362 +99,344 @@ class BackendTester:
             self.log_test("Login and Authentication Test", False, f"Error: {str(e)}")
             return False
 
-    def test_shifts_management(self):
-        """Test 2: Shifts Management APIs"""
+    def test_zkteco_get_devices_and_settings(self):
+        """Test 2: GET /api/hr/zkteco/devices - Get all devices and sync settings"""
         try:
             if not self.token:
-                self.log_test("Shifts Management Test", False, "No authentication token available")
+                self.log_test("ZKTeco Get Devices Test", False, "No authentication token available")
                 return False
             
-            # First get list of employees to use valid employee_id
-            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
-            if employees_response.status_code != 200:
-                self.log_test("Shifts Management Test", False, "Failed to get employees list")
-                return False
+            response = self.session.get(f"{BACKEND_URL}/hr/zkteco/devices")
             
-            employees = employees_response.json()
-            if not employees:
-                self.log_test("Shifts Management Test", False, "No employees found for testing")
-                return False
-            
-            employee_id = employees[0]["id"]
-            employee_name = employees[0]["name"]
-            
-            # Test 1: Create a shift
-            shift_data = {
-                "name": "الوردية الصباحية",
-                "start_time": "08:00",
-                "end_time": "16:00",
-                "working_hours": 8.0,
-                "break_duration": 60
-            }
-            
-            create_response = self.session.post(
-                f"{BACKEND_URL}/hr/shifts",
-                json=shift_data
-            )
-            
-            if create_response.status_code != 200:
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Verify response structure
+                if "devices" in data and "auto_sync_enabled" in data and "sync_interval" in data:
+                    devices_count = len(data["devices"])
+                    auto_sync = data["auto_sync_enabled"]
+                    sync_interval = data["sync_interval"]
+                    
+                    self.log_test(
+                        "ZKTeco Get Devices Test", 
+                        True, 
+                        f"Successfully retrieved {devices_count} devices, auto_sync: {auto_sync}, interval: {sync_interval}min"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "ZKTeco Get Devices Test", 
+                        False, 
+                        "Response missing required fields (devices, auto_sync_enabled, sync_interval)",
+                        data
+                    )
+                    return False
+            else:
                 self.log_test(
-                    "Shifts Management Test", 
+                    "ZKTeco Get Devices Test", 
                     False, 
-                    f"Failed to create shift: {create_response.status_code}",
-                    create_response.text
+                    f"Failed with status {response.status_code}",
+                    response.text
                 )
                 return False
-            
-            created_shift = create_response.json()
-            shift_id = created_shift["id"]
-            
-            # Test 2: Get all shifts
-            get_response = self.session.get(f"{BACKEND_URL}/hr/shifts")
-            
-            if get_response.status_code != 200:
-                self.log_test(
-                    "Shifts Management Test", 
-                    False, 
-                    f"Failed to get shifts: {get_response.status_code}",
-                    get_response.text
-                )
-                return False
-            
-            shifts = get_response.json()
-            
-            # Test 3: Assign shift to employee
-            assignment_data = {
-                "employee_id": employee_id,
-                "employee_name": employee_name,
-                "shift_id": shift_id,
-                "shift_name": "الوردية الصباحية",
-                "date": datetime.now().strftime("%Y-%m-%d"),
-                "is_recurring": False
-            }
-            
-            assign_response = self.session.post(
-                f"{BACKEND_URL}/hr/employee-shifts",
-                json=assignment_data
-            )
-            
-            if assign_response.status_code != 200:
-                self.log_test(
-                    "Shifts Management Test", 
-                    False, 
-                    f"Failed to assign shift: {assign_response.status_code}",
-                    assign_response.text
-                )
-                return False
-            
-            self.log_test(
-                "Shifts Management Test", 
-                True, 
-                f"Successfully created shift, retrieved {len(shifts)} shifts, and assigned shift to employee"
-            )
-            return True
                 
         except Exception as e:
-            self.log_test("Shifts Management Test", False, f"Error: {str(e)}")
+            self.log_test("ZKTeco Get Devices Test", False, f"Error: {str(e)}")
             return False
 
-    def test_overtime_management(self):
-        """Test 3: Overtime Management APIs"""
+    def test_zkteco_add_device(self):
+        """Test 3: POST /api/hr/zkteco/devices - Add new device"""
         try:
             if not self.token:
-                self.log_test("Overtime Management Test", False, "No authentication token available")
+                self.log_test("ZKTeco Add Device Test", False, "No authentication token available")
                 return False
             
-            # Get list of employees to use valid employee_id
-            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
-            if employees_response.status_code != 200:
-                self.log_test("Overtime Management Test", False, "Failed to get employees list")
-                return False
-            
-            employees = employees_response.json()
-            if not employees:
-                self.log_test("Overtime Management Test", False, "No employees found for testing")
-                return False
-            
-            employee_id = employees[0]["id"]
-            employee_name = employees[0]["name"]
-            
-            # Test 1: Create overtime record
-            overtime_data = {
-                "employee_id": employee_id,
-                "employee_name": employee_name,
-                "date": datetime.now().strftime("%Y-%m-%d"),
-                "start_time": "18:00",
-                "end_time": "20:00",
-                "hours": 2.0,
-                "rate": 1.5,
-                "reason": "مشروع عاجل"
+            # Test device data
+            device_data = {
+                "name": "جهاز اختبار API",
+                "ip_address": "192.168.1.100",
+                "port": 4370,
+                "location": "مكتب الاختبار"
             }
             
-            create_response = self.session.post(
-                f"{BACKEND_URL}/hr/overtime",
-                json=overtime_data
+            response = self.session.post(
+                f"{BACKEND_URL}/hr/zkteco/devices",
+                json=device_data
             )
             
-            if create_response.status_code != 200:
+            if response.status_code == 200:
+                created_device = response.json()
+                
+                # Verify device was created with correct data
+                if (created_device.get("name") == device_data["name"] and 
+                    created_device.get("ip_address") == device_data["ip_address"] and
+                    created_device.get("port") == device_data["port"] and
+                    created_device.get("location") == device_data["location"] and
+                    "id" in created_device):
+                    
+                    # Store device ID for later tests
+                    self.test_device_id = created_device["id"]
+                    
+                    self.log_test(
+                        "ZKTeco Add Device Test", 
+                        True, 
+                        f"Successfully created device '{device_data['name']}' with ID {created_device['id']}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "ZKTeco Add Device Test", 
+                        False, 
+                        "Created device data doesn't match input data",
+                        created_device
+                    )
+                    return False
+            else:
                 self.log_test(
-                    "Overtime Management Test", 
+                    "ZKTeco Add Device Test", 
                     False, 
-                    f"Failed to create overtime record: {create_response.status_code}",
-                    create_response.text
+                    f"Failed with status {response.status_code}",
+                    response.text
                 )
                 return False
-            
-            created_overtime = create_response.json()
-            overtime_id = created_overtime["id"]
-            
-            # Test 2: Get all overtime records
-            get_response = self.session.get(f"{BACKEND_URL}/hr/overtime")
-            
-            if get_response.status_code != 200:
-                self.log_test(
-                    "Overtime Management Test", 
-                    False, 
-                    f"Failed to get overtime records: {get_response.status_code}",
-                    get_response.text
-                )
-                return False
-            
-            overtime_records = get_response.json()
-            
-            # Test 3: Approve overtime
-            approve_response = self.session.put(
-                f"{BACKEND_URL}/hr/overtime/{overtime_id}/approve?approved=true"
-            )
-            
-            if approve_response.status_code != 200:
-                self.log_test(
-                    "Overtime Management Test", 
-                    False, 
-                    f"Failed to approve overtime: {approve_response.status_code}",
-                    approve_response.text
-                )
-                return False
-            
-            self.log_test(
-                "Overtime Management Test", 
-                True, 
-                f"Successfully created overtime record, retrieved {len(overtime_records)} records, and approved overtime"
-            )
-            return True
                 
         except Exception as e:
-            self.log_test("Overtime Management Test", False, f"Error: {str(e)}")
+            self.log_test("ZKTeco Add Device Test", False, f"Error: {str(e)}")
             return False
 
-    def test_loans_and_advances(self):
-        """Test 4: Loans & Advances APIs"""
+    def test_zkteco_test_device_connection(self):
+        """Test 4: POST /api/hr/zkteco/devices/{device_id}/test - Test device connection"""
         try:
             if not self.token:
-                self.log_test("Loans & Advances Test", False, "No authentication token available")
+                self.log_test("ZKTeco Test Connection Test", False, "No authentication token available")
                 return False
             
-            # Get list of employees to use valid employee_id
-            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
-            if employees_response.status_code != 200:
-                self.log_test("Loans & Advances Test", False, "Failed to get employees list")
+            if not hasattr(self, 'test_device_id'):
+                self.log_test("ZKTeco Test Connection Test", False, "No test device ID available from previous test")
                 return False
             
-            employees = employees_response.json()
-            if not employees:
-                self.log_test("Loans & Advances Test", False, "No employees found for testing")
-                return False
+            response = self.session.post(f"{BACKEND_URL}/hr/zkteco/devices/{self.test_device_id}/test")
             
-            employee_id = employees[0]["id"]
-            employee_name = employees[0]["name"]
-            
-            # Test 1: Create a loan
-            loan_data = {
-                "employee_id": employee_id,
-                "employee_name": employee_name,
-                "loan_type": "advance",
-                "amount": 500.0,
-                "installments": 5,
-                "reason": "حاجة شخصية"
-            }
-            
-            create_response = self.session.post(
-                f"{BACKEND_URL}/hr/loans",
-                json=loan_data
-            )
-            
-            if create_response.status_code != 200:
+            if response.status_code == 200:
+                result = response.json()
+                
+                # The API should work even if device is not reachable
+                if "success" in result and "message" in result:
+                    success = result["success"]
+                    message = result["message"]
+                    
+                    self.log_test(
+                        "ZKTeco Test Connection Test", 
+                        True, 
+                        f"Connection test completed - Success: {success}, Message: {message}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "ZKTeco Test Connection Test", 
+                        False, 
+                        "Response missing required fields (success, message)",
+                        result
+                    )
+                    return False
+            else:
                 self.log_test(
-                    "Loans & Advances Test", 
+                    "ZKTeco Test Connection Test", 
                     False, 
-                    f"Failed to create loan: {create_response.status_code}",
-                    create_response.text
+                    f"Failed with status {response.status_code}",
+                    response.text
                 )
                 return False
-            
-            created_loan = create_response.json()
-            loan_id = created_loan["id"]
-            
-            # Test 2: Get all loans
-            get_response = self.session.get(f"{BACKEND_URL}/hr/loans")
-            
-            if get_response.status_code != 200:
-                self.log_test(
-                    "Loans & Advances Test", 
-                    False, 
-                    f"Failed to get loans: {get_response.status_code}",
-                    get_response.text
-                )
-                return False
-            
-            loans = get_response.json()
-            
-            # Test 3: Approve loan
-            approve_response = self.session.put(
-                f"{BACKEND_URL}/hr/loans/{loan_id}/approve?approved=true"
-            )
-            
-            if approve_response.status_code != 200:
-                self.log_test(
-                    "Loans & Advances Test", 
-                    False, 
-                    f"Failed to approve loan: {approve_response.status_code}",
-                    approve_response.text
-                )
-                return False
-            
-            self.log_test(
-                "Loans & Advances Test", 
-                True, 
-                f"Successfully created loan, retrieved {len(loans)} loans, and approved loan"
-            )
-            return True
                 
         except Exception as e:
-            self.log_test("Loans & Advances Test", False, f"Error: {str(e)}")
+            self.log_test("ZKTeco Test Connection Test", False, f"Error: {str(e)}")
             return False
 
-    def test_employee_documents(self):
-        """Test 5: Employee Documents APIs"""
+    def test_zkteco_update_sync_settings(self):
+        """Test 5: PUT /api/hr/zkteco/settings - Update sync settings"""
         try:
             if not self.token:
-                self.log_test("Employee Documents Test", False, "No authentication token available")
+                self.log_test("ZKTeco Update Settings Test", False, "No authentication token available")
                 return False
             
-            # Get list of employees to use valid employee_id
-            employees_response = self.session.get(f"{BACKEND_URL}/hr/employees")
-            if employees_response.status_code != 200:
-                self.log_test("Employee Documents Test", False, "Failed to get employees list")
-                return False
-            
-            employees = employees_response.json()
-            if not employees:
-                self.log_test("Employee Documents Test", False, "No employees found for testing")
-                return False
-            
-            employee_id = employees[0]["id"]
-            employee_name = employees[0]["name"]
-            
-            # Test 1: Create a document
-            document_data = {
-                "employee_id": employee_id,
-                "employee_name": employee_name,
-                "document_type": "passport",
-                "document_name": "جواز سفر",
-                "document_number": "A1234567",
-                "expiry_date": "2026-12-31"
+            # Test settings data
+            settings_data = {
+                "auto_sync_enabled": True,
+                "sync_interval": 30
             }
             
-            create_response = self.session.post(
-                f"{BACKEND_URL}/hr/documents",
-                json=document_data
+            response = self.session.put(
+                f"{BACKEND_URL}/hr/zkteco/settings",
+                json=settings_data
             )
             
-            if create_response.status_code != 200:
+            if response.status_code == 200:
+                result = response.json()
+                
+                if "message" in result:
+                    # Verify settings were updated by getting them again
+                    get_response = self.session.get(f"{BACKEND_URL}/hr/zkteco/devices")
+                    
+                    if get_response.status_code == 200:
+                        data = get_response.json()
+                        
+                        if (data.get("auto_sync_enabled") == settings_data["auto_sync_enabled"] and
+                            data.get("sync_interval") == settings_data["sync_interval"]):
+                            
+                            self.log_test(
+                                "ZKTeco Update Settings Test", 
+                                True, 
+                                f"Successfully updated settings - auto_sync: {settings_data['auto_sync_enabled']}, interval: {settings_data['sync_interval']}min"
+                            )
+                            return True
+                        else:
+                            self.log_test(
+                                "ZKTeco Update Settings Test", 
+                                False, 
+                                "Settings were not updated correctly",
+                                data
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "ZKTeco Update Settings Test", 
+                            False, 
+                            "Failed to verify updated settings",
+                            get_response.text
+                        )
+                        return False
+                else:
+                    self.log_test(
+                        "ZKTeco Update Settings Test", 
+                        False, 
+                        "Response missing message field",
+                        result
+                    )
+                    return False
+            else:
                 self.log_test(
-                    "Employee Documents Test", 
+                    "ZKTeco Update Settings Test", 
                     False, 
-                    f"Failed to create document: {create_response.status_code}",
-                    create_response.text
+                    f"Failed with status {response.status_code}",
+                    response.text
                 )
                 return False
-            
-            created_document = create_response.json()
-            
-            # Test 2: Get all documents
-            get_response = self.session.get(f"{BACKEND_URL}/hr/documents")
-            
-            if get_response.status_code != 200:
-                self.log_test(
-                    "Employee Documents Test", 
-                    False, 
-                    f"Failed to get documents: {get_response.status_code}",
-                    get_response.text
-                )
-                return False
-            
-            documents = get_response.json()
-            
-            # Test 3: Get expiring documents
-            expiring_response = self.session.get(f"{BACKEND_URL}/hr/documents/expiring?days=365")
-            
-            if expiring_response.status_code != 200:
-                self.log_test(
-                    "Employee Documents Test", 
-                    False, 
-                    f"Failed to get expiring documents: {expiring_response.status_code}",
-                    expiring_response.text
-                )
-                return False
-            
-            expiring_documents = expiring_response.json()
-            
-            self.log_test(
-                "Employee Documents Test", 
-                True, 
-                f"Successfully created document, retrieved {len(documents)} documents, and found {len(expiring_documents)} expiring documents"
-            )
-            return True
                 
         except Exception as e:
-            self.log_test("Employee Documents Test", False, f"Error: {str(e)}")
+            self.log_test("ZKTeco Update Settings Test", False, f"Error: {str(e)}")
+            return False
+
+    def test_zkteco_sync_attendance(self):
+        """Test 6: POST /api/hr/zkteco/sync - Sync attendance"""
+        try:
+            if not self.token:
+                self.log_test("ZKTeco Sync Attendance Test", False, "No authentication token available")
+                return False
+            
+            response = self.session.post(f"{BACKEND_URL}/hr/zkteco/sync")
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if "message" in result and "synced_devices" in result:
+                    synced_devices = result["synced_devices"]
+                    message = result["message"]
+                    
+                    self.log_test(
+                        "ZKTeco Sync Attendance Test", 
+                        True, 
+                        f"Sync completed - {synced_devices} devices processed. {message}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "ZKTeco Sync Attendance Test", 
+                        False, 
+                        "Response missing required fields (message, synced_devices)",
+                        result
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "ZKTeco Sync Attendance Test", 
+                    False, 
+                    f"Failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("ZKTeco Sync Attendance Test", False, f"Error: {str(e)}")
+            return False
+
+    def test_zkteco_delete_device(self):
+        """Test 7: DELETE /api/hr/zkteco/devices/{device_id} - Delete device"""
+        try:
+            if not self.token:
+                self.log_test("ZKTeco Delete Device Test", False, "No authentication token available")
+                return False
+            
+            if not hasattr(self, 'test_device_id'):
+                self.log_test("ZKTeco Delete Device Test", False, "No test device ID available from previous test")
+                return False
+            
+            response = self.session.delete(f"{BACKEND_URL}/hr/zkteco/devices/{self.test_device_id}")
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if "message" in result:
+                    # Verify device was deleted by trying to get it
+                    get_response = self.session.get(f"{BACKEND_URL}/hr/zkteco/devices")
+                    
+                    if get_response.status_code == 200:
+                        data = get_response.json()
+                        devices = data.get("devices", [])
+                        
+                        # Check if our test device is no longer in the active devices list
+                        device_found = any(device.get("id") == self.test_device_id for device in devices)
+                        
+                        if not device_found:
+                            self.log_test(
+                                "ZKTeco Delete Device Test", 
+                                True, 
+                                f"Successfully deleted device {self.test_device_id}"
+                            )
+                            return True
+                        else:
+                            self.log_test(
+                                "ZKTeco Delete Device Test", 
+                                False, 
+                                "Device still appears in active devices list after deletion"
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "ZKTeco Delete Device Test", 
+                            False, 
+                            "Failed to verify device deletion",
+                            get_response.text
+                        )
+                        return False
+                else:
+                    self.log_test(
+                        "ZKTeco Delete Device Test", 
+                        False, 
+                        "Response missing message field",
+                        result
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "ZKTeco Delete Device Test", 
+                    False, 
+                    f"Failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("ZKTeco Delete Device Test", False, f"Error: {str(e)}")
             return False
 
     def run_all_tests(self):
