@@ -221,9 +221,10 @@ class BackendTester:
                 result = response.json()
                 
                 # The API should work even if device is not reachable
-                if "success" in result and "message" in result:
+                # Check for either success/message format or success/error format
+                if "success" in result and ("message" in result or "error" in result):
                     success = result["success"]
-                    message = result["message"]
+                    message = result.get("message") or result.get("error", "No message")
                     
                     self.log_test(
                         "ZKTeco Test Connection Test", 
@@ -235,7 +236,7 @@ class BackendTester:
                     self.log_test(
                         "ZKTeco Test Connection Test", 
                         False, 
-                        "Response missing required fields (success, message)",
+                        "Response missing required fields (success and message/error)",
                         result
                     )
                     return False
