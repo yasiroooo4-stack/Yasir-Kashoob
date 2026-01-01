@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Milk Collection Center ERP - HR Features Testing
-Tests the new HR features as requested in the review:
+Backend API Testing for Milk Collection Center ERP - ZKTeco Sync Manager Testing
+Tests the ZKTeco Sync Manager APIs as requested in the review:
 1. Login and Authentication Test (yasir/admin123)
-2. Shifts Management APIs
-3. Overtime Management APIs  
-4. Loans & Advances APIs
-5. Employee Documents APIs
+2. GET /api/hr/zkteco/devices - Get all devices and sync settings
+3. POST /api/hr/zkteco/devices - Add new device
+4. DELETE /api/hr/zkteco/devices/{device_id} - Delete device
+5. POST /api/hr/zkteco/devices/{device_id}/test - Test device connection
+6. PUT /api/hr/zkteco/settings - Update sync settings
+7. POST /api/hr/zkteco/sync - Sync attendance
 """
 
 import requests
