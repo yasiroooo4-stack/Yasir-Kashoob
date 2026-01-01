@@ -4,122 +4,65 @@
 - DO NOT EDIT THIS SECTION
 
 ## Current Test Focus
-- HR Module (Shifts, Overtime, Loans, Documents)
-- All backend APIs for new HR features
-- Frontend functionality for all HR tabs
+- ZKTeco Sync Manager APIs (NEW)
+- Web-based device management
+- Sync functionality
 
 ## Backend Tasks
 
 backend:
-  - task: "Authentication & Authorization"
+  - task: "ZKTeco Device Management APIs"
     implemented: true
     working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Login API working perfectly with yasir/admin123 credentials. Authentication token generation and profile verification successful. User role: admin."
 
-  - task: "Shifts Management APIs"
+  - task: "ZKTeco Sync Settings APIs"
     implemented: true
     working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: All shift management APIs working correctly. Successfully tested: GET /api/hr/shifts (retrieved 2 shifts), POST /api/hr/shifts (created new shift), and POST /api/hr/employee-shifts (assigned shift to employee)."
 
-  - task: "Overtime Management APIs"
+## Frontend Tasks
+
+frontend:
+  - task: "ZKTeco Manager Dialog"
     implemented: true
     working: true
-    file: "backend/server.py"
+    file: "frontend/src/pages/HR.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Overtime management fully functional. Successfully tested: GET /api/hr/overtime (retrieved 2 records), POST /api/hr/overtime (created overtime record), and PUT /api/hr/overtime/{id}/approve (approved overtime)."
 
-  - task: "Loans & Advances APIs"
-    implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Loans and advances system working perfectly. Successfully tested: GET /api/hr/loans (retrieved 2 loans), POST /api/hr/loans (created new loan), and PUT /api/hr/loans/{id}/approve (approved loan). Existing loan data returned correctly."
+## API Endpoints to Test
 
-  - task: "Employee Documents APIs"
-    implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Employee documents management fully operational. Successfully tested: GET /api/hr/documents (retrieved 2 documents), POST /api/hr/documents (created new document), and GET /api/hr/documents/expiring (found 2 expiring documents)."
+1. GET /api/hr/zkteco/devices - Get all devices and sync settings
+2. POST /api/hr/zkteco/devices - Add new device
+3. DELETE /api/hr/zkteco/devices/{device_id} - Delete device
+4. POST /api/hr/zkteco/devices/{device_id}/test - Test device connection
+5. PUT /api/hr/zkteco/settings - Update sync settings
+6. POST /api/hr/zkteco/sync - Sync attendance from all devices
 
-  - task: "Employee Management APIs"
-    implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ VERIFIED: Employee management API working correctly. GET /api/hr/employees successfully retrieved 58 employees with complete data including names, positions, and departments."
+## Test Data
 
-metadata:
-  created_by: "main_agent"
-  version: "1.2"
-  test_sequence: 1
-  run_ui: false
+Two devices already added:
+- جهاز البصمة الرئيسي: 192.168.100.201:4370 (حجيف)
+- جهاز الشريق: 192.168.100.214:4370 (الشريق)
 
-test_plan:
-  current_focus:
-    - "Verify all HR features after models refactoring"
-  stuck_tasks: []
-  test_all: true
-  test_priority: "high_first"
-
-## Incorporate User Feedback
-- None at this time
+## Credentials
+- Admin: yasir / admin123
 
 ## agent_communication
   - agent: "main"
     message: |
-      Refactoring completed:
-      1. Created backend/models/ directory with separate model files
-      2. All HR features verified working via screenshots
-      3. Application is stable and functioning
+      Added ZKTeco Sync Manager to HR page:
+      1. Devices management (add, delete, test connection)
+      2. Sync settings (auto sync, interval)
+      3. Manual sync button
+      4. Operation logs
       
-      Ready for verification testing.
-  
-  - agent: "testing"
-    message: |
-      HR MODULE TESTING COMPLETED SUCCESSFULLY:
-      
-      ✅ ALL 6 REQUESTED APIs TESTED AND WORKING:
-      1. Authentication (POST /api/auth/login) - yasir/admin123 ✅
-      2. Shifts Management (GET/POST /api/hr/shifts) - Full CRUD ✅
-      3. Overtime Management (GET/POST /api/hr/overtime) - Full workflow ✅
-      4. Loans/Advances (GET /api/hr/loans) - Existing data + new creation ✅
-      5. Employee Documents (GET/POST /api/hr/documents) - Full management ✅
-      6. Employee Management (GET /api/hr/employees) - 58 employees retrieved ✅
-      
-      All APIs tested using external URL: https://zendesk-16.preview.emergentagent.com/api
-      No critical issues found. System is production-ready for HR module.
+      Ready for testing.
