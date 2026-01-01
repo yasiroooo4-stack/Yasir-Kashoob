@@ -68,6 +68,7 @@ import {
   Play,
   Server,
   History,
+  AlertTriangle,
 } from "lucide-react";
 
 const HR = () => {
