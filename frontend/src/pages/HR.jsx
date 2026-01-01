@@ -109,6 +109,26 @@ const HR = () => {
   const [loanDialogOpen, setLoanDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   
+  // ZKTeco Sync Manager states
+  const [zktecoDialogOpen, setZktecoDialogOpen] = useState(false);
+  const [zktecoDevices, setZktecoDevices] = useState([]);
+  const [zktecoSyncSettings, setZktecoSyncSettings] = useState({
+    auto_sync_enabled: false,
+    sync_interval: 60,
+    last_sync: null
+  });
+  const [zktecoDeviceForm, setZktecoDeviceForm] = useState({
+    name: "",
+    ip_address: "",
+    port: 4370,
+    location: ""
+  });
+  const [zktecoSyncing, setZktecoSyncing] = useState(false);
+  const [zktecoTesting, setZktecoTesting] = useState(false);
+  const [selectedZktecoDevice, setSelectedZktecoDevice] = useState(null);
+  const [zktecoAddDialogOpen, setZktecoAddDialogOpen] = useState(false);
+  const [zktecoLogs, setZktecoLogs] = useState([]);
+  
   // Selected items
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedLeave, setSelectedLeave] = useState(null);
