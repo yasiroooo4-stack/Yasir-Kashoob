@@ -1,0 +1,14 @@
+{
+  "api_url": "https://milk-erp.preview.emergentagent.com",
+  "username": "yasir",
+  "password": "admin123",
+  "sync_interval": 3600,
+  "devices": [
+    {
+      "name": "Main Device",
+      "ip": "192.168.1.100",
+      "port": 4370
+    }
+  ],
+  "mdb_paths": []
+}
