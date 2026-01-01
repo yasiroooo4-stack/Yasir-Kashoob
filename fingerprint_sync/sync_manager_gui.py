@@ -360,9 +360,18 @@ class SyncManagerApp:
                 total_imported = 0
                 total_updated = 0
                 
+                # التحقق من وجود أجهزة
+                devices = self.config.get('devices', [])
+                if not devices:
+                    self.root.after(0, lambda: self.log("⚠️ لا توجد أجهزة مضافة!"))
+                    self.root.after(0, lambda: self.log("   أضف أجهزة البصمة أولاً"))
+                    return
+                
+                self.root.after(0, lambda: self.log(f"📊 عدد الأجهزة: {len(devices)}"))
+                
                 # مزامنة عبر الشبكة
-                if PYZK_AVAILABLE and self.config.get('devices'):
-                    self.root.after(0, lambda: self.log("📡 مزامنة عبر الشبكة..."))
+                if PYZK_AVAILABLE and devices:
+                    self.root.after(0, lambda: self.log("📡 جاري الاتصال بالأجهزة..."))
                     agent = NetworkSyncAgent()
                     agent.config = self.config
                     agent.api_url = self.config['api_url']
@@ -371,6 +380,12 @@ class SyncManagerApp:
                     if success:
                         total_imported += imported
                         total_updated += updated
+                        self.root.after(0, lambda: self.log(f"   ✅ تم جلب ورفع البيانات"))
+                    else:
+                        self.root.after(0, lambda: self.log(f"   ❌ فشل في المزامنة"))
+                else:
+                    if not PYZK_AVAILABLE:
+                        self.root.after(0, lambda: self.log("⚠️ مكتبة pyzk غير مثبتة"))
                 
                 # مزامنة ملفات MDB
                 if ZKTecoSyncAgent and self.config.get('mdb_paths'):
