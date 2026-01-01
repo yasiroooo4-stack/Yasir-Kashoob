@@ -998,6 +998,125 @@ const HR = () => {
     }
   };
 
+  // ==================== ZKTeco Sync Manager Functions ====================
+  
+  // Fetch ZKTeco devices
+  const fetchZktecoDevices = async () => {
+    try {
+      const res = await axios.get(`${API}/hr/zkteco/devices`);
+      setZktecoDevices(res.data.devices || []);
+      setZktecoSyncSettings({
+        auto_sync_enabled: res.data.auto_sync_enabled || false,
+        sync_interval: res.data.sync_interval || 60,
+        last_sync: res.data.last_sync
+      });
+    } catch (error) {
+      console.error("Error fetching ZKTeco devices:", error);
+    }
+  };
+
+  // Add ZKTeco device
+  const handleAddZktecoDevice = async () => {
+    try {
+      await axios.post(`${API}/hr/zkteco/devices`, zktecoDeviceForm);
+      toast.success(language === "ar" ? "تمت إضافة الجهاز بنجاح" : "Device added successfully");
+      setZktecoAddDialogOpen(false);
+      setZktecoDeviceForm({ name: "", ip_address: "", port: 4370, location: "" });
+      fetchZktecoDevices();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل إضافة الجهاز" : "Failed to add device"));
+    }
+  };
+
+  // Delete ZKTeco device
+  const handleDeleteZktecoDevice = async (deviceId) => {
+    try {
+      await axios.delete(`${API}/hr/zkteco/devices/${deviceId}`);
+      toast.success(language === "ar" ? "تم حذف الجهاز" : "Device deleted");
+      fetchZktecoDevices();
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل حذف الجهاز" : "Failed to delete device");
+    }
+  };
+
+  // Test ZKTeco device connection
+  const handleTestZktecoDevice = async (device) => {
+    setZktecoTesting(true);
+    setSelectedZktecoDevice(device.id);
+    addZktecoLog(`🔌 جاري اختبار الاتصال بـ ${device.ip_address}...`);
+    
+    try {
+      const res = await axios.post(`${API}/hr/zkteco/devices/${device.id}/test`);
+      if (res.data.success) {
+        addZktecoLog(`✅ تم الاتصال بنجاح!`);
+        addZktecoLog(`   الرقم التسلسلي: ${res.data.serial_number || 'N/A'}`);
+        addZktecoLog(`   المستخدمين: ${res.data.users_count || 0}، السجلات: ${res.data.records_count || 0}`);
+        toast.success(language === "ar" ? "الاتصال ناجح!" : "Connection successful!");
+      } else {
+        addZktecoLog(`❌ فشل الاتصال: ${res.data.error || 'خطأ غير معروف'}`);
+        toast.error(res.data.error || (language === "ar" ? "فشل الاتصال" : "Connection failed"));
+      }
+    } catch (error) {
+      addZktecoLog(`❌ خطأ: ${error.response?.data?.detail || error.message}`);
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل الاتصال" : "Connection failed"));
+    } finally {
+      setZktecoTesting(false);
+      setSelectedZktecoDevice(null);
+    }
+  };
+
+  // Sync now
+  const handleZktecoSyncNow = async () => {
+    setZktecoSyncing(true);
+    addZktecoLog("=" .repeat(40));
+    addZktecoLog("🔄 بدء المزامنة...");
+    
+    try {
+      const res = await axios.post(`${API}/hr/zkteco/sync`);
+      addZktecoLog(`✅ اكتملت المزامنة: ${res.data.imported || 0} جديد، ${res.data.updated || 0} محدث`);
+      toast.success(
+        language === "ar" 
+          ? `تم استيراد ${res.data.imported} سجل جديد وتحديث ${res.data.updated} سجل`
+          : `Imported ${res.data.imported} new and updated ${res.data.updated} records`
+      );
+      fetchAttendance();
+      fetchZktecoDevices();
+    } catch (error) {
+      addZktecoLog(`❌ فشلت المزامنة: ${error.response?.data?.detail || error.message}`);
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشلت المزامنة" : "Sync failed"));
+    } finally {
+      setZktecoSyncing(false);
+    }
+  };
+
+  // Update sync settings
+  const handleUpdateZktecoSettings = async () => {
+    try {
+      await axios.put(`${API}/hr/zkteco/settings`, zktecoSyncSettings);
+      toast.success(language === "ar" ? "تم حفظ الإعدادات" : "Settings saved");
+      addZktecoLog("💾 تم حفظ إعدادات المزامنة");
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل حفظ الإعدادات" : "Failed to save settings");
+    }
+  };
+
+  // Add log entry
+  const addZktecoLog = (message) => {
+    const timestamp = new Date().toLocaleTimeString('ar-SA');
+    setZktecoLogs(prev => [...prev.slice(-50), `[${timestamp}] ${message}`]);
+  };
+
+  // Clear logs
+  const clearZktecoLogs = () => {
+    setZktecoLogs([]);
+  };
+
+  // Open ZKTeco dialog
+  const openZktecoManager = () => {
+    fetchZktecoDevices();
+    setZktecoDialogOpen(true);
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: language === "ar" ? "قيد الانتظار" : "Pending", variant: "warning" },
