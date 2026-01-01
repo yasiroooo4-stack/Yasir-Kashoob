@@ -1435,6 +1435,132 @@ const HR = () => {
           </Card>
         </TabsContent>
 
+        {/* Warnings Tab */}
+        <TabsContent value="warnings">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  {language === "ar" ? "إنذارات الموظفين" : "Employee Warnings"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة الإنذارات والجزاءات التأديبية" : "Manage warnings and disciplinary actions"}
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => {
+                  setSelectedWarning(null);
+                  setWarningForm({
+                    employee_id: "",
+                    employee_name: "",
+                    warning_type: "verbal",
+                    reason: "",
+                    date: new Date().toISOString().split('T')[0],
+                    notes: ""
+                  });
+                  setWarningDialogOpen(true);
+                }}
+                className="gradient-primary text-white"
+              >
+                <Plus className="w-4 h-4 me-2" />
+                {language === "ar" ? "إنذار جديد" : "New Warning"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                      <TableHead>{language === "ar" ? "نوع الإنذار" : "Warning Type"}</TableHead>
+                      <TableHead>{language === "ar" ? "السبب" : "Reason"}</TableHead>
+                      <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                      <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {warnings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          {language === "ar" ? "لا توجد إنذارات مسجلة" : "No warnings recorded"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      warnings.map((warning) => (
+                        <TableRow key={warning.id}>
+                          <TableCell className="font-medium">{warning.employee_name}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              warning.warning_type === "verbal" ? "secondary" :
+                              warning.warning_type === "written" ? "outline" :
+                              warning.warning_type === "final" ? "destructive" : "default"
+                            }>
+                              {warning.warning_type === "verbal" ? (language === "ar" ? "شفهي" : "Verbal") :
+                               warning.warning_type === "written" ? (language === "ar" ? "كتابي" : "Written") :
+                               warning.warning_type === "final" ? (language === "ar" ? "نهائي" : "Final") :
+                               warning.warning_type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">{warning.reason}</TableCell>
+                          <TableCell>{new Date(warning.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
+                          <TableCell>
+                            <Badge variant={warning.status === "active" ? "destructive" : "secondary"}>
+                              {warning.status === "active" ? (language === "ar" ? "فعال" : "Active") :
+                               (language === "ar" ? "منتهي" : "Expired")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedWarning(warning);
+                                  setWarningForm({
+                                    employee_id: warning.employee_id,
+                                    employee_name: warning.employee_name,
+                                    warning_type: warning.warning_type,
+                                    reason: warning.reason,
+                                    date: warning.date,
+                                    notes: warning.notes || ""
+                                  });
+                                  setWarningDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={async () => {
+                                  if (confirm(language === "ar" ? "هل تريد حذف هذا الإنذار؟" : "Delete this warning?")) {
+                                    try {
+                                      await axios.delete(`${API}/hr/warnings/${warning.id}`);
+                                      toast.success(language === "ar" ? "تم حذف الإنذار" : "Warning deleted");
+                                      fetchData();
+                                    } catch (error) {
+                                      toast.error(language === "ar" ? "فشل الحذف" : "Delete failed");
+                                    }
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Attendance Tab */}
         <TabsContent value="attendance">
           <Card>
