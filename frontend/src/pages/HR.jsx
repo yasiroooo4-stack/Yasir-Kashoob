@@ -1265,10 +1265,6 @@ const HR = () => {
             <FileText className="w-5 h-5" />
             <span>{language === "ar" ? "الرسائل" : "Letters"}</span>
           </TabsTrigger>
-          <TabsTrigger value="devices" className="gap-2 px-4 py-3 text-base font-medium">
-            <Fingerprint className="w-5 h-5" />
-            <span>{language === "ar" ? "البصمة" : "Devices"}</span>
-          </TabsTrigger>
           <TabsTrigger value="shifts" className="gap-2 px-4 py-3 text-base font-medium">
             <Clock className="w-5 h-5" />
             <span>{language === "ar" ? "الورديات" : "Shifts"}</span>
