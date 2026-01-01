@@ -1273,6 +1273,10 @@ const HR = () => {
             <Users className="w-5 h-5" />
             <span>{language === "ar" ? "الموظفين" : "Employees"}</span>
           </TabsTrigger>
+          <TabsTrigger value="warnings" className="gap-2 px-4 py-3 text-base font-medium">
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            <span>{language === "ar" ? "الإنذارات" : "Warnings"}</span>
+          </TabsTrigger>
           <TabsTrigger value="attendance" className="gap-2 px-4 py-3 text-base font-medium">
             <Clock className="w-5 h-5" />
             <span>{language === "ar" ? "الحضور" : "Attendance"}</span>
