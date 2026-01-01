@@ -3745,6 +3745,108 @@ const HR = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Warning Dialog */}
+      <Dialog open={warningDialogOpen} onOpenChange={setWarningDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              {selectedWarning 
+                ? (language === "ar" ? "تعديل الإنذار" : "Edit Warning")
+                : (language === "ar" ? "إنذار جديد" : "New Warning")}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              if (selectedWarning) {
+                await axios.put(`${API}/hr/warnings/${selectedWarning.id}`, warningForm);
+                toast.success(language === "ar" ? "تم تحديث الإنذار" : "Warning updated");
+              } else {
+                await axios.post(`${API}/hr/warnings`, warningForm);
+                toast.success(language === "ar" ? "تم إضافة الإنذار" : "Warning added");
+              }
+              setWarningDialogOpen(false);
+              fetchData();
+            } catch (error) {
+              toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "Error occurred"));
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف" : "Employee"} *</Label>
+              <Select 
+                value={warningForm.employee_id} 
+                onValueChange={(value) => {
+                  const emp = employees.find(e => e.id === value);
+                  setWarningForm({ 
+                    ...warningForm, 
+                    employee_id: value, 
+                    employee_name: emp?.name || "" 
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select Employee"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "نوع الإنذار" : "Warning Type"} *</Label>
+              <Select 
+                value={warningForm.warning_type} 
+                onValueChange={(value) => setWarningForm({ ...warningForm, warning_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="verbal">{language === "ar" ? "إنذار شفهي" : "Verbal Warning"}</SelectItem>
+                  <SelectItem value="written">{language === "ar" ? "إنذار كتابي" : "Written Warning"}</SelectItem>
+                  <SelectItem value="final">{language === "ar" ? "إنذار نهائي" : "Final Warning"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "السبب" : "Reason"} *</Label>
+              <Textarea 
+                value={warningForm.reason} 
+                onChange={(e) => setWarningForm({ ...warningForm, reason: e.target.value })} 
+                required 
+                placeholder={language === "ar" ? "سبب الإنذار..." : "Reason for warning..."}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "التاريخ" : "Date"} *</Label>
+              <Input 
+                type="date" 
+                value={warningForm.date} 
+                onChange={(e) => setWarningForm({ ...warningForm, date: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
+              <Textarea 
+                value={warningForm.notes} 
+                onChange={(e) => setWarningForm({ ...warningForm, notes: e.target.value })} 
+                placeholder={language === "ar" ? "ملاحظات إضافية..." : "Additional notes..."}
+                rows={2}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setWarningDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{t("save")}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
