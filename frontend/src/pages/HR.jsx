@@ -1170,7 +1170,7 @@ const HR = () => {
       </div>
 
       {/* Dashboard Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -1201,6 +1201,19 @@ const HR = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-2xl font-bold text-red-600">{dashboard.today_absent || 0}</p>
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "الغياب اليوم" : "Today's Absent"}
+                </p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-2xl font-bold">{dashboard.pending_leaves || 0}</p>
                 <p className="text-sm text-muted-foreground">
                   {language === "ar" ? "طلبات إجازة" : "Leave Requests"}
@@ -1214,12 +1227,12 @@ const HR = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{dashboard.pending_expenses || 0}</p>
+                <p className="text-2xl font-bold text-yellow-600">{dashboard.active_warnings || 0}</p>
                 <p className="text-sm text-muted-foreground">
-                  {language === "ar" ? "طلبات مصاريف" : "Expense Requests"}
+                  {language === "ar" ? "الإنذارات" : "Warnings"}
                 </p>
               </div>
-              <Wallet className="w-8 h-8 text-purple-500" />
+              <AlertTriangle className="w-8 h-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -1227,12 +1240,12 @@ const HR = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{dashboard.active_car_contracts || 0}</p>
+                <p className="text-2xl font-bold">{dashboard.pending_expenses || 0}</p>
                 <p className="text-sm text-muted-foreground">
-                  {language === "ar" ? "عقود سيارات" : "Car Contracts"}
+                  {language === "ar" ? "طلبات مصاريف" : "Expense Requests"}
                 </p>
               </div>
-              <Car className="w-8 h-8 text-teal-500" />
+              <Wallet className="w-8 h-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
