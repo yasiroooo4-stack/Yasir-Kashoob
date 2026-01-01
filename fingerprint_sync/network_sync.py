@@ -306,6 +306,14 @@ class NetworkSyncAgent:
         logger.info("=" * 50)
         logger.info("بدء المزامنة...")
         
+        # التحقق من وجود أجهزة
+        devices = self.config.get('devices', [])
+        if not devices:
+            logger.error("لا توجد أجهزة مضافة في الإعدادات")
+            return False, 0, 0
+        
+        logger.info(f"عدد الأجهزة: {len(devices)}")
+        
         # الاتصال بالأجهزة
         if not self.connect_devices():
             logger.error("لم يتم الاتصال بأي جهاز")
@@ -313,14 +321,23 @@ class NetworkSyncAgent:
         
         try:
             # جلب البيانات
+            logger.info("جاري جلب سجلات الحضور...")
             attendance, users = self.fetch_all_attendance()
             
             if not attendance:
-                logger.warning("لا توجد سجلات حضور")
+                logger.warning("لا توجد سجلات حضور جديدة")
                 return True, 0, 0
+            
+            logger.info(f"تم جلب {len(attendance)} سجل")
             
             # معالجة البيانات
             processed = self.process_attendance(attendance)
+            logger.info(f"تم معالجة {len(processed)} سجل")
+            
+            # تسجيل الدخول أولاً
+            if not self.authenticate():
+                logger.error("فشل تسجيل الدخول للنظام")
+                return False, 0, 0
             
             # رفع البيانات
             success, imported, updated = self.upload_attendance(processed)
