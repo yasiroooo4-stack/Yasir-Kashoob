@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://milk-erp.preview.emergentagent.com/api"
+BACKEND_URL = "https://zendesk-16.preview.emergentagent.com/api"
 
 # Test credentials (as specified in review request)
 TEST_USERNAME = "yasir"

@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://milk-erp.preview.emergentagent.com',
+            'api_url': 'https://zendesk-16.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,

@@ -1,5 +1,5 @@
 {
-  "api_url": "https://milk-erp.preview.emergentagent.com",
+  "api_url": "https://zendesk-16.preview.emergentagent.com",
   "username": "yasir",
   "password": "YOUR_PASSWORD_HERE",
   "sync_interval": 3600,

@@ -42,13 +42,13 @@ class ZKTecoSyncAgent:
     
     def __init__(self, config_path=None):
         self.config = self._load_config(config_path)
-        self.api_url = self.config.get('api_url', 'https://milk-erp.preview.emergentagent.com')
+        self.api_url = self.config.get('api_url', 'https://zendesk-16.preview.emergentagent.com')
         self.api_token = None
         
     def _load_config(self, config_path):
         """تحميل إعدادات التكوين"""
         default_config = {
-            'api_url': 'https://milk-erp.preview.emergentagent.com',
+            'api_url': 'https://zendesk-16.preview.emergentagent.com',
             'username': 'admin',
             'password': '',
             'sync_interval': 3600,  # كل ساعة
@@ -245,7 +245,7 @@ class ZKTecoSyncAgent:
 def create_sample_config():
     """إنشاء ملف تكوين نموذجي"""
     config = {
-        "api_url": "https://milk-erp.preview.emergentagent.com",
+        "api_url": "https://zendesk-16.preview.emergentagent.com",
         "username": "yasir",
         "password": "admin123",
         "sync_interval": 3600,
