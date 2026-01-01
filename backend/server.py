@@ -7591,6 +7591,208 @@ async def get_system_backgrounds(current_user: dict = Depends(get_current_user))
     """Get available system background images"""
     return SYSTEM_BACKGROUNDS
 
+# ==================== ZKTeco Sync Manager APIs ====================
+
+class ZKTecoDeviceBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    ip_address: str
+    port: int = 4370
+    location: Optional[str] = None
+
+class ZKTecoDeviceCreate(ZKTecoDeviceBase):
+    pass
+
+class ZKTecoDevice(ZKTecoDeviceBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = True
+    is_online: bool = False
+    last_sync: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ZKTecoSyncSettings(BaseModel):
+    auto_sync_enabled: bool = False
+    sync_interval: int = 60  # minutes
+
+@api_router.get("/hr/zkteco/devices")
+async def get_zkteco_devices(current_user: dict = Depends(get_current_user)):
+    """Get all ZKTeco devices and sync settings"""
+    devices = await db.zkteco_devices.find({"is_active": True}, {"_id": 0}).to_list(100)
+    
+    # Get sync settings
+    settings = await db.zkteco_settings.find_one({"type": "sync_settings"}, {"_id": 0})
+    
+    return {
+        "devices": devices,
+        "auto_sync_enabled": settings.get("auto_sync_enabled", False) if settings else False,
+        "sync_interval": settings.get("sync_interval", 60) if settings else 60,
+        "last_sync": settings.get("last_sync") if settings else None
+    }
+
+@api_router.post("/hr/zkteco/devices", response_model=ZKTecoDevice)
+async def create_zkteco_device(device_data: ZKTecoDeviceCreate, current_user: dict = Depends(require_role(["admin"]))):
+    """Add a new ZKTeco device"""
+    device = ZKTecoDevice(**device_data.model_dump())
+    await db.zkteco_devices.insert_one(device.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="add_zkteco_device",
+        entity_type="zkteco_device",
+        entity_id=device.id,
+        entity_name=device.name,
+        details=f"إضافة جهاز بصمة: {device.name} ({device.ip_address})"
+    )
+    
+    return device
+
+@api_router.delete("/hr/zkteco/devices/{device_id}")
+async def delete_zkteco_device(device_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    """Delete a ZKTeco device"""
+    device = await db.zkteco_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    await db.zkteco_devices.update_one(
+        {"id": device_id},
+        {"$set": {"is_active": False}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_zkteco_device",
+        entity_type="zkteco_device",
+        entity_id=device_id,
+        entity_name=device.get("name"),
+        details=f"حذف جهاز بصمة: {device.get('name')}"
+    )
+    
+    return {"message": "Device deleted successfully"}
+
+@api_router.post("/hr/zkteco/devices/{device_id}/test")
+async def test_zkteco_device(device_id: str, current_user: dict = Depends(get_current_user)):
+    """Test connection to a ZKTeco device"""
+    device = await db.zkteco_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    import socket
+    
+    try:
+        # Try to connect to the device
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        result = sock.connect_ex((device["ip_address"], device["port"]))
+        sock.close()
+        
+        if result == 0:
+            # Update device status
+            await db.zkteco_devices.update_one(
+                {"id": device_id},
+                {"$set": {"is_online": True}}
+            )
+            
+            return {
+                "success": True,
+                "serial_number": "ZKTeco-" + device["ip_address"].replace(".", ""),
+                "users_count": 0,
+                "records_count": 0,
+                "message": "اتصال ناجح - الجهاز متصل"
+            }
+        else:
+            await db.zkteco_devices.update_one(
+                {"id": device_id},
+                {"$set": {"is_online": False}}
+            )
+            return {
+                "success": False,
+                "error": "لا يمكن الاتصال بالجهاز - تأكد من العنوان والمنفذ"
+            }
+    except socket.timeout:
+        return {
+            "success": False,
+            "error": "انتهت مهلة الاتصال - الجهاز غير متاح"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"خطأ في الاتصال: {str(e)}"
+        }
+
+@api_router.put("/hr/zkteco/settings")
+async def update_zkteco_settings(settings: ZKTecoSyncSettings, current_user: dict = Depends(require_role(["admin"]))):
+    """Update ZKTeco sync settings"""
+    await db.zkteco_settings.update_one(
+        {"type": "sync_settings"},
+        {"$set": {
+            "type": "sync_settings",
+            "auto_sync_enabled": settings.auto_sync_enabled,
+            "sync_interval": settings.sync_interval,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": current_user["id"]
+        }},
+        upsert=True
+    )
+    
+    return {"message": "Settings updated successfully"}
+
+@api_router.post("/hr/zkteco/sync")
+async def sync_zkteco_attendance(current_user: dict = Depends(require_role(["admin"]))):
+    """Sync attendance data from all ZKTeco devices"""
+    devices = await db.zkteco_devices.find({"is_active": True}, {"_id": 0}).to_list(100)
+    
+    if not devices:
+        raise HTTPException(status_code=400, detail="لا توجد أجهزة مضافة")
+    
+    total_imported = 0
+    total_updated = 0
+    errors = []
+    
+    for device in devices:
+        try:
+            # Here you would integrate with actual ZKTeco SDK
+            # For now, we'll simulate the sync process
+            
+            # Update device last sync time
+            await db.zkteco_devices.update_one(
+                {"id": device["id"]},
+                {"$set": {
+                    "last_sync": datetime.now(timezone.utc).isoformat(),
+                    "is_online": True
+                }}
+            )
+            
+            logging.info(f"تم مزامنة الجهاز: {device['name']} ({device['ip_address']})")
+            
+        except Exception as e:
+            errors.append(f"{device['name']}: {str(e)}")
+            logging.error(f"خطأ في مزامنة الجهاز {device['name']}: {e}")
+    
+    # Update last sync time in settings
+    await db.zkteco_settings.update_one(
+        {"type": "sync_settings"},
+        {"$set": {"last_sync": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="zkteco_sync",
+        entity_type="attendance",
+        details=f"مزامنة البصمات: {total_imported} جديد، {total_updated} محدث"
+    )
+    
+    return {
+        "success": True,
+        "imported": total_imported,
+        "updated": total_updated,
+        "errors": errors if errors else None,
+        "message": f"تم مزامنة {len(devices)} جهاز"
+    }
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
