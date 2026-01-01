@@ -3448,6 +3448,249 @@ const HR = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ZKTeco Sync Manager Dialog */}
+      <Dialog open={zktecoDialogOpen} onOpenChange={setZktecoDialogOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Fingerprint className="w-6 h-6 text-green-600" />
+              {language === "ar" ? "مدير مزامنة البصمات - ZKTeco" : "ZKTeco Sync Manager"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "ar" ? "إدارة أجهزة البصمة ومزامنة بيانات الحضور" : "Manage fingerprint devices and sync attendance data"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Sync Settings Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  {language === "ar" ? "إعدادات المزامنة" : "Sync Settings"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="auto-sync"
+                      checked={zktecoSyncSettings.auto_sync_enabled}
+                      onChange={(e) => setZktecoSyncSettings({ ...zktecoSyncSettings, auto_sync_enabled: e.target.checked })}
+                      className="w-5 h-5 rounded border-gray-300"
+                    />
+                    <Label htmlFor="auto-sync" className="text-base font-medium cursor-pointer">
+                      {language === "ar" ? "المزامنة التلقائية" : "Auto Sync"}
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-gray-500">
+                      {language === "ar" ? "كل" : "Every"}
+                    </Label>
+                    <Input
+                      type="number"
+                      min="5"
+                      value={zktecoSyncSettings.sync_interval}
+                      onChange={(e) => setZktecoSyncSettings({ ...zktecoSyncSettings, sync_interval: parseInt(e.target.value) || 60 })}
+                      className="w-20"
+                    />
+                    <Label className="text-sm text-gray-500">
+                      {language === "ar" ? "دقيقة" : "minutes"}
+                    </Label>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="text-sm text-gray-500">
+                    {zktecoSyncSettings.last_sync ? (
+                      <>
+                        <History className="w-4 h-4 inline me-1" />
+                        {language === "ar" ? "آخر مزامنة: " : "Last sync: "}
+                        {new Date(zktecoSyncSettings.last_sync).toLocaleString('ar-SA')}
+                      </>
+                    ) : (
+                      <>{language === "ar" ? "لم تتم المزامنة بعد" : "Not synced yet"}</>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleUpdateZktecoSettings}>
+                      {language === "ar" ? "حفظ الإعدادات" : "Save Settings"}
+                    </Button>
+                    <Button 
+                      className="gradient-primary text-white gap-2" 
+                      onClick={handleZktecoSyncNow}
+                      disabled={zktecoSyncing || zktecoDevices.length === 0}
+                    >
+                      {zktecoSyncing ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                      {language === "ar" ? "مزامنة الآن" : "Sync Now"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Devices Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Server className="w-5 h-5" />
+                    {language === "ar" ? "أجهزة البصمة" : "Fingerprint Devices"}
+                    <Badge variant="outline">{zktecoDevices.length}</Badge>
+                  </CardTitle>
+                  <Button size="sm" onClick={() => setZktecoAddDialogOpen(true)}>
+                    <Plus className="w-4 h-4 me-1" />
+                    {language === "ar" ? "إضافة جهاز" : "Add Device"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {zktecoDevices.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Fingerprint className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>{language === "ar" ? "لا توجد أجهزة مضافة" : "No devices added"}</p>
+                    <p className="text-sm">{language === "ar" ? "أضف جهاز بصمة للبدء" : "Add a fingerprint device to get started"}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {zktecoDevices.map((device) => (
+                      <div key={device.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${device.is_online ? 'bg-green-100' : 'bg-gray-100'}`}>
+                            {device.is_online ? (
+                              <Wifi className="w-5 h-5 text-green-600" />
+                            ) : (
+                              <WifiOff className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">{device.name}</p>
+                            <p className="text-sm text-gray-500">{device.ip_address}:{device.port}</p>
+                            {device.location && <p className="text-xs text-gray-400">{device.location}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestZktecoDevice(device)}
+                            disabled={zktecoTesting && selectedZktecoDevice === device.id}
+                          >
+                            {zktecoTesting && selectedZktecoDevice === device.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Wifi className="w-4 h-4" />
+                            )}
+                            {language === "ar" ? "اختبار" : "Test"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => handleDeleteZktecoDevice(device.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Logs Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    {language === "ar" ? "سجل العمليات" : "Operation Log"}
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" onClick={clearZktecoLogs}>
+                    {language === "ar" ? "مسح السجل" : "Clear Log"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm h-48 overflow-y-auto">
+                  {zktecoLogs.length === 0 ? (
+                    <p className="text-gray-500">{language === "ar" ? "لا توجد عمليات مسجلة" : "No operations logged"}</p>
+                  ) : (
+                    zktecoLogs.map((log, idx) => (
+                      <div key={idx} className="py-0.5">{log}</div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setZktecoDialogOpen(false)}>
+              {language === "ar" ? "إغلاق" : "Close"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add ZKTeco Device Dialog */}
+      <Dialog open={zktecoAddDialogOpen} onOpenChange={setZktecoAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "إضافة جهاز بصمة" : "Add Fingerprint Device"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleAddZktecoDevice(); }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "اسم الجهاز" : "Device Name"} *</Label>
+              <Input 
+                value={zktecoDeviceForm.name} 
+                onChange={(e) => setZktecoDeviceForm({ ...zktecoDeviceForm, name: e.target.value })} 
+                required 
+                placeholder={language === "ar" ? "مثال: جهاز البصمة الرئيسي" : "e.g., Main Fingerprint Device"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "عنوان IP" : "IP Address"} *</Label>
+              <Input 
+                value={zktecoDeviceForm.ip_address} 
+                onChange={(e) => setZktecoDeviceForm({ ...zktecoDeviceForm, ip_address: e.target.value })} 
+                required 
+                placeholder="192.168.1.100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "المنفذ" : "Port"}</Label>
+              <Input 
+                type="number" 
+                value={zktecoDeviceForm.port} 
+                onChange={(e) => setZktecoDeviceForm({ ...zktecoDeviceForm, port: parseInt(e.target.value) || 4370 })} 
+                placeholder="4370"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموقع" : "Location"}</Label>
+              <Input 
+                value={zktecoDeviceForm.location} 
+                onChange={(e) => setZktecoDeviceForm({ ...zktecoDeviceForm, location: e.target.value })} 
+                placeholder={language === "ar" ? "مثال: المدخل الرئيسي" : "e.g., Main Entrance"}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setZktecoAddDialogOpen(false)}>{t("cancel")}</Button>
+              <Button type="submit" className="gradient-primary text-white">{language === "ar" ? "إضافة" : "Add"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
