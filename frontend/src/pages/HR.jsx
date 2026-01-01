@@ -97,6 +97,17 @@ const HR = () => {
   const [overtime, setOvertime] = useState([]);
   const [loans, setLoans] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [warnings, setWarnings] = useState([]);
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [selectedWarning, setSelectedWarning] = useState(null);
+  const [warningForm, setWarningForm] = useState({
+    employee_id: "",
+    employee_name: "",
+    warning_type: "verbal",
+    reason: "",
+    date: new Date().toISOString().split('T')[0],
+    notes: ""
+  });
   
   // Dialog states
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
