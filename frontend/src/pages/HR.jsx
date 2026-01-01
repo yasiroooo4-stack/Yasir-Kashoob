@@ -357,6 +357,7 @@ const HR = () => {
         axios.get(`${API}/hr/overtime`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/loans`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/documents`).catch(() => ({ data: [] })),
+        axios.get(`${API}/hr/warnings`).catch(() => ({ data: [] })),
       ]);
       
       setEmployees(employeesRes.data);
@@ -374,6 +375,7 @@ const HR = () => {
       setOvertime(overtimeRes.data || []);
       setLoans(loansRes.data || []);
       setDocuments(documentsRes.data || []);
+      setWarnings(warningsRes.data || []);
     } catch (error) {
       console.error("Error fetching HR data:", error);
     } finally {
