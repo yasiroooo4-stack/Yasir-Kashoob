@@ -7793,6 +7793,109 @@ async def sync_zkteco_attendance(current_user: dict = Depends(require_role(["adm
         "message": f"تم مزامنة {len(devices)} جهاز"
     }
 
+# ==================== HR - WARNINGS (الإنذارات) ====================
+
+class WarningBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    warning_type: str  # verbal, written, final
+    reason: str
+    date: str
+    notes: Optional[str] = None
+
+class WarningCreate(WarningBase):
+    pass
+
+class Warning(WarningBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "active"
+    issued_by: Optional[str] = None
+    issued_by_name: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+@api_router.get("/hr/warnings")
+async def get_warnings(
+    employee_id: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all warnings"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if status:
+        query["status"] = status
+    
+    warnings = await db.hr_warnings.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return warnings
+
+@api_router.post("/hr/warnings", response_model=Warning)
+async def create_warning(warning_data: WarningCreate, current_user: dict = Depends(require_role(["admin", "hr_manager"]))):
+    """Create a new warning"""
+    warning = Warning(**warning_data.model_dump())
+    warning.issued_by = current_user["id"]
+    warning.issued_by_name = current_user["full_name"]
+    
+    await db.hr_warnings.insert_one(warning.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_warning",
+        entity_type="warning",
+        entity_id=warning.id,
+        entity_name=warning_data.employee_name,
+        details=f"إنذار {warning_data.warning_type} للموظف: {warning_data.employee_name}"
+    )
+    
+    return warning
+
+@api_router.put("/hr/warnings/{warning_id}")
+async def update_warning(warning_id: str, warning_data: WarningCreate, current_user: dict = Depends(require_role(["admin", "hr_manager"]))):
+    """Update a warning"""
+    existing = await db.hr_warnings.find_one({"id": warning_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Warning not found")
+    
+    await db.hr_warnings.update_one(
+        {"id": warning_id},
+        {"$set": warning_data.model_dump()}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_warning",
+        entity_type="warning",
+        entity_id=warning_id,
+        entity_name=warning_data.employee_name,
+        details=f"تحديث إنذار الموظف: {warning_data.employee_name}"
+    )
+    
+    return {"message": "Warning updated successfully"}
+
+@api_router.delete("/hr/warnings/{warning_id}")
+async def delete_warning(warning_id: str, current_user: dict = Depends(require_role(["admin", "hr_manager"]))):
+    """Delete a warning"""
+    warning = await db.hr_warnings.find_one({"id": warning_id}, {"_id": 0})
+    if not warning:
+        raise HTTPException(status_code=404, detail="Warning not found")
+    
+    await db.hr_warnings.delete_one({"id": warning_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_warning",
+        entity_type="warning",
+        entity_id=warning_id,
+        entity_name=warning.get("employee_name"),
+        details=f"حذف إنذار الموظف: {warning.get('employee_name')}"
+    )
+    
+    return {"message": "Warning deleted successfully"}
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
