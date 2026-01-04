@@ -315,6 +315,7 @@ const HR = () => {
 
   const LETTER_TYPES = [
     { id: "salary_certificate", name: "شهادة راتب", name_en: "Salary Certificate" },
+    { id: "salary_continuity_certificate", name: "شهادة استمرارية راتب", name_en: "Salary Continuity Certificate" },
     { id: "employment_letter", name: "خطاب تعريف بالراتب", name_en: "Employment Letter" },
     { id: "experience_letter", name: "شهادة خبرة", name_en: "Experience Letter" },
     { id: "mission_letter", name: "خطاب مهمة عمل", name_en: "Mission Letter" },
