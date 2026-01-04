@@ -870,6 +870,255 @@ const FeedPurchases = () => {
               </Table>
             </div>
           )}
+
+          {/* Inventory Tab */}
+          {activeTab === "inventory" && (
+            <div className="space-y-6">
+              {/* Inventory Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-emerald-600 font-medium">
+                      {language === "ar" ? "إجمالي الكمية" : "Total Quantity"}
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-700">
+                      {feedInventory.reduce((sum, i) => sum + (i.quantity || 0), 0).toLocaleString()}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-blue-600 font-medium">
+                      {language === "ar" ? "إجمالي القيمة" : "Total Value"}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {feedInventory.reduce((sum, i) => sum + (i.total_value || 0), 0).toLocaleString()} {t("currency")}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-purple-600 font-medium">
+                      {language === "ar" ? "عدد الأصناف" : "Item Count"}
+                    </p>
+                    <p className="text-2xl font-bold text-purple-700">
+                      {feedInventory.length}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Inventory Table */}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                      <TableHead>{language === "ar" ? "رقم الفاتورة" : "Invoice #"}</TableHead>
+                      <TableHead>{language === "ar" ? "نوع العلف" : "Feed Type"}</TableHead>
+                      <TableHead>{language === "ar" ? "الشركة" : "Company"}</TableHead>
+                      <TableHead>{language === "ar" ? "المورد" : "Supplier"}</TableHead>
+                      <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
+                      <TableHead>{language === "ar" ? "القيمة" : "Value"}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {feedInventory.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          {language === "ar" ? "لا توجد بيانات مخزون" : "No inventory data"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      feedInventory.map((item) => (
+                        <TableRow key={item.id} className="table-row-hover">
+                          <TableCell>
+                            {item.created_at ? new Date(item.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US") : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{item.invoice_number || "-"}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <span className="flex items-center gap-2">
+                              <Wheat className="w-4 h-4 text-amber-500" />
+                              {item.product_name}
+                            </span>
+                          </TableCell>
+                          <TableCell>{item.company_name}</TableCell>
+                          <TableCell>{item.supplier_name}</TableCell>
+                          <TableCell>
+                            {item.quantity?.toLocaleString()} {item.unit}
+                          </TableCell>
+                          <TableCell className="font-semibold text-emerald-600">
+                            {item.total_value?.toLocaleString()} {t("currency")}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* Reports Tab */}
+          {activeTab === "reports" && feedReport && (
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-blue-600 font-medium">
+                      {language === "ar" ? "إجمالي المشتريات" : "Total Purchases"}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {feedReport.summary?.total_purchases || 0}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-amber-600 font-medium">
+                      {language === "ar" ? "إجمالي المبلغ" : "Total Amount"}
+                    </p>
+                    <p className="text-2xl font-bold text-amber-700">
+                      {feedReport.summary?.total_amount?.toLocaleString() || 0} {t("currency")}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-green-600 font-medium">
+                      {language === "ar" ? "إجمالي الكمية" : "Total Quantity"}
+                    </p>
+                    <p className="text-2xl font-bold text-green-700">
+                      {feedReport.summary?.total_quantity?.toLocaleString() || 0}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-purple-600 font-medium">
+                      {language === "ar" ? "متوسط الفاتورة" : "Avg. Purchase"}
+                    </p>
+                    <p className="text-2xl font-bold text-purple-700">
+                      {feedReport.summary?.average_purchase_amount?.toFixed(2) || 0} {t("currency")}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* By Supplier */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    {language === "ar" ? "حسب المورد" : "By Supplier"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{language === "ar" ? "المورد" : "Supplier"}</TableHead>
+                          <TableHead>{language === "ar" ? "عدد المشتريات" : "Purchases"}</TableHead>
+                          <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
+                          <TableHead>{language === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {feedReport.by_supplier?.map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">{item.supplier_name}</TableCell>
+                            <TableCell>{item.purchase_count}</TableCell>
+                            <TableCell>{item.total_quantity?.toLocaleString()}</TableCell>
+                            <TableCell className="font-semibold text-amber-600">
+                              {item.total_amount?.toLocaleString()} {t("currency")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* By Feed Type */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Wheat className="w-5 h-5" />
+                    {language === "ar" ? "حسب نوع العلف" : "By Feed Type"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{language === "ar" ? "نوع العلف" : "Feed Type"}</TableHead>
+                          <TableHead>{language === "ar" ? "الشركة" : "Company"}</TableHead>
+                          <TableHead>{language === "ar" ? "عدد المشتريات" : "Purchases"}</TableHead>
+                          <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
+                          <TableHead>{language === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {feedReport.by_feed_type?.map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">{item.feed_type_name}</TableCell>
+                            <TableCell>{item.company_name}</TableCell>
+                            <TableCell>{item.purchase_count}</TableCell>
+                            <TableCell>{item.total_quantity?.toLocaleString()}</TableCell>
+                            <TableCell className="font-semibold text-amber-600">
+                              {item.total_amount?.toLocaleString()} {t("currency")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* By Month */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    {language === "ar" ? "حسب الشهر" : "By Month"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{language === "ar" ? "الشهر" : "Month"}</TableHead>
+                          <TableHead>{language === "ar" ? "عدد المشتريات" : "Purchases"}</TableHead>
+                          <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
+                          <TableHead>{language === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {feedReport.by_month?.map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">{item.month}</TableCell>
+                            <TableCell>{item.purchase_count}</TableCell>
+                            <TableCell>{item.total_quantity?.toLocaleString()}</TableCell>
+                            <TableCell className="font-semibold text-amber-600">
+                              {item.total_amount?.toLocaleString()} {t("currency")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </CardContent>
       </Card>
 
