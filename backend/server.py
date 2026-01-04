@@ -284,6 +284,7 @@ class EmployeeBase(BaseModel):
     center_id: Optional[str] = None
     center_name: Optional[str] = None
     fingerprint_id: Optional[str] = None  # معرف البصمة
+    work_location: Optional[str] = None  # موقع العمل: حجيف، غدو، زيك، الإدارة، ثمريت، طاقة، مرباط
     can_login: bool = False  # هل يمكنه تسجيل الدخول للنظام
     permissions: Optional[List[str]] = None  # الصلاحيات
     manager_id: Optional[str] = None  # معرف المسؤول
