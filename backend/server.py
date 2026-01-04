@@ -7905,8 +7905,14 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
     if not period:
         raise HTTPException(status_code=404, detail="Payroll period not found")
     
-    # Get all active employees
-    employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    # Get all active employees (exclude those marked as exclude_from_payroll)
+    employees = await db.hr_employees.find({
+        "is_active": True,
+        "$or": [
+            {"exclude_from_payroll": {"$ne": True}},
+            {"exclude_from_payroll": {"$exists": False}}
+        ]
+    }, {"_id": 0}).to_list(1000)
     
     # Get attendance records for the period
     start_date = period["start_date"]
