@@ -701,12 +701,12 @@ const Payroll = () => {
                   <TableRow>
                     <TableHead>{language === "ar" ? "الكود" : "Code"}</TableHead>
                     <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
-                    <TableHead>{language === "ar" ? "القسم" : "Department"}</TableHead>
+                    <TableHead>{language === "ar" ? "الموقع" : "Location"}</TableHead>
                     <TableHead className="text-center">{language === "ar" ? "الحضور" : "Present"}</TableHead>
                     <TableHead className="text-center">{language === "ar" ? "الغياب" : "Absent"}</TableHead>
-                    <TableHead className="text-center">{language === "ar" ? "الإجازات" : "Leaves"}</TableHead>
-                    <TableHead className="text-center">{language === "ar" ? "أيام الدفع" : "Pay Days"}</TableHead>
+                    <TableHead className="text-center">{language === "ar" ? "ساعات إضافية" : "Overtime"}</TableHead>
                     <TableHead>{language === "ar" ? "الراتب الأساسي" : "Basic"}</TableHead>
+                    <TableHead>{language === "ar" ? "بدل إضافي" : "OT Pay"}</TableHead>
                     <TableHead>{language === "ar" ? "الخصومات" : "Deductions"}</TableHead>
                     <TableHead>{language === "ar" ? "الصافي" : "Net"}</TableHead>
                   </TableRow>
@@ -718,7 +718,13 @@ const Payroll = () => {
                         <Badge variant="outline">{record.employee_code || "-"}</Badge>
                       </TableCell>
                       <TableCell className="font-medium">{record.employee_name}</TableCell>
-                      <TableCell>{record.department || "-"}</TableCell>
+                      <TableCell>
+                        {record.work_location ? (
+                          <Badge variant="secondary">{record.work_location}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className="bg-green-50 text-green-700">
                           {record.working_days}
@@ -730,14 +736,18 @@ const Payroll = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          {(record.annual_leave || 0) + (record.sick_leave || 0) + (record.emergency_leave || 0)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center font-medium">
-                        {record.total_pay_days}
+                        {record.total_overtime_hours > 0 ? (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                            {record.total_overtime_hours?.toFixed(1)}h
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>{record.basic_salary?.toFixed(3)}</TableCell>
+                      <TableCell className="text-amber-600">
+                        {record.overtime_pay > 0 ? `+${record.overtime_pay?.toFixed(3)}` : "-"}
+                      </TableCell>
                       <TableCell className="text-red-600">
                         -{record.deductions?.toFixed(3)}
                       </TableCell>
