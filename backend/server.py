@@ -7964,6 +7964,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
 async def get_payroll_records(
     period_id: Optional[str] = None,
     employee_id: Optional[str] = None,
+    work_location: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """Get payroll records with optional filters"""
@@ -7972,9 +7973,69 @@ async def get_payroll_records(
         query["period_id"] = period_id
     if employee_id:
         query["employee_id"] = employee_id
+    if work_location:
+        query["work_location"] = work_location
     
     records = await db.payroll_records.find(query, {"_id": 0}).to_list(1000)
     return records
+
+@api_router.get("/hr/payroll/by-location/{period_id}")
+async def get_payroll_by_location(period_id: str, current_user: dict = Depends(get_current_user)):
+    """Get payroll records grouped by work location"""
+    records = await db.payroll_records.find({"period_id": period_id}, {"_id": 0}).to_list(1000)
+    
+    # Group by location
+    locations = {}
+    for record in records:
+        loc = record.get("work_location") or "غير محدد"
+        if loc not in locations:
+            locations[loc] = {
+                "location": loc,
+                "employees": [],
+                "total_employees": 0,
+                "total_working_days": 0,
+                "total_overtime_hours": 0,
+                "total_gross_salary": 0,
+                "total_overtime_pay": 0,
+                "total_deductions": 0,
+                "total_net_salary": 0
+            }
+        locations[loc]["employees"].append(record)
+        locations[loc]["total_employees"] += 1
+        locations[loc]["total_working_days"] += record.get("working_days", 0)
+        locations[loc]["total_overtime_hours"] += record.get("total_overtime_hours", 0)
+        locations[loc]["total_gross_salary"] += record.get("gross_salary", 0)
+        locations[loc]["total_overtime_pay"] += record.get("overtime_pay", 0)
+        locations[loc]["total_deductions"] += record.get("deductions", 0)
+        locations[loc]["total_net_salary"] += record.get("net_salary", 0)
+    
+    # Round totals
+    for loc in locations.values():
+        loc["total_gross_salary"] = round(loc["total_gross_salary"], 3)
+        loc["total_overtime_pay"] = round(loc["total_overtime_pay"], 3)
+        loc["total_deductions"] = round(loc["total_deductions"], 3)
+        loc["total_net_salary"] = round(loc["total_net_salary"], 3)
+        loc["total_overtime_hours"] = round(loc["total_overtime_hours"], 2)
+    
+    return {
+        "period_id": period_id,
+        "locations": list(locations.values()),
+        "grand_total": {
+            "employees": len(records),
+            "gross_salary": round(sum(r.get("gross_salary", 0) for r in records), 3),
+            "overtime_pay": round(sum(r.get("overtime_pay", 0) for r in records), 3),
+            "deductions": round(sum(r.get("deductions", 0) for r in records), 3),
+            "net_salary": round(sum(r.get("net_salary", 0) for r in records), 3)
+        }
+    }
+
+# Work locations list
+WORK_LOCATIONS = ["حجيف", "غدو", "زيك", "الإدارة", "ثمريت", "طاقة", "مرباط"]
+
+@api_router.get("/hr/work-locations")
+async def get_work_locations(current_user: dict = Depends(get_current_user)):
+    """Get list of available work locations"""
+    return {"locations": WORK_LOCATIONS}
 
 @api_router.put("/hr/payroll/records/{record_id}")
 async def update_payroll_record(
