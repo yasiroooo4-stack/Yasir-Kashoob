@@ -138,6 +138,7 @@ const FeedPurchases = () => {
       ...purchaseForm,
       supplier_id: supplierId,
       supplier_name: supplier?.name || "",
+      supplier_code: supplier?.code || supplierId?.slice(0,6) || "",
     });
     // For edit mode, add back the original amount to available balance
     let balance = supplier?.balance || 0;
@@ -145,6 +146,34 @@ const FeedPurchases = () => {
       balance += editingPurchase.total_amount || 0;
     }
     setSelectedSupplierBalance(balance);
+  };
+
+  // Handle supplier code input - search by code
+  const handleSupplierCodeChange = (code) => {
+    setPurchaseForm({ ...purchaseForm, supplier_code: code, supplier_id: "", supplier_name: "" });
+    setSelectedSupplierBalance(0);
+    
+    if (code.length >= 3) {
+      // Search for supplier by code or id
+      const supplier = suppliers.find((s) => 
+        (s.code && s.code.toLowerCase().includes(code.toLowerCase())) ||
+        s.id?.toLowerCase().includes(code.toLowerCase())
+      );
+      
+      if (supplier && supplier.balance > 0) {
+        setPurchaseForm({
+          ...purchaseForm,
+          supplier_code: code,
+          supplier_id: supplier.id,
+          supplier_name: supplier.name,
+        });
+        let balance = supplier.balance || 0;
+        if (editingPurchase && editingPurchase.supplier_id === supplier.id) {
+          balance += editingPurchase.total_amount || 0;
+        }
+        setSelectedSupplierBalance(balance);
+      }
+    }
   };
 
   // Handle feed type selection
