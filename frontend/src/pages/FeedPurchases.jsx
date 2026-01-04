@@ -433,7 +433,7 @@ const FeedPurchases = () => {
         <!-- Header with Logo and Company Info -->
         <div class="header">
           <div class="logo">
-            al morooj<br>Dairy<br>للألبان
+            <img src="${logoUrl}" alt="Al Morooj Dairy Logo" />
           </div>
           <div class="company-info">
             <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
