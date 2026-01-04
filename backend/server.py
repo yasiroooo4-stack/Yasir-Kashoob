@@ -3913,16 +3913,57 @@ async def bulk_sync_attendance(
     
     for record in records:
         try:
-            # البحث عن الموظف بواسطة fingerprint_id أو employee_id
+            # البحث عن الموظف بعدة طرق
             employee = None
+            
+            # 1. البحث بـ fingerprint_id
             if record.get("fingerprint_id"):
-                employee = await db.hr_employees.find_one({"fingerprint_id": record["fingerprint_id"]}, {"_id": 0})
+                employee = await db.hr_employees.find_one({"fingerprint_id": str(record["fingerprint_id"])}, {"_id": 0})
+            
+            # 2. البحث بـ employee_id
             if not employee and record.get("employee_id"):
                 employee = await db.hr_employees.find_one({"id": record["employee_id"]}, {"_id": 0})
             
-            # إذا لم نجد الموظف، نتجاهل السجل
+            # 3. البحث بالاسم (تقريبي)
+            if not employee and record.get("employee_name"):
+                employee = await db.hr_employees.find_one(
+                    {"name": {"$regex": record["employee_name"], "$options": "i"}}, 
+                    {"_id": 0}
+                )
+            
+            # إذا لم نجد الموظف، نُنشئ سجل مع تحذير
             if not employee:
-                errors.append(f"Employee not found for fingerprint_id: {record.get('fingerprint_id')}")
+                # نُنشئ سجل حتى لو لم نجد الموظف (للمراجعة لاحقاً)
+                attendance_data = {
+                    "id": str(uuid.uuid4()),
+                    "employee_id": str(record.get("fingerprint_id", "")),
+                    "employee_name": record.get("employee_name", f"Unknown ({record.get('fingerprint_id')})"),
+                    "date": record.get("date"),
+                    "check_in": record.get("check_in"),
+                    "check_out": record.get("check_out"),
+                    "status": record.get("status", "present"),
+                    "source": "fingerprint",
+                    "device_ip": record.get("device_ip", ""),
+                    "fingerprint_id": str(record.get("fingerprint_id", "")),
+                    "needs_review": True,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                # التحقق من وجود سجل مسبق بنفس fingerprint_id والتاريخ
+                existing = await db.hr_attendance.find_one({
+                    "fingerprint_id": str(record.get("fingerprint_id", "")),
+                    "date": record.get("date")
+                })
+                
+                if existing:
+                    await db.hr_attendance.update_one(
+                        {"id": existing["id"]},
+                        {"$set": attendance_data}
+                    )
+                    updated += 1
+                else:
+                    await db.hr_attendance.insert_one(attendance_data)
+                    imported += 1
                 continue
             
             # التحقق من وجود سجل مسبق
@@ -3941,6 +3982,7 @@ async def bulk_sync_attendance(
                 "status": record.get("status", "present"),
                 "source": "fingerprint",
                 "device_ip": record.get("device_ip", ""),
+                "fingerprint_id": str(record.get("fingerprint_id", "")),
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
