@@ -663,9 +663,11 @@ const FeedPurchases = () => {
 
   const openEditPurchase = (purchase) => {
     setEditingPurchase(purchase);
+    const supplier = suppliers.find(s => s.id === purchase.supplier_id);
     setPurchaseForm({
       supplier_id: purchase.supplier_id,
       supplier_name: purchase.supplier_name,
+      supplier_code: supplier?.code || purchase.supplier_id?.slice(0,6) || "",
       feed_type_id: purchase.feed_type_id,
       feed_type_name: purchase.feed_type_name,
       company_name: purchase.company_name,
@@ -674,7 +676,6 @@ const FeedPurchases = () => {
       unit: purchase.unit,
     });
     // Set balance including the current purchase amount (since it will be refunded if changed)
-    const supplier = suppliers.find(s => s.id === purchase.supplier_id);
     setSelectedSupplierBalance((supplier?.balance || 0) + (purchase.total_amount || 0));
     setPurchaseDialogOpen(true);
   };
