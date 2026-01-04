@@ -219,6 +219,7 @@ const HR = () => {
     center_name: "",
     fingerprint_id: "",
     work_location: "",
+    exclude_from_payroll: false,
     permissions: [],
     manager_id: "",
     manager_name: "",
