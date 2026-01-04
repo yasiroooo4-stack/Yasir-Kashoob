@@ -2481,6 +2481,27 @@ const HR = () => {
                 />
               </div>
             </div>
+            
+            {/* Work Location - موقع العمل */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "موقع العمل" : "Work Location"} *</Label>
+              <Select
+                value={employeeForm.work_location}
+                onValueChange={(v) => setEmployeeForm({ ...employeeForm, work_location: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر موقع العمل" : "Select Work Location"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {WORK_LOCATIONS.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label>{language === "ar" ? "المركز" : "Center"}</Label>
               <Select
