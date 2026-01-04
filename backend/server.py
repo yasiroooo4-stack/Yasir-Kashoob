@@ -2777,6 +2777,187 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
     return {"message": "Feed purchase deleted, amount refunded to supplier, and inventory/treasury updated"}
 
 
+# ==================== FEED PURCHASE PRINT (طباعة طلب شراء الأعلاف) ====================
+
+@api_router.get("/feed-purchases/{purchase_id}/print")
+async def print_feed_purchase(purchase_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate printable PDF for feed purchase request"""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+    import io
+    
+    # Get purchase data
+    purchase = await db.feed_purchases.find_one({"id": purchase_id}, {"_id": 0})
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    
+    # Get supplier data
+    supplier = await db.suppliers.find_one({"id": purchase["supplier_id"]}, {"_id": 0})
+    
+    # Get all feed types for the table
+    feed_types = await db.feed_types.find({}, {"_id": 0}).to_list(100)
+    
+    # Create PDF buffer
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20*mm, bottomMargin=20*mm)
+    
+    # Try to register Arabic font
+    try:
+        pdfmetrics.registerFont(TTFont('Arabic', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+        arabic_font = 'Arabic'
+    except:
+        arabic_font = 'Helvetica'
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'Title', fontSize=18, alignment=TA_CENTER, fontName=arabic_font,
+        spaceAfter=10
+    )
+    header_style = ParagraphStyle(
+        'Header', fontSize=12, alignment=TA_LEFT, fontName=arabic_font,
+        spaceAfter=5
+    )
+    remark_style = ParagraphStyle(
+        'Remark', fontSize=9, alignment=TA_LEFT, fontName=arabic_font,
+        spaceAfter=3
+    )
+    
+    elements = []
+    
+    # Title
+    elements.append(Paragraph("PURCHASE REQUEST", title_style))
+    elements.append(Paragraph("طلب شراء أعلاف", title_style))
+    elements.append(Spacer(1, 10*mm))
+    
+    # Header info table
+    header_data = [
+        [f"Farmer Name: {supplier.get('name', '')}", f"AMDC/DFI/{purchase.get('invoice_number', '')}"],
+        [f"Farmer Code: {supplier.get('id', '')[:8]}", f"Date: {purchase.get('purchase_date', '')[:10]}"],
+        [f"Farmer ID: {supplier.get('phone', '')}", ""],
+    ]
+    header_table = Table(header_data, colWidths=[100*mm, 80*mm])
+    header_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 10*mm))
+    
+    # Products table header
+    products_header = [
+        ["SL", "Product / اسم المنتج", "Weight / الوزن", "Quantity / الكمية"]
+    ]
+    
+    # Build products data - show all feed types with purchased quantity
+    products_data = []
+    sl = 1
+    for ft in feed_types:
+        qty = 0
+        weight = ft.get('kg_per_unit', 40)
+        if ft['id'] == purchase.get('feed_type_id'):
+            qty = purchase.get('quantity', 0)
+        products_data.append([
+            str(sl),
+            f"{ft.get('name', '')}",
+            f"{weight}",
+            str(int(qty)) if qty else "0"
+        ])
+        sl += 1
+    
+    # If no feed types, show just the purchased item
+    if not products_data:
+        products_data.append([
+            "1",
+            purchase.get('feed_type_name', ''),
+            str(purchase.get('unit', 'kg')),
+            str(purchase.get('quantity', 0))
+        ])
+    
+    all_products = products_header + products_data
+    products_table = Table(all_products, colWidths=[15*mm, 90*mm, 35*mm, 40*mm])
+    products_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(products_table)
+    elements.append(Spacer(1, 15*mm))
+    
+    # Total
+    total_data = [
+        ["", "", "Total / الإجمالي:", f"{purchase.get('total_amount', 0)} OMR"]
+    ]
+    total_table = Table(total_data, colWidths=[15*mm, 90*mm, 35*mm, 40*mm])
+    total_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('ALIGN', (2, 0), (3, 0), 'CENTER'),
+        ('FONTWEIGHT', (2, 0), (-1, -1), 'BOLD'),
+    ]))
+    elements.append(total_table)
+    elements.append(Spacer(1, 15*mm))
+    
+    # Remarks
+    elements.append(Paragraph("Remark: / ملاحظة:", header_style))
+    elements.append(Paragraph(
+        "1. The customer agreed to transfer the full feeds as per the purchase request signed",
+        remark_style
+    ))
+    elements.append(Paragraph(
+        "1- أنا العميل الموقع أعلاه موافق على شحن الكمية الموضحة في طلب الشراء بالكامل",
+        remark_style
+    ))
+    elements.append(Spacer(1, 3*mm))
+    elements.append(Paragraph(
+        "2. All farmers should bring ID copy. Without ID proof, feeds will not be issued",
+        remark_style
+    ))
+    elements.append(Paragraph(
+        "2- على جميع المربين إحضار نسخة من البطاقة الشخصية. بدون البطاقة الشخصية لن يتم صرف الأعلاف",
+        remark_style
+    ))
+    
+    # Signature section
+    elements.append(Spacer(1, 20*mm))
+    sig_data = [
+        ["Signature / التوقيع:", "_________________", "Date / التاريخ:", "_________________"]
+    ]
+    sig_table = Table(sig_data, colWidths=[40*mm, 50*mm, 40*mm, 50*mm])
+    sig_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+    ]))
+    elements.append(sig_table)
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=purchase_request_{purchase_id[:8]}.pdf"
+        }
+    )
+
+
 # ==================== FEED INVENTORY & REPORTS (مخزون وتقارير الأعلاف) ====================
 
 @api_router.get("/feed-inventory")
