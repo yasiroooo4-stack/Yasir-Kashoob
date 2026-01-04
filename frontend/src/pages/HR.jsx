@@ -1366,6 +1366,7 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "الكود" : "Code"}</TableHead>
                       <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
                       <TableHead>{language === "ar" ? "القسم" : "Department"}</TableHead>
+                      <TableHead>{language === "ar" ? "موقع العمل" : "Location"}</TableHead>
                       <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
                       <TableHead>{language === "ar" ? "المسؤول" : "Manager"}</TableHead>
                       <TableHead>{language === "ar" ? "الراتب" : "Salary"}</TableHead>
@@ -1377,7 +1378,7 @@ const HR = () => {
                   <TableBody>
                     {employees.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                           {t("no_data")}
                         </TableCell>
                       </TableRow>
@@ -1389,6 +1390,13 @@ const HR = () => {
                           </TableCell>
                           <TableCell className="font-medium">{emp.name}</TableCell>
                           <TableCell>{getDepartmentName(emp.department)}</TableCell>
+                          <TableCell>
+                            {emp.work_location ? (
+                              <Badge variant="secondary">{emp.work_location}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell>{emp.position}</TableCell>
                           <TableCell>
                             {emp.manager_name ? (
