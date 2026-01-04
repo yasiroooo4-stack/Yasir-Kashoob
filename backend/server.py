@@ -391,7 +391,7 @@ class OfficialLetterBase(BaseModel):
     employee_name: str
     department: Optional[str] = None
     position: Optional[str] = None
-    letter_type: str  # salary_certificate, employment_letter, experience_letter, mission_letter, no_objection, leave_request
+    letter_type: str  # salary_certificate, salary_continuity_certificate, employment_letter, experience_letter, mission_letter, no_objection, leave_request
     purpose: Optional[str] = None
     recipient: Optional[str] = None
     content: Optional[str] = None
