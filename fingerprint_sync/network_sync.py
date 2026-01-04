@@ -273,7 +273,7 @@ class NetworkSyncAgent:
         return processed
     
     def upload_attendance(self, records):
-        """رفع سجلات الحضور إلى API - استخدام bulk-sync"""
+        """رفع سجلات الحضور إلى API - تقسيم لدفعات صغيرة"""
         if not self.api_token:
             if not self.authenticate():
                 return False, 0, 0
@@ -283,33 +283,45 @@ class NetworkSyncAgent:
             'Content-Type': 'application/json'
         }
         
-        # محاولة استخدام bulk-sync أولاً
-        try:
-            logger.info(f"إرسال {len(records)} سجل...")
-            response = requests.post(
-                f"{self.api_url}/api/hr/attendance/bulk-sync",
-                json=records,
-                headers=headers,
-                timeout=120
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                imported = result.get('imported', 0)
-                updated = result.get('updated', 0)
-                errors = result.get('errors', [])
-                if errors:
-                    for err in errors[:5]:
-                        logger.warning(f"تحذير: {err}")
-                logger.info(f"✅ تم الرفع: {imported} جديد، {updated} محدث")
-                return True, imported, updated
-            else:
-                logger.error(f"فشل الإرسال: {response.status_code} | {response.text[:100]}")
-                return False, 0, 0
+        # تقسيم السجلات لدفعات صغيرة (100 سجل لكل دفعة)
+        BATCH_SIZE = 100
+        total_imported = 0
+        total_updated = 0
+        total_errors = []
+        
+        batches = [records[i:i + BATCH_SIZE] for i in range(0, len(records), BATCH_SIZE)]
+        logger.info(f"تقسيم {len(records)} سجل إلى {len(batches)} دفعة...")
+        
+        for batch_num, batch in enumerate(batches, 1):
+            try:
+                logger.info(f"إرسال الدفعة {batch_num}/{len(batches)} ({len(batch)} سجل)...")
+                response = requests.post(
+                    f"{self.api_url}/api/hr/attendance/bulk-sync",
+                    json=batch,
+                    headers=headers,
+                    timeout=60
+                )
                 
-        except Exception as e:
-            logger.error(f"خطأ في الاتصال: {e}")
-            return False, 0, 0
+                if response.status_code == 200:
+                    result = response.json()
+                    total_imported += result.get('imported', 0)
+                    total_updated += result.get('updated', 0)
+                    errors = result.get('errors', [])
+                    if errors:
+                        total_errors.extend(errors[:5])
+                    logger.info(f"  ✅ دفعة {batch_num}: {result.get('imported', 0)} جديد، {result.get('updated', 0)} محدث")
+                else:
+                    logger.error(f"  ❌ دفعة {batch_num}: فشل ({response.status_code})")
+                    
+            except Exception as e:
+                logger.error(f"  ❌ دفعة {batch_num}: خطأ - {e}")
+        
+        logger.info(f"✅ اكتملت المزامنة: {total_imported} جديد، {total_updated} محدث")
+        if total_errors:
+            for err in total_errors[:5]:
+                logger.warning(f"تحذير: {err}")
+        
+        return True, total_imported, total_updated
     
     def sync_now(self):
         """تنفيذ المزامنة الآن"""
