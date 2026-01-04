@@ -572,18 +572,31 @@ const FeedPurchases = () => {
         <CardHeader>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <TabsList className="grid w-full max-w-lg grid-cols-3">
+              <TabsList className="grid w-full max-w-3xl grid-cols-5">
                 <TabsTrigger value="purchases" className="gap-2" data-testid="tab-purchases">
                   <ShoppingBag className="w-4 h-4" />
-                  {t("feed_purchases")}
+                  <span className="hidden sm:inline">{t("feed_purchases")}</span>
+                  <span className="sm:hidden">{language === "ar" ? "مشتريات" : "Purchases"}</span>
+                </TabsTrigger>
+                <TabsTrigger value="inventory" className="gap-2" data-testid="tab-inventory">
+                  <Package className="w-4 h-4" />
+                  <span className="hidden sm:inline">{language === "ar" ? "المخزون" : "Inventory"}</span>
+                  <span className="sm:hidden">{language === "ar" ? "مخزون" : "Stock"}</span>
+                </TabsTrigger>
+                <TabsTrigger value="reports" className="gap-2" data-testid="tab-reports">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="hidden sm:inline">{language === "ar" ? "التقارير" : "Reports"}</span>
+                  <span className="sm:hidden">{language === "ar" ? "تقارير" : "Reports"}</span>
                 </TabsTrigger>
                 <TabsTrigger value="companies" className="gap-2" data-testid="tab-companies">
                   <Building2 className="w-4 h-4" />
-                  {t("feed_companies")}
+                  <span className="hidden sm:inline">{t("feed_companies")}</span>
+                  <span className="sm:hidden">{language === "ar" ? "شركات" : "Companies"}</span>
                 </TabsTrigger>
                 <TabsTrigger value="types" className="gap-2" data-testid="tab-types">
                   <Wheat className="w-4 h-4" />
-                  {t("feed_types")}
+                  <span className="hidden sm:inline">{t("feed_types")}</span>
+                  <span className="sm:hidden">{language === "ar" ? "أنواع" : "Types"}</span>
                 </TabsTrigger>
               </TabsList>
               
