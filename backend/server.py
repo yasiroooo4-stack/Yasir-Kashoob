@@ -7859,6 +7859,10 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
     
     payroll_records = []
     
+    # Constants for overtime calculation
+    STANDARD_HOURS_PER_DAY = 8
+    OVERTIME_MULTIPLIER = 1.5
+    
     for emp in employees:
         # Filter attendance for this employee
         emp_attendance = [a for a in attendance_records if a.get("employee_id") == emp.get("id") or a.get("employee_name") == emp.get("name")]
@@ -7874,9 +7878,16 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         absent_days = len([a for a in emp_attendance if a.get("status") == "absent"])
         unpaid_leave = len([a for a in emp_attendance if a.get("status") == "unpaid_leave"])
         
+        # Calculate overtime hours from attendance records
+        total_overtime_hours = 0.0
+        for att in emp_attendance:
+            overtime_hrs = att.get("overtime_hours", 0) or 0
+            total_overtime_hours += overtime_hrs
+        
         # Calculate salary
         basic_salary = emp.get("salary", 0)
         daily_rate = basic_salary / 30 if basic_salary > 0 else 0
+        hourly_rate = daily_rate / STANDARD_HOURS_PER_DAY if daily_rate > 0 else 0
         
         # Total pay days = working + paid leaves
         total_pay_days = working_days + day_off + sick_leave + annual_leave + public_holiday + emergency_leave + on_duty
@@ -7884,11 +7895,14 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         # Gross salary
         gross_salary = daily_rate * total_pay_days
         
+        # Overtime pay (1.5x hourly rate)
+        overtime_pay = total_overtime_hours * hourly_rate * OVERTIME_MULTIPLIER
+        
         # Deductions for unpaid leave and absences
         deductions = daily_rate * (absent_days + unpaid_leave)
         
-        # Net salary
-        net_salary = gross_salary - deductions
+        # Net salary = gross + overtime - deductions
+        net_salary = gross_salary + overtime_pay - deductions
         
         record = PayrollRecord(
             period_id=period_id,
@@ -7897,6 +7911,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
             employee_code=emp.get("employee_code"),
             department=emp.get("department"),
             position=emp.get("position"),
+            work_location=emp.get("work_location"),
             working_days=working_days,
             day_off=day_off,
             sick_leave=sick_leave,
@@ -7906,10 +7921,13 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
             on_duty=on_duty,
             absent_days=absent_days,
             unpaid_leave=unpaid_leave,
+            total_overtime_hours=round(total_overtime_hours, 2),
             basic_salary=basic_salary,
             daily_rate=round(daily_rate, 3),
+            hourly_rate=round(hourly_rate, 3),
             total_pay_days=total_pay_days,
             gross_salary=round(gross_salary, 3),
+            overtime_pay=round(overtime_pay, 3),
             deductions=round(deductions, 3),
             net_salary=round(net_salary, 3)
         )
