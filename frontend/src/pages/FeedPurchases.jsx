@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet, Printer, CheckCircle, Package, FileText, TrendingUp } from "lucide-react";
+import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet, Printer, CheckCircle, Package, FileText, TrendingUp, AlertTriangle, Bell } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 
 const FeedPurchases = () => {
@@ -57,6 +57,7 @@ const FeedPurchases = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [feedInventory, setFeedInventory] = useState([]);
   const [feedReport, setFeedReport] = useState(null);
+  const [feedAlerts, setFeedAlerts] = useState(null);
   
   // Dialog states
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
@@ -66,6 +67,9 @@ const FeedPurchases = () => {
   const [deleteType, setDeleteType] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [editingPurchase, setEditingPurchase] = useState(null);
+  const [minStockDialogOpen, setMinStockDialogOpen] = useState(false);
+  const [selectedFeedType, setSelectedFeedType] = useState(null);
+  const [minStockValue, setMinStockValue] = useState("");
   
   // Form states
   const [purchaseForm, setPurchaseForm] = useState({
