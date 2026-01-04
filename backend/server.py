@@ -2775,6 +2775,129 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
     
     return {"message": "Feed purchase deleted, amount refunded to supplier, and inventory/treasury updated"}
 
+
+# ==================== FEED INVENTORY & REPORTS (مخزون وتقارير الأعلاف) ====================
+
+@api_router.get("/feed-inventory")
+async def get_feed_inventory(current_user: dict = Depends(get_current_user)):
+    """Get all feed inventory items"""
+    inventory = await db.feed_inventory.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return inventory
+
+@api_router.get("/feed-inventory/summary")
+async def get_feed_inventory_summary(current_user: dict = Depends(get_current_user)):
+    """Get feed inventory summary by feed type"""
+    inventory = await db.feed_inventory.find({}, {"_id": 0}).to_list(1000)
+    
+    # Group by feed type
+    summary = {}
+    for item in inventory:
+        product_name = item.get("product_name", "Unknown")
+        if product_name not in summary:
+            summary[product_name] = {
+                "product_name": product_name,
+                "company_name": item.get("company_name", ""),
+                "unit": item.get("unit", "kg"),
+                "total_quantity": 0,
+                "total_value": 0,
+                "purchase_count": 0
+            }
+        summary[product_name]["total_quantity"] += item.get("quantity", 0)
+        summary[product_name]["total_value"] += item.get("total_value", 0)
+        summary[product_name]["purchase_count"] += 1
+    
+    return list(summary.values())
+
+@api_router.get("/reports/feed-purchases")
+async def get_feed_purchase_report(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    supplier_id: Optional[str] = None,
+    feed_type_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get detailed feed purchase report with statistics"""
+    query = {}
+    
+    if supplier_id:
+        query["supplier_id"] = supplier_id
+    if feed_type_id:
+        query["feed_type_id"] = feed_type_id
+    if start_date:
+        query["purchase_date"] = {"$gte": start_date}
+    if end_date:
+        if "purchase_date" in query:
+            query["purchase_date"]["$lte"] = end_date
+        else:
+            query["purchase_date"] = {"$lte": end_date}
+    
+    purchases = await db.feed_purchases.find(query, {"_id": 0}).sort("purchase_date", -1).to_list(10000)
+    
+    # Calculate statistics
+    total_purchases = len(purchases)
+    total_amount = sum(p.get("total_amount", 0) for p in purchases)
+    total_quantity = sum(p.get("quantity", 0) for p in purchases)
+    
+    # Group by supplier
+    by_supplier = {}
+    for p in purchases:
+        sid = p.get("supplier_id")
+        if sid not in by_supplier:
+            by_supplier[sid] = {
+                "supplier_name": p.get("supplier_name", ""),
+                "total_amount": 0,
+                "total_quantity": 0,
+                "purchase_count": 0
+            }
+        by_supplier[sid]["total_amount"] += p.get("total_amount", 0)
+        by_supplier[sid]["total_quantity"] += p.get("quantity", 0)
+        by_supplier[sid]["purchase_count"] += 1
+    
+    # Group by feed type
+    by_feed_type = {}
+    for p in purchases:
+        ftid = p.get("feed_type_id")
+        if ftid not in by_feed_type:
+            by_feed_type[ftid] = {
+                "feed_type_name": p.get("feed_type_name", ""),
+                "company_name": p.get("company_name", ""),
+                "total_amount": 0,
+                "total_quantity": 0,
+                "purchase_count": 0
+            }
+        by_feed_type[ftid]["total_amount"] += p.get("total_amount", 0)
+        by_feed_type[ftid]["total_quantity"] += p.get("quantity", 0)
+        by_feed_type[ftid]["purchase_count"] += 1
+    
+    # Group by month
+    by_month = {}
+    for p in purchases:
+        date_str = p.get("purchase_date", "")[:7]  # YYYY-MM
+        if date_str not in by_month:
+            by_month[date_str] = {
+                "month": date_str,
+                "total_amount": 0,
+                "total_quantity": 0,
+                "purchase_count": 0
+            }
+        by_month[date_str]["total_amount"] += p.get("total_amount", 0)
+        by_month[date_str]["total_quantity"] += p.get("quantity", 0)
+        by_month[date_str]["purchase_count"] += 1
+    
+    return {
+        "summary": {
+            "total_purchases": total_purchases,
+            "total_amount": total_amount,
+            "total_quantity": total_quantity,
+            "average_purchase_amount": total_amount / total_purchases if total_purchases > 0 else 0
+        },
+        "by_supplier": list(by_supplier.values()),
+        "by_feed_type": list(by_feed_type.values()),
+        "by_month": sorted(list(by_month.values()), key=lambda x: x["month"], reverse=True),
+        "purchases": purchases[:100]  # Return last 100 for display
+    }
+
+
 # ==================== TREASURY ROUTES (الخزينة) ====================
 
 @api_router.get("/treasury/balance")
