@@ -3865,6 +3865,35 @@ async def create_employee_account(
 
 # ==================== HR - ATTENDANCE (الحضور والانصراف) ====================
 
+# Helper function to calculate total hours and overtime
+def calculate_work_hours(check_in: str, check_out: str) -> tuple:
+    """Calculate total hours worked and overtime hours"""
+    STANDARD_HOURS = 8
+    
+    if not check_in or not check_out:
+        return (None, None)
+    
+    try:
+        # Parse times
+        in_time = datetime.fromisoformat(check_in.replace("Z", "+00:00"))
+        out_time = datetime.fromisoformat(check_out.replace("Z", "+00:00"))
+        
+        # Calculate total hours
+        total_hours = (out_time - in_time).total_seconds() / 3600
+        
+        # Calculate overtime (hours > 8)
+        overtime_hours = max(0, total_hours - STANDARD_HOURS)
+        
+        return (round(total_hours, 2), round(overtime_hours, 2))
+    except:
+        return (None, None)
+
+# Helper function to get employee's work location
+async def get_employee_work_location(employee_id: str) -> str:
+    """Get employee's work location from database"""
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"work_location": 1})
+    return employee.get("work_location") if employee else None
+
 @api_router.post("/hr/attendance", response_model=Attendance)
 async def create_attendance(attendance_data: AttendanceCreate, current_user: dict = Depends(get_current_user)):
     # Check if attendance already exists for this employee and date
