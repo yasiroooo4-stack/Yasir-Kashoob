@@ -3895,6 +3895,133 @@ async def upsert_attendance(attendance_data: AttendanceCreate, current_user: dic
     await db.hr_attendance.insert_one(attendance.model_dump())
     return {"status": "created", "attendance": attendance.model_dump()}
 
+
+# ==================== BULK ATTENDANCE SYNC (مزامنة مجمعة للحضور) ====================
+
+@api_router.post("/hr/attendance/bulk-sync")
+async def bulk_sync_attendance(
+    records: List[dict],
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Bulk sync attendance records from desktop app.
+    Accepts a list of attendance records and creates/updates them.
+    """
+    imported = 0
+    updated = 0
+    errors = []
+    
+    for record in records:
+        try:
+            # البحث عن الموظف بواسطة fingerprint_id أو employee_id
+            employee = None
+            if record.get("fingerprint_id"):
+                employee = await db.hr_employees.find_one({"fingerprint_id": record["fingerprint_id"]}, {"_id": 0})
+            if not employee and record.get("employee_id"):
+                employee = await db.hr_employees.find_one({"id": record["employee_id"]}, {"_id": 0})
+            
+            # إذا لم نجد الموظف، نتجاهل السجل
+            if not employee:
+                errors.append(f"Employee not found for fingerprint_id: {record.get('fingerprint_id')}")
+                continue
+            
+            # التحقق من وجود سجل مسبق
+            existing = await db.hr_attendance.find_one({
+                "employee_id": employee["id"],
+                "date": record.get("date")
+            })
+            
+            attendance_data = {
+                "id": str(uuid.uuid4()) if not existing else existing["id"],
+                "employee_id": employee["id"],
+                "employee_name": employee.get("name", ""),
+                "date": record.get("date"),
+                "check_in": record.get("check_in"),
+                "check_out": record.get("check_out"),
+                "status": record.get("status", "present"),
+                "source": "fingerprint",
+                "device_ip": record.get("device_ip", ""),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            if existing:
+                # تحديث السجل الموجود
+                await db.hr_attendance.update_one(
+                    {"id": existing["id"]},
+                    {"$set": attendance_data}
+                )
+                updated += 1
+            else:
+                # إنشاء سجل جديد
+                await db.hr_attendance.insert_one(attendance_data)
+                imported += 1
+                
+        except Exception as e:
+            errors.append(f"Error processing record: {str(e)}")
+    
+    return {
+        "success": True,
+        "imported": imported,
+        "updated": updated,
+        "errors": errors[:10] if errors else []  # Return first 10 errors only
+    }
+
+
+@api_router.post("/hr/attendance/sync")
+async def sync_single_attendance(
+    record: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Sync a single attendance record from desktop app.
+    Creates or updates the record.
+    """
+    try:
+        # البحث عن الموظف
+        employee = None
+        if record.get("fingerprint_id"):
+            employee = await db.hr_employees.find_one({"fingerprint_id": record["fingerprint_id"]}, {"_id": 0})
+        if not employee and record.get("employee_id"):
+            employee = await db.hr_employees.find_one({"id": record["employee_id"]}, {"_id": 0})
+        
+        if not employee:
+            raise HTTPException(status_code=404, detail=f"Employee not found for fingerprint_id: {record.get('fingerprint_id')}")
+        
+        # التحقق من وجود سجل مسبق
+        existing = await db.hr_attendance.find_one({
+            "employee_id": employee["id"],
+            "date": record.get("date")
+        })
+        
+        attendance_data = {
+            "id": str(uuid.uuid4()) if not existing else existing["id"],
+            "employee_id": employee["id"],
+            "employee_name": employee.get("name", ""),
+            "date": record.get("date"),
+            "check_in": record.get("check_in"),
+            "check_out": record.get("check_out"),
+            "status": record.get("status", "present"),
+            "source": "fingerprint",
+            "device_ip": record.get("device_ip", ""),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if existing:
+            await db.hr_attendance.update_one(
+                {"id": existing["id"]},
+                {"$set": attendance_data}
+            )
+            return {"status": "updated", "attendance": attendance_data}
+        else:
+            await db.hr_attendance.insert_one(attendance_data)
+            return {"status": "created", "attendance": attendance_data}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.get("/hr/attendance")
 async def get_attendance(
     employee_id: Optional[str] = None,
