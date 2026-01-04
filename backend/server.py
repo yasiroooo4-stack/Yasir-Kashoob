@@ -2543,6 +2543,39 @@ async def create_feed_purchase(purchase_data: FeedPurchaseCreate, current_user: 
         {"$inc": {"balance": -total_amount}}
     )
     
+    # ===== AUTO-LINK TO INVENTORY =====
+    # Add feed to inventory
+    feed_type = await db.feed_types.find_one({"id": purchase_data.feed_type_id}, {"_id": 0})
+    feed_inventory = {
+        "id": str(uuid.uuid4()),
+        "product_type": "feed",
+        "product_name": purchase.feed_type_name,
+        "quantity": purchase.quantity,
+        "unit": purchase.unit,
+        "price_per_unit": purchase.price_per_unit,
+        "total_value": total_amount,
+        "supplier_id": purchase.supplier_id,
+        "supplier_name": purchase.supplier_name,
+        "company_name": purchase.company_name,
+        "purchase_id": purchase.id,
+        "invoice_number": invoice_number,
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.feed_inventory.insert_one(feed_inventory)
+    
+    # ===== AUTO-LINK TO TREASURY/FINANCE =====
+    # Record as expense in treasury (withdrawal from supplier credit to feed)
+    await update_treasury(
+        transaction_type="withdrawal",
+        amount=total_amount,
+        source_type="feed_purchase",
+        source_id=purchase.id,
+        description=f"شراء علف: {purchase.feed_type_name} - {purchase.quantity} {purchase.unit} للمورد {supplier.get('name')} (خصم من رصيد المورد)",
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", "")
+    )
+    
     await log_activity(
         user_id=current_user["id"],
         user_name=current_user["full_name"],
@@ -2550,7 +2583,7 @@ async def create_feed_purchase(purchase_data: FeedPurchaseCreate, current_user: 
         entity_type="feed_purchase",
         entity_id=purchase.id,
         entity_name=supplier.get("name"),
-        details=f"فاتورة شراء علف: {invoice_number} - {purchase.feed_type_name} - {total_amount} ر.ع من رصيد {supplier.get('name')}"
+        details=f"فاتورة شراء علف: {invoice_number} - {purchase.feed_type_name} - {total_amount} ر.ع من رصيد {supplier.get('name')} (مرتبط بالمخزون والمالية)"
     )
     
     return purchase
@@ -2712,6 +2745,21 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
         {"$inc": {"balance": existing.get("total_amount", 0)}}
     )
     
+    # ===== REMOVE FROM INVENTORY =====
+    await db.feed_inventory.delete_one({"purchase_id": purchase_id})
+    
+    # ===== REVERSE TREASURY TRANSACTION =====
+    # Add back to treasury (deposit) to reverse the withdrawal
+    await update_treasury(
+        transaction_type="deposit",
+        amount=existing.get("total_amount", 0),
+        source_type="feed_purchase_reversal",
+        source_id=purchase_id,
+        description=f"إلغاء شراء علف: {existing.get('feed_type_name', '')} - إرجاع {existing.get('total_amount', 0)} ر.ع لرصيد {supplier_name}",
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", "")
+    )
+    
     # Delete purchase
     await db.feed_purchases.delete_one({"id": purchase_id})
     
@@ -2722,10 +2770,10 @@ async def delete_feed_purchase(purchase_id: str, current_user: dict = Depends(ge
         entity_type="feed_purchase",
         entity_id=purchase_id,
         entity_name=supplier_name,
-        details=f"حذف شراء علف وإرجاع {existing.get('total_amount', 0)} ر.ع لرصيد {supplier_name}"
+        details=f"حذف شراء علف وإرجاع {existing.get('total_amount', 0)} ر.ع لرصيد {supplier_name} (تم تحديث المخزون والمالية)"
     )
     
-    return {"message": "Feed purchase deleted and amount refunded to supplier"}
+    return {"message": "Feed purchase deleted, amount refunded to supplier, and inventory/treasury updated"}
 
 # ==================== TREASURY ROUTES (الخزينة) ====================
 
