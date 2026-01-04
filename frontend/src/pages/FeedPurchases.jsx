@@ -1405,32 +1405,22 @@ const FeedPurchases = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePurchaseSubmit} className="space-y-4">
-            {/* Supplier Selection */}
+            {/* Supplier Code Input */}
             <div className="space-y-2">
-              <Label>{t("supplier")} *</Label>
-              <Select value={purchaseForm.supplier_id} onValueChange={handleSupplierChange}>
-                <SelectTrigger data-testid="purchase-supplier-select">
-                  <SelectValue placeholder={t("supplier")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.filter(s => s.balance > 0 || (editingPurchase && s.id === editingPurchase.supplier_id)).map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.code || supplier.id?.slice(0,6)} - {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>{language === "ar" ? "كود المورد" : "Supplier Code"} *</Label>
+              <Input
+                type="text"
+                placeholder={language === "ar" ? "أدخل كود المورد..." : "Enter supplier code..."}
+                value={purchaseForm.supplier_code}
+                onChange={(e) => handleSupplierCodeChange(e.target.value)}
+                data-testid="purchase-supplier-code-input"
+                className="text-lg"
+              />
             </div>
 
-            {/* Supplier Info Display - Shows after selection */}
+            {/* Supplier Info Display - Shows after code match */}
             {purchaseForm.supplier_id && (
-              <div className="grid grid-cols-3 gap-3 p-3 bg-muted/50 rounded-lg border">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">{language === "ar" ? "كود المورد" : "Supplier Code"}</p>
-                  <p className="font-medium text-sm">
-                    {suppliers.find(s => s.id === purchaseForm.supplier_id)?.code || purchaseForm.supplier_id?.slice(0,6)}
-                  </p>
-                </div>
+              <div className="grid grid-cols-2 gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">{language === "ar" ? "اسم المورد" : "Supplier Name"}</p>
                   <p className="font-medium text-sm">{purchaseForm.supplier_name}</p>
@@ -1441,6 +1431,15 @@ const FeedPurchases = () => {
                     {selectedSupplierBalance.toLocaleString()} {t("currency")}
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* No supplier found warning */}
+            {purchaseForm.supplier_code.length >= 3 && !purchaseForm.supplier_id && (
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-sm text-amber-700">
+                  {language === "ar" ? "لم يتم العثور على مورد بهذا الكود أو رصيده صفر" : "No supplier found with this code or balance is zero"}
+                </p>
               </div>
             )}
 
