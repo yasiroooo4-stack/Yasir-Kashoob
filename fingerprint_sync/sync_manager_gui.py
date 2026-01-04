@@ -69,9 +69,10 @@ class SyncManagerApp:
         """تحميل ملف التكوين"""
         default_config = {
             'api_url': 'https://milk-erp-1.preview.emergentagent.com',
-            'username': '',
-            'password': '',
-            'sync_interval': 3600,
+            'username': 'yasir',
+            'password': 'admin123',
+            'sync_interval': 3600,  # ساعة واحدة (60 دقيقة)
+            'auto_sync_enabled': True,  # تفعيل المزامنة التلقائية افتراضياً
             'devices': [],
             'mdb_paths': []
         }
