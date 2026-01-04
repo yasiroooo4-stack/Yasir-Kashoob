@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet, Printer, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Wheat, Building2, ShoppingBag, Wallet, Printer, CheckCircle, Package, FileText, TrendingUp } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 
 const FeedPurchases = () => {
@@ -55,6 +55,8 @@ const FeedPurchases = () => {
   const [companies, setCompanies] = useState([]);
   const [feedTypes, setFeedTypes] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [feedInventory, setFeedInventory] = useState([]);
+  const [feedReport, setFeedReport] = useState(null);
   
   // Dialog states
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
