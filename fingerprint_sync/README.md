@@ -98,7 +98,7 @@ python sync_agent.py --mdb C:/ZKTeco/att2000.mdb -u yasir -p password
 
 ```json
 {
-  "api_url": "https://milk-erp-1.preview.emergentagent.com",
+  "api_url": "https://agritrack-18.preview.emergentagent.com",
   "username": "yasir",
   "password": "your_password",
   "sync_interval": 3600,
