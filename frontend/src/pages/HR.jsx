@@ -2339,6 +2339,11 @@ const HR = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Fingerprints Tab */}
+        <TabsContent value="fingerprints">
+          <FingerprintManager />
+        </TabsContent>
       </Tabs>
 
       {/* Employee Dialog */}
