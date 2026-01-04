@@ -65,6 +65,16 @@ class SyncManagerApp:
         self.load_devices_to_list()
         self.update_status("جاهز للعمل")
         
+        # تشغيل المزامنة التلقائية إذا كانت مفعلة
+        if self.config.get('auto_sync_enabled', False):
+            self.root.after(1000, self.start_auto_sync_on_load)
+    
+    def start_auto_sync_on_load(self):
+        """تشغيل المزامنة التلقائية عند بدء التطبيق"""
+        self.auto_sync_var.set(True)
+        self.toggle_auto_sync()
+        self.log("🚀 تم تشغيل المزامنة التلقائية (كل ساعة)")
+        
     def load_config(self):
         """تحميل ملف التكوين"""
         default_config = {
