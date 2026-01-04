@@ -2899,6 +2899,87 @@ async def get_feed_purchase_report(
     }
 
 
+# ==================== FEED STOCK ALERTS (تنبيهات مخزون الأعلاف) ====================
+
+@api_router.get("/feed-inventory/alerts")
+async def get_feed_inventory_alerts(current_user: dict = Depends(get_current_user)):
+    """Get feed inventory alerts for low stock items"""
+    # Get all feed types with their min_stock_alert
+    feed_types = await db.feed_types.find({}, {"_id": 0}).to_list(1000)
+    feed_types_dict = {ft["id"]: ft for ft in feed_types}
+    
+    # Get current inventory grouped by feed type
+    inventory = await db.feed_inventory.find({}, {"_id": 0}).to_list(10000)
+    
+    # Calculate current stock per feed type
+    current_stock = {}
+    for item in inventory:
+        ft_id = item.get("purchase_id")  # Get feed type from purchase
+        ft_name = item.get("product_name", "")
+        if ft_name not in current_stock:
+            current_stock[ft_name] = {
+                "product_name": ft_name,
+                "current_quantity": 0,
+                "unit": item.get("unit", "kg"),
+                "total_value": 0
+            }
+        current_stock[ft_name]["current_quantity"] += item.get("quantity", 0)
+        current_stock[ft_name]["total_value"] += item.get("total_value", 0)
+    
+    # Check for low stock alerts
+    alerts = []
+    for ft in feed_types:
+        ft_name = ft.get("name", "")
+        min_stock = ft.get("min_stock_alert", 0)
+        current = current_stock.get(ft_name, {}).get("current_quantity", 0)
+        
+        if min_stock > 0 and current < min_stock:
+            alerts.append({
+                "feed_type_id": ft.get("id"),
+                "feed_type_name": ft_name,
+                "company_name": ft.get("company_name", ""),
+                "min_stock_alert": min_stock,
+                "current_quantity": current,
+                "unit": ft.get("unit", "kg"),
+                "shortage": min_stock - current,
+                "alert_level": "critical" if current == 0 else "warning"
+            })
+    
+    return {
+        "alerts": sorted(alerts, key=lambda x: x["shortage"], reverse=True),
+        "total_alerts": len(alerts),
+        "critical_count": len([a for a in alerts if a["alert_level"] == "critical"]),
+        "warning_count": len([a for a in alerts if a["alert_level"] == "warning"])
+    }
+
+@api_router.put("/feed-types/{feed_type_id}/min-stock")
+async def update_feed_type_min_stock(
+    feed_type_id: str,
+    min_stock: float,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update minimum stock alert level for a feed type"""
+    result = await db.feed_types.update_one(
+        {"id": feed_type_id},
+        {"$set": {"min_stock_alert": min_stock}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Feed type not found")
+    
+    feed_type = await db.feed_types.find_one({"id": feed_type_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_feed_min_stock",
+        entity_type="feed_type",
+        entity_id=feed_type_id,
+        entity_name=feed_type.get("name"),
+        details=f"تعديل الحد الأدنى للتنبيه: {feed_type.get('name')} - {min_stock}"
+    )
+    
+    return feed_type
+
 # ==================== TREASURY ROUTES (الخزينة) ====================
 
 @api_router.get("/treasury/balance")
