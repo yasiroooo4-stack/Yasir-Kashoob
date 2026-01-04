@@ -667,7 +667,7 @@ const FeedPurchases = () => {
     setPurchaseForm({
       supplier_id: purchase.supplier_id,
       supplier_name: purchase.supplier_name,
-      supplier_code: supplier?.code || purchase.supplier_id?.slice(0,6) || "",
+      supplier_code: supplier?.supplier_code || purchase.supplier_id?.slice(0,6) || "",
       feed_type_id: purchase.feed_type_id,
       feed_type_name: purchase.feed_type_name,
       company_name: purchase.company_name,
