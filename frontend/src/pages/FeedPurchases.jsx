@@ -1498,6 +1498,59 @@ const FeedPurchases = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Min Stock Alert Dialog */}
+      <Dialog open={minStockDialogOpen} onOpenChange={setMinStockDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-orange-500" />
+              {language === "ar" ? "إعداد تنبيه المخزون" : "Set Stock Alert"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "ar" 
+                ? `تحديد الحد الأدنى للتنبيه عند انخفاض مخزون "${selectedFeedType?.name}"`
+                : `Set minimum stock level alert for "${selectedFeedType?.name}"`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="minStock">
+                {language === "ar" ? "الحد الأدنى للكمية" : "Minimum Quantity"} ({getUnitLabel(selectedFeedType?.unit || "kg")})
+              </Label>
+              <Input
+                id="minStock"
+                type="number"
+                step="1"
+                min="0"
+                value={minStockValue}
+                onChange={(e) => setMinStockValue(e.target.value)}
+                placeholder={language === "ar" ? "أدخل الكمية" : "Enter quantity"}
+                data-testid="min-stock-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                {language === "ar" 
+                  ? "سيظهر تنبيه عندما ينخفض المخزون عن هذا الحد. أدخل 0 لإلغاء التنبيه."
+                  : "An alert will show when stock falls below this level. Enter 0 to disable."}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMinStockDialogOpen(false)}>
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleUpdateMinStock}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              data-testid="save-min-stock-btn"
+            >
+              <Bell className="w-4 h-4 me-2" />
+              {language === "ar" ? "حفظ التنبيه" : "Save Alert"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
