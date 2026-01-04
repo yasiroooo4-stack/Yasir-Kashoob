@@ -805,12 +805,21 @@ const HR = () => {
           
           <div class="letter-body">
             <p><strong>إلى من يهمه الأمر،</strong></p>
-            <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
-            ${letter.department ? `<p>القسم: ${letter.department}</p>` : ''}
-            ${letter.position ? `<p>المسمى الوظيفي: ${letter.position}</p>` : ''}
-            ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
-            ${letter.content ? `<p>${letter.content}</p>` : ''}
-            <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
+            ${letter.letter_type === 'salary_continuity_certificate' ? `
+              <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
+              ${letter.position ? `<p>يعمل لدينا بمسمى وظيفي: <strong>${letter.position}</strong></p>` : ''}
+              ${letter.department ? `<p>في قسم: <strong>${letter.department}</strong></p>` : ''}
+              <p>وأنه مستمر على رأس العمل حتى تاريخه ويتقاضى راتباً شهرياً.</p>
+              ${letter.content ? `<p>${letter.content}</p>` : ''}
+              <p>أُعطيت له هذه الشهادة بناءً على طلبه لتقديمها إلى ${letter.recipient || 'الجهة المختصة'} دون أدنى مسؤولية على الشركة.</p>
+            ` : `
+              <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
+              ${letter.department ? `<p>القسم: ${letter.department}</p>` : ''}
+              ${letter.position ? `<p>المسمى الوظيفي: ${letter.position}</p>` : ''}
+              ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
+              ${letter.content ? `<p>${letter.content}</p>` : ''}
+              <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
+            `}
           </div>
           
           <div class="signature-section">
