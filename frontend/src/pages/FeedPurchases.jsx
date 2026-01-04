@@ -606,6 +606,7 @@ const FeedPurchases = () => {
     setPurchaseForm({
       supplier_id: "",
       supplier_name: "",
+      supplier_code: "",
       feed_type_id: "",
       feed_type_name: "",
       company_name: "",
