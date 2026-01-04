@@ -880,13 +880,14 @@ const FeedPurchases = () => {
                     <TableHead>{t("unit")}</TableHead>
                     <TableHead>{t("kg_per_unit")}</TableHead>
                     <TableHead>{t("price_per_unit")}</TableHead>
+                    <TableHead>{language === "ar" ? "الحد الأدنى" : "Min Stock"}</TableHead>
                     <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {feedTypes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         {t("no_data")}
                       </TableCell>
                     </TableRow>
@@ -906,6 +907,17 @@ const FeedPurchases = () => {
                         </TableCell>
                         <TableCell className="font-semibold">
                           {feedType.price_per_unit} {t("currency")}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={feedType.min_stock_alert > 0 ? "text-orange-600" : "text-muted-foreground"}
+                            onClick={() => openMinStockDialog(feedType)}
+                          >
+                            <Bell className="w-4 h-4 me-1" />
+                            {feedType.min_stock_alert > 0 ? feedType.min_stock_alert : "-"}
+                          </Button>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
