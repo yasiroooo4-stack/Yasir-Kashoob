@@ -227,8 +227,8 @@ const FeedPurchases = () => {
     const printWindow = window.open('', '_blank');
     const printDate = new Date(purchase.purchase_date).toLocaleDateString('en-GB').replace(/\//g, '-');
     
-    // Get the logo URL from public folder
-    const logoUrl = window.location.origin + '/logo-almorooj.png';
+    // Use the uploaded logo URL directly
+    const logoUrl = 'https://customer-assets.emergentagent.com/job_milk-erp-1/artifacts/ciylod8k_image.png';
     
     // Build feed types rows
     let feedTypesRows = '';
