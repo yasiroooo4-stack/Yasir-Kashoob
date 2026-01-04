@@ -1553,11 +1553,14 @@ async def reset_password(token: str = Form(...), new_password: str = Form(...)):
     if datetime.now(timezone.utc) > expires_at:
         raise HTTPException(status_code=400, detail="Reset token has expired")
     
-    # Update password
+    # Update password - update both fields for compatibility
     new_hash = hash_password(new_password)
     await db.users.update_one(
         {"id": reset_token["user_id"]},
-        {"$set": {"password": new_hash}}
+        {"$set": {
+            "password": new_hash,
+            "password_hash": new_hash
+        }}
     )
     
     # Mark token as used
