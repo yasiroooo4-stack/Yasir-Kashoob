@@ -596,6 +596,7 @@ class PayrollRecord(BaseModel):
     employee_code: Optional[str] = None
     department: Optional[str] = None
     position: Optional[str] = None
+    work_location: Optional[str] = None  # موقع العمل
     nationality: Optional[str] = None
     # Attendance summary
     working_days: int = 0  # أيام العمل الفعلية
@@ -612,9 +613,12 @@ class PayrollRecord(BaseModel):
     unpaid_leave: int = 0  # إجازة بدون راتب LWP
     absent_days: int = 0  # غياب AB
     otp_days: int = 0  # عطل بصمة OTP
+    # Overtime
+    total_overtime_hours: float = 0.0  # إجمالي ساعات العمل الإضافي
     # Salary calculation
     basic_salary: float = 0.0
     daily_rate: float = 0.0
+    hourly_rate: float = 0.0  # سعر الساعة
     total_pay_days: int = 0  # إجمالي الأيام المستحقة
     gross_salary: float = 0.0  # الراتب الإجمالي
     deductions: float = 0.0  # الخصومات
