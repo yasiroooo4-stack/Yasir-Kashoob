@@ -226,6 +226,284 @@ const Payroll = () => {
     return "";
   };
 
+  // Print payroll report by location type
+  const handlePrintPayroll = (type) => {
+    if (!currentPeriod || payrollRecords.length === 0) {
+      toast.error(language === "ar" ? "لا توجد سجلات للطباعة" : "No records to print");
+      return;
+    }
+
+    // Filter records by location type
+    const locations = type === "centers" ? CENTER_LOCATIONS : ADMIN_LOCATIONS;
+    const filteredRecords = payrollRecords.filter(r => 
+      locations.includes(r.work_location) || 
+      (type === "centers" && !r.work_location && !ADMIN_LOCATIONS.includes(r.work_location))
+    );
+
+    if (filteredRecords.length === 0) {
+      toast.error(language === "ar" ? "لا توجد سجلات لهذا التقرير" : "No records for this report");
+      return;
+    }
+
+    // Group records by location
+    const groupedRecords = {};
+    filteredRecords.forEach(record => {
+      const loc = record.work_location || "غير محدد";
+      if (!groupedRecords[loc]) {
+        groupedRecords[loc] = [];
+      }
+      groupedRecords[loc].push(record);
+    });
+
+    // Calculate totals
+    const totals = {
+      employees: filteredRecords.length,
+      working_days: filteredRecords.reduce((sum, r) => sum + (r.working_days || 0), 0),
+      overtime_hours: filteredRecords.reduce((sum, r) => sum + (r.total_overtime_hours || 0), 0),
+      basic_salary: filteredRecords.reduce((sum, r) => sum + (r.basic_salary || 0), 0),
+      overtime_pay: filteredRecords.reduce((sum, r) => sum + (r.overtime_pay || 0), 0),
+      deductions: filteredRecords.reduce((sum, r) => sum + (r.deductions || 0), 0),
+      net_salary: filteredRecords.reduce((sum, r) => sum + (r.net_salary || 0), 0),
+    };
+
+    const reportTitle = type === "centers" 
+      ? (language === "ar" ? "كشف رواتب المراكز" : "Centers Payroll Report")
+      : (language === "ar" ? "كشف رواتب الإدارة" : "Administration Payroll Report");
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>${reportTitle} - ${currentPeriod.name}</title>
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body { 
+            font-family: 'Arial', sans-serif; 
+            direction: rtl;
+            margin: 0;
+            padding: 15px;
+            font-size: 11px;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1a365d;
+            padding-bottom: 15px;
+          }
+          .header h1 {
+            color: #1a365d;
+            margin: 0 0 5px 0;
+            font-size: 18px;
+          }
+          .header .period {
+            color: #666;
+            font-size: 12px;
+          }
+          .location-section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+          }
+          .location-title {
+            background: #1a365d;
+            color: white;
+            padding: 8px 15px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 0;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 10px;
+          }
+          th {
+            background: #f0f0f0;
+            font-weight: bold;
+          }
+          .name-cell {
+            text-align: right;
+            font-weight: 500;
+          }
+          .total-row {
+            background: #e8f4e8;
+            font-weight: bold;
+          }
+          .grand-total {
+            background: #1a365d;
+            color: white;
+            margin-top: 20px;
+            padding: 15px;
+          }
+          .grand-total h3 {
+            margin: 0 0 10px 0;
+          }
+          .grand-total-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+          }
+          .grand-total-item {
+            text-align: center;
+          }
+          .grand-total-item .label {
+            font-size: 10px;
+            opacity: 0.9;
+          }
+          .grand-total-item .value {
+            font-size: 16px;
+            font-weight: bold;
+          }
+          .signature-section {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+          }
+          .signature-box {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid #333;
+          }
+          .print-date {
+            text-align: left;
+            font-size: 9px;
+            color: #666;
+            margin-top: 20px;
+          }
+          @media print { 
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>شركة المروج للألبان</h1>
+          <h2 style="margin: 5px 0; color: #1a365d;">${reportTitle}</h2>
+          <div class="period">الفترة: ${currentPeriod.name} (${currentPeriod.start_date} إلى ${currentPeriod.end_date})</div>
+        </div>
+
+        ${Object.entries(groupedRecords).map(([location, records]) => {
+          const locTotals = {
+            working_days: records.reduce((sum, r) => sum + (r.working_days || 0), 0),
+            overtime_hours: records.reduce((sum, r) => sum + (r.total_overtime_hours || 0), 0),
+            basic_salary: records.reduce((sum, r) => sum + (r.basic_salary || 0), 0),
+            overtime_pay: records.reduce((sum, r) => sum + (r.overtime_pay || 0), 0),
+            deductions: records.reduce((sum, r) => sum + (r.deductions || 0), 0),
+            net_salary: records.reduce((sum, r) => sum + (r.net_salary || 0), 0),
+          };
+          return `
+            <div class="location-section">
+              <div class="location-title">${location} (${records.length} موظف)</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 40px;">م</th>
+                    <th style="width: 60px;">الكود</th>
+                    <th style="width: 150px;">اسم الموظف</th>
+                    <th>المنصب</th>
+                    <th>الحضور</th>
+                    <th>الغياب</th>
+                    <th>الإجازات</th>
+                    <th>ساعات إضافية</th>
+                    <th>الراتب الأساسي</th>
+                    <th>بدل إضافي</th>
+                    <th>الخصومات</th>
+                    <th>الصافي</th>
+                    <th>التوقيع</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${records.map((r, idx) => `
+                    <tr>
+                      <td>${idx + 1}</td>
+                      <td>${r.employee_code || '-'}</td>
+                      <td class="name-cell">${r.employee_name}</td>
+                      <td>${r.position || '-'}</td>
+                      <td>${r.working_days || 0}</td>
+                      <td>${r.absent_days || 0}</td>
+                      <td>${(r.annual_leave || 0) + (r.sick_leave || 0) + (r.emergency_leave || 0)}</td>
+                      <td>${(r.total_overtime_hours || 0).toFixed(1)}</td>
+                      <td>${(r.basic_salary || 0).toFixed(3)}</td>
+                      <td>${(r.overtime_pay || 0).toFixed(3)}</td>
+                      <td style="color: #c00;">${(r.deductions || 0).toFixed(3)}</td>
+                      <td style="font-weight: bold; color: #060;">${(r.net_salary || 0).toFixed(3)}</td>
+                      <td></td>
+                    </tr>
+                  `).join('')}
+                  <tr class="total-row">
+                    <td colspan="4">المجموع</td>
+                    <td>${locTotals.working_days}</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>${locTotals.overtime_hours.toFixed(1)}</td>
+                    <td>${locTotals.basic_salary.toFixed(3)}</td>
+                    <td>${locTotals.overtime_pay.toFixed(3)}</td>
+                    <td style="color: #c00;">${locTotals.deductions.toFixed(3)}</td>
+                    <td style="font-weight: bold; color: #060;">${locTotals.net_salary.toFixed(3)}</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          `;
+        }).join('')}
+
+        <div class="grand-total">
+          <h3>الإجمالي الكلي</h3>
+          <div class="grand-total-grid">
+            <div class="grand-total-item">
+              <div class="label">عدد الموظفين</div>
+              <div class="value">${totals.employees}</div>
+            </div>
+            <div class="grand-total-item">
+              <div class="label">إجمالي الرواتب الأساسية</div>
+              <div class="value">${totals.basic_salary.toFixed(3)} ر.ع</div>
+            </div>
+            <div class="grand-total-item">
+              <div class="label">إجمالي العمل الإضافي</div>
+              <div class="value">${totals.overtime_pay.toFixed(3)} ر.ع</div>
+            </div>
+            <div class="grand-total-item">
+              <div class="label">صافي الرواتب</div>
+              <div class="value">${totals.net_salary.toFixed(3)} ر.ع</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="signature-section">
+          <div class="signature-box">
+            <div>إعداد</div>
+            <div style="margin-top: 5px; font-size: 10px;">الموارد البشرية</div>
+          </div>
+          <div class="signature-box">
+            <div>مراجعة</div>
+            <div style="margin-top: 5px; font-size: 10px;">المدير المالي</div>
+          </div>
+          <div class="signature-box">
+            <div>اعتماد</div>
+            <div style="margin-top: 5px; font-size: 10px;">المدير العام</div>
+          </div>
+        </div>
+
+        <div class="print-date">
+          تاريخ الطباعة: ${new Date().toLocaleString('ar-SA')}
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -238,10 +516,32 @@ const Payroll = () => {
             {language === "ar" ? "إدارة رواتب الموظفين (من 16 إلى 15 من الشهر التالي)" : "Manage employee payroll (16th to 15th)"}
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gradient-primary text-white">
-          <Plus className="w-4 h-4 me-2" />
-          {language === "ar" ? "فترة رواتب جديدة" : "New Payroll Period"}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {selectedPeriod && payrollRecords.length > 0 && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => handlePrintPayroll("centers")}
+                className="gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                {language === "ar" ? "طباعة كشف المراكز" : "Print Centers"}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handlePrintPayroll("admin")}
+                className="gap-2"
+              >
+                <Building2 className="w-4 h-4" />
+                {language === "ar" ? "طباعة كشف الإدارة" : "Print Admin"}
+              </Button>
+            </>
+          )}
+          <Button onClick={() => setDialogOpen(true)} className="gradient-primary text-white">
+            <Plus className="w-4 h-4 me-2" />
+            {language === "ar" ? "فترة رواتب جديدة" : "New Payroll Period"}
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
