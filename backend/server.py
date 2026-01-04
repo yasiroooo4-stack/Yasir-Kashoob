@@ -3908,7 +3908,23 @@ async def create_attendance(attendance_data: AttendanceCreate, current_user: dic
             detail="سجل الحضور موجود مسبقاً لهذا الموظف في هذا التاريخ"
         )
     
-    attendance = Attendance(**attendance_data.model_dump())
+    # Calculate work hours and overtime
+    total_hours, overtime_hours = calculate_work_hours(
+        attendance_data.check_in, 
+        attendance_data.check_out
+    )
+    
+    # Get employee's work location
+    work_location = attendance_data.work_location
+    if not work_location:
+        work_location = await get_employee_work_location(attendance_data.employee_id)
+    
+    attendance_dict = attendance_data.model_dump()
+    attendance_dict["total_hours"] = total_hours
+    attendance_dict["overtime_hours"] = overtime_hours
+    attendance_dict["work_location"] = work_location
+    
+    attendance = Attendance(**attendance_dict)
     await db.hr_attendance.insert_one(attendance.model_dump())
     return attendance
 
@@ -3916,6 +3932,17 @@ async def create_attendance(attendance_data: AttendanceCreate, current_user: dic
 @api_router.post("/hr/attendance/upsert")
 async def upsert_attendance(attendance_data: AttendanceCreate, current_user: dict = Depends(get_current_user)):
     """Create or update attendance record - for sync purposes"""
+    # Calculate work hours and overtime
+    total_hours, overtime_hours = calculate_work_hours(
+        attendance_data.check_in, 
+        attendance_data.check_out
+    )
+    
+    # Get employee's work location if not provided
+    work_location = attendance_data.work_location
+    if not work_location:
+        work_location = await get_employee_work_location(attendance_data.employee_id)
+    
     # Check if attendance already exists for this employee and date
     existing = await db.hr_attendance.find_one({
         "employee_id": attendance_data.employee_id,
