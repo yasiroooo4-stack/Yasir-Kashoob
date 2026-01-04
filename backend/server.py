@@ -4064,6 +4064,57 @@ async def sync_single_attendance(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@api_router.put("/hr/attendance/{attendance_id}")
+async def update_attendance(
+    attendance_id: str,
+    attendance_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an attendance record"""
+    existing = await db.hr_attendance.find_one({"id": attendance_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    # Update fields
+    update_data = {
+        "check_in": attendance_data.get("check_in", existing.get("check_in")),
+        "check_out": attendance_data.get("check_out", existing.get("check_out")),
+        "status": attendance_data.get("status", existing.get("status")),
+        "notes": attendance_data.get("notes", existing.get("notes", "")),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.hr_attendance.update_one({"id": attendance_id}, {"$set": update_data})
+    
+    updated = await db.hr_attendance.find_one({"id": attendance_id}, {"_id": 0})
+    return updated
+
+
+@api_router.delete("/hr/attendance/{attendance_id}")
+async def delete_attendance(
+    attendance_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an attendance record"""
+    existing = await db.hr_attendance.find_one({"id": attendance_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    await db.hr_attendance.delete_one({"id": attendance_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_attendance",
+        entity_type="attendance",
+        entity_id=attendance_id,
+        entity_name=existing.get("employee_name", ""),
+        details=f"حذف سجل حضور: {existing.get('employee_name')} - {existing.get('date')}"
+    )
+    
+    return {"message": "Attendance record deleted", "id": attendance_id}
+
+
 @api_router.get("/hr/attendance")
 async def get_attendance(
     employee_id: Optional[str] = None,
