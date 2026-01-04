@@ -293,12 +293,6 @@ const FeedPurchases = () => {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 10px;
-            text-align: center;
-            flex-shrink: 0;
           }
           .company-info {
             flex: 1;
