@@ -218,11 +218,15 @@ const HR = () => {
     center_id: "",
     center_name: "",
     fingerprint_id: "",
+    work_location: "",
     permissions: [],
     manager_id: "",
     manager_name: "",
     username: "",
   });
+
+  // Work locations list
+  const WORK_LOCATIONS = ["حجيف", "غدو", "زيك", "الإدارة", "ثمريت", "طاقة", "مرباط"];
   
   const [leaveForm, setLeaveForm] = useState({
     employee_id: "",
