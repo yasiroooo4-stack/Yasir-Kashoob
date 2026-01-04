@@ -1315,6 +1315,10 @@ const HR = () => {
             <FileText className="w-5 h-5" />
             <span>{language === "ar" ? "الوثائق" : "Documents"}</span>
           </TabsTrigger>
+          <TabsTrigger value="fingerprints" className="gap-2 px-4 py-3 text-base font-medium">
+            <Link className="w-5 h-5" />
+            <span>{language === "ar" ? "ربط البصمات" : "Fingerprints"}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Employees Tab */}
