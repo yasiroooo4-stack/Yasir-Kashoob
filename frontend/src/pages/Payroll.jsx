@@ -14,6 +14,9 @@ import {
   Trash2,
   RefreshCw,
   Download,
+  Printer,
+  Building2,
+  MapPin,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -46,6 +49,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { useLanguage } from "../App";
 
 const API = process.env.REACT_APP_BACKEND_URL;
+
+// Work locations categories
+const CENTER_LOCATIONS = ["حجيف", "غدو", "زيك", "ثمريت", "طاقة", "مرباط"];
+const ADMIN_LOCATIONS = ["الإدارة"];
 
 const Payroll = () => {
   const { t } = useTranslation();
