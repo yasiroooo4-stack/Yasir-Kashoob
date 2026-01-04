@@ -286,6 +286,7 @@ class EmployeeBase(BaseModel):
     fingerprint_id: Optional[str] = None  # معرف البصمة
     work_location: Optional[str] = None  # موقع العمل: حجيف، غدو، زيك، الإدارة، ثمريت، طاقة، مرباط
     can_login: bool = False  # هل يمكنه تسجيل الدخول للنظام
+    exclude_from_payroll: bool = False  # استبعاد من الرواتب والحضور (مثل مدير النظام)
     permissions: Optional[List[str]] = None  # الصلاحيات
     manager_id: Optional[str] = None  # معرف المسؤول
     manager_name: Optional[str] = None  # اسم المسؤول
