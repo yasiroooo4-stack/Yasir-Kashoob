@@ -486,6 +486,27 @@ const FeedPurchases = () => {
     setPurchaseDialogOpen(true);
   };
 
+  // Update min stock alert
+  const handleUpdateMinStock = async () => {
+    if (!selectedFeedType || !minStockValue) return;
+    try {
+      await axios.put(`${API}/feed-types/${selectedFeedType.id}/min-stock?min_stock=${parseFloat(minStockValue)}`);
+      toast.success(language === "ar" ? "تم تحديث الحد الأدنى للتنبيه" : "Min stock alert updated");
+      setMinStockDialogOpen(false);
+      setSelectedFeedType(null);
+      setMinStockValue("");
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل التحديث" : "Update failed"));
+    }
+  };
+
+  const openMinStockDialog = (feedType) => {
+    setSelectedFeedType(feedType);
+    setMinStockValue(feedType.min_stock_alert?.toString() || "0");
+    setMinStockDialogOpen(true);
+  };
+
   const getUnitLabel = (unit) => {
     const units = { kg: t("kg"), bag: t("bag"), ton: t("ton") };
     return units[unit] || unit;
@@ -504,6 +525,46 @@ const FeedPurchases = () => {
 
   return (
     <div className="space-y-6" data-testid="feed-purchases-page">
+      {/* Alerts Banner */}
+      {feedAlerts && feedAlerts.total_alerts > 0 && (
+        <Card className="border-orange-300 bg-gradient-to-r from-orange-50 to-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-orange-800">
+                  {language === "ar" ? `${feedAlerts.total_alerts} تنبيه انخفاض مخزون` : `${feedAlerts.total_alerts} Low Stock Alerts`}
+                </h3>
+                <div className="flex gap-4 text-sm mt-1">
+                  {feedAlerts.critical_count > 0 && (
+                    <span className="text-red-600 font-medium">
+                      {language === "ar" ? `${feedAlerts.critical_count} حرج (نفذ)` : `${feedAlerts.critical_count} Critical (Out)`}
+                    </span>
+                  )}
+                  {feedAlerts.warning_count > 0 && (
+                    <span className="text-orange-600 font-medium">
+                      {language === "ar" ? `${feedAlerts.warning_count} تحذير (منخفض)` : `${feedAlerts.warning_count} Warning (Low)`}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {feedAlerts.alerts?.slice(0, 3).map((alert, idx) => (
+                  <Badge 
+                    key={idx} 
+                    className={alert.alert_level === "critical" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}
+                  >
+                    {alert.feed_type_name}: {alert.current_quantity} / {alert.min_stock_alert}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
