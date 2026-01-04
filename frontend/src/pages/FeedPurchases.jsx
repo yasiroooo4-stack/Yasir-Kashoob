@@ -227,6 +227,9 @@ const FeedPurchases = () => {
     const printWindow = window.open('', '_blank');
     const printDate = new Date(purchase.purchase_date).toLocaleDateString('en-GB').replace(/\//g, '-');
     
+    // Get the logo URL from public folder
+    const logoUrl = window.location.origin + '/logo-almorooj.png';
+    
     // Build feed types rows
     let feedTypesRows = '';
     let slNo = 1;
@@ -281,13 +284,15 @@ const FeedPurchases = () => {
             margin-bottom: 15px;
           }
           .logo {
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             margin-right: 20px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #d4a574 0%, #c4956a 50%, #8b6914 100%);
-            display: flex;
-            align-items: center;
+            flex-shrink: 0;
+          }
+          .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
             justify-content: center;
             color: white;
             font-weight: bold;
