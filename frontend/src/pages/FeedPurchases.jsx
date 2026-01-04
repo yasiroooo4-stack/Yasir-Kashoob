@@ -1385,17 +1385,34 @@ const FeedPurchases = () => {
                 <SelectContent>
                   {suppliers.filter(s => s.balance > 0 || (editingPurchase && s.id === editingPurchase.supplier_id)).map((supplier) => (
                     <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name} - {t("balance")}: {supplier.balance?.toLocaleString()} {t("currency")}
+                      {supplier.code || supplier.id?.slice(0,6)} - {supplier.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {selectedSupplierBalance > 0 && (
-                <p className="text-sm text-emerald-600 font-medium">
-                  {t("available_balance")}: {selectedSupplierBalance.toLocaleString()} {t("currency")}
-                </p>
-              )}
             </div>
+
+            {/* Supplier Info Display - Shows after selection */}
+            {purchaseForm.supplier_id && (
+              <div className="grid grid-cols-3 gap-3 p-3 bg-muted/50 rounded-lg border">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">{language === "ar" ? "كود المورد" : "Supplier Code"}</p>
+                  <p className="font-medium text-sm">
+                    {suppliers.find(s => s.id === purchaseForm.supplier_id)?.code || purchaseForm.supplier_id?.slice(0,6)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">{language === "ar" ? "اسم المورد" : "Supplier Name"}</p>
+                  <p className="font-medium text-sm">{purchaseForm.supplier_name}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">{language === "ar" ? "الرصيد المتاح" : "Available Balance"}</p>
+                  <p className="font-medium text-sm text-emerald-600">
+                    {selectedSupplierBalance.toLocaleString()} {t("currency")}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Feed Type Selection */}
             <div className="space-y-2">
@@ -1407,8 +1424,7 @@ const FeedPurchases = () => {
                 <SelectContent>
                   {feedTypes.map((feedType) => (
                     <SelectItem key={feedType.id} value={feedType.id}>
-                      {feedType.name} ({feedType.company_name}) - {feedType.price_per_unit} {t("currency")}/{getUnitLabel(feedType.unit)}
-                      {feedType.kg_per_unit && ` (${feedType.kg_per_unit} ${t("kg")})`}
+                      {feedType.name} ({feedType.company_name})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1438,8 +1454,15 @@ const FeedPurchases = () => {
                   value={purchaseForm.price_per_unit}
                   onChange={(e) => setPurchaseForm({ ...purchaseForm, price_per_unit: e.target.value })}
                   required
+                  readOnly
+                  className="bg-muted/50"
                   data-testid="purchase-price-input"
                 />
+                {purchaseForm.feed_type_id && (
+                  <p className="text-xs text-muted-foreground">
+                    {language === "ar" ? "السعر من نوع العلف" : "Price from feed type"}
+                  </p>
+                )}
               </div>
             </div>
 
