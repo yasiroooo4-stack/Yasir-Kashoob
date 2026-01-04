@@ -107,13 +107,14 @@ const FeedPurchases = () => {
 
   const fetchAllData = async () => {
     try {
-      const [purchasesRes, companiesRes, feedTypesRes, suppliersRes, inventoryRes, reportRes] = await Promise.all([
+      const [purchasesRes, companiesRes, feedTypesRes, suppliersRes, inventoryRes, reportRes, alertsRes] = await Promise.all([
         axios.get(`${API}/feed-purchases`),
         axios.get(`${API}/feed-companies`),
         axios.get(`${API}/feed-types`),
         axios.get(`${API}/suppliers`),
         axios.get(`${API}/feed-inventory`),
         axios.get(`${API}/reports/feed-purchases`),
+        axios.get(`${API}/feed-inventory/alerts`),
       ]);
       setPurchases(purchasesRes.data);
       setCompanies(companiesRes.data);
@@ -121,6 +122,7 @@ const FeedPurchases = () => {
       setSuppliers(suppliersRes.data);
       setFeedInventory(inventoryRes.data);
       setFeedReport(reportRes.data);
+      setFeedAlerts(alertsRes.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
