@@ -2514,6 +2514,26 @@ const HR = () => {
               </Select>
             </div>
 
+            {/* Exclude from Payroll - استبعاد من الرواتب */}
+            <div className="flex items-center space-x-2 space-x-reverse p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <Checkbox
+                id="exclude_from_payroll"
+                checked={employeeForm.exclude_from_payroll}
+                onCheckedChange={(checked) => setEmployeeForm({ ...employeeForm, exclude_from_payroll: checked })}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="exclude_from_payroll"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  {language === "ar" ? "استبعاد من الرواتب والحضور" : "Exclude from Payroll & Attendance"}
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {language === "ar" ? "مثل مدير النظام - لن يظهر في كشف الرواتب" : "Like system admin - won't appear in payroll"}
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>{language === "ar" ? "المركز" : "Center"}</Label>
               <Select
