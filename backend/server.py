@@ -309,6 +309,9 @@ class AttendanceBase(BaseModel):
     check_out: Optional[str] = None
     device_ip: Optional[str] = None
     source: str = "manual"  # manual, fingerprint
+    work_location: Optional[str] = None  # موقع العمل
+    total_hours: Optional[float] = None  # إجمالي ساعات العمل
+    overtime_hours: Optional[float] = None  # ساعات العمل الإضافي (> 8 ساعات)
 
 class AttendanceCreate(AttendanceBase):
     pass
