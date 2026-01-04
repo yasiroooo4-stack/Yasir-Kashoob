@@ -225,7 +225,7 @@ const FeedPurchases = () => {
     // Get all feed types for the table
     const feedTypesData = feedTypes || [];
     const printWindow = window.open('', '_blank');
-    const printDate = new Date(purchase.purchase_date).toLocaleDateString('en-GB');
+    const printDate = new Date(purchase.purchase_date).toLocaleDateString('en-GB').replace(/\//g, '-');
     
     // Build feed types rows
     let feedTypesRows = '';
@@ -234,10 +234,10 @@ const FeedPurchases = () => {
       const qty = ft.id === purchase.feed_type_id ? purchase.quantity : 0;
       feedTypesRows += `
         <tr>
-          <td>${slNo}</td>
-          <td style="text-align: left; direction: ltr;">${ft.name}</td>
-          <td>${ft.kg_per_unit || 40}</td>
-          <td style="font-weight: ${qty > 0 ? 'bold' : 'normal'}; color: ${qty > 0 ? '#16a34a' : '#000'};">${qty}</td>
+          <td class="sl-col">${slNo}</td>
+          <td class="product-col">${ft.name}</td>
+          <td class="weight-col">${ft.kg_per_unit || 40}</td>
+          <td class="qty-col" style="font-weight: ${qty > 0 ? 'bold' : 'normal'};">${qty}</td>
         </tr>
       `;
       slNo++;
@@ -247,204 +247,263 @@ const FeedPurchases = () => {
     if (feedTypesData.length === 0) {
       feedTypesRows = `
         <tr>
-          <td>1</td>
-          <td style="text-align: left;">${purchase.feed_type_name}</td>
-          <td>40</td>
-          <td style="font-weight: bold; color: #16a34a;">${purchase.quantity}</td>
+          <td class="sl-col">1</td>
+          <td class="product-col">${purchase.feed_type_name}</td>
+          <td class="weight-col">40</td>
+          <td class="qty-col" style="font-weight: bold;">${purchase.quantity}</td>
         </tr>
       `;
     }
     
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html lang="ar">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <title>PURCHASE REQUEST - ${purchase.invoice_number || purchase.id.slice(0,8)}</title>
         <style>
+          @page { size: A4; margin: 15mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { 
-            font-family: 'Arial', 'Tahoma', sans-serif; 
-            padding: 25px; 
-            max-width: 800px; 
+            font-family: Arial, 'Tahoma', sans-serif; 
+            padding: 20px;
+            max-width: 210mm;
             margin: 0 auto;
-            font-size: 12px;
+            font-size: 11px;
+            line-height: 1.4;
+            border: 1px solid #3b82f6;
           }
+          
+          /* Header Section */
+          .header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+          }
+          .logo {
+            width: 80px;
+            height: 80px;
+            margin-right: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4a574 0%, #c4956a 50%, #8b6914 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+            flex-shrink: 0;
+          }
+          .company-info {
+            flex: 1;
+            text-align: center;
+          }
+          .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 3px;
+          }
+          .company-details {
+            font-size: 10px;
+            color: #333;
+          }
+          .company-details div {
+            margin: 2px 0;
+          }
+          
+          /* Title */
           .title {
             text-align: center;
-            font-size: 22px;
+            font-size: 16px;
             font-weight: bold;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
+            margin: 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px double #000;
           }
-          .header-info {
+          
+          /* Farmer Info Section */
+          .farmer-section {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 5px;
+            margin-bottom: 15px;
+            padding: 10px 0;
           }
-          .header-left, .header-right {
-            font-size: 12px;
+          .farmer-left {
+            font-size: 11px;
           }
-          .header-left div, .header-right div {
+          .farmer-left div {
             margin: 4px 0;
           }
-          .label { color: #555; }
-          .value { font-weight: bold; }
+          .farmer-name {
+            color: #2563eb;
+            font-weight: bold;
+          }
+          .farmer-right {
+            text-align: right;
+          }
+          .ref-number {
+            color: #db2777;
+            font-weight: bold;
+            font-size: 12px;
+          }
+          .ref-date {
+            color: #db2777;
+            font-size: 11px;
+          }
+          
+          /* Table */
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 10px 0;
           }
           th, td {
-            border: 1px solid #333;
-            padding: 10px;
-            text-align: center;
+            border: 1px solid #000;
+            padding: 8px 5px;
           }
           th {
-            background: #4a5568;
-            color: white;
-            font-size: 11px;
-          }
-          .bilingual-header {
-            font-size: 10px;
-          }
-          .total-row {
-            background: #f0f0f0;
+            background: #f3f4f6;
             font-weight: bold;
-          }
-          .remarks {
-            margin-top: 25px;
-            padding: 15px;
-            background: #fffbeb;
-            border: 1px solid #fbbf24;
-            border-radius: 5px;
-          }
-          .remarks h4 {
-            margin-bottom: 10px;
-            color: #92400e;
-          }
-          .remarks ol {
-            margin-left: 20px;
-            font-size: 11px;
-          }
-          .remarks li {
-            margin: 8px 0;
-          }
-          .arabic-text {
-            direction: rtl;
-            text-align: right;
-            color: #666;
             font-size: 10px;
-            margin-top: 3px;
           }
-          .signature-section {
+          .sl-col { width: 8%; text-align: center; }
+          .product-col { width: 52%; text-align: left; padding-left: 10px; }
+          .weight-col { width: 20%; text-align: center; }
+          .qty-col { width: 20%; text-align: center; }
+          
+          /* Remarks */
+          .remarks {
+            margin-top: 20px;
+            font-size: 10px;
+          }
+          .remarks-header {
             display: flex;
             justify-content: space-between;
-            margin-top: 40px;
+            margin-bottom: 8px;
           }
-          .signature-box {
-            text-align: center;
-            width: 200px;
+          .remarks-content {
+            display: flex;
+          }
+          .remarks-en {
+            flex: 1;
+            padding-right: 20px;
+          }
+          .remarks-ar {
+            flex: 1;
+            text-align: right;
+            direction: rtl;
+          }
+          .remarks ol {
+            margin-left: 15px;
+          }
+          .remarks li {
+            margin: 5px 0;
+          }
+          
+          /* Signature */
+          .signature-section {
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
           }
           .signature-line {
-            border-top: 1px solid #333;
-            margin-top: 50px;
+            width: 200px;
+            border-top: 1px solid #000;
+            margin-top: 40px;
             padding-top: 5px;
-            font-size: 11px;
           }
-          .footer {
-            margin-top: 30px;
-            text-align: center;
+          .signature-label {
             font-size: 10px;
-            color: #666;
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
           }
+          .signature-label-ar {
+            font-size: 10px;
+            direction: rtl;
+          }
+          
           @media print { 
-            body { padding: 15px; } 
-            .no-print { display: none; }
+            body { 
+              padding: 10px; 
+              border: 1px solid #3b82f6;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="title">
-          PURCHASE REQUEST<br>
-          <span style="font-size: 16px;">طلب شراء أعلاف</span>
+        <!-- Header with Logo and Company Info -->
+        <div class="header">
+          <div class="logo">
+            al morooj<br>Dairy<br>للألبان
+          </div>
+          <div class="company-info">
+            <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
+            <div class="company-details">
+              <div>CR NO: 1249988</div>
+              <div>P.O BOX: 1385,PC-211</div>
+              <div>VAT: OM1100091687</div>
+              <div>SALALAH, SULTANATE OF OMAN</div>
+            </div>
+          </div>
         </div>
         
-        <div class="header-info">
-          <div class="header-left">
-            <div><span class="label">Farmer Name / اسم المربي:</span> <span class="value">${purchase.supplier_name}</span></div>
-            <div><span class="label">Farmer Code / رمز المربي:</span> <span class="value">${purchase.supplier_id?.slice(0,8) || '-'}</span></div>
-            <div><span class="label">Farmer ID / رقم الهوية:</span> <span class="value">${purchase.supplier_phone || '-'}</span></div>
+        <!-- Title -->
+        <div class="title">PURCHASE REQUEST</div>
+        
+        <!-- Farmer Information -->
+        <div class="farmer-section">
+          <div class="farmer-left">
+            <div><strong>Farmer Name</strong> <span class="farmer-name">${purchase.supplier_name}</span></div>
+            <div><strong>Farmer Code</strong> ${purchase.supplier_id?.slice(0,4) || '0000'}</div>
+            <div><strong>Farmer ID</strong> ${purchase.supplier_phone || '0000000'}</div>
           </div>
-          <div class="header-right" style="text-align: right;">
-            <div><span class="value">AMDC/DFI/${purchase.invoice_number || 'H-' + purchase.id.slice(0,4)}</span></div>
-            <div><span class="label">Date / التاريخ:</span> <span class="value">${printDate}</span></div>
+          <div class="farmer-right">
+            <div class="ref-number">IDC/DFI/${purchase.invoice_number || 'H025-' + purchase.id.slice(0,4)}</div>
+            <div class="ref-date">${printDate}</div>
           </div>
         </div>
 
+        <!-- Products Table -->
         <table>
           <thead>
             <tr>
-              <th style="width: 8%;">SL<br><span class="bilingual-header">م</span></th>
-              <th style="width: 52%;">Product<br><span class="bilingual-header">اسم المنتج</span></th>
-              <th style="width: 20%;">Weight<br><span class="bilingual-header">الوزن بالكيلوا</span></th>
-              <th style="width: 20%;">Quantity<br><span class="bilingual-header">الكمية</span></th>
+              <th class="sl-col">SL</th>
+              <th class="product-col">Product / اسم المنتج</th>
+              <th class="weight-col">Weight / الوزن بالكيلوا</th>
+              <th class="qty-col">Quantity / الكمية</th>
             </tr>
           </thead>
           <tbody>
             ${feedTypesRows}
-            <tr class="total-row">
-              <td colspan="3" style="text-align: right;">Total / الإجمالي:</td>
-              <td>${purchase.quantity}</td>
-            </tr>
-            <tr class="total-row">
-              <td colspan="3" style="text-align: right;">Total Amount / المبلغ الإجمالي:</td>
-              <td>${purchase.total_amount?.toLocaleString()} OMR</td>
-            </tr>
           </tbody>
         </table>
 
+        <!-- Remarks Section -->
         <div class="remarks">
-          <h4>Remark: / ملاحظة:</h4>
-          <ol>
-            <li>
-              The customer agreed to transfer the full feeds as per the purchase request signed
-              <div class="arabic-text">أنا العميل الموقع أعلاه موافق على شحن الكمية الموضحة في طلب الشراء بالكامل</div>
-            </li>
-            <li>
-              All farmers should bring ID copy. Without ID proof, feeds will not be issued
-              <div class="arabic-text">على جميع المربين إحضار نسخة من البطاقة الشخصية. بدون البطاقة الشخصية لن يتم صرف الأعلاف</div>
-            </li>
-          </ol>
+          <div class="remarks-header">
+            <span><strong>Remark:</strong></span>
+            <span style="direction: rtl;"><strong>ملاحظة:</strong></span>
+          </div>
+          <div class="remarks-content">
+            <div class="remarks-en">
+              <ol>
+                <li>The customer are agreed to transfer the full feeds as per the purchase request signed</li>
+                <li>All the farmer should bring the ID copy. Without ID proof, feeds will not issue</li>
+              </ol>
+            </div>
+            <div class="remarks-ar">
+              <div>1- أنا العميل أوافق على ضمن الكمية الموضحة في طلب الشراء بالكامل</div>
+              <div style="margin-top: 5px;">2- على جميع المربين احضار نسخة من البطاقة الشخصية ، بدون البطاقة الشخصية لن يتم صرف الأعلاف</div>
+            </div>
+          </div>
         </div>
 
+        <!-- Signature Section -->
         <div class="signature-section">
-          <div class="signature-box">
-            <div class="signature-line">
-              Signature / التوقيع
-            </div>
+          <div class="signature-line">
+            <div class="signature-label-ar">توقيع العميل</div>
+            <div class="signature-label">Customer Signature</div>
           </div>
-          <div class="signature-box">
-            <div class="signature-line">
-              Date / التاريخ
-            </div>
-          </div>
-          <div class="signature-box">
-            <div class="signature-line">
-              Authorized / المفوض
-            </div>
-          </div>
-        </div>
-
-        <div class="footer">
-          <p>Al Morooj Dairy Company - شركة المروج للألبان</p>
-          <p>Sultanate of Oman - سلطنة عمان</p>
         </div>
       </body>
       </html>
