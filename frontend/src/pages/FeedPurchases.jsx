@@ -138,7 +138,7 @@ const FeedPurchases = () => {
       ...purchaseForm,
       supplier_id: supplierId,
       supplier_name: supplier?.name || "",
-      supplier_code: supplier?.code || supplierId?.slice(0,6) || "",
+      supplier_code: supplier?.supplier_code || supplierId?.slice(0,6) || "",
     });
     // For edit mode, add back the original amount to available balance
     let balance = supplier?.balance || 0;
@@ -153,10 +153,10 @@ const FeedPurchases = () => {
     setPurchaseForm({ ...purchaseForm, supplier_code: code, supplier_id: "", supplier_name: "" });
     setSelectedSupplierBalance(0);
     
-    if (code.length >= 3) {
-      // Search for supplier by code or id
+    if (code.length >= 2) {
+      // Search for supplier by supplier_code or id
       const supplier = suppliers.find((s) => 
-        (s.code && s.code.toLowerCase().includes(code.toLowerCase())) ||
+        (s.supplier_code && s.supplier_code.toLowerCase().includes(code.toLowerCase())) ||
         s.id?.toLowerCase().includes(code.toLowerCase())
       );
       
