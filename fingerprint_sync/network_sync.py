@@ -261,45 +261,55 @@ class NetworkSyncAgent:
             processed.append({
                 'employee_id': data['employee_id'],
                 'employee_name': data['employee_name'],
+                'fingerprint_id': data['employee_id'],  # إضافة fingerprint_id
                 'date': data['date'],
                 'check_in': check_in,
                 'check_out': check_out,
+                'status': 'present',
                 'source': 'zkteco_network',
-                'device': data['device']
+                'device_ip': data.get('device', '')
             })
         
         return processed
     
     def upload_attendance(self, records):
-        """رفع سجلات الحضور إلى API"""
+        """رفع سجلات الحضور إلى API - استخدام bulk-sync"""
         if not self.api_token:
             if not self.authenticate():
                 return False, 0, 0
         
-        headers = {'Authorization': f'Bearer {self.api_token}'}
-        imported = 0
-        updated = 0
+        headers = {
+            'Authorization': f'Bearer {self.api_token}',
+            'Content-Type': 'application/json'
+        }
         
-        for record in records:
-            try:
-                # محاولة إنشاء سجل جديد
-                response = requests.post(
-                    f"{self.api_url}/api/hr/attendance",
-                    json=record,
-                    headers=headers,
-                    timeout=30
-                )
+        # محاولة استخدام bulk-sync أولاً
+        try:
+            logger.info(f"إرسال {len(records)} سجل...")
+            response = requests.post(
+                f"{self.api_url}/api/hr/attendance/bulk-sync",
+                json=records,
+                headers=headers,
+                timeout=120
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                imported = result.get('imported', 0)
+                updated = result.get('updated', 0)
+                errors = result.get('errors', [])
+                if errors:
+                    for err in errors[:5]:
+                        logger.warning(f"تحذير: {err}")
+                logger.info(f"✅ تم الرفع: {imported} جديد، {updated} محدث")
+                return True, imported, updated
+            else:
+                logger.error(f"فشل الإرسال: {response.status_code} | {response.text[:100]}")
+                return False, 0, 0
                 
-                if response.status_code == 200:
-                    imported += 1
-                elif response.status_code == 409:  # موجود مسبقاً
-                    updated += 1
-                    
-            except Exception as e:
-                logger.warning(f"خطأ في رفع سجل: {e}")
-        
-        logger.info(f"تم الرفع: {imported} جديد، {updated} محدث")
-        return True, imported, updated
+        except Exception as e:
+            logger.error(f"خطأ في الاتصال: {e}")
+            return False, 0, 0
     
     def sync_now(self):
         """تنفيذ المزامنة الآن"""
