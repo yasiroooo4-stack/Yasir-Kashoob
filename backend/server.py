@@ -3949,16 +3949,21 @@ async def upsert_attendance(attendance_data: AttendanceCreate, current_user: dic
         "date": attendance_data.date
     })
     
+    attendance_dict = attendance_data.model_dump()
+    attendance_dict["total_hours"] = total_hours
+    attendance_dict["overtime_hours"] = overtime_hours
+    attendance_dict["work_location"] = work_location
+    
     if existing:
         # Update existing record
         await db.hr_attendance.update_one(
             {"id": existing["id"]},
-            {"$set": attendance_data.model_dump()}
+            {"$set": attendance_dict}
         )
         attendance = await db.hr_attendance.find_one({"id": existing["id"]}, {"_id": 0})
         return {"status": "updated", "attendance": attendance}
     
-    attendance = Attendance(**attendance_data.model_dump())
+    attendance = Attendance(**attendance_dict)
     await db.hr_attendance.insert_one(attendance.model_dump())
     return {"status": "created", "attendance": attendance.model_dump()}
 
