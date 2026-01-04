@@ -1233,7 +1233,8 @@ class FeedTypeCreate(FeedTypeBase):
 class FeedType(FeedTypeBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     is_active: bool = True
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    min_stock_alert: float = 0.0  # الحد الأدنى للتنبيه
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat()))
 
 # Feed Purchase Models (مشتريات الأعلاف من رصيد المورد)
 class FeedPurchaseBase(BaseModel):
