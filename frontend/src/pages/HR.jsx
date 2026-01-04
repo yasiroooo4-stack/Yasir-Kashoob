@@ -69,7 +69,9 @@ import {
   Server,
   History,
   AlertTriangle,
+  Link,
 } from "lucide-react";
+import FingerprintManager from "../components/hr/FingerprintManager";
 
 const HR = () => {
   const { t } = useTranslation();
