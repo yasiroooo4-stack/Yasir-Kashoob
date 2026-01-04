@@ -3681,17 +3681,38 @@ async def create_attendance(attendance_data: AttendanceCreate, current_user: dic
         "date": attendance_data.date
     })
     if existing:
+        # Return 409 Conflict for duplicate record
+        raise HTTPException(
+            status_code=409,
+            detail="سجل الحضور موجود مسبقاً لهذا الموظف في هذا التاريخ"
+        )
+    
+    attendance = Attendance(**attendance_data.model_dump())
+    await db.hr_attendance.insert_one(attendance.model_dump())
+    return attendance
+
+
+@api_router.post("/hr/attendance/upsert")
+async def upsert_attendance(attendance_data: AttendanceCreate, current_user: dict = Depends(get_current_user)):
+    """Create or update attendance record - for sync purposes"""
+    # Check if attendance already exists for this employee and date
+    existing = await db.hr_attendance.find_one({
+        "employee_id": attendance_data.employee_id,
+        "date": attendance_data.date
+    })
+    
+    if existing:
         # Update existing record
         await db.hr_attendance.update_one(
             {"id": existing["id"]},
             {"$set": attendance_data.model_dump()}
         )
         attendance = await db.hr_attendance.find_one({"id": existing["id"]}, {"_id": 0})
-        return attendance
+        return {"status": "updated", "attendance": attendance}
     
     attendance = Attendance(**attendance_data.model_dump())
     await db.hr_attendance.insert_one(attendance.model_dump())
-    return attendance
+    return {"status": "created", "attendance": attendance.model_dump()}
 
 @api_router.get("/hr/attendance")
 async def get_attendance(
