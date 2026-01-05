@@ -9083,7 +9083,7 @@ async def get_payroll_period(period_id: str, current_user: dict = Depends(get_cu
 
 @api_router.post("/hr/payroll/periods/{period_id}/calculate")
 async def calculate_payroll(period_id: str, current_user: dict = Depends(get_current_user)):
-    """Calculate payroll for all employees based on attendance"""
+    """Calculate payroll for all employees based on attendance with holiday and weekend logic"""
     period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
     if not period:
         raise HTTPException(status_code=404, detail="Payroll period not found")
@@ -9100,6 +9100,12 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         "date": {"$gte": start_date, "$lte": end_date}
     }, {"_id": 0}).to_list(10000)
     
+    # Get official holidays for the period
+    official_holidays = await db.hr_official_holidays.find({
+        "date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(100)
+    holiday_dates = {h["date"] for h in official_holidays}
+    
     # Delete existing payroll records for this period
     await db.payroll_records.delete_many({"period_id": period_id})
     
@@ -9108,27 +9114,92 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
     # Constants for overtime calculation
     STANDARD_HOURS_PER_DAY = 8
     OVERTIME_MULTIPLIER = 1.5
+    WEEKEND_WORK_MULTIPLIER = 1.5  # مضاعف العمل في أيام الإجازة الأسبوعية
+    HOLIDAY_WORK_MULTIPLIER = 2.0   # مضاعف العمل في العطل الرسمية
+    
+    from datetime import datetime as dt, timedelta
     
     for emp in employees:
+        # Get employee's weekly off days (default Friday & Saturday)
+        employee_weekly_off_days = emp.get("weekly_off_days", [4, 5])  # 4=Friday, 5=Saturday
+        
         # Filter attendance for this employee
         emp_attendance = [a for a in attendance_records if a.get("employee_id") == emp.get("id") or a.get("employee_name") == emp.get("name")]
         
+        # Create a set of dates with attendance records for quick lookup
+        attendance_by_date = {a["date"]: a for a in emp_attendance}
+        
         # Count attendance types
-        working_days = len([a for a in emp_attendance if a.get("status") == "present"])
-        day_off = len([a for a in emp_attendance if a.get("status") in ["off", "weekend"]])
-        sick_leave = len([a for a in emp_attendance if a.get("status") == "sick_leave"])
-        annual_leave = len([a for a in emp_attendance if a.get("status") == "annual_leave"])
-        public_holiday = len([a for a in emp_attendance if a.get("status") == "public_holiday"])
-        emergency_leave = len([a for a in emp_attendance if a.get("status") == "emergency_leave"])
-        on_duty = len([a for a in emp_attendance if a.get("status") == "on_duty"])
-        absent_days = len([a for a in emp_attendance if a.get("status") == "absent"])
-        unpaid_leave = len([a for a in emp_attendance if a.get("status") == "unpaid_leave"])
+        working_days = 0
+        day_off = 0
+        sick_leave = 0
+        annual_leave = 0
+        public_holiday = 0
+        emergency_leave = 0
+        on_duty = 0
+        absent_days = 0
+        unpaid_leave = 0
+        weekend_work_days = 0  # أيام عمل في الإجازة الأسبوعية
+        holiday_work_days = 0  # أيام عمل في العطل الرسمية
         
         # Calculate overtime hours from attendance records
         total_overtime_hours = 0.0
-        for att in emp_attendance:
-            overtime_hrs = att.get("overtime_hours", 0) or 0
-            total_overtime_hours += overtime_hrs
+        weekend_work_pay = 0.0
+        holiday_work_pay = 0.0
+        
+        # Iterate through each day in the period
+        current_date = dt.strptime(start_date, "%Y-%m-%d")
+        end_date_dt = dt.strptime(end_date, "%Y-%m-%d")
+        
+        while current_date <= end_date_dt:
+            date_str = current_date.strftime("%Y-%m-%d")
+            day_of_week = current_date.weekday()  # 0=Monday, 6=Sunday
+            
+            is_official_holiday = date_str in holiday_dates
+            is_weekly_off = day_of_week in employee_weekly_off_days
+            
+            attendance = attendance_by_date.get(date_str)
+            
+            if attendance:
+                status = attendance.get("status", "present")
+                overtime_hrs = attendance.get("overtime_hours", 0) or 0
+                
+                if status == "present":
+                    # Check if working on a holiday or weekend
+                    if is_official_holiday:
+                        holiday_work_days += 1
+                    elif is_weekly_off:
+                        weekend_work_days += 1
+                    else:
+                        working_days += 1
+                    total_overtime_hours += overtime_hrs
+                    
+                elif status in ["off", "weekend"]:
+                    day_off += 1
+                elif status == "sick_leave":
+                    sick_leave += 1
+                elif status == "annual_leave":
+                    annual_leave += 1
+                elif status == "public_holiday":
+                    public_holiday += 1
+                elif status == "emergency_leave":
+                    emergency_leave += 1
+                elif status == "on_duty":
+                    on_duty += 1
+                elif status == "absent":
+                    absent_days += 1
+                elif status == "unpaid_leave":
+                    unpaid_leave += 1
+            else:
+                # No attendance record - check if it's a holiday/weekend
+                if is_official_holiday:
+                    public_holiday += 1
+                elif is_weekly_off:
+                    day_off += 1
+                else:
+                    absent_days += 1  # No record = absent
+            
+            current_date += timedelta(days=1)
         
         # Calculate salary
         basic_salary = emp.get("salary", 0)
@@ -9138,8 +9209,14 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         # Total pay days = working + paid leaves
         total_pay_days = working_days + day_off + sick_leave + annual_leave + public_holiday + emergency_leave + on_duty
         
-        # Gross salary
+        # Gross salary for regular work
         gross_salary = daily_rate * total_pay_days
+        
+        # Weekend work pay (1.5x)
+        weekend_work_pay = daily_rate * weekend_work_days * WEEKEND_WORK_MULTIPLIER
+        
+        # Holiday work pay (2x)
+        holiday_work_pay = daily_rate * holiday_work_days * HOLIDAY_WORK_MULTIPLIER
         
         # Overtime pay (1.5x hourly rate)
         overtime_pay = total_overtime_hours * hourly_rate * OVERTIME_MULTIPLIER
@@ -9147,8 +9224,8 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         # Deductions for unpaid leave and absences
         deductions = daily_rate * (absent_days + unpaid_leave)
         
-        # Net salary = gross + overtime - deductions
-        net_salary = gross_salary + overtime_pay - deductions
+        # Net salary = gross + overtime + weekend_work + holiday_work - deductions
+        net_salary = gross_salary + overtime_pay + weekend_work_pay + holiday_work_pay - deductions
         
         record = PayrollRecord(
             period_id=period_id,
@@ -9178,8 +9255,15 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
             net_salary=round(net_salary, 3)
         )
         
-        await db.payroll_records.insert_one(record.model_dump())
-        payroll_records.append(record.model_dump())
+        # Add extra fields for weekend/holiday work
+        record_dict = record.model_dump()
+        record_dict["weekend_work_days"] = weekend_work_days
+        record_dict["weekend_work_pay"] = round(weekend_work_pay, 3)
+        record_dict["holiday_work_days"] = holiday_work_days
+        record_dict["holiday_work_pay"] = round(holiday_work_pay, 3)
+        
+        await db.payroll_records.insert_one(record_dict)
+        payroll_records.append(record_dict)
     
     # Update period status
     await db.payroll_periods.update_one(
