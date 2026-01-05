@@ -125,7 +125,7 @@ const Layout = () => {
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
     { path: "/employees", icon: UserCog, label: "employees", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
-    { path: "/settings", icon: Settings, label: "settings" },
+    { path: "/system-settings", icon: Settings, label: "system_settings", roles: ["admin"], departments: ["admin", "it"] },
   ];
 
   // Filter nav items based on role, department, and permissions
