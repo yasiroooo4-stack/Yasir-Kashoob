@@ -48,6 +48,7 @@ import {
 } from "./ui/dialog";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import LetterRequestButton from "./LetterRequestButton";
+import ExcuseRequestButton from "./ExcuseRequestButton";
 import EmployeeStatsWidget from "./EmployeeStatsWidget";
 
 const Layout = () => {
