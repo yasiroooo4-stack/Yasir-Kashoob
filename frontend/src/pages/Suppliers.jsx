@@ -175,15 +175,25 @@ const Suppliers = () => {
 
   const getMilkTypeName = (type) => {
     const milkType = MILK_TYPES.find(t => t.id === type);
-    return milkType ? (language === "ar" ? milkType.name : milkType.name_en) : type;
+    // Also handle Arabic milk type values directly
+    if (type === 'إبل') return language === "ar" ? "إبل" : "Camel";
+    if (type === 'بقر' || type === 'أبقار') return language === "ar" ? "أبقار" : "Cow";
+    if (type === 'ماعز') return language === "ar" ? "ماعز" : "Goat";
+    return milkType ? (language === "ar" ? milkType.name : milkType.name_en) : type || '-';
   };
 
-  const filteredSuppliers = suppliers.filter(
-    (s) =>
-      (s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.phone.includes(searchTerm)) &&
-      (filterCenter === "all" || s.center_id === filterCenter)
-  );
+  const filteredSuppliers = suppliers.filter((s) => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      (s.name?.toLowerCase() || '').includes(searchLower) ||
+      (s.phone || '').includes(searchTerm) ||
+      (s.supplier_code || '').includes(searchTerm) ||
+      (s.address?.toLowerCase() || '').includes(searchLower);
+    
+    const matchesCenter = filterCenter === "all" || s.center_id === filterCenter;
+    
+    return matchesSearch && matchesCenter;
+  });
 
   if (loading) {
     return (
