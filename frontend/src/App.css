@@ -32,3 +32,14 @@
         transform: rotate(360deg);
     }
 }
+
+/* Welcome toast with large logo */
+.welcome-toast {
+  min-width: 320px !important;
+  padding: 0 !important;
+}
+
+.welcome-toast [data-content] {
+  padding: 0 !important;
+}
+
