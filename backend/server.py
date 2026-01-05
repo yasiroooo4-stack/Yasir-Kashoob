@@ -343,6 +343,33 @@ class LeaveRequest(LeaveRequestBase):
     rejection_reason: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# Excuse Request Models (نماذج طلبات الأعذار)
+class ExcuseRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    excuse_date: str  # تاريخ الغياب المطلوب تبريره
+    excuse_type: str  # medical (طبي), accompanying (مرافق مريض), other (سبب آخر)
+    reason: str  # سبب العذر
+    start_time: Optional[str] = None  # وقت بداية العذر (إذا كان جزئي)
+    end_time: Optional[str] = None  # وقت نهاية العذر (إذا كان جزئي)
+    attachment_url: Optional[str] = None  # رابط المرفق (شهادة طبية مثلاً)
+    notes: Optional[str] = None
+
+class ExcuseRequestCreate(ExcuseRequestBase):
+    pass
+
+class ExcuseRequest(ExcuseRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending (قيد الانتظار), approved (موافق عليه), rejected (مرفوض)
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    # When approved, attendance is automatically marked
+    attendance_updated: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Expense Request Models (نماذج طلبات المصاريف)
 class ExpenseRequestBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
