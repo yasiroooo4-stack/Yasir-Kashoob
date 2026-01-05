@@ -133,12 +133,24 @@ const SupplierManagement = () => {
       setLoading(true);
       await axios.put(`${API}/api/admin/supplier-feed-requests/${requestId}/approve`, {}, { headers });
       toast.success("تمت الموافقة على الطلب وخصم المبلغ من رصيد المورد");
+      setApproveDialogOpen(false);
+      setSelectedRequest(null);
       fetchFeedRequests();
     } catch (error) {
       toast.error(error.response?.data?.detail || "فشل في الموافقة على الطلب");
     } finally {
       setLoading(false);
     }
+  };
+
+  const openApproveDialog = (request) => {
+    setSelectedRequest(request);
+    setApproveDialogOpen(true);
+  };
+
+  const openViewRequestDialog = (request) => {
+    setSelectedRequest(request);
+    setViewRequestDialogOpen(true);
   };
 
   const handleRejectRequest = async () => {
