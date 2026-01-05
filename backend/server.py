@@ -4377,6 +4377,205 @@ async def reject_leave_request(request_id: str, reason: str = "", current_user: 
     
     return request
 
+# ==================== HR - EXCUSE REQUESTS (طلبات الأعذار) ====================
+
+@api_router.post("/hr/excuse-requests", response_model=ExcuseRequest)
+async def create_excuse_request(request_data: ExcuseRequestCreate, current_user: dict = Depends(get_current_user)):
+    """إنشاء طلب عذر جديد"""
+    excuse_request = ExcuseRequest(**request_data.model_dump())
+    await db.hr_excuse_requests.insert_one(excuse_request.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_excuse_request",
+        entity_type="excuse_request",
+        entity_id=excuse_request.id,
+        entity_name=request_data.employee_name,
+        details=f"طلب عذر: {request_data.employee_name} - {request_data.excuse_date} - {request_data.excuse_type}"
+    )
+    
+    return excuse_request
+
+@api_router.get("/hr/excuse-requests")
+async def get_excuse_requests(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة طلبات الأعذار"""
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    requests = await db.hr_excuse_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return requests
+
+@api_router.get("/hr/excuse-requests/{request_id}")
+async def get_excuse_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل طلب عذر محدد"""
+    request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="Excuse request not found")
+    return request
+
+@api_router.put("/hr/excuse-requests/{request_id}/approve")
+async def approve_excuse_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """الموافقة على طلب العذر وتسجيل حضور تلقائي"""
+    # Get the excuse request
+    excuse_request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
+    if not excuse_request:
+        raise HTTPException(status_code=404, detail="Excuse request not found")
+    
+    if excuse_request.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Request already processed")
+    
+    # Update excuse request status
+    await db.hr_excuse_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "attendance_updated": True
+        }}
+    )
+    
+    # Create or update attendance record as "excused" presence
+    excuse_date = excuse_request.get("excuse_date")
+    employee_id = excuse_request.get("employee_id")
+    employee_name = excuse_request.get("employee_name")
+    
+    # Check if attendance exists for this date
+    existing_attendance = await db.hr_attendance.find_one({
+        "employee_id": employee_id,
+        "date": excuse_date
+    })
+    
+    if existing_attendance:
+        # Update existing attendance to mark as excused
+        await db.hr_attendance.update_one(
+            {"id": existing_attendance["id"]},
+            {"$set": {
+                "source": "excuse_approved",
+                "check_in": excuse_request.get("start_time") or "08:00",
+                "check_out": excuse_request.get("end_time") or "16:00",
+                "notes": f"عذر معتمد: {excuse_request.get('excuse_type')} - {excuse_request.get('reason')}"
+            }}
+        )
+    else:
+        # Create new attendance record
+        attendance = Attendance(
+            employee_id=employee_id,
+            employee_name=employee_name,
+            date=excuse_date,
+            check_in=excuse_request.get("start_time") or "08:00",
+            check_out=excuse_request.get("end_time") or "16:00",
+            source="excuse_approved",
+            total_hours=8.0
+        )
+        await db.hr_attendance.insert_one(attendance.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_excuse_request",
+        entity_type="excuse_request",
+        entity_id=request_id,
+        entity_name=employee_name,
+        details=f"موافقة على عذر: {employee_name} - {excuse_date}"
+    )
+    
+    updated_request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.put("/hr/excuse-requests/{request_id}/reject")
+async def reject_excuse_request(
+    request_id: str, 
+    reason: str = "",
+    current_user: dict = Depends(get_current_user)
+):
+    """رفض طلب العذر وتسجيل غياب"""
+    excuse_request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
+    if not excuse_request:
+        raise HTTPException(status_code=404, detail="Excuse request not found")
+    
+    if excuse_request.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Request already processed")
+    
+    # Update excuse request status
+    await db.hr_excuse_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason,
+            "attendance_updated": True
+        }}
+    )
+    
+    # Ensure attendance is marked as absent
+    excuse_date = excuse_request.get("excuse_date")
+    employee_id = excuse_request.get("employee_id")
+    employee_name = excuse_request.get("employee_name")
+    
+    existing_attendance = await db.hr_attendance.find_one({
+        "employee_id": employee_id,
+        "date": excuse_date
+    })
+    
+    if not existing_attendance:
+        # Create attendance record marked as absent
+        attendance = Attendance(
+            employee_id=employee_id,
+            employee_name=employee_name,
+            date=excuse_date,
+            check_in=None,
+            check_out=None,
+            source="excuse_rejected",
+            total_hours=0
+        )
+        await db.hr_attendance.insert_one(attendance.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="reject_excuse_request",
+        entity_type="excuse_request",
+        entity_id=request_id,
+        entity_name=employee_name,
+        details=f"رفض عذر: {employee_name} - {excuse_date} - {reason}"
+    )
+    
+    updated_request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.delete("/hr/excuse-requests/{request_id}")
+async def delete_excuse_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """حذف طلب عذر"""
+    excuse_request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
+    if not excuse_request:
+        raise HTTPException(status_code=404, detail="Excuse request not found")
+    
+    await db.hr_excuse_requests.delete_one({"id": request_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_excuse_request",
+        entity_type="excuse_request",
+        entity_id=request_id,
+        entity_name=excuse_request.get("employee_name"),
+        details=f"حذف طلب عذر: {excuse_request.get('employee_name')}"
+    )
+    
+    return {"message": "Excuse request deleted successfully"}
+
 # ==================== HR - EXPENSE REQUESTS (طلبات المصاريف) ====================
 
 @api_router.post("/hr/expense-requests", response_model=ExpenseRequest)
