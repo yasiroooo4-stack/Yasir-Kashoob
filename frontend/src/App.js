@@ -255,6 +255,9 @@ function App() {
               <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
               <Route path="/reset-password" element={user ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
               
+              {/* Supplier Portal - Public Route */}
+              <Route path="/supplier-portal" element={<SupplierPortal />} />
+              
               <Route path="/" element={
                 user ? (
                   <ErrorBoundary>
