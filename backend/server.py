@@ -1831,6 +1831,323 @@ async def delete_supplier(supplier_id: str, current_user: dict = Depends(require
     
     return {"message": "Supplier deleted successfully"}
 
+# ==================== SUPPLIER PORTAL (بوابة الموردين) ====================
+
+# Supplier Feed Request Models
+class SupplierFeedRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    supplier_id: str
+    supplier_name: str
+    supplier_code: str
+    feed_type: str  # نوع العلف
+    quantity: float  # الكمية
+    amount_to_deduct: float  # المبلغ المخصوم من الرصيد
+    notes: Optional[str] = None
+
+class SupplierFeedRequestCreate(SupplierFeedRequestBase):
+    pass
+
+class SupplierFeedRequest(SupplierFeedRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"  # pending, approved, rejected, delivered
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Supplier Message Models
+class SupplierMessageBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    supplier_id: str
+    supplier_name: str
+    supplier_code: str
+    message_type: str  # increase_quantity (زيادة كمية), general (عام), complaint (شكوى), inquiry (استفسار)
+    subject: str
+    message: str
+
+class SupplierMessageCreate(SupplierMessageBase):
+    pass
+
+class SupplierMessage(SupplierMessageBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "unread"  # unread, read, replied
+    reply: Optional[str] = None
+    replied_by: Optional[str] = None
+    replied_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Supplier Portal - Login by code
+@api_router.post("/supplier-portal/login")
+async def supplier_portal_login(supplier_code: str):
+    """تسجيل دخول المورد بالكود الخاص به"""
+    supplier = await db.suppliers.find_one({"supplier_code": supplier_code, "is_active": True}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="كود المورد غير صحيح أو غير مفعل")
+    
+    # Create a simple token for supplier
+    token_data = {
+        "sub": supplier["id"],
+        "supplier_code": supplier_code,
+        "type": "supplier",
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+    
+    return {
+        "access_token": token,
+        "supplier": {
+            "id": supplier["id"],
+            "name": supplier.get("name"),
+            "code": supplier.get("supplier_code"),
+            "balance": supplier.get("balance", 0),
+            "total_supplied": supplier.get("total_supplied", 0),
+            "milk_type": supplier.get("milk_type"),
+            "center_name": supplier.get("center_name")
+        }
+    }
+
+# Supplier Portal - Get my data
+@api_router.get("/supplier-portal/me")
+async def get_supplier_portal_data(authorization: str = None):
+    """جلب بيانات المورد الحالي"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="غير مصرح")
+    
+    try:
+        token = authorization.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "supplier":
+            raise HTTPException(status_code=401, detail="غير مصرح")
+        
+        supplier_id = payload.get("sub")
+        supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+        if not supplier:
+            raise HTTPException(status_code=404, detail="المورد غير موجود")
+        
+        return supplier
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="انتهت صلاحية الجلسة")
+    except:
+        raise HTTPException(status_code=401, detail="غير مصرح")
+
+# Supplier Portal - Get my milk receptions
+@api_router.get("/supplier-portal/milk-receptions")
+async def get_supplier_milk_receptions(
+    supplier_code: str,
+    month: Optional[int] = None,
+    year: Optional[int] = None
+):
+    """جلب سجلات استلام الحليب للمورد"""
+    supplier = await db.suppliers.find_one({"supplier_code": supplier_code}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="المورد غير موجود")
+    
+    query = {"supplier_id": supplier["id"]}
+    
+    if month and year:
+        # Filter by month and year
+        start_date = f"{year}-{month:02d}-01"
+        if month == 12:
+            end_date = f"{year + 1}-01-01"
+        else:
+            end_date = f"{year}-{month + 1:02d}-01"
+        query["date"] = {"$gte": start_date, "$lt": end_date}
+    
+    receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("date", -1).to_list(100)
+    
+    # Calculate totals
+    total_quantity = sum(r.get("quantity_liters", 0) for r in receptions)
+    total_amount = sum(r.get("total_amount", 0) for r in receptions)
+    
+    return {
+        "supplier": {
+            "name": supplier.get("name"),
+            "code": supplier.get("supplier_code"),
+            "balance": supplier.get("balance", 0),
+            "total_supplied": supplier.get("total_supplied", 0)
+        },
+        "receptions": receptions,
+        "summary": {
+            "total_quantity": total_quantity,
+            "total_amount": total_amount,
+            "count": len(receptions)
+        }
+    }
+
+# Supplier Portal - Request feed (تحويل رصيد إلى أعلاف)
+@api_router.post("/supplier-portal/feed-requests")
+async def create_supplier_feed_request(request_data: SupplierFeedRequestCreate):
+    """إنشاء طلب تحويل رصيد إلى أعلاف"""
+    # Verify supplier exists and has enough balance
+    supplier = await db.suppliers.find_one({"supplier_code": request_data.supplier_code}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="المورد غير موجود")
+    
+    if supplier.get("balance", 0) < request_data.amount_to_deduct:
+        raise HTTPException(status_code=400, detail="الرصيد غير كافي")
+    
+    feed_request = SupplierFeedRequest(**request_data.model_dump())
+    await db.supplier_feed_requests.insert_one(feed_request.model_dump())
+    
+    return {
+        "message": "تم إرسال طلب الأعلاف بنجاح وبانتظار موافقة قسم الأعلاف",
+        "request_id": feed_request.id,
+        "status": "pending"
+    }
+
+# Supplier Portal - Get my feed requests
+@api_router.get("/supplier-portal/feed-requests")
+async def get_supplier_feed_requests(supplier_code: str):
+    """جلب طلبات الأعلاف للمورد"""
+    requests = await db.supplier_feed_requests.find(
+        {"supplier_code": supplier_code}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return requests
+
+# Supplier Portal - Send message
+@api_router.post("/supplier-portal/messages")
+async def create_supplier_message(message_data: SupplierMessageCreate):
+    """إرسال رسالة من المورد"""
+    message = SupplierMessage(**message_data.model_dump())
+    await db.supplier_messages.insert_one(message.model_dump())
+    
+    return {
+        "message": "تم إرسال الرسالة بنجاح",
+        "message_id": message.id
+    }
+
+# Supplier Portal - Get my messages
+@api_router.get("/supplier-portal/messages")
+async def get_supplier_messages(supplier_code: str):
+    """جلب رسائل المورد"""
+    messages = await db.supplier_messages.find(
+        {"supplier_code": supplier_code}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return messages
+
+# Admin - Get all feed requests
+@api_router.get("/admin/supplier-feed-requests")
+async def get_all_feed_requests(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب جميع طلبات الأعلاف (للإدارة)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    requests = await db.supplier_feed_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return requests
+
+# Admin - Approve feed request
+@api_router.put("/admin/supplier-feed-requests/{request_id}/approve")
+async def approve_feed_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """الموافقة على طلب الأعلاف وخصم المبلغ"""
+    feed_request = await db.supplier_feed_requests.find_one({"id": request_id}, {"_id": 0})
+    if not feed_request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    if feed_request.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="تم معالجة هذا الطلب مسبقاً")
+    
+    # Deduct from supplier balance
+    supplier = await db.suppliers.find_one({"id": feed_request["supplier_id"]}, {"_id": 0})
+    if supplier.get("balance", 0) < feed_request["amount_to_deduct"]:
+        raise HTTPException(status_code=400, detail="رصيد المورد غير كافي")
+    
+    await db.suppliers.update_one(
+        {"id": feed_request["supplier_id"]},
+        {"$inc": {"balance": -feed_request["amount_to_deduct"]}}
+    )
+    
+    # Update request status
+    await db.supplier_feed_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_feed_request",
+        entity_type="supplier_feed_request",
+        entity_id=request_id,
+        entity_name=feed_request["supplier_name"],
+        details=f"موافقة على طلب أعلاف: {feed_request['supplier_name']} - {feed_request['amount_to_deduct']} ريال"
+    )
+    
+    return {"message": "تمت الموافقة على الطلب وخصم المبلغ من الرصيد"}
+
+# Admin - Reject feed request
+@api_router.put("/admin/supplier-feed-requests/{request_id}/reject")
+async def reject_feed_request(
+    request_id: str, 
+    reason: str = "",
+    current_user: dict = Depends(get_current_user)
+):
+    """رفض طلب الأعلاف"""
+    feed_request = await db.supplier_feed_requests.find_one({"id": request_id}, {"_id": 0})
+    if not feed_request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    if feed_request.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="تم معالجة هذا الطلب مسبقاً")
+    
+    await db.supplier_feed_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason
+        }}
+    )
+    
+    return {"message": "تم رفض الطلب"}
+
+# Admin - Get all supplier messages
+@api_router.get("/admin/supplier-messages")
+async def get_all_supplier_messages(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب جميع رسائل الموردين (للإدارة)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    messages = await db.supplier_messages.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return messages
+
+# Admin - Reply to supplier message
+@api_router.put("/admin/supplier-messages/{message_id}/reply")
+async def reply_to_supplier_message(
+    message_id: str,
+    reply: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """الرد على رسالة المورد"""
+    await db.supplier_messages.update_one(
+        {"id": message_id},
+        {"$set": {
+            "status": "replied",
+            "reply": reply,
+            "replied_by": current_user["full_name"],
+            "replied_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "تم إرسال الرد"}
+
 # ==================== MILK RECEPTION ROUTES ====================
 
 @api_router.post("/milk-receptions", response_model=MilkReception)
