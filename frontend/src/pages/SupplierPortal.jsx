@@ -829,13 +829,18 @@ const SupplierPortal = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>المبلغ المطلوب خصمه *</Label>
+              <Label>المبلغ المطلوب خصمه (ريال) *</Label>
               <Input
                 type="number"
                 value={feedForm.amount_to_deduct}
-                onChange={(e) => setFeedForm({ ...feedForm, amount_to_deduct: e.target.value })}
-                className="bg-muted"
+                readOnly
+                className="bg-muted font-bold text-lg"
               />
+              {feedForm.feed_type && feedForm.quantity && (
+                <p className="text-xs text-muted-foreground">
+                  {FEED_TYPES.find(f => f.id === feedForm.feed_type)?.price} ريال × {feedForm.quantity} كجم = {feedForm.amount_to_deduct} ريال
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>ملاحظات</Label>
