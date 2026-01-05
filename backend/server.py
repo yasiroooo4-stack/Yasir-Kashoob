@@ -270,6 +270,26 @@ class TreasuryBalance(BaseModel):
     total_withdrawals: float = 0.0
     last_updated: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# Supplier Modification Request (طلب تعديل/نقل المورد - يحتاج موافقة المدير)
+class SupplierModificationRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    supplier_id: str
+    supplier_name: str
+    supplier_code: str
+    request_type: str  # transfer, update, delete
+    current_data: dict  # البيانات الحالية
+    new_data: dict  # البيانات الجديدة المطلوبة
+    reason: Optional[str] = None
+    requested_by: str
+    requested_by_name: str
+    requested_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    status: str = "pending"  # pending, approved, rejected
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+
 # Employee Models (نماذج الموظفين المُحسّنة)
 class EmployeeBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
