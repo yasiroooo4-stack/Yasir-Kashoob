@@ -1,12 +1,26 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { API, useLanguage } from "../App";
 import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
 import {
   Select,
   SelectContent,
@@ -14,704 +28,560 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import {
-  BarChart3,
-  Calendar,
-  FileText,
+  Users,
+  Milk,
+  DollarSign,
+  Wallet,
+  Clock,
   Download,
-  Printer,
+  Filter,
+  RefreshCw,
+  FileSpreadsheet,
   TrendingUp,
   TrendingDown,
-  Milk,
-  ShoppingCart,
-  Wallet,
-  FileSpreadsheet,
-  Users,
-  Building2,
+  Calendar,
+  Building,
+  BarChart3,
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Legend,
-} from "recharts";
+
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const Reports = () => {
-  const { t } = useTranslation();
-  const { language } = useLanguage();
+  const [activeTab, setActiveTab] = useState("suppliers");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("daily");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedSupplier, setSelectedSupplier] = useState("");
+  
+  // Filters
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [centerFilter, setCenterFilter] = useState("all");
+  const [milkTypeFilter, setMilkTypeFilter] = useState("all");
+  
+  // Data
   const [suppliers, setSuppliers] = useState([]);
-  const [dailyReport, setDailyReport] = useState(null);
-  const [monthlyReport, setMonthlyReport] = useState(null);
-  const [supplierReport, setSupplierReport] = useState(null);
+  const [milkReceptions, setMilkReceptions] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  
+  // Stats
+  const [stats, setStats] = useState({
+    totalSuppliers: 0,
+    totalMilk: 0,
+    totalPayments: 0,
+    totalEmployees: 0,
+  });
+
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
-    fetchSuppliers();
+    fetchAllData();
   }, []);
 
-  const fetchSuppliers = async () => {
-    try {
-      const response = await axios.get(`${API}/suppliers`);
-      setSuppliers(response.data);
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-    }
-  };
-
-  const fetchDailyReport = async () => {
+  const fetchAllData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API}/reports/daily?date=${selectedDate}`);
-      setDailyReport(response.data);
+      const [suppliersRes, receptionsRes, employeesRes, attendanceRes] = await Promise.all([
+        axios.get(`${API}/api/suppliers`, { headers }),
+        axios.get(`${API}/api/milk-receptions`, { headers }),
+        axios.get(`${API}/api/hr/employees`, { headers }),
+        axios.get(`${API}/api/hr/attendance`, { headers }),
+      ]);
+      
+      setSuppliers(suppliersRes.data || []);
+      setMilkReceptions(receptionsRes.data || []);
+      setEmployees(employeesRes.data || []);
+      setAttendance(attendanceRes.data || []);
+      
+      const totalMilk = (receptionsRes.data || []).reduce((sum, r) => sum + (r.quantity || 0), 0);
+      const totalPayments = (receptionsRes.data || []).reduce((sum, r) => sum + (r.total_amount || 0), 0);
+      
+      setStats({
+        totalSuppliers: (suppliersRes.data || []).length,
+        totalMilk,
+        totalPayments,
+        totalEmployees: (employeesRes.data || []).length,
+      });
+      
     } catch (error) {
-      toast.error(t("error"));
+      console.error("Error fetching data:", error);
+      toast.error("فشل في تحميل البيانات");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMonthlyReport = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${API}/reports/monthly?year=${selectedYear}&month=${selectedMonth}`
-      );
-      setMonthlyReport(response.data);
-    } catch (error) {
-      toast.error(t("error"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const formatNumber = (num) => new Intl.NumberFormat("ar-SA").format(num || 0);
+  const formatCurrency = (num) => `${formatNumber(num)} ر.ع`;
+  const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString("ar-SA") : "-";
 
-  const fetchSupplierReport = async () => {
-    if (!selectedSupplier) {
-      toast.error(language === "ar" ? "اختر مورداً" : "Select a supplier");
+  const filteredSuppliers = suppliers.filter(s => {
+    if (centerFilter !== "all" && s.center_name !== centerFilter) return false;
+    if (milkTypeFilter !== "all" && s.milk_type !== milkTypeFilter) return false;
+    return true;
+  });
+
+  const filteredReceptions = milkReceptions.filter(r => {
+    if (dateFrom && new Date(r.date) < new Date(dateFrom)) return false;
+    if (dateTo && new Date(r.date) > new Date(dateTo)) return false;
+    if (centerFilter !== "all" && r.center_name !== centerFilter) return false;
+    return true;
+  });
+
+  const suppliersByCenter = suppliers.reduce((acc, s) => {
+    const center = s.center_name || "غير محدد";
+    if (!acc[center]) acc[center] = { total: 0, camel: 0, cow: 0, balance: 0 };
+    acc[center].total++;
+    if (s.milk_type === "إبل") acc[center].camel++;
+    else acc[center].cow++;
+    acc[center].balance += s.balance || 0;
+    return acc;
+  }, {});
+
+  const receptionsByDate = filteredReceptions.reduce((acc, r) => {
+    const date = r.date?.split("T")[0] || "غير محدد";
+    if (!acc[date]) acc[date] = { quantity: 0, amount: 0, count: 0 };
+    acc[date].quantity += r.quantity || 0;
+    acc[date].amount += r.total_amount || 0;
+    acc[date].count++;
+    return acc;
+  }, {});
+
+  const exportToCSV = (data, filename) => {
+    if (!data || data.length === 0) {
+      toast.error("لا توجد بيانات للتصدير");
       return;
     }
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API}/reports/supplier/${selectedSupplier}`);
-      setSupplierReport(response.data);
-    } catch (error) {
-      toast.error(t("error"));
-    } finally {
-      setLoading(false);
-    }
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => Object.values(row).join(",")).join("\n");
+    const csv = `\uFEFF${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    toast.success("تم تصدير التقرير بنجاح");
   };
 
-  const handleGenerateReport = () => {
-    switch (activeTab) {
-      case "daily":
-        fetchDailyReport();
-        break;
-      case "monthly":
-        fetchMonthlyReport();
-        break;
-      case "supplier":
-        fetchSupplierReport();
-        break;
-    }
-  };
-
-  // Export functions
-  const handleExportExcel = async (type) => {
-    try {
-      let endpoint = '';
-      let filename = '';
-      
-      switch (type) {
-        case 'suppliers':
-          endpoint = '/reports/export/suppliers/excel';
-          filename = 'suppliers_report.xlsx';
-          break;
-        case 'employees':
-          endpoint = '/reports/export/hr/employees/excel';
-          filename = 'employees_report.xlsx';
-          break;
-        case 'milk':
-          endpoint = `/reports/export/milk-receptions/excel?start_date=${selectedDate}`;
-          filename = 'milk_receptions.xlsx';
-          break;
-        case 'finance':
-          endpoint = '/reports/export/finance/excel';
-          filename = 'finance_report.xlsx';
-          break;
-        default:
-          return;
-      }
-      
-      const response = await axios.get(`${API}${endpoint}`, {
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(language === "ar" ? "تم التصدير بنجاح" : "Exported successfully");
-    } catch (error) {
-      toast.error(language === "ar" ? "فشل التصدير" : "Export failed");
-    }
-  };
-
-  const handleExportPDF = async (type) => {
-    try {
-      let endpoint = '';
-      let filename = '';
-      
-      switch (type) {
-        case 'suppliers':
-          endpoint = '/reports/export/suppliers/pdf';
-          filename = 'suppliers_report.pdf';
-          break;
-        case 'daily':
-          endpoint = `/reports/export/daily/pdf?date=${selectedDate}`;
-          filename = `daily_report_${selectedDate}.pdf`;
-          break;
-        default:
-          return;
-      }
-      
-      const response = await axios.get(`${API}${endpoint}`, {
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(language === "ar" ? "تم التصدير بنجاح" : "Exported successfully");
-    } catch (error) {
-      toast.error(language === "ar" ? "فشل التصدير" : "Export failed");
-    }
-  };
-
-  const months = [
-    { value: 1, label: language === "ar" ? "يناير" : "January" },
-    { value: 2, label: language === "ar" ? "فبراير" : "February" },
-    { value: 3, label: language === "ar" ? "مارس" : "March" },
-    { value: 4, label: language === "ar" ? "أبريل" : "April" },
-    { value: 5, label: language === "ar" ? "مايو" : "May" },
-    { value: 6, label: language === "ar" ? "يونيو" : "June" },
-    { value: 7, label: language === "ar" ? "يوليو" : "July" },
-    { value: 8, label: language === "ar" ? "أغسطس" : "August" },
-    { value: 9, label: language === "ar" ? "سبتمبر" : "September" },
-    { value: 10, label: language === "ar" ? "أكتوبر" : "October" },
-    { value: 11, label: language === "ar" ? "نوفمبر" : "November" },
-    { value: 12, label: language === "ar" ? "ديسمبر" : "December" },
-  ];
+  const centers = [...new Set(suppliers.map(s => s.center_name).filter(Boolean))];
 
   return (
-    <div className="space-y-6" data-testid="reports-page">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6" dir="rtl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("reports")}</h1>
-          <p className="text-muted-foreground">
-            {language === "ar" ? "عرض وتصدير التقارير" : "View and export reports"}
-          </p>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="w-7 h-7" />
+            التقارير
+          </h1>
+          <p className="text-muted-foreground">تقارير شاملة للموردين والتوريدات والمالية</p>
         </div>
+        <Button onClick={fetchAllData} variant="outline" disabled={loading}>
+          <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
+          تحديث
+        </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
-          <TabsTrigger value="daily" className="gap-2" data-testid="tab-daily">
-            <Calendar className="w-4 h-4" />
-            {t("daily_report")}
-          </TabsTrigger>
-          <TabsTrigger value="monthly" className="gap-2" data-testid="tab-monthly">
-            <BarChart3 className="w-4 h-4" />
-            {t("monthly_report")}
-          </TabsTrigger>
-          <TabsTrigger value="supplier" className="gap-2" data-testid="tab-supplier">
-            <FileText className="w-4 h-4" />
-            {t("supplier_report")}
-          </TabsTrigger>
-          <TabsTrigger value="export" className="gap-2" data-testid="tab-export">
-            <Download className="w-4 h-4" />
-            {language === "ar" ? "تصدير" : "Export"}
-          </TabsTrigger>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">الموردين</p>
+                <p className="text-3xl font-bold">{formatNumber(stats.totalSuppliers)}</p>
+              </div>
+              <Users className="w-10 h-10 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">الحليب (لتر)</p>
+                <p className="text-3xl font-bold">{formatNumber(stats.totalMilk)}</p>
+              </div>
+              <Milk className="w-10 h-10 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">المدفوعات</p>
+                <p className="text-3xl font-bold">{formatCurrency(stats.totalPayments)}</p>
+              </div>
+              <DollarSign className="w-10 h-10 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">الموظفين</p>
+                <p className="text-3xl font-bold">{formatNumber(stats.totalEmployees)}</p>
+              </div>
+              <Users className="w-10 h-10 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="space-y-2">
+              <Label>من تاريخ</Label>
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+            </div>
+            <div className="space-y-2">
+              <Label>إلى تاريخ</Label>
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
+            </div>
+            <div className="space-y-2">
+              <Label>المركز</Label>
+              <Select value={centerFilter} onValueChange={setCenterFilter}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع المراكز</SelectItem>
+                  {centers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>نوع الحليب</Label>
+              <Select value={milkTypeFilter} onValueChange={setMilkTypeFilter}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  <SelectItem value="إبل">إبل</SelectItem>
+                  <SelectItem value="أبقار">أبقار</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" onClick={() => { setDateFrom(""); setDateTo(""); setCenterFilter("all"); setMilkTypeFilter("all"); }}>
+              <Filter className="w-4 h-4 me-2" />إعادة تعيين
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+          <TabsTrigger value="suppliers"><Users className="w-4 h-4 me-1" />الموردين</TabsTrigger>
+          <TabsTrigger value="receptions"><Milk className="w-4 h-4 me-1" />التوريدات</TabsTrigger>
+          <TabsTrigger value="finance"><DollarSign className="w-4 h-4 me-1" />المالية</TabsTrigger>
+          <TabsTrigger value="payroll"><Wallet className="w-4 h-4 me-1" />الرواتب</TabsTrigger>
+          <TabsTrigger value="attendance"><Clock className="w-4 h-4 me-1" />الحضور</TabsTrigger>
         </TabsList>
 
-        {/* Daily Report Tab */}
-        <TabsContent value="daily" className="space-y-6">
+        <TabsContent value="suppliers">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t("select_date")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    data-testid="date-input"
-                  />
-                </div>
-                <Button
-                  onClick={handleGenerateReport}
-                  className="gradient-primary text-white"
-                  disabled={loading}
-                  data-testid="generate-daily-btn"
-                >
-                  {loading ? t("loading") : t("generate_report")}
+              <div className="flex justify-between items-center">
+                <CardTitle>تقرير الموردين</CardTitle>
+                <Button onClick={() => exportToCSV(filteredSuppliers.map(s => ({ الكود: s.supplier_code, الاسم: s.name, المركز: s.center_name, النوع: s.milk_type, الهاتف: s.phone, الرصيد: s.balance })), "suppliers_report")}>
+                  <Download className="w-4 h-4 me-2" />تصدير
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {dailyReport && (
-            <div className="space-y-4">
-              {/* Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="stat-card">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t("receptions")}</p>
-                        <p className="text-2xl font-bold">
-                          {dailyReport.receptions?.total_quantity?.toLocaleString() || 0} {t("liters")}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {dailyReport.receptions?.count || 0} {language === "ar" ? "عملية" : "operations"}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="stat-card">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t("sales")}</p>
-                        <p className="text-2xl font-bold">
-                          {dailyReport.sales?.total_quantity?.toLocaleString() || 0} {t("liters")}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {dailyReport.sales?.total_value?.toLocaleString() || 0} {t("currency")}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 rounded-xl gradient-secondary flex items-center justify-center">
-                        <ShoppingCart className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="stat-card">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t("payments")}</p>
-                        <p className="text-2xl font-bold">
-                          {dailyReport.payments?.total_value?.toLocaleString() || 0} {t("currency")}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {dailyReport.payments?.count || 0} {language === "ar" ? "عملية" : "operations"}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 rounded-xl gradient-accent flex items-center justify-center">
-                        <Wallet className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Monthly Report Tab */}
-        <TabsContent value="monthly" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t("select_month")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Select
-                    value={selectedMonth.toString()}
-                    onValueChange={(v) => setSelectedMonth(parseInt(v))}
-                  >
-                    <SelectTrigger data-testid="month-select">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map((m) => (
-                        <SelectItem key={m.value} value={m.value.toString()}>
-                          {m.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <Select
-                    value={selectedYear.toString()}
-                    onValueChange={(v) => setSelectedYear(parseInt(v))}
-                  >
-                    <SelectTrigger data-testid="year-select">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[2023, 2024, 2025, 2026].map((y) => (
-                        <SelectItem key={y} value={y.toString()}>
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  onClick={handleGenerateReport}
-                  className="gradient-primary text-white"
-                  disabled={loading}
-                  data-testid="generate-monthly-btn"
-                >
-                  {loading ? t("loading") : t("generate_report")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {monthlyReport && (
-            <div className="space-y-4">
-              {/* Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <Card className="stat-card">
-                  <CardContent className="p-4 text-center">
-                    <Milk className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <p className="text-2xl font-bold">
-                      {monthlyReport.summary?.total_reception_quantity?.toLocaleString() || 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{t("receptions")} ({t("liters")})</p>
-                  </CardContent>
-                </Card>
-                <Card className="stat-card">
-                  <CardContent className="p-4 text-center">
-                    <ShoppingCart className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold">
-                      {monthlyReport.summary?.total_sales_quantity?.toLocaleString() || 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{t("sales")} ({t("liters")})</p>
-                  </CardContent>
-                </Card>
-                <Card className="stat-card">
-                  <CardContent className="p-4 text-center">
-                    <TrendingUp className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold">
-                      {monthlyReport.summary?.total_sales_value?.toLocaleString() || 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{t("sales")} ({t("currency")})</p>
-                  </CardContent>
-                </Card>
-                <Card className="stat-card">
-                  <CardContent className="p-4 text-center">
-                    <Wallet className="w-8 h-8 text-violet-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold">
-                      {monthlyReport.summary?.total_payments?.toLocaleString() || 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{t("payments")} ({t("currency")})</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {language === "ar" ? "الرسم البياني" : "Chart"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlyReport.daily_data || []}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis
-                          dataKey="date"
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => value.slice(-2)}
-                        />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            borderColor: "hsl(var(--border))",
-                            borderRadius: "8px",
-                          }}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="reception_qty"
-                          name={t("receptions")}
-                          stroke="#0EA5E9"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="sales_qty"
-                          name={t("sales")}
-                          stroke="#10B981"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Supplier Report Tab */}
-        <TabsContent value="supplier" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t("supplier")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-                    <SelectTrigger data-testid="supplier-select">
-                      <SelectValue placeholder={t("supplier")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {suppliers.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  onClick={handleGenerateReport}
-                  className="gradient-primary text-white"
-                  disabled={loading}
-                  data-testid="generate-supplier-btn"
-                >
-                  {loading ? t("loading") : t("generate_report")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {supplierReport && (
-            <div className="space-y-4">
-              {/* Supplier Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{supplierReport.supplier?.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-sky-50 rounded-xl">
-                      <p className="text-2xl font-bold text-primary">
-                        {supplierReport.summary?.total_supplied?.toLocaleString() || 0}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{t("total_supplied")} ({t("liters")})</p>
-                    </div>
-                    <div className="text-center p-4 bg-emerald-50 rounded-xl">
-                      <p className="text-2xl font-bold text-emerald-600">
-                        {supplierReport.summary?.reception_count || 0}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{t("receptions")}</p>
-                    </div>
-                    <div className="text-center p-4 bg-amber-50 rounded-xl">
-                      <p className="text-2xl font-bold text-amber-600">
-                        {supplierReport.summary?.current_balance?.toLocaleString() || 0}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{t("balance")} ({t("currency")})</p>
-                    </div>
-                    <div className="text-center p-4 bg-violet-50 rounded-xl">
-                      <p className="text-2xl font-bold text-violet-600">
-                        {supplierReport.payments?.length || 0}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{t("payments")}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recent Receptions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t("receptions")}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {supplierReport.receptions?.slice(0, 5).map((r, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium">
-                            {r.quantity_liters?.toLocaleString()} {t("liters")}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(r.reception_date).toLocaleDateString(
-                              language === "ar" ? "ar-SA" : "en-US"
-                            )}
-                          </p>
-                        </div>
-                        <p className="font-semibold text-primary">
-                          {r.total_amount?.toLocaleString()} {t("currency")}
-                        </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {Object.entries(suppliersByCenter).map(([center, data]) => (
+                  <Card key={center} className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Building className="w-5 h-5 text-primary" />
+                        <h4 className="font-bold">{center}</h4>
                       </div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between"><span>الإجمالي:</span><Badge>{data.total}</Badge></div>
+                        <div className="flex justify-between"><span>🐪 إبل:</span><span>{data.camel}</span></div>
+                        <div className="flex justify-between"><span>🐄 أبقار:</span><span>{data.cow}</span></div>
+                        <div className="flex justify-between border-t pt-2"><span>الأرصدة:</span><span className="font-bold text-green-600">{formatCurrency(data.balance)}</span></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <div className="rounded-md border max-h-96 overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      <TableHead>الكود</TableHead>
+                      <TableHead>الاسم</TableHead>
+                      <TableHead>المركز</TableHead>
+                      <TableHead>النوع</TableHead>
+                      <TableHead>الرصيد</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSuppliers.slice(0, 100).map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-mono">{s.supplier_code}</TableCell>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell><Badge variant="outline">{s.center_name}</Badge></TableCell>
+                        <TableCell>{s.milk_type === "إبل" ? "🐪" : "🐄"} {s.milk_type}</TableCell>
+                        <TableCell className={s.balance > 0 ? "text-green-600" : ""}>{formatCurrency(s.balance)}</TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Export Tab */}
-        <TabsContent value="export" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Suppliers Export */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-500" />
-                  {language === "ar" ? "تقرير الموردين" : "Suppliers Report"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar" ? "تصدير قائمة الموردين مع أرصدتهم" : "Export suppliers list with balances"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex gap-2">
-                <Button onClick={() => handleExportExcel('suppliers')} variant="outline" className="flex-1">
-                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
-                  Excel
+        <TabsContent value="receptions">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>تقرير التوريدات</CardTitle>
+                <Button onClick={() => exportToCSV(Object.entries(receptionsByDate).map(([date, data]) => ({ التاريخ: date, الكمية: data.quantity, المبلغ: data.amount, العدد: data.count })), "receptions_report")}>
+                  <Download className="w-4 h-4 me-2" />تصدير
                 </Button>
-                <Button onClick={() => handleExportPDF('suppliers')} variant="outline" className="flex-1">
-                  <FileText className="w-4 h-4 me-2 text-red-600" />
-                  PDF
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-green-50 dark:bg-green-900/20">
+                  <CardContent className="p-4 text-center">
+                    <Milk className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <p className="text-sm text-muted-foreground">إجمالي الكمية</p>
+                    <p className="text-2xl font-bold text-green-600">{formatNumber(filteredReceptions.reduce((s, r) => s + (r.quantity || 0), 0))} لتر</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-amber-50 dark:bg-amber-900/20">
+                  <CardContent className="p-4 text-center">
+                    <DollarSign className="w-8 h-8 mx-auto mb-2 text-amber-600" />
+                    <p className="text-sm text-muted-foreground">إجمالي المبلغ</p>
+                    <p className="text-2xl font-bold text-amber-600">{formatCurrency(filteredReceptions.reduce((s, r) => s + (r.total_amount || 0), 0))}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 dark:bg-blue-900/20">
+                  <CardContent className="p-4 text-center">
+                    <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <p className="text-sm text-muted-foreground">عدد التوريدات</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatNumber(filteredReceptions.length)}</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="rounded-md border max-h-96 overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      <TableHead>التاريخ</TableHead>
+                      <TableHead>العدد</TableHead>
+                      <TableHead>الكمية (لتر)</TableHead>
+                      <TableHead>المبلغ (ر.ع)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(receptionsByDate).sort((a, b) => b[0].localeCompare(a[0])).map(([date, data]) => (
+                      <TableRow key={date}>
+                        <TableCell><Calendar className="w-4 h-4 inline me-2" />{date}</TableCell>
+                        <TableCell>{data.count}</TableCell>
+                        <TableCell className="font-bold">{formatNumber(data.quantity)}</TableCell>
+                        <TableCell className="text-green-600 font-bold">{formatCurrency(data.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Employees Export */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-purple-500" />
-                  {language === "ar" ? "تقرير الموظفين" : "Employees Report"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar" ? "تصدير قائمة الموظفين" : "Export employees list"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex gap-2">
-                <Button onClick={() => handleExportExcel('employees')} variant="outline" className="flex-1">
-                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
-                  Excel
+        <TabsContent value="finance">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>تقرير المالية</CardTitle>
+                <Button onClick={() => exportToCSV(suppliers.filter(s => s.balance !== 0).map(s => ({ الكود: s.supplier_code, الاسم: s.name, المركز: s.center_name, الرصيد: s.balance })), "finance_report")}>
+                  <Download className="w-4 h-4 me-2" />تصدير
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-green-50 dark:bg-green-900/20">
+                  <CardContent className="p-4">
+                    <TrendingUp className="w-10 h-10 text-green-600 mb-2" />
+                    <p className="text-sm text-muted-foreground">مستحق للموردين</p>
+                    <p className="text-2xl font-bold text-green-600">{formatCurrency(suppliers.filter(s => s.balance > 0).reduce((s, sup) => s + sup.balance, 0))}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-red-50 dark:bg-red-900/20">
+                  <CardContent className="p-4">
+                    <TrendingDown className="w-10 h-10 text-red-600 mb-2" />
+                    <p className="text-sm text-muted-foreground">أرصدة دائنة</p>
+                    <p className="text-2xl font-bold text-red-600">{formatCurrency(Math.abs(suppliers.filter(s => s.balance < 0).reduce((s, sup) => s + sup.balance, 0)))}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 dark:bg-blue-900/20">
+                  <CardContent className="p-4">
+                    <Wallet className="w-10 h-10 text-blue-600 mb-2" />
+                    <p className="text-sm text-muted-foreground">صافي الأرصدة</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(suppliers.reduce((s, sup) => s + (sup.balance || 0), 0))}</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="rounded-md border max-h-64 overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      <TableHead>الكود</TableHead>
+                      <TableHead>الاسم</TableHead>
+                      <TableHead>المركز</TableHead>
+                      <TableHead>الرصيد</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {suppliers.filter(s => s.balance > 0).sort((a, b) => b.balance - a.balance).slice(0, 20).map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-mono">{s.supplier_code}</TableCell>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell><Badge variant="outline">{s.center_name}</Badge></TableCell>
+                        <TableCell className="text-green-600 font-bold">{formatCurrency(s.balance)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Milk Receptions Export */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Milk className="w-5 h-5 text-sky-500" />
-                  {language === "ar" ? "تقرير استلام الحليب" : "Milk Receptions Report"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar" ? "تصدير سجلات استلام الحليب" : "Export milk reception records"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex gap-2">
-                <Button onClick={() => handleExportExcel('milk')} variant="outline" className="flex-1">
-                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
-                  Excel
+        <TabsContent value="payroll">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>تقرير الرواتب</CardTitle>
+                <Button onClick={() => exportToCSV(employees.map(e => ({ الكود: e.employee_id, الاسم: e.name, القسم: e.department, الراتب: e.salary })), "payroll_report")}>
+                  <Download className="w-4 h-4 me-2" />تصدير
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-purple-50 dark:bg-purple-900/20">
+                  <CardContent className="p-4 text-center">
+                    <Users className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                    <p className="text-sm text-muted-foreground">عدد الموظفين</p>
+                    <p className="text-2xl font-bold text-purple-600">{employees.length}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50 dark:bg-green-900/20">
+                  <CardContent className="p-4 text-center">
+                    <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <p className="text-sm text-muted-foreground">إجمالي الرواتب</p>
+                    <p className="text-2xl font-bold text-green-600">{formatCurrency(employees.reduce((s, e) => s + (e.salary || 0), 0))}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 dark:bg-blue-900/20">
+                  <CardContent className="p-4 text-center">
+                    <BarChart3 className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <p className="text-sm text-muted-foreground">متوسط الراتب</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(employees.length > 0 ? employees.reduce((s, e) => s + (e.salary || 0), 0) / employees.length : 0)}</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="rounded-md border max-h-96 overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      <TableHead>الكود</TableHead>
+                      <TableHead>الاسم</TableHead>
+                      <TableHead>القسم</TableHead>
+                      <TableHead>الوظيفة</TableHead>
+                      <TableHead>الراتب</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {employees.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell className="font-mono">{e.employee_id}</TableCell>
+                        <TableCell>{e.name}</TableCell>
+                        <TableCell><Badge variant="outline">{e.department}</Badge></TableCell>
+                        <TableCell>{e.job_title}</TableCell>
+                        <TableCell className="text-green-600 font-bold">{formatCurrency(e.salary)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Finance Export */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-amber-500" />
-                  {language === "ar" ? "التقرير المالي" : "Finance Report"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar" ? "تصدير سجلات المدفوعات" : "Export payment records"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex gap-2">
-                <Button onClick={() => handleExportExcel('finance')} variant="outline" className="flex-1">
-                  <FileSpreadsheet className="w-4 h-4 me-2 text-green-600" />
-                  Excel
+        <TabsContent value="attendance">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>تقرير الحضور</CardTitle>
+                <Button onClick={() => exportToCSV(attendance.map(a => ({ التاريخ: a.date, الموظف: a.employee_name, الحضور: a.check_in, الانصراف: a.check_out, الحالة: a.status })), "attendance_report")}>
+                  <Download className="w-4 h-4 me-2" />تصدير
                 </Button>
-              </CardContent>
-            </Card>
-
-            {/* Daily Report Export */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-teal-500" />
-                  {language === "ar" ? "التقرير اليومي" : "Daily Report"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar" ? "تصدير التقرير اليومي بصيغة PDF" : "Export daily report as PDF"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4 items-end">
-                  <div className="flex-1">
-                    <Label className="mb-2 block">{t("select_date")}</Label>
-                    <Input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={() => handleExportPDF('daily')} variant="outline">
-                    <FileText className="w-4 h-4 me-2 text-red-600" />
-                    {language === "ar" ? "تصدير PDF" : "Export PDF"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <Card className="bg-green-50 dark:bg-green-900/20">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">حاضر</p>
+                    <p className="text-2xl font-bold text-green-600">{attendance.filter(a => a.status === "present").length}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-red-50 dark:bg-red-900/20">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">غائب</p>
+                    <p className="text-2xl font-bold text-red-600">{attendance.filter(a => a.status === "absent").length}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-amber-50 dark:bg-amber-900/20">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">متأخر</p>
+                    <p className="text-2xl font-bold text-amber-600">{attendance.filter(a => a.status === "late").length}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 dark:bg-blue-900/20">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">الإجمالي</p>
+                    <p className="text-2xl font-bold text-blue-600">{attendance.length}</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="rounded-md border max-h-96 overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      <TableHead>التاريخ</TableHead>
+                      <TableHead>الموظف</TableHead>
+                      <TableHead>الحضور</TableHead>
+                      <TableHead>الانصراف</TableHead>
+                      <TableHead>الحالة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {attendance.slice(0, 100).map((a, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{formatDate(a.date)}</TableCell>
+                        <TableCell>{a.employee_name || a.employee_id}</TableCell>
+                        <TableCell>{a.check_in || "-"}</TableCell>
+                        <TableCell>{a.check_out || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant={a.status === "present" ? "default" : a.status === "absent" ? "destructive" : "secondary"}>
+                            {a.status === "present" ? "حاضر" : a.status === "absent" ? "غائب" : a.status === "late" ? "متأخر" : a.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
