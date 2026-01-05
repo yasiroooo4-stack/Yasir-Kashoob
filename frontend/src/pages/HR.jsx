@@ -4526,6 +4526,13 @@ const HR = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Salary History Dialog */}
+      <SalaryHistoryDialog
+        open={salaryHistoryDialogOpen}
+        onOpenChange={setSalaryHistoryDialogOpen}
+        employee={selectedEmployeeForSalary}
+      />
     </div>
   );
 };
