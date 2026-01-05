@@ -6168,7 +6168,9 @@ async def import_attendance_from_zkteco(
     """Import attendance records from ZKTeco MDB database file"""
     import tempfile
     import os
-    from mdbtools import MDBTable
+    import subprocess
+    import csv
+    from io import StringIO
     
     if not file.filename.endswith('.mdb'):
         raise HTTPException(status_code=400, detail="يجب أن يكون الملف بصيغة MDB من جهاز ZKTeco")
@@ -6180,29 +6182,47 @@ async def import_attendance_from_zkteco(
             tmp.write(content)
             tmp_path = tmp.name
         
-        # Extract users from MDB using mdbtools library
+        # Helper function to read table using mdb-export CLI
+        def read_mdb_table(mdb_path, table_name):
+            try:
+                result = subprocess.run(
+                    ['mdb-export', mdb_path, table_name],
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+                if result.returncode != 0:
+                    return []
+                
+                # Parse CSV output
+                reader = csv.DictReader(StringIO(result.stdout))
+                return list(reader)
+            except Exception as e:
+                logging.warning(f"Could not read table {table_name}: {e}")
+                return []
+        
+        # Extract users from MDB using mdb-export CLI
         user_map = {}
         try:
-            userinfo_table = MDBTable(tmp_path, 'USERINFO')
-            for row in userinfo_table:
+            userinfo_rows = read_mdb_table(tmp_path, 'USERINFO')
+            for row in userinfo_rows:
                 user_id = str(row.get('USERID', ''))
                 name = row.get('Name', '') or row.get('Badgenumber', '') or ''
                 badge = str(row.get('Badgenumber', ''))
                 if user_id:
                     user_map[user_id] = {'name': name, 'badge': badge}
         except Exception as e:
-            print(f"Warning: Could not read USERINFO table: {e}")
+            logging.warning(f"Could not read USERINFO table: {e}")
         
         # Extract attendance records from MDB
-        try:
-            checkinout_table = MDBTable(tmp_path, 'CHECKINOUT')
-        except Exception as e:
+        checkinout_rows = read_mdb_table(tmp_path, 'CHECKINOUT')
+        if not checkinout_rows:
             os.unlink(tmp_path)
-            raise HTTPException(status_code=500, detail=f"فشل في قراءة جدول CHECKINOUT: {str(e)}")
+            raise HTTPException(status_code=500, detail="فشل في قراءة جدول CHECKINOUT أو الجدول فارغ")
         
         # Group records by user and date
         attendance_by_day = {}
-        for row in checkinout_table:
+        for row in checkinout_rows:
             user_id = str(row.get('USERID', ''))
             check_time = row.get('CHECKTIME', None)
             
@@ -6210,22 +6230,23 @@ async def import_attendance_from_zkteco(
                 continue
             
             try:
-                # check_time should be datetime object from mdbtools
+                # Parse check_time string from CSV
                 from datetime import datetime as dt
-                if isinstance(check_time, str):
-                    # Try different formats
-                    for fmt in ["%m/%d/%y %H:%M:%S", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S"]:
-                        try:
-                            check_time = dt.strptime(check_time, fmt)
-                            break
-                        except:
-                            continue
+                check_time_dt = None
                 
-                if not isinstance(check_time, dt):
+                # Try different formats
+                for fmt in ["%m/%d/%y %H:%M:%S", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S", "%Y/%m/%d %H:%M:%S"]:
+                    try:
+                        check_time_dt = dt.strptime(check_time, fmt)
+                        break
+                    except:
+                        continue
+                
+                if not check_time_dt:
                     continue
                     
-                date_str = check_time.strftime("%Y-%m-%d")
-                time_str = check_time.strftime("%H:%M")
+                date_str = check_time_dt.strftime("%Y-%m-%d")
+                time_str = check_time_dt.strftime("%H:%M")
                 
                 key = f"{user_id}_{date_str}"
                 if key not in attendance_by_day:
