@@ -108,6 +108,7 @@ const Layout = () => {
   const navItems = [
     { path: "/dashboard", icon: LayoutDashboard, label: "dashboard" },
     { path: "/suppliers", icon: Users, label: "suppliers", departments: ["purchasing", "milk_reception", "admin", "it"] },
+    { path: "/supplier-management", icon: PackageSearch, label: "supplier_management", departments: ["purchasing", "admin", "it"] },
     { path: "/milk-reception", icon: Milk, label: "milk_reception", departments: ["milk_reception", "admin", "it"] },
     { path: "/customers", icon: ShoppingCart, label: "customers", departments: ["sales", "admin", "it"] },
     { path: "/sales", icon: ShoppingCart, label: "sales", departments: ["sales", "admin", "it"] },
