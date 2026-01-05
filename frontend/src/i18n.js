@@ -8,6 +8,7 @@ const resources = {
       "app_name": "مركز تجميع الحليب",
       "dashboard": "لوحة التحكم",
       "suppliers": "الموردين",
+      "supplier_management": "إدارة الموردين",
       "milk_reception": "استلام الحليب",
       "customers": "العملاء",
       "sales": "المبيعات",
