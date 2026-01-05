@@ -1412,6 +1412,10 @@ const HR = () => {
             <AlertTriangle className="w-5 h-5 text-orange-500" />
             <span>{language === "ar" ? "الأعذار" : "Excuses"}</span>
           </TabsTrigger>
+          <TabsTrigger value="holidays" className="gap-2 px-4 py-3 text-base font-medium">
+            <Calendar className="w-5 h-5 text-red-500" />
+            <span>{language === "ar" ? "العطلات" : "Holidays"}</span>
+          </TabsTrigger>
           <TabsTrigger value="expenses" className="gap-2 px-4 py-3 text-base font-medium">
             <Wallet className="w-5 h-5" />
             <span>{language === "ar" ? "المصاريف" : "Expenses"}</span>
