@@ -94,6 +94,8 @@ const SupplierManagement = () => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [viewMessageDialogOpen, setViewMessageDialogOpen] = useState(false);
+  const [viewRequestDialogOpen, setViewRequestDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
