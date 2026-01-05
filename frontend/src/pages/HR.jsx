@@ -1541,6 +1541,17 @@ const HR = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => {
+                                  setSelectedEmployeeForSalary(emp);
+                                  setSalaryHistoryDialogOpen(true);
+                                }}
+                                title={language === "ar" ? "سجل الراتب" : "Salary History"}
+                              >
+                                <History className="w-4 h-4 text-green-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => openEditEmployee(emp)}
                               >
                                 <Pencil className="w-4 h-4" />
