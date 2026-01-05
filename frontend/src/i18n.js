@@ -9,6 +9,7 @@ const resources = {
       "dashboard": "لوحة التحكم",
       "suppliers": "الموردين",
       "supplier_management": "إدارة الموردين",
+      "employee_scheduling": "جدولة الموظفين",
       "milk_reception": "استلام الحليب",
       "customers": "العملاء",
       "sales": "المبيعات",
