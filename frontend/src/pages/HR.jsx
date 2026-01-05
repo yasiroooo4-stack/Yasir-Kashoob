@@ -339,6 +339,7 @@ const HR = () => {
         employeesRes,
         departmentsRes,
         leavesRes,
+        excusesRes,
         expensesRes,
         carsRes,
         lettersRes,
@@ -356,6 +357,7 @@ const HR = () => {
         axios.get(`${API}/hr/employees`),
         axios.get(`${API}/hr/departments`),
         axios.get(`${API}/hr/leave-requests`),
+        axios.get(`${API}/hr/excuse-requests`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/expense-requests`),
         axios.get(`${API}/hr/car-contracts`),
         axios.get(`${API}/hr/official-letters`),
@@ -374,6 +376,7 @@ const HR = () => {
       setEmployees(employeesRes.data);
       setDepartments(departmentsRes.data);
       setLeaveRequests(leavesRes.data);
+      setExcuseRequests(excusesRes.data || []);
       setExpenseRequests(expensesRes.data);
       setCarContracts(carsRes.data);
       setOfficialLetters(lettersRes.data);
