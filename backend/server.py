@@ -4377,6 +4377,234 @@ async def reject_leave_request(request_id: str, reason: str = "", current_user: 
     
     return request
 
+# ==================== HR - FILE UPLOAD (رفع الملفات) ====================
+
+import base64
+import os
+
+UPLOAD_DIR = "/app/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@api_router.post("/hr/upload-file")
+async def upload_hr_file(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """رفع ملف (صورة أو PDF) للأعذار أو أي غرض آخر"""
+    allowed_types = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp']
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    
+    if file_ext not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"نوع الملف غير مدعوم. الأنواع المدعومة: {', '.join(allowed_types)}")
+    
+    # Check file size (max 10MB)
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="حجم الملف يجب أن يكون أقل من 10 ميجابايت")
+    
+    # Generate unique filename
+    import uuid
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    
+    # Save file
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    # Return URL
+    file_url = f"/api/uploads/{unique_filename}"
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="upload_file",
+        details=f"رفع ملف: {file.filename}"
+    )
+    
+    return {"url": file_url, "filename": unique_filename, "original_name": file.filename}
+
+@api_router.get("/uploads/{filename}")
+async def get_uploaded_file(filename: str):
+    """جلب ملف مرفوع"""
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="الملف غير موجود")
+    
+    # Determine content type
+    ext = os.path.splitext(filename)[1].lower()
+    content_types = {
+        '.pdf': 'application/pdf',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+    }
+    content_type = content_types.get(ext, 'application/octet-stream')
+    
+    with open(file_path, "rb") as f:
+        content = f.read()
+    
+    return StreamingResponse(io.BytesIO(content), media_type=content_type)
+
+# ==================== HR - OFFICIAL HOLIDAYS (العطلات الرسمية) ====================
+
+class OfficialHolidayBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str  # اسم العطلة
+    date: str  # تاريخ العطلة
+    applies_to: str = "all"  # all, admin_only, centers_only
+    is_recurring: bool = False  # هل تتكرر سنوياً
+    notes: Optional[str] = None
+
+class OfficialHolidayCreate(OfficialHolidayBase):
+    pass
+
+class OfficialHoliday(OfficialHolidayBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+@api_router.post("/hr/official-holidays")
+async def create_official_holiday(
+    holiday_data: OfficialHolidayCreate,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """إضافة عطلة رسمية"""
+    holiday = OfficialHoliday(**holiday_data.model_dump(), created_by=current_user["full_name"])
+    await db.hr_official_holidays.insert_one(holiday.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_official_holiday",
+        entity_type="official_holiday",
+        entity_id=holiday.id,
+        entity_name=holiday_data.name,
+        details=f"إضافة عطلة رسمية: {holiday_data.name} - {holiday_data.date}"
+    )
+    
+    return holiday
+
+@api_router.get("/hr/official-holidays")
+async def get_official_holidays(
+    year: Optional[int] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة العطلات الرسمية"""
+    query = {}
+    if year:
+        query["date"] = {"$regex": f"^{year}"}
+    
+    holidays = await db.hr_official_holidays.find(query, {"_id": 0}).sort("date", 1).to_list(100)
+    return holidays
+
+@api_router.delete("/hr/official-holidays/{holiday_id}")
+async def delete_official_holiday(
+    holiday_id: str,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """حذف عطلة رسمية"""
+    result = await db.hr_official_holidays.delete_one({"id": holiday_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="العطلة غير موجودة")
+    return {"message": "تم حذف العطلة بنجاح"}
+
+@api_router.get("/hr/check-holiday/{date}")
+async def check_if_holiday(date: str, current_user: dict = Depends(get_current_user)):
+    """التحقق إذا كان تاريخ معين عطلة رسمية"""
+    holiday = await db.hr_official_holidays.find_one({"date": date}, {"_id": 0})
+    if holiday:
+        return {"is_holiday": True, "holiday": holiday}
+    
+    # Check day of week (Friday=4, Saturday=5 in Python weekday)
+    from datetime import datetime
+    try:
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        day_of_week = date_obj.weekday()
+        # Friday = 4, Saturday = 5
+        is_weekend = day_of_week in [4, 5]
+        return {"is_holiday": is_weekend, "is_weekend": is_weekend, "day_of_week": day_of_week}
+    except:
+        return {"is_holiday": False}
+
+# ==================== HR - EMPLOYEE WEEKLY OFF DAYS (أيام الإجازة الأسبوعية للموظف) ====================
+
+class EmployeeWeeklyOffBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    off_days: List[int]  # [4, 5] للجمعة والسبت (الإدارة) أو أي يومين آخرين للمراكز
+    # 0=الاثنين, 1=الثلاثاء, 2=الأربعاء, 3=الخميس, 4=الجمعة, 5=السبت, 6=الأحد
+
+class EmployeeWeeklyOffCreate(EmployeeWeeklyOffBase):
+    pass
+
+@api_router.put("/hr/employees/{employee_id}/weekly-off")
+async def set_employee_weekly_off(
+    employee_id: str,
+    off_data: EmployeeWeeklyOffCreate,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تعيين أيام الإجازة الأسبوعية للموظف"""
+    result = await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"weekly_off_days": off_data.off_days}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="set_weekly_off",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=off_data.employee_name,
+        details=f"تحديد أيام الإجازة الأسبوعية: {off_data.off_days}"
+    )
+    
+    return employee
+
+@api_router.get("/hr/employees/{employee_id}/check-working-day/{date}")
+async def check_employee_working_day(
+    employee_id: str,
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """التحقق إذا كان يوم معين يوم عمل للموظف"""
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    from datetime import datetime
+    try:
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        day_of_week = date_obj.weekday()
+    except:
+        raise HTTPException(status_code=400, detail="تنسيق التاريخ غير صحيح")
+    
+    # Get employee's weekly off days
+    weekly_off_days = employee.get("weekly_off_days", [4, 5])  # Default: Friday & Saturday
+    
+    # Check if it's an official holiday
+    holiday = await db.hr_official_holidays.find_one({"date": date}, {"_id": 0})
+    
+    is_off_day = day_of_week in weekly_off_days
+    is_official_holiday = holiday is not None
+    
+    return {
+        "date": date,
+        "day_of_week": day_of_week,
+        "is_weekly_off": is_off_day,
+        "is_official_holiday": is_official_holiday,
+        "is_working_day": not is_off_day and not is_official_holiday,
+        "holiday_name": holiday.get("name") if holiday else None,
+        "employee_weekly_off_days": weekly_off_days
+    }
+
 # ==================== HR - EXCUSE REQUESTS (طلبات الأعذار) ====================
 
 @api_router.post("/hr/excuse-requests", response_model=ExcuseRequest)
