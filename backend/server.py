@@ -1835,34 +1835,168 @@ async def transfer_supplier_to_center(
     new_center: str = Query(..., description="اسم المركز الجديد"),
     current_user: dict = Depends(require_role(["admin"]))
 ):
-    """نقل مورد من مركز إلى مركز آخر"""
+    """نقل مورد من مركز إلى مركز آخر - يحتاج موافقة المدير (Yasir Kashoob IT)"""
     supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
     if not supplier:
         raise HTTPException(status_code=404, detail="المورد غير موجود")
     
     old_center = supplier.get("center_name", "غير محدد")
     
-    result = await db.suppliers.update_one(
-        {"id": supplier_id},
-        {"$set": {"center_name": new_center, "address": new_center}}
+    # Check if current user is the IT manager (Yasir Kashoob)
+    is_it_manager = current_user.get("username") == "yasir" or current_user.get("department") == "it"
+    
+    if is_it_manager:
+        # Direct approval for IT manager
+        result = await db.suppliers.update_one(
+            {"id": supplier_id},
+            {"$set": {"center_name": new_center, "address": new_center}}
+        )
+        
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="transfer_supplier",
+            entity_type="supplier",
+            entity_id=supplier_id,
+            entity_name=supplier.get("name"),
+            details=f"نقل المورد {supplier.get('name')} من {old_center} إلى {new_center}"
+        )
+        
+        return {
+            "message": f"تم نقل المورد بنجاح من {old_center} إلى {new_center}",
+            "supplier_id": supplier_id,
+            "old_center": old_center,
+            "new_center": new_center,
+            "approved": True
+        }
+    else:
+        # Create approval request for non-IT users
+        request = SupplierModificationRequest(
+            supplier_id=supplier_id,
+            supplier_name=supplier.get("name"),
+            supplier_code=supplier.get("supplier_code"),
+            request_type="transfer",
+            current_data={"center_name": old_center},
+            new_data={"center_name": new_center},
+            reason=f"نقل من {old_center} إلى {new_center}",
+            requested_by=current_user["id"],
+            requested_by_name=current_user["full_name"]
+        )
+        
+        await db.supplier_modification_requests.insert_one(request.model_dump())
+        
+        return {
+            "message": "تم إرسال طلب نقل المورد للمدير للموافقة",
+            "request_id": request.id,
+            "requires_approval": True
+        }
+
+# Get all supplier modification requests (for IT manager)
+@api_router.get("/admin/supplier-modification-requests")
+async def get_supplier_modification_requests(
+    status: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """جلب جميع طلبات تعديل/نقل الموردين (للمدير)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    requests = await db.supplier_modification_requests.find(query, {"_id": 0}).sort("requested_at", -1).to_list(500)
+    return requests
+
+# Approve supplier modification request
+@api_router.put("/admin/supplier-modification-requests/{request_id}/approve")
+async def approve_supplier_modification(
+    request_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """الموافقة على طلب تعديل/نقل المورد"""
+    # Only IT manager can approve
+    if current_user.get("username") != "yasir" and current_user.get("department") != "it":
+        raise HTTPException(status_code=403, detail="فقط مدير تقنية المعلومات يمكنه الموافقة على الطلبات")
+    
+    mod_request = await db.supplier_modification_requests.find_one({"id": request_id}, {"_id": 0})
+    if not mod_request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    if mod_request.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="تم معالجة هذا الطلب مسبقاً")
+    
+    # Apply the modification
+    supplier_id = mod_request["supplier_id"]
+    request_type = mod_request["request_type"]
+    new_data = mod_request["new_data"]
+    
+    if request_type == "transfer":
+        await db.suppliers.update_one(
+            {"id": supplier_id},
+            {"$set": {"center_name": new_data["center_name"], "address": new_data["center_name"]}}
+        )
+    elif request_type == "update":
+        await db.suppliers.update_one(
+            {"id": supplier_id},
+            {"$set": new_data}
+        )
+    elif request_type == "delete":
+        await db.suppliers.update_one(
+            {"id": supplier_id},
+            {"$set": {"is_active": False}}
+        )
+    
+    # Update request status
+    await db.supplier_modification_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     
     await log_activity(
         user_id=current_user["id"],
         user_name=current_user["full_name"],
-        action="transfer_supplier",
+        action=f"approve_{request_type}_supplier",
         entity_type="supplier",
         entity_id=supplier_id,
-        entity_name=supplier.get("name"),
-        details=f"نقل المورد {supplier.get('name')} من {old_center} إلى {new_center}"
+        entity_name=mod_request["supplier_name"],
+        details=f"موافقة على طلب {request_type} للمورد {mod_request['supplier_name']}"
     )
     
-    return {
-        "message": f"تم نقل المورد بنجاح من {old_center} إلى {new_center}",
-        "supplier_id": supplier_id,
-        "old_center": old_center,
-        "new_center": new_center
-    }
+    return {"message": "تمت الموافقة على الطلب وتنفيذ التعديل"}
+
+# Reject supplier modification request
+@api_router.put("/admin/supplier-modification-requests/{request_id}/reject")
+async def reject_supplier_modification(
+    request_id: str,
+    reason: str = "",
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """رفض طلب تعديل/نقل المورد"""
+    if current_user.get("username") != "yasir" and current_user.get("department") != "it":
+        raise HTTPException(status_code=403, detail="فقط مدير تقنية المعلومات يمكنه رفض الطلبات")
+    
+    mod_request = await db.supplier_modification_requests.find_one({"id": request_id}, {"_id": 0})
+    if not mod_request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    if mod_request.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="تم معالجة هذا الطلب مسبقاً")
+    
+    await db.supplier_modification_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason
+        }}
+    )
+    
+    return {"message": "تم رفض الطلب"}
 
 @api_router.delete("/suppliers/{supplier_id}")
 async def delete_supplier(supplier_id: str, current_user: dict = Depends(require_role(["admin"]))):
