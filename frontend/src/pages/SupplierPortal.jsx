@@ -1,0 +1,687 @@
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import axios from "axios";
+import { toast } from "sonner";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Textarea } from "../components/ui/textarea";
+import { Badge } from "../components/ui/badge";
+import {
+  Milk,
+  Wallet,
+  Package,
+  MessageSquare,
+  LogIn,
+  Send,
+  History,
+  User,
+  RefreshCw,
+  Plus,
+  ArrowLeftRight,
+} from "lucide-react";
+
+const API = process.env.REACT_APP_BACKEND_URL;
+
+const FEED_TYPES = [
+  { id: "barley", name: "شعير", name_en: "Barley", price: 85 },
+  { id: "wheat_bran", name: "نخالة قمح", name_en: "Wheat Bran", price: 70 },
+  { id: "corn", name: "ذرة", name_en: "Corn", price: 95 },
+  { id: "alfalfa", name: "برسيم", name_en: "Alfalfa", price: 120 },
+  { id: "mixed", name: "علف مخلوط", name_en: "Mixed Feed", price: 100 },
+];
+
+const MESSAGE_TYPES = [
+  { id: "increase_quantity", name: "طلب زيادة كمية", name_en: "Request Quantity Increase" },
+  { id: "general", name: "استفسار عام", name_en: "General Inquiry" },
+  { id: "complaint", name: "شكوى", name_en: "Complaint" },
+  { id: "inquiry", name: "استفسار مالي", name_en: "Financial Inquiry" },
+];
+
+const SupplierPortal = () => {
+  const { t } = useTranslation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [supplierCode, setSupplierCode] = useState("");
+  const [supplier, setSupplier] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Data states
+  const [milkReceptions, setMilkReceptions] = useState([]);
+  const [feedRequests, setFeedRequests] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Dialog states
+  const [feedDialogOpen, setFeedDialogOpen] = useState(false);
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+  
+  // Form states
+  const [feedForm, setFeedForm] = useState({
+    feed_type: "",
+    quantity: "",
+    amount_to_deduct: "",
+    notes: "",
+  });
+  
+  const [messageForm, setMessageForm] = useState({
+    message_type: "general",
+    subject: "",
+    message: "",
+  });
+
+  // Check if supplier is logged in (from localStorage)
+  useEffect(() => {
+    const savedCode = localStorage.getItem("supplier_code");
+    if (savedCode) {
+      setSupplierCode(savedCode);
+      handleLogin(savedCode);
+    }
+  }, []);
+
+  const handleLogin = async (code = supplierCode) => {
+    if (!code.trim()) {
+      toast.error("يرجى إدخال كود المورد");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/api/supplier-portal/login?supplier_code=${code}`);
+      setSupplier(response.data.supplier);
+      setIsLoggedIn(true);
+      localStorage.setItem("supplier_code", code);
+      localStorage.setItem("supplier_token", response.data.access_token);
+      toast.success(`مرحباً ${response.data.supplier.name}`);
+      fetchData(code);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "كود المورد غير صحيح");
+      localStorage.removeItem("supplier_code");
+      localStorage.removeItem("supplier_token");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setSupplier(null);
+    setSupplierCode("");
+    localStorage.removeItem("supplier_code");
+    localStorage.removeItem("supplier_token");
+  };
+
+  const fetchData = async (code = supplierCode) => {
+    try {
+      const [receptionsRes, feedRes, messagesRes] = await Promise.all([
+        axios.get(`${API}/api/supplier-portal/milk-receptions?supplier_code=${code}&month=${selectedMonth}&year=${selectedYear}`),
+        axios.get(`${API}/api/supplier-portal/feed-requests?supplier_code=${code}`),
+        axios.get(`${API}/api/supplier-portal/messages?supplier_code=${code}`),
+      ]);
+      
+      setMilkReceptions(receptionsRes.data.receptions || []);
+      setSupplier(prev => ({
+        ...prev,
+        ...receptionsRes.data.supplier,
+        summary: receptionsRes.data.summary
+      }));
+      setFeedRequests(feedRes.data || []);
+      setMessages(messagesRes.data || []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && supplierCode) {
+      fetchData();
+    }
+  }, [selectedMonth, selectedYear]);
+
+  const handleFeedRequest = async (e) => {
+    e.preventDefault();
+    
+    if (!feedForm.feed_type || !feedForm.quantity || !feedForm.amount_to_deduct) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await axios.post(`${API}/api/supplier-portal/feed-requests`, {
+        supplier_id: supplier.id,
+        supplier_name: supplier.name,
+        supplier_code: supplierCode,
+        feed_type: feedForm.feed_type,
+        quantity: parseFloat(feedForm.quantity),
+        amount_to_deduct: parseFloat(feedForm.amount_to_deduct),
+        notes: feedForm.notes,
+      });
+      
+      toast.success("تم إرسال طلب الأعلاف بنجاح وبانتظار الموافقة");
+      setFeedDialogOpen(false);
+      setFeedForm({ feed_type: "", quantity: "", amount_to_deduct: "", notes: "" });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل إرسال الطلب");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    
+    if (!messageForm.subject || !messageForm.message) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await axios.post(`${API}/api/supplier-portal/messages`, {
+        supplier_id: supplier.id,
+        supplier_name: supplier.name,
+        supplier_code: supplierCode,
+        ...messageForm,
+      });
+      
+      toast.success("تم إرسال الرسالة بنجاح");
+      setMessageDialogOpen(false);
+      setMessageForm({ message_type: "general", subject: "", message: "" });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل إرسال الرسالة");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateFeedAmount = (feedType, quantity) => {
+    const feed = FEED_TYPES.find(f => f.id === feedType);
+    if (feed && quantity) {
+      return feed.price * parseFloat(quantity);
+    }
+    return 0;
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      pending: { label: "قيد الانتظار", variant: "secondary" },
+      approved: { label: "تمت الموافقة", variant: "default" },
+      rejected: { label: "مرفوض", variant: "destructive" },
+      delivered: { label: "تم التسليم", variant: "outline" },
+      unread: { label: "جديد", variant: "secondary" },
+      read: { label: "تمت القراءة", variant: "outline" },
+      replied: { label: "تم الرد", variant: "default" },
+    };
+    const s = statusMap[status] || { label: status, variant: "outline" };
+    return <Badge variant={s.variant}>{s.label}</Badge>;
+  };
+
+  // Login Screen
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
+              <Milk className="w-8 h-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl">بوابة الموردين</CardTitle>
+            <CardDescription>أدخل كود المورد الخاص بك للدخول</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
+              <div className="space-y-2">
+                <Label>كود المورد</Label>
+                <Input
+                  type="text"
+                  value={supplierCode}
+                  onChange={(e) => setSupplierCode(e.target.value)}
+                  placeholder="مثال: 1108"
+                  className="text-center text-lg"
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full gradient-primary text-white" disabled={loading}>
+                {loading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin me-2" />
+                ) : (
+                  <LogIn className="w-4 h-4 me-2" />
+                )}
+                دخول
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Main Portal
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg">{supplier?.name}</h1>
+                <p className="text-sm text-muted-foreground">كود: {supplier?.code}</p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              خروج
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Wallet className="w-10 h-10 opacity-80" />
+                <div>
+                  <p className="text-3xl font-bold">{(supplier?.balance || 0).toLocaleString()}</p>
+                  <p className="text-sm opacity-80">الرصيد الحالي (ريال)</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Milk className="w-10 h-10 opacity-80" />
+                <div>
+                  <p className="text-3xl font-bold">{(supplier?.total_supplied || 0).toLocaleString()}</p>
+                  <p className="text-sm opacity-80">إجمالي الكمية (لتر)</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Package className="w-10 h-10 opacity-80" />
+                <div>
+                  <p className="text-3xl font-bold">{feedRequests.filter(r => r.status === 'pending').length}</p>
+                  <p className="text-sm opacity-80">طلبات أعلاف قيد الانتظار</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <History className="w-10 h-10 opacity-80" />
+                <div>
+                  <p className="text-3xl font-bold">{supplier?.summary?.count || 0}</p>
+                  <p className="text-sm opacity-80">توريدات هذا الشهر</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Button onClick={() => setFeedDialogOpen(true)} className="gradient-primary text-white">
+            <ArrowLeftRight className="w-4 h-4 me-2" />
+            طلب تحويل رصيد إلى أعلاف
+          </Button>
+          <Button variant="outline" onClick={() => setMessageDialogOpen(true)}>
+            <MessageSquare className="w-4 h-4 me-2" />
+            إرسال رسالة
+          </Button>
+          <Button variant="outline" onClick={() => fetchData()}>
+            <RefreshCw className="w-4 h-4 me-2" />
+            تحديث البيانات
+          </Button>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="overview" className="gap-2">
+              <Milk className="w-4 h-4" />
+              سجل التوريدات
+            </TabsTrigger>
+            <TabsTrigger value="feed" className="gap-2">
+              <Package className="w-4 h-4" />
+              طلبات الأعلاف
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              الرسائل
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Milk Receptions Tab */}
+          <TabsContent value="overview">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <CardTitle>سجل توريدات الحليب</CardTitle>
+                  <div className="flex gap-2">
+                    <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                          <SelectItem key={m} value={m.toString()}>شهر {m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[2024, 2025, 2026].map(y => (
+                          <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Summary */}
+                <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-muted rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">إجمالي الكمية</p>
+                    <p className="text-xl font-bold">{(supplier?.summary?.total_quantity || 0).toLocaleString()} لتر</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">إجمالي المبلغ</p>
+                    <p className="text-xl font-bold">{(supplier?.summary?.total_amount || 0).toLocaleString()} ريال</p>
+                  </div>
+                </div>
+                
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>التاريخ</TableHead>
+                      <TableHead>الكمية (لتر)</TableHead>
+                      <TableHead>السعر/لتر</TableHead>
+                      <TableHead>المبلغ</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {milkReceptions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                          لا توجد توريدات في هذه الفترة
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      milkReceptions.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell>{new Date(r.date).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell>{r.quantity_liters?.toLocaleString()}</TableCell>
+                          <TableCell>{r.price_per_liter}</TableCell>
+                          <TableCell className="font-medium">{r.total_amount?.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Feed Requests Tab */}
+          <TabsContent value="feed">
+            <Card>
+              <CardHeader>
+                <CardTitle>طلبات تحويل الرصيد إلى أعلاف</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>التاريخ</TableHead>
+                      <TableHead>نوع العلف</TableHead>
+                      <TableHead>الكمية</TableHead>
+                      <TableHead>المبلغ</TableHead>
+                      <TableHead>الحالة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {feedRequests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          لا توجد طلبات أعلاف
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      feedRequests.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell>{new Date(r.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell>{FEED_TYPES.find(f => f.id === r.feed_type)?.name || r.feed_type}</TableCell>
+                          <TableCell>{r.quantity}</TableCell>
+                          <TableCell>{r.amount_to_deduct?.toLocaleString()} ريال</TableCell>
+                          <TableCell>{getStatusBadge(r.status)}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <Card>
+              <CardHeader>
+                <CardTitle>الرسائل والاستفسارات</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {messages.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground">لا توجد رسائل</p>
+                  ) : (
+                    messages.map((m) => (
+                      <Card key={m.id} className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-medium">{m.subject}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {MESSAGE_TYPES.find(t => t.id === m.message_type)?.name} • {new Date(m.created_at).toLocaleDateString("ar-SA")}
+                            </p>
+                          </div>
+                          {getStatusBadge(m.status)}
+                        </div>
+                        <p className="text-sm mb-2">{m.message}</p>
+                        {m.reply && (
+                          <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                            <p className="text-sm font-medium text-green-700 dark:text-green-300">رد الإدارة:</p>
+                            <p className="text-sm">{m.reply}</p>
+                          </div>
+                        )}
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Feed Request Dialog */}
+      <Dialog open={feedDialogOpen} onOpenChange={setFeedDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>طلب تحويل رصيد إلى أعلاف</DialogTitle>
+            <DialogDescription>
+              رصيدك الحالي: {(supplier?.balance || 0).toLocaleString()} ريال
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleFeedRequest} className="space-y-4">
+            <div className="space-y-2">
+              <Label>نوع العلف *</Label>
+              <Select
+                value={feedForm.feed_type}
+                onValueChange={(v) => {
+                  setFeedForm({ 
+                    ...feedForm, 
+                    feed_type: v,
+                    amount_to_deduct: calculateFeedAmount(v, feedForm.quantity).toString()
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر نوع العلف" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FEED_TYPES.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name} - {f.price} ريال/كجم
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>الكمية (كجم) *</Label>
+              <Input
+                type="number"
+                value={feedForm.quantity}
+                onChange={(e) => {
+                  const qty = e.target.value;
+                  setFeedForm({ 
+                    ...feedForm, 
+                    quantity: qty,
+                    amount_to_deduct: calculateFeedAmount(feedForm.feed_type, qty).toString()
+                  });
+                }}
+                placeholder="أدخل الكمية"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>المبلغ المطلوب خصمه *</Label>
+              <Input
+                type="number"
+                value={feedForm.amount_to_deduct}
+                onChange={(e) => setFeedForm({ ...feedForm, amount_to_deduct: e.target.value })}
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>ملاحظات</Label>
+              <Textarea
+                value={feedForm.notes}
+                onChange={(e) => setFeedForm({ ...feedForm, notes: e.target.value })}
+                placeholder="أي ملاحظات إضافية..."
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFeedDialogOpen(false)}>
+                إلغاء
+              </Button>
+              <Button type="submit" className="gradient-primary text-white" disabled={loading}>
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 me-2" />}
+                إرسال الطلب
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Dialog */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>إرسال رسالة</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSendMessage} className="space-y-4">
+            <div className="space-y-2">
+              <Label>نوع الرسالة</Label>
+              <Select
+                value={messageForm.message_type}
+                onValueChange={(v) => setMessageForm({ ...messageForm, message_type: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MESSAGE_TYPES.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>الموضوع *</Label>
+              <Input
+                value={messageForm.subject}
+                onChange={(e) => setMessageForm({ ...messageForm, subject: e.target.value })}
+                placeholder="عنوان الرسالة"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>الرسالة *</Label>
+              <Textarea
+                value={messageForm.message}
+                onChange={(e) => setMessageForm({ ...messageForm, message: e.target.value })}
+                placeholder="اكتب رسالتك هنا..."
+                rows={4}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setMessageDialogOpen(false)}>
+                إلغاء
+              </Button>
+              <Button type="submit" className="gradient-primary text-white" disabled={loading}>
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 me-2" />}
+                إرسال
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default SupplierPortal;
