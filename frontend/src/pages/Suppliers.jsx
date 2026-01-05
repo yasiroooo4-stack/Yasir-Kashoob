@@ -413,14 +413,25 @@ const Suppliers = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => openEditDialog(supplier)}
                             data-testid={`edit-supplier-${supplier.id}`}
+                            title={language === "ar" ? "تعديل" : "Edit"}
                           >
                             <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openTransferDialog(supplier)}
+                            data-testid={`transfer-supplier-${supplier.id}`}
+                            title={language === "ar" ? "نقل لمركز آخر" : "Transfer to another center"}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <ArrowRightLeft className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -431,6 +442,7 @@ const Suppliers = () => {
                               setDeleteDialogOpen(true);
                             }}
                             data-testid={`delete-supplier-${supplier.id}`}
+                            title={language === "ar" ? "حذف" : "Delete"}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
