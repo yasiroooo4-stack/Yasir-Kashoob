@@ -743,6 +743,154 @@ const SupplierManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Feed Request Dialog */}
+      <Dialog open={viewRequestDialogOpen} onOpenChange={setViewRequestDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-orange-500" />
+              تفاصيل طلب الأعلاف
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 border-b pb-4">
+                <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
+                  <User className="w-7 h-7 text-orange-600" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg">{selectedRequest.supplier_name}</p>
+                  <p className="text-sm text-muted-foreground">كود: {selectedRequest.supplier_code}</p>
+                </div>
+                {getStatusBadge(selectedRequest.status)}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">نوع العلف</p>
+                  <p className="font-bold">{getFeedTypeName(selectedRequest.feed_type)}</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">الكمية</p>
+                  <p className="font-bold">{selectedRequest.quantity?.toLocaleString()} كجم</p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg col-span-2">
+                  <p className="text-xs text-muted-foreground">المبلغ المطلوب خصمه</p>
+                  <p className="font-bold text-xl text-green-600">{selectedRequest.amount_to_deduct?.toLocaleString()} ريال</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                تاريخ الطلب: {formatDate(selectedRequest.created_at)}
+              </div>
+
+              {selectedRequest.status === "approved" && (
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <p className="text-sm text-green-600 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    تمت الموافقة بواسطة: {selectedRequest.approved_by_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatDate(selectedRequest.approved_at)}
+                  </p>
+                </div>
+              )}
+
+              {selectedRequest.status === "rejected" && (
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                  <p className="text-sm text-red-600 flex items-center gap-2">
+                    <XCircle className="w-4 h-4" />
+                    تم الرفض بواسطة: {selectedRequest.approved_by_name}
+                  </p>
+                  {selectedRequest.rejection_reason && (
+                    <p className="text-sm mt-2">السبب: {selectedRequest.rejection_reason}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatDate(selectedRequest.approved_at)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewRequestDialogOpen(false)}>
+              إغلاق
+            </Button>
+            {selectedRequest?.status === "pending" && (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setViewRequestDialogOpen(false);
+                    setRejectDialogOpen(true);
+                  }}
+                >
+                  <X className="w-4 h-4 me-2" />
+                  رفض
+                </Button>
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setViewRequestDialogOpen(false);
+                    setApproveDialogOpen(true);
+                  }}
+                >
+                  <Check className="w-4 h-4 me-2" />
+                  موافقة
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve Confirmation Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="w-5 h-5" />
+              تأكيد الموافقة على الطلب
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                هل أنت متأكد من الموافقة على طلب الأعلاف التالي؟
+              </p>
+              <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg space-y-2">
+                <p><strong>المورد:</strong> {selectedRequest.supplier_name}</p>
+                <p><strong>نوع العلف:</strong> {getFeedTypeName(selectedRequest.feed_type)}</p>
+                <p><strong>الكمية:</strong> {selectedRequest.quantity} كجم</p>
+                <p className="text-green-600 font-bold text-lg">
+                  المبلغ: {selectedRequest.amount_to_deduct?.toLocaleString()} ريال
+                </p>
+              </div>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-sm">
+                <p className="flex items-center gap-2 text-yellow-700">
+                  <AlertCircle className="w-4 h-4" />
+                  سيتم خصم المبلغ من رصيد المورد تلقائياً
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button 
+              className="bg-green-600 hover:bg-green-700" 
+              onClick={() => handleApproveRequest(selectedRequest?.id)}
+              disabled={loading}
+            >
+              {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Check className="w-4 h-4 me-2" />}
+              تأكيد الموافقة
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
