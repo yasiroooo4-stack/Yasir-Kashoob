@@ -1878,18 +1878,37 @@ class SupplierMessage(SupplierMessageBase):
     replied_at: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-# Supplier Portal - Login by code
+# Supplier Portal - Login by code and password
+class SupplierLoginRequest(BaseModel):
+    supplier_code: str
+    password: str
+
 @api_router.post("/supplier-portal/login")
-async def supplier_portal_login(supplier_code: str):
-    """تسجيل دخول المورد بالكود الخاص به"""
-    supplier = await db.suppliers.find_one({"supplier_code": supplier_code, "is_active": True}, {"_id": 0})
+async def supplier_portal_login(login_data: SupplierLoginRequest):
+    """تسجيل دخول المورد بالكود وكلمة المرور"""
+    supplier = await db.suppliers.find_one({"supplier_code": login_data.supplier_code, "is_active": True}, {"_id": 0})
     if not supplier:
         raise HTTPException(status_code=404, detail="كود المورد غير صحيح أو غير مفعل")
     
-    # Create a simple token for supplier
+    # Check password
+    stored_password_hash = supplier.get("password_hash")
+    
+    # If supplier has no password set, check if they're using default (phone number last 4 digits)
+    if not stored_password_hash:
+        # Default password is last 4 digits of phone
+        phone = supplier.get("phone", "")
+        default_password = phone[-4:] if len(phone) >= 4 else "1234"
+        if login_data.password != default_password:
+            raise HTTPException(status_code=401, detail="كلمة المرور غير صحيحة")
+    else:
+        # Verify hashed password
+        if not verify_password(login_data.password, stored_password_hash):
+            raise HTTPException(status_code=401, detail="كلمة المرور غير صحيحة")
+    
+    # Create token
     token_data = {
         "sub": supplier["id"],
-        "supplier_code": supplier_code,
+        "supplier_code": login_data.supplier_code,
         "type": "supplier",
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)
     }
@@ -1901,12 +1920,115 @@ async def supplier_portal_login(supplier_code: str):
             "id": supplier["id"],
             "name": supplier.get("name"),
             "code": supplier.get("supplier_code"),
+            "phone": supplier.get("phone"),
             "balance": supplier.get("balance", 0),
             "total_supplied": supplier.get("total_supplied", 0),
             "milk_type": supplier.get("milk_type"),
-            "center_name": supplier.get("center_name")
+            "center_name": supplier.get("center_name"),
+            "has_custom_password": stored_password_hash is not None
         }
     }
+
+# Supplier Portal - Recover password by phone
+@api_router.post("/supplier-portal/recover-password")
+async def supplier_recover_password(supplier_code: str, phone: str):
+    """استرجاع كلمة المرور عن طريق رقم الهاتف"""
+    supplier = await db.suppliers.find_one({"supplier_code": supplier_code}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="كود المورد غير موجود")
+    
+    # Verify phone number matches
+    stored_phone = supplier.get("phone", "").replace(" ", "").replace("-", "")
+    input_phone = phone.replace(" ", "").replace("-", "")
+    
+    # Check if phone matches (allow partial match for last digits)
+    if not (stored_phone == input_phone or stored_phone.endswith(input_phone[-8:]) or input_phone.endswith(stored_phone[-8:])):
+        raise HTTPException(status_code=400, detail="رقم الهاتف غير مطابق لسجلات المورد")
+    
+    # Generate new password (last 4 digits of phone)
+    new_password = stored_phone[-4:] if len(stored_phone) >= 4 else "1234"
+    
+    # Reset password to default (remove custom password)
+    await db.suppliers.update_one(
+        {"supplier_code": supplier_code},
+        {"$unset": {"password_hash": ""}}
+    )
+    
+    return {
+        "message": "تم إعادة تعيين كلمة المرور بنجاح",
+        "new_password": new_password,
+        "hint": f"كلمة المرور الجديدة هي آخر 4 أرقام من رقم هاتفك: {new_password}"
+    }
+
+# Supplier Portal - Change password
+@api_router.put("/supplier-portal/change-password")
+async def supplier_change_password(
+    supplier_code: str,
+    current_password: str,
+    new_password: str
+):
+    """تغيير كلمة مرور المورد"""
+    supplier = await db.suppliers.find_one({"supplier_code": supplier_code}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="المورد غير موجود")
+    
+    # Verify current password
+    stored_password_hash = supplier.get("password_hash")
+    phone = supplier.get("phone", "")
+    default_password = phone[-4:] if len(phone) >= 4 else "1234"
+    
+    if stored_password_hash:
+        if not verify_password(current_password, stored_password_hash):
+            raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
+    else:
+        if current_password != default_password:
+            raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
+    
+    # Validate new password
+    if len(new_password) < 4:
+        raise HTTPException(status_code=400, detail="كلمة المرور يجب أن تكون 4 أحرف على الأقل")
+    
+    # Hash and save new password
+    new_password_hash = hash_password(new_password)
+    await db.suppliers.update_one(
+        {"supplier_code": supplier_code},
+        {"$set": {"password_hash": new_password_hash}}
+    )
+    
+    return {"message": "تم تغيير كلمة المرور بنجاح"}
+
+# Supplier Portal - Set password for supplier (Admin only)
+@api_router.put("/admin/suppliers/{supplier_id}/set-password")
+async def admin_set_supplier_password(
+    supplier_id: str,
+    new_password: str,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تعيين كلمة مرور للمورد (للإدارة فقط)"""
+    supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="المورد غير موجود")
+    
+    if len(new_password) < 4:
+        raise HTTPException(status_code=400, detail="كلمة المرور يجب أن تكون 4 أحرف على الأقل")
+    
+    new_password_hash = hash_password(new_password)
+    await db.suppliers.update_one(
+        {"id": supplier_id},
+        {"$set": {"password_hash": new_password_hash}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="set_supplier_password",
+        entity_type="supplier",
+        entity_id=supplier_id,
+        entity_name=supplier.get("name"),
+        details=f"تعيين كلمة مرور للمورد: {supplier.get('name')}"
+    )
+    
+    return {"message": "تم تعيين كلمة المرور بنجاح"}
 
 # Supplier Portal - Get my data
 @api_router.get("/supplier-portal/me")
