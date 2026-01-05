@@ -265,6 +265,7 @@ const resources = {
       "employees": "Employees",
       "reports": "Reports",
       "settings": "Settings",
+      "system_settings": "System Settings",
       "logout": "Logout",
       "login": "Login",
       "register": "Register",
