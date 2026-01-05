@@ -1,186 +1,173 @@
 <analysis>**original_problem_statement:**
-The initial project was to build an ERP system for a milk collection center. The scope has expanded to include modules for Suppliers, Milk Reception, Finance, HR, Inventory, Treasury, and Reporting.
+The initial project was to build a comprehensive ERP system for a milk collection center. The scope includes modules for Suppliers, Milk Reception, Finance, HR, Inventory, and Reporting.
 
-Recent user requests have focused on:
-1.  Adding a Salary Continuity Certificate official letter type.
-2.  Enhancing the Feed Purchase form to be driven by supplier codes and to auto-populate related data.
-3.  Implementing a system for automatic overtime calculation based on employee work locations.
-4.  Generating location-specific PDF payroll reports.
-5.  Excluding specific administrative users from payroll and attendance.
-6.  Bulk importing a list of suppliers from an Excel file, which initially failed and requires correction.
+Recent user requests implemented in this session include:
+1.  Adding a complete system for employees to request excuses for absences, including the ability to attach files (e.g., medical certificates) and an approval workflow for HR.
+2.  Implementing password-based authentication for the new Supplier Portal, with a password recovery mechanism via the supplier's phone number.
+3.  Creating a system to track the history of employee salary changes.
+4.  Developing a web-based Supplier Portal where suppliers can log in to view their account balance, milk supply history, and request animal feed.
+5.  Fixing search and filtering functionality on the suppliers page.
+6.  Implementing a system for managing official holidays and employee-specific weekly days off.
+7.  Replacing the Excel import function with a manual import from a ZKTeco attendance device's database file ().
+8.  Correcting a failed bulk import of 309 suppliers.
 
 **PRODUCT REQUIREMENTS:**
 - **Core ERP Modules:** Suppliers, Milk Reception, Finance, Employees, Reports, Inventory, Treasury.
 - **HR Module:**
     - Employee management with attendance, payroll, leaves, and official letters.
-    - Automatic overtime calculation for work shifts exceeding 8 hours.
-    - Ability to assign a fixed  to each employee.
-    - A flag to  for specific employees.
-- **Payroll Module:**
-    - Generate separate payroll reports for different work locations (e.g., Centers vs. Administration).
-    - PDF printing functionality for these reports.
+    - A new **Excuse Request System** with file attachments and an approval/rejection workflow.
+    - A new **Holiday Management System** to define official public holidays and assign specific weekly off-days to employees.
+    - A **Salary History** log to track all changes to an employee's salary over time.
 - **Supplier Module:**
-    - Ability to import suppliers in bulk from Excel files, including  and .
-- **Feed Purchase Module:**
-    - A form where entering a  automatically fetches the supplier's name and balance.
-    - The price per unit should be automatically filled based on the selected feed type.
+    - A robust supplier list with corrected data, searchable by code, and filterable by milk type.
+- **Supplier Portal (New Module):**
+    - A secure, standalone web portal for suppliers.
+    - Authentication via  and a password.
+    - Password recovery functionality.
+    - A dashboard displaying balance, supply history, and feed request status.
+    - Ability for suppliers to request feed and send messages to the administration.
+- **Attendance:**
+    - Ability to import attendance records directly from a ZKTeco  file.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
-A full-stack ERP application with a FastAPI backend, React frontend, and MongoDB. The system has modules for HR, Finance, Inventory, and Supplier management.
+A full-stack ERP application with a FastAPI backend, React frontend, and MongoDB. The system's functionality was significantly expanded in this session.
 
-Key additions from this session include:
-- **Comprehensive HR Overtime System:** Employees now have a . The backend automatically calculates  and  for any attendance record longer than 8 hours. The payroll calculation logic has been updated to include this.
-- **Location-Based Payroll Reporting:** The Payroll page now displays the work location for each employee. It features separate Print Centers Report and Print Admin Report buttons, which will generate filtered PDF reports.
-- **Employee Payroll Exclusion:** A new  flag was added to the employee model and UI. The system administrator () has been excluded from payroll calculations and their attendance records were deleted.
-- **Enhanced Feed Purchase Form:** The form was refactored to use a supplier code input field instead of a dropdown. Entering the code now fetches and displays the supplier's name and balance. The unit price is also automatically populated when a feed type is chosen.
-- **Salary Continuity Certificate:** This new letter type has been successfully added to both the main HR page and the secondary letter request form in the application header.
+- **Supplier Data Correction:** All 309 suppliers from the  file were successfully imported with the correct  and  ('إبل').
+- **HR Excuse System:** A complete workflow for managing employee absence excuses has been implemented. Employees can submit requests with attachments, and HR can approve or deny them.
+- **HR Holiday & Weekend System:** A new tab was added to the HR page for managing official holidays and setting employee-specific weekly off-days. The backend APIs are in place.
+- **HR Salary History:** The system now automatically logs any change in an employee's salary to a history collection. The backend API to retrieve this history is complete.
+- **Supplier Portal:** A new, fully functional web portal for suppliers is live at the  route. It includes secure login, password recovery, a dashboard, and functionality for suppliers to view their data and make requests.
+- **Improved Supplier Management:** The main supplier list in the admin dashboard now has corrected search functionality (including by code) and a new filter for .
+- **ZKTeco Import:** A button to import attendance data from an  file has been added to the HR attendance tab UI, connected to an existing backend endpoint.
 
 **Last working item**:
-- **Last item agent was working:** The user reported that a recent bulk import of 306 suppliers was incorrect; it missed the  and  ('إبل' - Camel). The agent analyzed the provided Excel file again, correctly parsed the data including the code, deleted the 306 incorrect supplier records, and was about to re-import them correctly.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** Backend testing. Use a script or chained  commands to iterate through the parsed JSON data () and create the new suppliers via the  endpoint. Verify the count and data integrity after completion.
+- **Last item agent was working:** The agent finished implementing a complete authentication system for the Supplier Portal. This included adding a password field to the supplier model, creating a secure login endpoint, a forgot password flow using the supplier's phone number, and updating the frontend portal to include login, password recovery, and password change forms.
+- **Status:** USER VERIFICATION PENDING
+- **Agent Testing Done:** Y
+- **Which testing method agent to use?** NA
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** Correctly re-import suppliers from . (P0)
-
-**Issues Detail:**
-- **Issue 1:**
-    - **Attempted fixes:** An initial attempt to update the existing suppliers failed with a 422 API validation error. The agent then opted to delete the incorrect records (which was successful) to prepare for a clean re-import.
-    - **Next debug checklist:**
-        1.  The correctly parsed supplier data is available in .
-        2.  Write and execute a script to read this JSON file.
-        3.  For each supplier object in the file, make a  request to , ensuring the payload includes , , and .
-        4.  After the script finishes, query the database or use an API endpoint to confirm that all 300+ suppliers have been added with the correct data.
-    - **Why fix this issue and what will be achieved with the fix?** Correct supplier data, including unique codes, is fundamental for all procurement and financial transactions in the ERP.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Backend.
-    - **Blocked on other issue:** None.
+There are no pending issues. All reported problems and requests from this session were addressed.
 
 **In progress Task List**:
-- **Task 1:** Complete the refactoring of  and . (P0)
-    - **Where to resume:**
-        - **Backend:** The directory structure  has been created. Start by moving employee-related endpoints (CRUD, etc.) from  into a new file like  and including it in the main router.
-        - **Frontend:** Identify distinct sections within  (e.g., Employee Table, Employee Form, Letters Tab, Attendance Tab) and extract them into their own components under .
-    - **What will be achieved with this?** A more stable, maintainable, and scalable codebase, reducing the risk of introducing bugs during future development.
-    - **Status:** NOT STARTED
-    - **Should Test frontend/backend/both after fix?** Both. This is a major change and requires thorough regression testing, preferably with the testing agent.
-    - **Blocked on something:** The immediate supplier data fix (Issue 1).
+There are no tasks currently in progress.
 
 **Upcoming and Future Tasks**
+
 - **Upcoming Tasks:**
-    - **(P0) Refactor  and **: This is the highest priority technical debt and should be addressed immediately after the supplier import is fixed.
-    - **(P1) Verify ZKTeco desktop sync app ()**: This is a recurring issue from the previous session, and user verification for the latest version is still pending.
+    - **(P0) Refactor  and **: This is a critical technical debt task from the previous session. Both files have grown significantly larger and more complex, making them difficult to maintain and increasing the risk of bugs. This should be the highest priority.
+    - **(P1) Add Admin UIs for New Supplier Portal Features**:
+        - Create a UI for the feed department to view and approve/reject feed requests made by suppliers.
+        - Create a UI for administrators to view and respond to messages sent by suppliers through the portal.
+    - **(P1) Add UI for HR Salary History**: Create a new tab or view in the HR section to display the salary change history for a selected employee.
+    - **(P1) Integrate Holiday/Weekend Logic into Payroll**: Update the payroll calculation endpoint () to correctly process work on official holidays (as overtime) and not penalize employees for their assigned weekly off-days.
 - **Future Tasks:**
+    - (P1) Develop a full native mobile app for suppliers/customers.
     - (P1) Integrate with Ekomilk scales via RS232.
     - (P1) Develop an AI camera feature for automated QR code scanning.
     - (P2) Add email notifications for low-stock alerts.
-    - (P2) Add the ability to export reports to Excel.
-    - (P2) Integrate with other physical hardware.
+    - (P2) Add the ability to export more reports to Excel.
 
 **Completed work in this session**
-- **Feature: Automated Overtime & Work Locations:** Implemented  for employees and automatic calculation of overtime pay.
-- **Feature: Location-Based Payroll PDF Reports:** Added UI buttons and backend logic to support printing separate payroll reports for different company sites.
-- **Feature: Employee Payroll Exclusion:** Added functionality to exclude specific users (like system admins) from payroll calculations and reports.
-- **Feature: Advanced Feed Purchase Form:** Refactored the feed purchase UI to be driven by supplier codes, with auto-population of related data.
-- **Feature: Salary Continuity Certificate:** The new letter type was added and is available in all relevant UI locations.
-- **Data Cleanup:** Deleted incorrect supplier records and specific user attendance records as requested.
-- **Refactoring (Initiated):** Created the directory structure  in preparation for breaking down the monolithic .
+- **Data Fix:** Successfully imported 309 suppliers with correct  and .
+- **Feature: HR Excuse System:** Built a full workflow for submitting, managing, and approving absence excuses with file attachments.
+- **Feature: Supplier Portal:** Created a comprehensive, secure web portal for suppliers with authentication, dashboard, and request features.
+- **Feature: HR Salary History:** Implemented automatic tracking of all employee salary changes.
+- **Feature: HR Holiday Management:** Added backend and frontend components to manage official holidays and weekly off-days.
+- **Improvement: Supplier Filtering:** Fixed and enhanced the search/filter functionality on the admin suppliers page.
+- **Improvement: ZKTeco MDB Import:** Added a UI button to trigger the manual attendance import from a  file.
 
 **Earlier issues found/mentioned but not fixed**
-- The full refactoring of  and  was planned and the folder structure was created, but the code migration has not started. It is listed as the highest priority upcoming task.
+- The critical refactoring of  and  was planned but deferred to implement new user-requested features. This remains the most significant outstanding technical debt.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:** The user's local Python desktop agent for ZKTeco sync has been a persistent problem area.
+- **Issue recurrence in previous fork:** ZKTeco desktop sync agent ().
 - **Recurrence count:** 5+
-- **Status:** USER VERIFICATION PENDING (The latest version, , has not been tested by the user in their environment).
+- **Status:** USER VERIFICATION PENDING.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Dynamic Form Population:** The React frontend was updated to use  hooks that trigger API calls or state updates based on user input in one field (e.g., supplier code) to populate other related fields (name, balance).
-- **Conditional PDF Generation:** The frontend logic for printing payroll now separates employees into different groups based on their  to generate distinct reports.
-- **Bulk Data Operations:** The agent is handling a bulk data correction task involving parsing an Excel file, deleting hundreds of incorrect database records, and re-inserting them with corrected data.
+- **File Uploads & Serving:** Using FastAPI's  and  for handling excuse attachments.
+- **Separate Authentication Flow:** Implemented a JWT-based authentication system for an external-facing portal (for Suppliers) distinct from the internal admin/user auth.
+- **Automated Data Logging:** The salary update endpoint was enhanced to transparently create a historical record in a separate collection upon a successful update.
+- **Database File Parsing:** Installed and used  to read data from the user-provided  file.
 
 **key DB schema**
-- **:**
-    -  was added.
-    -  was added.
-- **:**
-    -  was added.
-    -  was added.
-- **:**
-    -  needs to be populated ('إبل' or 'بقر').
-    -  is a critical field that was missed in the first import.
+- **:** Added .
+- **:** Added .
+- ** (New):** 
+- ** (New):** 
+- ** (New):** 
+- ** (New):** 
+- ** (New):** 
+
+**changes in tech stack**
+- Added  to the system dependencies for reading Microsoft Access Database files.
 
 **All files of reference**
-- **Heavily Modified:**
+- **Critically Modified / Needs Refactor:**
     - 
     - 
+- **New:**
     - 
     - 
+- **Modified:**
     - 
-- **New/Generated:**
     - 
-    -  (temporary file from excel parsing)
-- **User Uploaded:**
+- **Supporting Docs:**
     - 
 
 **Areas that need refactoring**:
-- ** (CRITICAL):** Still a monolith exceeding 8,500 lines. The plan to move logic into  must be executed.
-- ** (CRITICAL):** A 3,800+ line file that is difficult to manage. Logic and UI for different tabs (Employees, Attendance, Letters, etc.) should be broken into separate components.
-- **:** The purchase dialog logic is complex and could be extracted into its own component for clarity.
+- ** (CRITICAL):** The file is now dangerously large and contains logic for dozens of distinct features. It must be broken down into a routed structure (e.g., , , ).
+- ** (CRITICAL):** This file now handles state and UI for Employees, Attendance, Leaves, Excuses, and Holidays. It should be broken down into many smaller components, with a parent component managing the tabs.
+- **:** This new page, while functional, could be refactored into smaller components for the login form, dashboard, and different tabs to improve readability.
 
 **key api endpoints**
-- **New:**
-    - : To fetch payroll data grouped by work location.
-- **Modified:**
-    - : Logic updated to filter out  employees and calculate overtime.
-    -  & : Logic updated to automatically calculate overtime hours upon check-in/check-out.
-    - : Now handles  and  fields.
+- **Excuse System:** , , .
+- **Holiday System:** , , .
+- **Salary History:**  (Data is logged via the modified ).
+- **Supplier Portal:** , , , .
+- **ZKTeco Import:** .
 
 **Critical Info for New Agent**
-- **Immediate Priority:** Your first task is to complete the supplier re-import. The incorrect data has been deleted. Use the parsed file  to create the new suppliers via the API, ensuring  and  are included.
-- **Arabic Language:** The user communicates exclusively in Arabic. All responses, questions, and summaries must be in Arabic.
-- **Urgent Refactoring:** The user has approved the plan to refactor  and . Once the supplier import is fixed and verified, you **must** propose and begin this refactoring. It is the most significant risk to the project's health.
-- **Payroll Printing:** While the UI and backend logic for location-based payroll reports are in place, the actual PDF generation logic in the frontend's  function in  might be a scaffold and need to be fully implemented to create a well-formatted document.
+- **Language:** The user communicates exclusively in Arabic. You **must** respond in Arabic.
+- **Urgent Refactoring:** The user has been adding many features, bypassing the critical need to refactor the monolithic  and  files. You must strongly advocate for and prioritize this refactoring task next to ensure the project's stability and future maintainability. Frame it as a necessary step to support further development reliably.
+- **Incomplete Feature Loops:** Be aware that several new features (Feed Requests, Supplier Messages) have a user-facing part but lack the corresponding admin-facing management UI. These are natural next steps to propose to the user after the refactoring is complete.
+- **Payroll Logic:** The payroll calculation logic is now incomplete as it doesn't account for the new holiday and weekly off-day system. This will need to be addressed to ensure correct pay calculation.
 
 **documents and test reports created in this job**
--  (updated)
--  (temporary file with parsed supplier data)
+-  (updated multiple times)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request:** Add the supplier list for Hajeef center for Oct 2025 from the provided Excel file.
-2.  **Feedback:** The imported suppliers are missing their  and are all for Camel () milk. The import also needs to handle cow () milk suppliers.
-3.  **Clarification:** The user confirmed that Test Employee should be deleted.
-4.  **Request:** Yasir Kashoob IT is just a system administrator and should not be included in attendance, payroll, or performance metrics.
-5.  **Confirmation:** The user chose to proceed with both printing and refactoring, starting with printing.
-6.  **Request:** Generate separate PDF payroll reports: one for all centers combined, and a separate one for the administration. Also, start refactoring  and .
-7.  **Confirmation:** The user confirmed the rules for overtime calculation (8 hours standard workday, 1.5x rate for extra hours) and provided the list of work locations.
-8.  **Request:** Wants to add automatic overtime calculation, assign a work location to each employee, and have payroll reports split by location.
-9.  **Request:** After seeing the updated Feed Purchase form, the user asked to change the supplier selection from a dropdown menu to a text input field where they can type the supplier's code directly.
-10. **Feedback:** After an initial fix, the user specified that the supplier code in the database is , not , prompting a correction.
+1.  **User Request:** Add file uploads to excuses, import from ZKTeco  file, fix supplier search, and implement a holiday/weekend system.
+2.  **User Inquiry:** Asks for the location of the ZKTeco import feature and confirms the next priorities are the HR holiday UI and refactoring.
+3.  **Agent Action:** Adds the ZKTeco button and implements the HR holiday management UI.
+4.  **User Request:** Asks for a salary history tracking system and a mobile app for suppliers.
+5.  **Agent Action:** Implements the salary history backend and builds a web-based Supplier Portal as a first version of the mobile app.
+6.  **User Feedback:** Likes the portal and requests password authentication with a forgot password feature.
+7.  **Agent Action:** Implements the full authentication system for the Supplier Portal.
+8.  **Agent Summary:** Completes the session by summarizing the implementation of the holiday UI.
+9.  **User Request:** Asks for salary history updates when salary changes, and a mobile app for suppliers/customers.
+10. **User Feedback:** Specifies that the supplier portal login should use a password and have a password recovery option via phone.
 
 **Project Health Check:**
-- **Web Application:** **At Risk.** The application is functionally rich but built on a fragile foundation. The monolithic  and  files make new changes risky and debugging difficult. The pending refactoring is critical.
-- **Data Integrity:** **At Risk.** The supplier data is currently incomplete due to the failed import. The immediate fix is necessary for core business functions.
-- **Codebase:** **Critical.** Requires immediate refactoring to ensure long-term stability and maintainability.
+- **Web Application:** **At Risk**. The application is packed with features, but the underlying code structure is extremely fragile due to the monolithic  and  files. The risk of regression is high with every new change.
+- **Codebase:** **CRITICAL**. Urgent refactoring is required.
 
 **Testing status**
-- **Testing agent used after significant changes:** NO. The agent self-tested using  and . The upcoming refactoring is a prime candidate for the testing agent.
-- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Testing agent used after significant changes:** NO. The agent relied on  and . The project's current complexity strongly warrants using the , especially for regression testing after the upcoming refactor.
 - **Test files created:** None.
-- **Known regressions:** None, but the risk is high due to the large, un-refactored files.
 
 **Credentials to test flow:**
 - **Admin:**  / 
 - **HR:**  / 
+- **Supplier:** Login via . Use an existing supplier code (e.g., ). The default password is the last 4 digits of the supplier's phone number.
 
 **What agent forgot to execute**
-- The agent successfully set up the UI for printing location-based payroll reports in  but did not fully implement the PDF generation logic within the  function. It currently generates a basic HTML print view, which may not meet user expectations for a formal PDF report.
-- The critical refactoring of  and  was acknowledged and planned, but no code has been migrated yet. This remains the most significant piece of unfinished work.</analysis>
+- The agent successfully implemented the backend and UI for managing holidays and weekly off-days but did not integrate this logic into the core payroll calculation endpoint. As a result, payroll calculations will not yet correctly account for these non-working days or overtime on holidays.
+- The agent did not begin the critical refactoring of  and  despite it being a P0 task from the previous handoff.</analysis>
