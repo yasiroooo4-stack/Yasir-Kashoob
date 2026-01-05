@@ -3812,11 +3812,41 @@ async def update_hr_employee(employee_id: str, employee_data: EmployeeCreate, cu
     if not existing_employee:
         raise HTTPException(status_code=404, detail="Employee not found")
     
+    # Check if salary changed - record in salary history
+    old_salary = existing_employee.get("salary", 0)
+    new_salary = employee_data.salary
+    
+    if old_salary != new_salary:
+        # Create salary history record
+        salary_history = SalaryHistory(
+            employee_id=employee_id,
+            employee_name=existing_employee.get("name"),
+            old_salary=old_salary,
+            new_salary=new_salary,
+            change_reason="adjustment",  # Default reason
+            effective_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            changed_by=current_user["id"],
+            changed_by_name=current_user["full_name"],
+            notes=f"تم تعديل الراتب من {old_salary} إلى {new_salary}"
+        )
+        await db.salary_history.insert_one(salary_history.model_dump())
+        
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user["full_name"],
+            action="salary_change",
+            entity_type="employee",
+            entity_id=employee_id,
+            entity_name=existing_employee.get("name"),
+            details=f"تغيير راتب: {existing_employee.get('name')} من {old_salary} إلى {new_salary}"
+        )
+    
     # Update only the fields from employee_data, preserving is_active and can_login
     update_data = employee_data.model_dump()
     # Preserve status fields that should not be changed during regular updates
     update_data["is_active"] = existing_employee.get("is_active", True)
     update_data["can_login"] = existing_employee.get("can_login", False)
+    update_data["weekly_off_days"] = existing_employee.get("weekly_off_days", [4, 5])
     
     result = await db.hr_employees.update_one(
         {"id": employee_id},
