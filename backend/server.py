@@ -5159,23 +5159,6 @@ async def update_employee_work_schedule(
         "weekly_off_days": off_days
     }
 
-@api_router.get("/hr/employees/work-schedules")
-async def get_all_employees_work_schedules(current_user: dict = Depends(get_current_user)):
-    """الحصول على جداول عمل جميع الموظفين"""
-    employees = await db.hr_employees.find(
-        {"is_active": True},
-        {"_id": 0, "id": 1, "name": 1, "employee_id": 1, "department": 1, "job_title": 1, "shift_type": 1, "weekly_off_days": 1}
-    ).to_list(1000)
-    
-    # Add default values if not set
-    for emp in employees:
-        if "shift_type" not in emp:
-            emp["shift_type"] = "morning"
-        if "weekly_off_days" not in emp:
-            emp["weekly_off_days"] = [4, 5]
-    
-    return employees
-
 @api_router.get("/hr/employees/{employee_id}/check-working-day/{date}")
 async def check_employee_working_day(
     employee_id: str,
