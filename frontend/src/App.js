@@ -366,11 +366,6 @@ function App() {
                     <SupplierManagement />
                   </ProtectedRoute>
                 } />
-                <Route path="settings" element={
-                  <ProtectedRoute>
-                    <SystemSettings />
-                  </ProtectedRoute>
-                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
