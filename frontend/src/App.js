@@ -201,7 +201,17 @@ function App() {
       axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
       setUser(userData);
       
-      toast.success(language === "ar" ? "تم تسجيل الدخول بنجاح" : "Login successful");
+      // Welcome toast with logo
+      toast.success(
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="المروج للألبان" className="w-10 h-10 rounded-full object-cover" />
+          <div>
+            <p className="font-bold">{language === "ar" ? "مرحباً بك في المروج للألبان" : "Welcome to Al Marooj Dairy"}</p>
+            <p className="text-sm opacity-80">{userData.name}</p>
+          </div>
+        </div>,
+        { duration: 4000 }
+      );
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.detail || (language === "ar" ? "فشل تسجيل الدخول" : "Login failed");
