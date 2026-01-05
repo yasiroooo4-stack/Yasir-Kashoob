@@ -369,6 +369,7 @@ const HR = () => {
         loansRes,
         documentsRes,
         warningsRes,
+        holidaysRes,
       ] = await Promise.all([
         axios.get(`${API}/hr/employees`),
         axios.get(`${API}/hr/departments`),
@@ -387,6 +388,7 @@ const HR = () => {
         axios.get(`${API}/hr/loans`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/documents`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/warnings`).catch(() => ({ data: [] })),
+        axios.get(`${API}/hr/official-holidays`).catch(() => ({ data: [] })),
       ]);
       
       setEmployees(employeesRes.data);
@@ -406,6 +408,7 @@ const HR = () => {
       setLoans(loansRes.data || []);
       setDocuments(documentsRes.data || []);
       setWarnings(warningsRes.data || []);
+      setOfficialHolidays(holidaysRes.data || []);
     } catch (error) {
       console.error("Error fetching HR data:", error);
     } finally {
