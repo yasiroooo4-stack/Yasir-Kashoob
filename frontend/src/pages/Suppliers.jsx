@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Users, Phone, MapPin, Building } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Phone, MapPin, Building, ArrowRightLeft } from "lucide-react";
 
 const Suppliers = () => {
   const { t } = useTranslation();
@@ -53,7 +53,9 @@ const Suppliers = () => {
   const [filterMilkType, setFilterMilkType] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [newCenterId, setNewCenterId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
