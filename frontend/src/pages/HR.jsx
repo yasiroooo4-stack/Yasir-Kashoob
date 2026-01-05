@@ -85,6 +85,7 @@ const HR = () => {
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
+  const [excuseRequests, setExcuseRequests] = useState([]);
   const [expenseRequests, setExpenseRequests] = useState([]);
   const [carContracts, setCarContracts] = useState([]);
   const [officialLetters, setOfficialLetters] = useState([]);
