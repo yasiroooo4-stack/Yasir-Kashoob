@@ -1840,6 +1840,142 @@ const HR = () => {
           </Card>
         </TabsContent>
 
+        {/* Excuses Tab */}
+        <TabsContent value="excuses">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-orange-500" />
+                  {language === "ar" ? "طلبات الأعذار" : "Excuse Requests"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة طلبات الأعذار عن الغياب" : "Manage absence excuse requests"}
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                      <TableHead>{language === "ar" ? "تاريخ الغياب" : "Absence Date"}</TableHead>
+                      <TableHead>{language === "ar" ? "نوع العذر" : "Excuse Type"}</TableHead>
+                      <TableHead>{language === "ar" ? "السبب" : "Reason"}</TableHead>
+                      <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                      <TableHead>{language === "ar" ? "تاريخ الطلب" : "Request Date"}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {excuseRequests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          {language === "ar" ? "لا توجد طلبات أعذار" : "No excuse requests"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      excuseRequests.map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">{request.employee_name}</TableCell>
+                          <TableCell>{new Date(request.excuse_date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              request.excuse_type === "medical" ? "default" :
+                              request.excuse_type === "accompanying" ? "secondary" : "outline"
+                            }>
+                              {request.excuse_type === "medical" ? (language === "ar" ? "طبي" : "Medical") :
+                               request.excuse_type === "accompanying" ? (language === "ar" ? "مرافق مريض" : "Accompanying") :
+                               (language === "ar" ? "سبب آخر" : "Other")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">{request.reason}</TableCell>
+                          <TableCell>{getStatusBadge(request.status)}</TableCell>
+                          <TableCell>{new Date(request.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {request.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-green-600 hover:text-green-700"
+                                    onClick={async () => {
+                                      try {
+                                        await axios.put(`${API}/hr/excuse-requests/${request.id}/approve`);
+                                        toast.success(language === "ar" ? "تمت الموافقة على العذر وتسجيل الحضور" : "Excuse approved and attendance recorded");
+                                        fetchData();
+                                      } catch (error) {
+                                        toast.error(error.response?.data?.detail || t("error"));
+                                      }
+                                    }}
+                                    title={language === "ar" ? "موافقة" : "Approve"}
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={async () => {
+                                      const reason = prompt(language === "ar" ? "سبب الرفض:" : "Rejection reason:");
+                                      if (reason === null) return;
+                                      try {
+                                        await axios.put(`${API}/hr/excuse-requests/${request.id}/reject?reason=${encodeURIComponent(reason)}`);
+                                        toast.success(language === "ar" ? "تم رفض العذر وتسجيل الغياب" : "Excuse rejected and absence recorded");
+                                        fetchData();
+                                      } catch (error) {
+                                        toast.error(error.response?.data?.detail || t("error"));
+                                      }
+                                    }}
+                                    title={language === "ar" ? "رفض" : "Reject"}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                              {request.attachment_url && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => window.open(request.attachment_url, '_blank')}
+                                  title={language === "ar" ? "عرض المرفق" : "View Attachment"}
+                                >
+                                  <FileText className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={async () => {
+                                  if (confirm(language === "ar" ? "هل تريد حذف هذا الطلب؟" : "Delete this request?")) {
+                                    try {
+                                      await axios.delete(`${API}/hr/excuse-requests/${request.id}`);
+                                      toast.success(language === "ar" ? "تم حذف الطلب" : "Request deleted");
+                                      fetchData();
+                                    } catch (error) {
+                                      toast.error(error.response?.data?.detail || t("error"));
+                                    }
+                                  }
+                                }}
+                                title={language === "ar" ? "حذف" : "Delete"}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Expenses Tab */}
         <TabsContent value="expenses">
           <Card>
