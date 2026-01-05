@@ -4366,6 +4366,152 @@ const HR = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Official Holiday Dialog */}
+      <Dialog open={holidayDialogOpen} onOpenChange={setHolidayDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-red-500" />
+              {language === "ar" ? "إضافة عطلة رسمية" : "Add Official Holiday"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleCreateHoliday(); }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "اسم العطلة" : "Holiday Name"} *</Label>
+              <Input
+                value={holidayForm.name}
+                onChange={(e) => setHolidayForm({ ...holidayForm, name: e.target.value })}
+                placeholder={language === "ar" ? "مثال: عيد الفطر" : "e.g., Eid Al-Fitr"}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "تاريخ العطلة" : "Holiday Date"} *</Label>
+              <Input
+                type="date"
+                value={holidayForm.date}
+                onChange={(e) => setHolidayForm({ ...holidayForm, date: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "تنطبق على" : "Applies To"}</Label>
+              <Select
+                value={holidayForm.applies_to}
+                onValueChange={(v) => setHolidayForm({ ...holidayForm, applies_to: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === "ar" ? "جميع الموظفين" : "All Employees"}</SelectItem>
+                  <SelectItem value="admin_only">{language === "ar" ? "الإدارة فقط" : "Admin Only"}</SelectItem>
+                  <SelectItem value="centers_only">{language === "ar" ? "المراكز فقط" : "Centers Only"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="is_recurring"
+                checked={holidayForm.is_recurring}
+                onCheckedChange={(checked) => setHolidayForm({ ...holidayForm, is_recurring: checked })}
+              />
+              <Label htmlFor="is_recurring" className="cursor-pointer">
+                {language === "ar" ? "عطلة سنوية متكررة" : "Recurring yearly holiday"}
+              </Label>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
+              <Textarea
+                value={holidayForm.notes}
+                onChange={(e) => setHolidayForm({ ...holidayForm, notes: e.target.value })}
+                placeholder={language === "ar" ? "ملاحظات إضافية..." : "Additional notes..."}
+                rows={2}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setHolidayDialogOpen(false)}>
+                {t("cancel")}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white">
+                <Plus className="w-4 h-4 me-2" />
+                {language === "ar" ? "إضافة" : "Add"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Weekly Off Days Dialog */}
+      <Dialog open={weeklyOffDialogOpen} onOpenChange={setWeeklyOffDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-500" />
+              {language === "ar" ? "تحديد أيام الإجازة الأسبوعية" : "Set Weekly Off Days"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedEmployeeForWeeklyOff?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {language === "ar" 
+                ? "اختر يومين إجازة في الأسبوع (5 أيام عمل):" 
+                : "Select two off days per week (5 working days):"}
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {DAYS_OF_WEEK.map((day) => (
+                <div
+                  key={day.id}
+                  className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    weeklyOffDays.includes(day.id) 
+                      ? "bg-red-50 border-red-300 dark:bg-red-950" 
+                      : "hover:bg-muted"
+                  }`}
+                  onClick={() => toggleWeeklyOffDay(day.id)}
+                >
+                  <Checkbox
+                    checked={weeklyOffDays.includes(day.id)}
+                    onCheckedChange={() => toggleWeeklyOffDay(day.id)}
+                  />
+                  <span className={weeklyOffDays.includes(day.id) ? "font-medium text-red-600" : ""}>
+                    {language === "ar" ? day.name : day.name_en}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="bg-muted p-3 rounded-lg">
+              <p className="text-sm font-medium">
+                {language === "ar" ? "أيام الإجازة المختارة:" : "Selected off days:"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {weeklyOffDays.length > 0 
+                  ? weeklyOffDays.map(d => {
+                      const day = DAYS_OF_WEEK.find(day => day.id === d);
+                      return day ? (language === "ar" ? day.name : day.name_en) : d;
+                    }).join("، ")
+                  : (language === "ar" ? "لم يتم اختيار أي يوم" : "No days selected")}
+              </p>
+              <p className="text-sm text-green-600 mt-2">
+                {language === "ar" 
+                  ? `أيام العمل: ${7 - weeklyOffDays.length} أيام` 
+                  : `Working days: ${7 - weeklyOffDays.length} days`}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setWeeklyOffDialogOpen(false)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={handleSaveWeeklyOff} className="gradient-primary text-white">
+              <CheckCircle className="w-4 h-4 me-2" />
+              {language === "ar" ? "حفظ" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
