@@ -352,6 +352,11 @@ function App() {
                     <Analytics />
                   </ProtectedRoute>
                 } />
+                <Route path="supplier-management" element={
+                  <ProtectedRoute>
+                    <SupplierManagement />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
