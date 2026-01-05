@@ -57,6 +57,7 @@ import Payroll from "./pages/Payroll";
 import Treasury from "./pages/Treasury";
 import Analytics from "./pages/Analytics";
 import SupplierPortal from "./pages/SupplierPortal";
+import SupplierManagement from "./pages/SupplierManagement";
 
 // Layout
 import Layout from "./components/Layout";
