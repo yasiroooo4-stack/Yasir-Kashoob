@@ -58,6 +58,7 @@ import Treasury from "./pages/Treasury";
 import Analytics from "./pages/Analytics";
 import SupplierPortal from "./pages/SupplierPortal";
 import SupplierManagement from "./pages/SupplierManagement";
+import SystemSettings from "./pages/SystemSettings";
 
 // Layout
 import Layout from "./components/Layout";
