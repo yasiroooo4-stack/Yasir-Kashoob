@@ -44,6 +44,12 @@ import {
   RefreshCw,
   Plus,
   ArrowLeftRight,
+  Key,
+  Phone,
+  Eye,
+  EyeOff,
+  Lock,
+  Settings,
 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -67,9 +73,23 @@ const SupplierPortal = () => {
   const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [supplierCode, setSupplierCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [supplier, setSupplier] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Recovery states
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [recoveryPhone, setRecoveryPhone] = useState("");
+  const [recoveredPassword, setRecoveredPassword] = useState("");
+  
+  // Change password states
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   
   // Data states
   const [milkReceptions, setMilkReceptions] = useState([]);
@@ -98,32 +118,114 @@ const SupplierPortal = () => {
 
   // Check if supplier is logged in (from localStorage)
   useEffect(() => {
+    const token = localStorage.getItem("supplier_token");
     const savedCode = localStorage.getItem("supplier_code");
-    if (savedCode) {
-      setSupplierCode(savedCode);
-      handleLogin(savedCode);
+    if (token && savedCode) {
+      // Verify token is still valid
+      verifyToken(token, savedCode);
     }
   }, []);
 
-  const handleLogin = async (code = supplierCode) => {
-    if (!code.trim()) {
+  const verifyToken = async (token, code) => {
+    try {
+      const response = await axios.get(`${API}/api/supplier-portal/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSupplier(response.data);
+      setSupplierCode(code);
+      setIsLoggedIn(true);
+      fetchData(code);
+    } catch (error) {
+      // Token expired or invalid
+      localStorage.removeItem("supplier_token");
+      localStorage.removeItem("supplier_code");
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e?.preventDefault();
+    
+    if (!supplierCode.trim()) {
       toast.error("يرجى إدخال كود المورد");
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast.error("يرجى إدخال كلمة المرور");
       return;
     }
     
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/api/supplier-portal/login?supplier_code=${code}`);
+      const response = await axios.post(`${API}/api/supplier-portal/login`, {
+        supplier_code: supplierCode,
+        password: password
+      });
       setSupplier(response.data.supplier);
       setIsLoggedIn(true);
-      localStorage.setItem("supplier_code", code);
+      localStorage.setItem("supplier_code", supplierCode);
       localStorage.setItem("supplier_token", response.data.access_token);
       toast.success(`مرحباً ${response.data.supplier.name}`);
-      fetchData(code);
+      fetchData(supplierCode);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "كود المورد غير صحيح");
-      localStorage.removeItem("supplier_code");
-      localStorage.removeItem("supplier_token");
+      toast.error(error.response?.data?.detail || "كود المورد أو كلمة المرور غير صحيحة");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRecoverPassword = async (e) => {
+    e?.preventDefault();
+    
+    if (!recoveryCode.trim() || !recoveryPhone.trim()) {
+      toast.error("يرجى إدخال كود المورد ورقم الهاتف");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API}/api/supplier-portal/recover-password?supplier_code=${recoveryCode}&phone=${recoveryPhone}`
+      );
+      setRecoveredPassword(response.data.new_password);
+      toast.success("تم إعادة تعيين كلمة المرور بنجاح");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل استرجاع كلمة المرور - تأكد من صحة البيانات");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e?.preventDefault();
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("يرجى ملء جميع الحقول");
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast.error("كلمة المرور الجديدة غير متطابقة");
+      return;
+    }
+    
+    if (newPassword.length < 4) {
+      toast.error("كلمة المرور يجب أن تكون 4 أحرف على الأقل");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await axios.put(
+        `${API}/api/supplier-portal/change-password?supplier_code=${supplierCode}&current_password=${currentPassword}&new_password=${newPassword}`
+      );
+      toast.success("تم تغيير كلمة المرور بنجاح");
+      setChangePasswordDialogOpen(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل تغيير كلمة المرور");
     } finally {
       setLoading(false);
     }
@@ -133,6 +235,7 @@ const SupplierPortal = () => {
     setIsLoggedIn(false);
     setSupplier(null);
     setSupplierCode("");
+    setPassword("");
     localStorage.removeItem("supplier_code");
     localStorage.removeItem("supplier_token");
   };
@@ -255,30 +358,151 @@ const SupplierPortal = () => {
               <Milk className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-2xl">بوابة الموردين</CardTitle>
-            <CardDescription>أدخل كود المورد الخاص بك للدخول</CardDescription>
+            <CardDescription>
+              {showRecovery ? "استرجاع كلمة المرور" : "أدخل بيانات الدخول الخاصة بك"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
-              <div className="space-y-2">
-                <Label>كود المورد</Label>
-                <Input
-                  type="text"
-                  value={supplierCode}
-                  onChange={(e) => setSupplierCode(e.target.value)}
-                  placeholder="مثال: 1108"
-                  className="text-center text-lg"
-                  autoFocus
-                />
-              </div>
-              <Button type="submit" className="w-full gradient-primary text-white" disabled={loading}>
-                {loading ? (
-                  <RefreshCw className="w-4 h-4 animate-spin me-2" />
+            {!showRecovery ? (
+              // Login Form
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    كود المورد
+                  </Label>
+                  <Input
+                    type="text"
+                    value={supplierCode}
+                    onChange={(e) => setSupplierCode(e.target.value)}
+                    placeholder="مثال: 1108"
+                    className="text-center text-lg"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    كلمة المرور
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="أدخل كلمة المرور"
+                      className="text-center text-lg pe-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    كلمة المرور الافتراضية: آخر 4 أرقام من رقم هاتفك
+                  </p>
+                </div>
+                <Button type="submit" className="w-full gradient-primary text-white" disabled={loading}>
+                  {loading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin me-2" />
+                  ) : (
+                    <LogIn className="w-4 h-4 me-2" />
+                  )}
+                  دخول
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full text-muted-foreground"
+                  onClick={() => {
+                    setShowRecovery(true);
+                    setRecoveredPassword("");
+                  }}
+                >
+                  <Key className="w-4 h-4 me-2" />
+                  نسيت كلمة المرور؟
+                </Button>
+              </form>
+            ) : (
+              // Recovery Form
+              <div className="space-y-4">
+                {!recoveredPassword ? (
+                  <form onSubmit={handleRecoverPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        كود المورد
+                      </Label>
+                      <Input
+                        type="text"
+                        value={recoveryCode}
+                        onChange={(e) => setRecoveryCode(e.target.value)}
+                        placeholder="أدخل كود المورد"
+                        className="text-center"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        رقم الهاتف المسجل
+                      </Label>
+                      <Input
+                        type="tel"
+                        value={recoveryPhone}
+                        onChange={(e) => setRecoveryPhone(e.target.value)}
+                        placeholder="أدخل رقم هاتفك المسجل"
+                        className="text-center"
+                        dir="ltr"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : null}
+                      استرجاع كلمة المرور
+                    </Button>
+                  </form>
                 ) : (
-                  <LogIn className="w-4 h-4 me-2" />
+                  <div className="text-center space-y-4">
+                    <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">كلمة المرور الجديدة:</p>
+                      <p className="text-3xl font-bold text-green-600">{recoveredPassword}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setShowRecovery(false);
+                        setRecoveryCode("");
+                        setRecoveryPhone("");
+                        setRecoveredPassword("");
+                        setSupplierCode(recoveryCode);
+                        setPassword(recoveredPassword);
+                      }}
+                      className="w-full gradient-primary text-white"
+                    >
+                      العودة لتسجيل الدخول
+                    </Button>
+                  </div>
                 )}
-                دخول
-              </Button>
-            </form>
+                {!recoveredPassword && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-muted-foreground"
+                    onClick={() => {
+                      setShowRecovery(false);
+                      setRecoveryCode("");
+                      setRecoveryPhone("");
+                    }}
+                  >
+                    العودة لتسجيل الدخول
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -301,9 +525,15 @@ const SupplierPortal = () => {
                 <p className="text-sm text-muted-foreground">كود: {supplier?.code}</p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
-              خروج
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setChangePasswordDialogOpen(true)}>
+                <Settings className="w-4 h-4 me-1" />
+                <span className="hidden sm:inline">تغيير كلمة المرور</span>
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>
+                خروج
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -675,6 +905,56 @@ const SupplierPortal = () => {
               <Button type="submit" className="gradient-primary text-white" disabled={loading}>
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 me-2" />}
                 إرسال
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              تغيير كلمة المرور
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label>كلمة المرور الحالية</Label>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="أدخل كلمة المرور الحالية"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>كلمة المرور الجديدة</Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="أدخل كلمة المرور الجديدة (4 أحرف على الأقل)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>تأكيد كلمة المرور الجديدة</Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="أعد إدخال كلمة المرور الجديدة"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setChangePasswordDialogOpen(false)}>
+                إلغاء
+              </Button>
+              <Button type="submit" className="gradient-primary text-white" disabled={loading}>
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
+                تغيير كلمة المرور
               </Button>
             </DialogFooter>
           </form>
