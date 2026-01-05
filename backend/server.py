@@ -5094,6 +5094,71 @@ async def set_employee_weekly_off(
     
     return employee
 
+@api_router.put("/hr/employees/{employee_id}/work-schedule")
+async def update_employee_work_schedule(
+    employee_id: str,
+    shift_type: str = Query(..., description="نوع الوردية: morning, afternoon, night"),
+    weekly_off_days: str = Query(..., description="أيام الإجازة (مفصولة بفاصلة) مثل: 4,5"),
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تحديث جدول عمل الموظف (الوردية وأيام الإجازة)"""
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Parse weekly off days
+    try:
+        off_days = [int(d.strip()) for d in weekly_off_days.split(",") if d.strip()]
+    except:
+        off_days = [4, 5]  # Default Friday, Saturday
+    
+    # Update employee
+    result = await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {
+            "shift_type": shift_type,
+            "weekly_off_days": off_days
+        }}
+    )
+    
+    shift_names = {"morning": "صباحي", "afternoon": "مسائي", "night": "ليلي"}
+    day_names = {0: "الأحد", 1: "الإثنين", 2: "الثلاثاء", 3: "الأربعاء", 4: "الخميس", 5: "الجمعة", 6: "السبت"}
+    off_day_names = [day_names.get(d, str(d)) for d in off_days]
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_work_schedule",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"تحديث جدول العمل: وردية {shift_names.get(shift_type, shift_type)}, إجازة: {', '.join(off_day_names)}"
+    )
+    
+    return {
+        "message": "تم تحديث جدول العمل بنجاح",
+        "employee_id": employee_id,
+        "shift_type": shift_type,
+        "weekly_off_days": off_days
+    }
+
+@api_router.get("/hr/employees/work-schedules")
+async def get_all_employees_work_schedules(current_user: dict = Depends(get_current_user)):
+    """الحصول على جداول عمل جميع الموظفين"""
+    employees = await db.hr_employees.find(
+        {"is_active": True},
+        {"_id": 0, "id": 1, "name": 1, "employee_id": 1, "department": 1, "job_title": 1, "shift_type": 1, "weekly_off_days": 1}
+    ).to_list(1000)
+    
+    # Add default values if not set
+    for emp in employees:
+        if "shift_type" not in emp:
+            emp["shift_type"] = "morning"
+        if "weekly_off_days" not in emp:
+            emp["weekly_off_days"] = [4, 5]
+    
+    return employees
+
 @api_router.get("/hr/employees/{employee_id}/check-working-day/{date}")
 async def check_employee_working_day(
     employee_id: str,
