@@ -119,6 +119,7 @@ const Layout = () => {
     { path: "/treasury", icon: PiggyBank, label: "treasury", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/analytics", icon: BarChart3, label: "analytics" },
     { path: "/hr", icon: Building2, label: "hr", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
+    { path: "/employee-scheduling", icon: CalendarClock, label: "employee_scheduling", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/payroll", icon: Calculator, label: "payroll", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
