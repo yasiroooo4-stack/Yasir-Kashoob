@@ -193,7 +193,16 @@ const Suppliers = () => {
     
     const matchesCenter = filterCenter === "all" || s.center_id === filterCenter;
     
-    return matchesSearch && matchesCenter;
+    // Handle milk type filtering - check both English IDs and Arabic values
+    const matchesMilkType = filterMilkType === "all" || 
+      s.milk_type === filterMilkType ||
+      (filterMilkType === "camel" && s.milk_type === "إبل") ||
+      (filterMilkType === "cow" && (s.milk_type === "بقر" || s.milk_type === "أبقار")) ||
+      (filterMilkType === "goat" && s.milk_type === "ماعز") ||
+      (filterMilkType === "إبل" && s.milk_type === "إبل") ||
+      (filterMilkType === "أبقار" && (s.milk_type === "cow" || s.milk_type === "بقر" || s.milk_type === "أبقار"));
+    
+    return matchesSearch && matchesCenter && matchesMilkType;
   });
 
   if (loading) {
