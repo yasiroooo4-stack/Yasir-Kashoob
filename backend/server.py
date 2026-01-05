@@ -298,6 +298,27 @@ class EmployeeCreate(EmployeeBase):
 class Employee(EmployeeBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     is_active: bool = True
+    weekly_off_days: Optional[List[int]] = None  # أيام الإجازة الأسبوعية
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Salary History Models (سجل تغييرات الرواتب)
+class SalaryHistoryBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    old_salary: float
+    new_salary: float
+    change_reason: str  # promotion (ترقية), annual_increase (زيادة سنوية), adjustment (تعديل), demotion (تخفيض), other (أخرى)
+    effective_date: str  # تاريخ سريان الراتب الجديد
+    notes: Optional[str] = None
+
+class SalaryHistoryCreate(SalaryHistoryBase):
+    pass
+
+class SalaryHistory(SalaryHistoryBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    changed_by: Optional[str] = None
+    changed_by_name: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # Attendance Models (نماذج الحضور والانصراف)
