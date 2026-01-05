@@ -2096,6 +2096,181 @@ const HR = () => {
           </Card>
         </TabsContent>
 
+        {/* Holidays Tab - العطلات الرسمية */}
+        <TabsContent value="holidays">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-red-500" />
+                  {language === "ar" ? "العطلات الرسمية" : "Official Holidays"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة العطلات الرسمية وأيام الإجازة" : "Manage official holidays and off days"}
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => setHolidayDialogOpen(true)}
+                className="gradient-primary text-white"
+              >
+                <Plus className="w-4 h-4 me-2" />
+                {language === "ar" ? "إضافة عطلة" : "Add Holiday"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {/* Info Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-red-50 dark:bg-red-950 border-red-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-8 h-8 text-red-500" />
+                      <div>
+                        <p className="text-2xl font-bold text-red-600">{officialHolidays.length}</p>
+                        <p className="text-sm text-muted-foreground">{language === "ar" ? "عطلات رسمية" : "Official Holidays"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Building className="w-8 h-8 text-blue-500" />
+                      <div>
+                        <p className="text-lg font-bold text-blue-600">{language === "ar" ? "الجمعة + السبت" : "Fri + Sat"}</p>
+                        <p className="text-sm text-muted-foreground">{language === "ar" ? "إجازة الإدارة" : "Admin Off Days"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50 dark:bg-green-950 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Users className="w-8 h-8 text-green-500" />
+                      <div>
+                        <p className="text-lg font-bold text-green-600">{language === "ar" ? "5 أيام عمل" : "5 Working Days"}</p>
+                        <p className="text-sm text-muted-foreground">{language === "ar" ? "للموظفين في المراكز" : "For Center Employees"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Holidays Table */}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "ar" ? "اسم العطلة" : "Holiday Name"}</TableHead>
+                      <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                      <TableHead>{language === "ar" ? "تنطبق على" : "Applies To"}</TableHead>
+                      <TableHead>{language === "ar" ? "متكررة" : "Recurring"}</TableHead>
+                      <TableHead>{language === "ar" ? "ملاحظات" : "Notes"}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {officialHolidays.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          {language === "ar" ? "لا توجد عطلات رسمية مسجلة" : "No official holidays recorded"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      officialHolidays.map((holiday) => (
+                        <TableRow key={holiday.id}>
+                          <TableCell className="font-medium">{holiday.name}</TableCell>
+                          <TableCell>{new Date(holiday.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              holiday.applies_to === "all" ? "default" :
+                              holiday.applies_to === "admin_only" ? "secondary" : "outline"
+                            }>
+                              {holiday.applies_to === "all" ? (language === "ar" ? "الجميع" : "All") :
+                               holiday.applies_to === "admin_only" ? (language === "ar" ? "الإدارة فقط" : "Admin Only") :
+                               (language === "ar" ? "المراكز فقط" : "Centers Only")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {holiday.is_recurring ? (
+                              <Badge variant="outline" className="text-green-600">
+                                {language === "ar" ? "سنوية" : "Yearly"}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-gray-500">
+                                {language === "ar" ? "مرة واحدة" : "One-time"}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">{holiday.notes || "-"}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteHoliday(holiday.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Employee Weekly Off Days Section */}
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  {language === "ar" ? "أيام الإجازة الأسبوعية للموظفين" : "Employee Weekly Off Days"}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {language === "ar" 
+                    ? "انقر على 'تعديل' لتحديد أيام الإجازة الأسبوعية لكل موظف. الإدارة: الجمعة والسبت. المراكز: يختلف حسب الموظف." 
+                    : "Click 'Edit' to set weekly off days for each employee. Admin: Fri & Sat. Centers: varies by employee."}
+                </p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                        <TableHead>{language === "ar" ? "موقع العمل" : "Work Location"}</TableHead>
+                        <TableHead>{language === "ar" ? "أيام الإجازة الأسبوعية" : "Weekly Off Days"}</TableHead>
+                        <TableHead>{t("actions")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {employees.filter(e => !e.exclude_from_payroll).slice(0, 20).map((emp) => (
+                        <TableRow key={emp.id}>
+                          <TableCell className="font-medium">{emp.name}</TableCell>
+                          <TableCell>{emp.work_location || (language === "ar" ? "غير محدد" : "Not Set")}</TableCell>
+                          <TableCell>
+                            {(emp.weekly_off_days || [4, 5]).map(d => {
+                              const day = DAYS_OF_WEEK.find(day => day.id === d);
+                              return day ? (language === "ar" ? day.name : day.name_en) : d;
+                            }).join(", ") || (language === "ar" ? "الجمعة، السبت" : "Friday, Saturday")}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openWeeklyOffDialog(emp)}
+                            >
+                              <Pencil className="w-3 h-3 me-1" />
+                              {language === "ar" ? "تعديل" : "Edit"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Expenses Tab */}
         <TabsContent value="expenses">
           <Card>
