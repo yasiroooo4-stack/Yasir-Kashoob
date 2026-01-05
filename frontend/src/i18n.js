@@ -18,6 +18,7 @@ const resources = {
       "employees": "الموظفين",
       "reports": "التقارير",
       "settings": "الإعدادات",
+      "system_settings": "إعدادات النظام",
       "logout": "تسجيل الخروج",
       "login": "تسجيل الدخول",
       "register": "إنشاء حساب",
