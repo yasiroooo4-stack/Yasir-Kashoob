@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, Plus, Upload } from "lucide-react";
+import { AlertCircle, Plus, Upload, FileText, X, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -37,7 +37,9 @@ const ExcuseRequestButton = ({ currentUser }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const fileInputRef = useRef(null);
   
   // Check if user is admin or hr_manager
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'hr_manager';
@@ -51,6 +53,7 @@ const ExcuseRequestButton = ({ currentUser }) => {
     start_time: "",
     end_time: "",
     attachment_url: "",
+    attachment_name: "",
     notes: "",
   });
 
@@ -127,6 +130,62 @@ const ExcuseRequestButton = ({ currentUser }) => {
     return null;
   }
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(language === "ar" ? "نوع الملف غير مدعوم. يرجى رفع صورة أو PDF" : "Invalid file type. Please upload an image or PDF");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(language === "ar" ? "حجم الملف يجب أن يكون أقل من 10 ميجابايت" : "File size must be less than 10MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await axios.post(`${API}/api/hr/upload-file`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setExcuseForm(prev => ({
+        ...prev,
+        attachment_url: response.data.url,
+        attachment_name: response.data.original_name,
+      }));
+
+      toast.success(language === "ar" ? "تم رفع الملف بنجاح" : "File uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل رفع الملف" : "Failed to upload file"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAttachment = () => {
+    setExcuseForm(prev => ({
+      ...prev,
+      attachment_url: "",
+      attachment_name: "",
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -168,6 +227,7 @@ const ExcuseRequestButton = ({ currentUser }) => {
         start_time: "",
         end_time: "",
         attachment_url: "",
+        attachment_name: "",
         notes: "",
       });
     } else if (currentEmployee) {
@@ -180,8 +240,12 @@ const ExcuseRequestButton = ({ currentUser }) => {
         start_time: "",
         end_time: "",
         attachment_url: "",
+        attachment_name: "",
         notes: "",
       });
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -213,7 +277,7 @@ const ExcuseRequestButton = ({ currentUser }) => {
       </Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-orange-500" />
@@ -316,18 +380,50 @@ const ExcuseRequestButton = ({ currentUser }) => {
               />
             </div>
 
-            {/* Attachment URL */}
+            {/* File Upload */}
             <div className="space-y-2">
-              <Label>{language === "ar" ? "رابط المرفق (اختياري)" : "Attachment URL (Optional)"}</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={excuseForm.attachment_url}
-                  onChange={(e) => setExcuseForm({ ...excuseForm, attachment_url: e.target.value })}
-                  placeholder={language === "ar" ? "رابط الشهادة الطبية أو المرفق" : "Medical certificate or attachment URL"}
-                />
-              </div>
+              <Label>{language === "ar" ? "إرفاق ملف (صورة أو PDF)" : "Attach File (Image or PDF)"}</Label>
+              
+              {excuseForm.attachment_url ? (
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <span className="flex-1 text-sm truncate">{excuseForm.attachment_name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={removeAttachment}
+                    className="h-8 w-8"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`${API}${excuseForm.attachment_url}`, '_blank')}
+                  >
+                    {language === "ar" ? "عرض" : "View"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="cursor-pointer"
+                  />
+                  {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                </div>
+              )}
+              
               <p className="text-xs text-muted-foreground">
-                {language === "ar" ? "يمكنك إرفاق رابط الشهادة الطبية أو أي مستند داعم" : "You can attach a link to medical certificate or supporting document"}
+                {language === "ar" 
+                  ? "الملفات المدعومة: PDF، PNG، JPG، JPEG، GIF، WEBP (حد أقصى 10 ميجابايت)" 
+                  : "Supported files: PDF, PNG, JPG, JPEG, GIF, WEBP (Max 10MB)"}
               </p>
             </div>
 
@@ -347,18 +443,18 @@ const ExcuseRequestButton = ({ currentUser }) => {
                 type="button" 
                 variant="outline" 
                 onClick={() => setDialogOpen(false)}
-                disabled={loading}
+                disabled={loading || uploading}
               >
                 {t("cancel")}
               </Button>
               <Button 
                 type="submit" 
                 className="gradient-primary text-white"
-                disabled={loading}
+                disabled={loading || uploading}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <span className="animate-spin">⏳</span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     {language === "ar" ? "جاري الإرسال..." : "Submitting..."}
                   </span>
                 ) : (
