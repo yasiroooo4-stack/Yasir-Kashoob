@@ -316,8 +316,16 @@ function App() {
                     <Employees />
                   </ProtectedRoute>
                 } />
-                <Route path="reports" element={<Reports />} />
-                <Route path="settings" element={<Settings />} />
+                <Route path="reports" element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                } />
+                <Route path="system-settings" element={
+                  <ProtectedRoute>
+                    <SystemSettings />
+                  </ProtectedRoute>
+                } />
                 <Route path="hr" element={
                   <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]}>
                     <HR />
