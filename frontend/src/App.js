@@ -59,6 +59,7 @@ import Analytics from "./pages/Analytics";
 import SupplierPortal from "./pages/SupplierPortal";
 import SupplierManagement from "./pages/SupplierManagement";
 import SystemSettings from "./pages/SystemSettings";
+import EmployeeScheduling from "./pages/EmployeeScheduling";
 
 // Layout
 import Layout from "./components/Layout";
