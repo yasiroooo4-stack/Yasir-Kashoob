@@ -50,6 +50,7 @@ const Suppliers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCenter, setFilterCenter] = useState("all");
+  const [filterMilkType, setFilterMilkType] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
