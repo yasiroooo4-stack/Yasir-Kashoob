@@ -2173,31 +2173,54 @@ async def supplier_change_password(
     new_password: str
 ):
     """تغيير كلمة مرور المورد"""
+    import hashlib
+    
     supplier = await db.suppliers.find_one({"supplier_code": supplier_code}, {"_id": 0})
     if not supplier:
         raise HTTPException(status_code=404, detail="المورد غير موجود")
     
     # Verify current password
     stored_password_hash = supplier.get("password_hash")
-    phone = supplier.get("phone", "")
-    default_password = phone[-4:] if len(phone) >= 4 else "1234"
+    portal_password = supplier.get("portal_password")
     
-    if stored_password_hash:
-        if not verify_password(current_password, stored_password_hash):
-            raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
-    else:
-        if current_password != default_password:
-            raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
+    password_valid = False
+    
+    # Check portal_password (default 0000)
+    if portal_password:
+        input_hash = hashlib.sha256(current_password.encode()).hexdigest()
+        if input_hash == portal_password:
+            password_valid = True
+    
+    # Check old password_hash
+    if not password_valid and stored_password_hash:
+        if verify_password(current_password, stored_password_hash):
+            password_valid = True
+    
+    # Check legacy default
+    if not password_valid and not stored_password_hash and not portal_password:
+        phone = supplier.get("phone", "")
+        default_password = phone[-4:] if len(phone) >= 4 else "1234"
+        if current_password == default_password:
+            password_valid = True
+    
+    if not password_valid:
+        raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
     
     # Validate new password
     if len(new_password) < 4:
         raise HTTPException(status_code=400, detail="كلمة المرور يجب أن تكون 4 أحرف على الأقل")
     
-    # Hash and save new password
+    # Hash and save new password (using both methods for compatibility)
     new_password_hash = hash_password(new_password)
+    new_portal_password = hashlib.sha256(new_password.encode()).hexdigest()
+    
     await db.suppliers.update_one(
         {"supplier_code": supplier_code},
-        {"$set": {"password_hash": new_password_hash}}
+        {"$set": {
+            "password_hash": new_password_hash,
+            "portal_password": new_portal_password,
+            "password_changed": True
+        }}
     )
     
     return {"message": "تم تغيير كلمة المرور بنجاح"}
