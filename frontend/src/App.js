@@ -272,6 +272,9 @@ function App() {
               {/* Supplier Portal - Public Route */}
               <Route path="/supplier-portal" element={<SupplierPortal />} />
               
+              {/* Supplier App (PWA) - Public Route */}
+              <Route path="/supplier-app" element={<SupplierApp />} />
+              
               <Route path="/" element={
                 user ? (
                   <ErrorBoundary>
