@@ -281,8 +281,8 @@ const Suppliers = () => {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-lg">{t("suppliers")}</CardTitle>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <CardTitle className="text-lg">{t("suppliers")} ({filteredSuppliers.length})</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <Select value={filterCenter} onValueChange={setFilterCenter}>
                 <SelectTrigger className="w-full sm:w-40" data-testid="filter-center">
                   <SelectValue placeholder={t("center")} />
@@ -296,10 +296,22 @@ const Suppliers = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={filterMilkType} onValueChange={setFilterMilkType}>
+                <SelectTrigger className="w-full sm:w-40" data-testid="filter-milk-type">
+                  <SelectValue placeholder={language === "ar" ? "نوع الحليب" : "Milk Type"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === "ar" ? "جميع الأنواع" : "All Types"}</SelectItem>
+                  <SelectItem value="إبل">{language === "ar" ? "إبل" : "Camel"}</SelectItem>
+                  <SelectItem value="cow">{language === "ar" ? "أبقار" : "Cow"}</SelectItem>
+                  <SelectItem value="goat">{language === "ar" ? "ماعز" : "Goat"}</SelectItem>
+                  <SelectItem value="mixed">{language === "ar" ? "مختلط" : "Mixed"}</SelectItem>
+                </SelectContent>
+              </Select>
               <div className="relative w-full sm:w-64">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder={t("search")}
+                  placeholder={language === "ar" ? "بحث بالاسم أو الكود أو الهاتف..." : "Search by name, code, or phone..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="ps-9"
