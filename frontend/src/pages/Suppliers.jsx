@@ -141,6 +141,32 @@ const Suppliers = () => {
     }
   };
 
+  const handleTransfer = async () => {
+    if (!newCenterId) {
+      toast.error(language === "ar" ? "يرجى اختيار المركز الجديد" : "Please select new center");
+      return;
+    }
+    const newCenter = centers.find(c => c.id === newCenterId);
+    if (!newCenter) return;
+
+    try {
+      await axios.put(`${API}/suppliers/${selectedSupplier.id}/transfer-center?new_center=${encodeURIComponent(newCenter.name)}`);
+      toast.success(language === "ar" ? "تم نقل المورد بنجاح" : "Supplier transferred successfully");
+      setTransferDialogOpen(false);
+      setSelectedSupplier(null);
+      setNewCenterId("");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  const openTransferDialog = (supplier) => {
+    setSelectedSupplier(supplier);
+    setNewCenterId("");
+    setTransferDialogOpen(true);
+  };
+
   const openEditDialog = (supplier) => {
     setSelectedSupplier(supplier);
     setFormData({
