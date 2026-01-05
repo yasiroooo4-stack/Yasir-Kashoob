@@ -1058,6 +1058,84 @@ const HR = () => {
     }
   };
 
+  // ==================== Official Holidays Functions ====================
+  
+  // Create official holiday
+  const handleCreateHoliday = async () => {
+    try {
+      await axios.post(`${API}/hr/official-holidays`, holidayForm);
+      toast.success(language === "ar" ? "تمت إضافة العطلة بنجاح" : "Holiday added successfully");
+      setHolidayDialogOpen(false);
+      setHolidayForm({
+        name: "",
+        date: new Date().toISOString().split('T')[0],
+        applies_to: "all",
+        is_recurring: false,
+        notes: ""
+      });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل إضافة العطلة" : "Failed to add holiday"));
+    }
+  };
+
+  // Delete official holiday
+  const handleDeleteHoliday = async (holidayId) => {
+    if (!confirm(language === "ar" ? "هل تريد حذف هذه العطلة؟" : "Delete this holiday?")) return;
+    try {
+      await axios.delete(`${API}/hr/official-holidays/${holidayId}`);
+      toast.success(language === "ar" ? "تم حذف العطلة" : "Holiday deleted");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // ==================== Weekly Off Days Functions ====================
+  
+  const DAYS_OF_WEEK = [
+    { id: 0, name: "الاثنين", name_en: "Monday" },
+    { id: 1, name: "الثلاثاء", name_en: "Tuesday" },
+    { id: 2, name: "الأربعاء", name_en: "Wednesday" },
+    { id: 3, name: "الخميس", name_en: "Thursday" },
+    { id: 4, name: "الجمعة", name_en: "Friday" },
+    { id: 5, name: "السبت", name_en: "Saturday" },
+    { id: 6, name: "الأحد", name_en: "Sunday" },
+  ];
+
+  // Open weekly off dialog
+  const openWeeklyOffDialog = (employee) => {
+    setSelectedEmployeeForWeeklyOff(employee);
+    setWeeklyOffDays(employee.weekly_off_days || [4, 5]);
+    setWeeklyOffDialogOpen(true);
+  };
+
+  // Save weekly off days
+  const handleSaveWeeklyOff = async () => {
+    if (!selectedEmployeeForWeeklyOff) return;
+    try {
+      await axios.put(`${API}/hr/employees/${selectedEmployeeForWeeklyOff.id}/weekly-off`, {
+        employee_id: selectedEmployeeForWeeklyOff.id,
+        employee_name: selectedEmployeeForWeeklyOff.name,
+        off_days: weeklyOffDays
+      });
+      toast.success(language === "ar" ? "تم حفظ أيام الإجازة الأسبوعية" : "Weekly off days saved");
+      setWeeklyOffDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // Toggle day in weekly off
+  const toggleWeeklyOffDay = (dayId) => {
+    if (weeklyOffDays.includes(dayId)) {
+      setWeeklyOffDays(weeklyOffDays.filter(d => d !== dayId));
+    } else {
+      setWeeklyOffDays([...weeklyOffDays, dayId]);
+    }
+  };
+
   // ==================== ZKTeco Sync Manager Functions ====================
   
   // Fetch ZKTeco devices
