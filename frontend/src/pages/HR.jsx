@@ -131,6 +131,8 @@ const HR = () => {
   const [overtimeDialogOpen, setOvertimeDialogOpen] = useState(false);
   const [loanDialogOpen, setLoanDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [salaryHistoryDialogOpen, setSalaryHistoryDialogOpen] = useState(false);
+  const [selectedEmployeeForSalary, setSelectedEmployeeForSalary] = useState(null);
   
   // Official Holidays states
   const [officialHolidays, setOfficialHolidays] = useState([]);
