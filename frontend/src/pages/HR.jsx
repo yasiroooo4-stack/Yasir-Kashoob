@@ -131,6 +131,22 @@ const HR = () => {
   const [loanDialogOpen, setLoanDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   
+  // Official Holidays states
+  const [officialHolidays, setOfficialHolidays] = useState([]);
+  const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
+  const [holidayForm, setHolidayForm] = useState({
+    name: "",
+    date: new Date().toISOString().split('T')[0],
+    applies_to: "all",
+    is_recurring: false,
+    notes: ""
+  });
+  
+  // Weekly Off Days dialog
+  const [weeklyOffDialogOpen, setWeeklyOffDialogOpen] = useState(false);
+  const [selectedEmployeeForWeeklyOff, setSelectedEmployeeForWeeklyOff] = useState(null);
+  const [weeklyOffDays, setWeeklyOffDays] = useState([4, 5]); // Friday=4, Saturday=5 default
+  
   // ZKTeco Sync Manager states
   const [zktecoDialogOpen, setZktecoDialogOpen] = useState(false);
   const [zktecoDevices, setZktecoDevices] = useState([]);
