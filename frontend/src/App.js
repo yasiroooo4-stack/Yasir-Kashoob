@@ -60,6 +60,7 @@ import SupplierPortal from "./pages/SupplierPortal";
 import SupplierManagement from "./pages/SupplierManagement";
 import SystemSettings from "./pages/SystemSettings";
 import EmployeeScheduling from "./pages/EmployeeScheduling";
+import SupplierApp from "./pages/SupplierApp";
 
 // Layout
 import Layout from "./components/Layout";
