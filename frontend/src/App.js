@@ -201,16 +201,16 @@ function App() {
       axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
       setUser(userData);
       
-      // Welcome toast with logo
+      // Welcome toast with large logo
       toast.success(
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="المروج للألبان" className="w-10 h-10 rounded-full object-cover" />
-          <div>
-            <p className="font-bold">{language === "ar" ? "مرحباً بك في المروج للألبان" : "Welcome to Al Marooj Dairy"}</p>
-            <p className="text-sm opacity-80">{userData.name}</p>
+        <div className="flex flex-col items-center gap-4 p-4">
+          <img src="/logo.png" alt="المروج للألبان" className="w-32 h-32 object-contain" />
+          <div className="text-center">
+            <p className="font-bold text-xl">{language === "ar" ? "مرحباً بك في المروج للألبان" : "Welcome to Al Marooj Dairy"}</p>
+            <p className="text-base opacity-80 mt-1">{userData.full_name || userData.name}</p>
           </div>
         </div>,
-        { duration: 4000 }
+        { duration: 5000, className: "welcome-toast" }
       );
       return { success: true };
     } catch (error) {
