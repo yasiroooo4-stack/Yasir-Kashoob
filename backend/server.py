@@ -6066,10 +6066,9 @@ async def import_attendance_from_zkteco(
     current_user: dict = Depends(require_role(["admin"]))
 ):
     """Import attendance records from ZKTeco MDB database file"""
-    import subprocess
     import tempfile
-    import csv
-    from io import StringIO
+    import os
+    from mdbtools import MDBTable
     
     if not file.filename.endswith('.mdb'):
         raise HTTPException(status_code=400, detail="يجب أن يكون الملف بصيغة MDB من جهاز ZKTeco")
@@ -6081,48 +6080,50 @@ async def import_attendance_from_zkteco(
             tmp.write(content)
             tmp_path = tmp.name
         
-        # Extract users from MDB
-        users_result = subprocess.run(
-            ['mdb-export', tmp_path, 'USERINFO'],
-            capture_output=True, text=True
-        )
-        
-        # Parse users into dictionary
+        # Extract users from MDB using mdbtools library
         user_map = {}
-        if users_result.returncode == 0:
-            reader = csv.DictReader(StringIO(users_result.stdout))
-            for row in reader:
-                user_id = row.get('USERID', '')
-                name = row.get('Name', '') or row.get('Badgenumber', '')
-                badge = row.get('Badgenumber', '')
+        try:
+            userinfo_table = MDBTable(tmp_path, 'USERINFO')
+            for row in userinfo_table:
+                user_id = str(row.get('USERID', ''))
+                name = row.get('Name', '') or row.get('Badgenumber', '') or ''
+                badge = str(row.get('Badgenumber', ''))
                 if user_id:
                     user_map[user_id] = {'name': name, 'badge': badge}
+        except Exception as e:
+            print(f"Warning: Could not read USERINFO table: {e}")
         
         # Extract attendance records from MDB
-        attendance_result = subprocess.run(
-            ['mdb-export', tmp_path, 'CHECKINOUT'],
-            capture_output=True, text=True
-        )
-        
-        if attendance_result.returncode != 0:
-            raise HTTPException(status_code=500, detail="فشل في قراءة ملف قاعدة البيانات")
-        
-        # Parse attendance records
-        reader = csv.DictReader(StringIO(attendance_result.stdout))
+        try:
+            checkinout_table = MDBTable(tmp_path, 'CHECKINOUT')
+        except Exception as e:
+            os.unlink(tmp_path)
+            raise HTTPException(status_code=500, detail=f"فشل في قراءة جدول CHECKINOUT: {str(e)}")
         
         # Group records by user and date
         attendance_by_day = {}
-        for row in reader:
-            user_id = row.get('USERID', '')
-            check_time_str = row.get('CHECKTIME', '')
+        for row in checkinout_table:
+            user_id = str(row.get('USERID', ''))
+            check_time = row.get('CHECKTIME', None)
             
-            if not user_id or not check_time_str:
+            if not user_id or not check_time:
                 continue
             
             try:
-                # Parse datetime (format: "MM/DD/YY HH:MM:SS")
+                # check_time should be datetime object from mdbtools
                 from datetime import datetime as dt
-                check_time = dt.strptime(check_time_str, "%m/%d/%y %H:%M:%S")
+                if isinstance(check_time, str):
+                    # Try different formats
+                    for fmt in ["%m/%d/%y %H:%M:%S", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S"]:
+                        try:
+                            check_time = dt.strptime(check_time, fmt)
+                            break
+                        except:
+                            continue
+                
+                if not isinstance(check_time, dt):
+                    continue
+                    
                 date_str = check_time.strftime("%Y-%m-%d")
                 time_str = check_time.strftime("%H:%M")
                 
