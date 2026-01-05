@@ -377,6 +377,11 @@ function App() {
                     <SupplierManagement />
                   </ProtectedRoute>
                 } />
+                <Route path="employee-scheduling" element={
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]}>
+                    <EmployeeScheduling />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
