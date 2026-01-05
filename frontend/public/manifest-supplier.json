@@ -1,0 +1,26 @@
+{
+  "name": "المروج للألبان - الموردين",
+  "short_name": "المروج",
+  "description": "بوابة الموردين - المروج للألبان",
+  "start_url": "/supplier-app",
+  "display": "standalone",
+  "background_color": "#1e88e5",
+  "theme_color": "#1e88e5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl"
+}
