@@ -2075,24 +2075,39 @@ class SupplierLoginRequest(BaseModel):
 @api_router.post("/supplier-portal/login")
 async def supplier_portal_login(login_data: SupplierLoginRequest):
     """تسجيل دخول المورد بالكود وكلمة المرور"""
+    import hashlib
+    
     supplier = await db.suppliers.find_one({"supplier_code": login_data.supplier_code, "is_active": True}, {"_id": 0})
     if not supplier:
         raise HTTPException(status_code=404, detail="كود المورد غير صحيح أو غير مفعل")
     
     # Check password
     stored_password_hash = supplier.get("password_hash")
+    portal_password = supplier.get("portal_password")  # New simple hash for default password
+    password_changed = supplier.get("password_changed", False)
     
-    # If supplier has no password set, check if they're using default (phone number last 4 digits)
-    if not stored_password_hash:
-        # Default password is last 4 digits of phone
+    password_valid = False
+    
+    # First check if using the new portal_password (0000 default)
+    if portal_password:
+        input_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+        if input_hash == portal_password:
+            password_valid = True
+    
+    # Then check old password_hash if set
+    if not password_valid and stored_password_hash:
+        if verify_password(login_data.password, stored_password_hash):
+            password_valid = True
+    
+    # Finally check legacy default (phone last 4 digits)
+    if not password_valid and not stored_password_hash and not portal_password:
         phone = supplier.get("phone", "")
         default_password = phone[-4:] if len(phone) >= 4 else "1234"
-        if login_data.password != default_password:
-            raise HTTPException(status_code=401, detail="كلمة المرور غير صحيحة")
-    else:
-        # Verify hashed password
-        if not verify_password(login_data.password, stored_password_hash):
-            raise HTTPException(status_code=401, detail="كلمة المرور غير صحيحة")
+        if login_data.password == default_password:
+            password_valid = True
+    
+    if not password_valid:
+        raise HTTPException(status_code=401, detail="كلمة المرور غير صحيحة")
     
     # Create token
     token_data = {
@@ -2114,7 +2129,8 @@ async def supplier_portal_login(login_data: SupplierLoginRequest):
             "total_supplied": supplier.get("total_supplied", 0),
             "milk_type": supplier.get("milk_type"),
             "center_name": supplier.get("center_name"),
-            "has_custom_password": stored_password_hash is not None
+            "has_custom_password": password_changed or stored_password_hash is not None,
+            "password_changed": password_changed
         }
     }
 
