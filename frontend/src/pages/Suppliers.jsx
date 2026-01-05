@@ -622,6 +622,60 @@ const Suppliers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Transfer Supplier Dialog */}
+      <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "نقل المورد لمركز آخر" : "Transfer Supplier to Another Center"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "ar" 
+                ? `نقل المورد "${selectedSupplier?.name}" من "${selectedSupplier?.center_name || 'غير محدد'}" إلى مركز جديد`
+                : `Transfer supplier "${selectedSupplier?.name}" from "${selectedSupplier?.center_name || 'Not specified'}" to a new center`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "المركز الحالي" : "Current Center"}</Label>
+              <Input 
+                value={selectedSupplier?.center_name || (language === "ar" ? "غير محدد" : "Not specified")} 
+                disabled 
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "المركز الجديد" : "New Center"} *</Label>
+              <Select value={newCenterId} onValueChange={setNewCenterId}>
+                <SelectTrigger data-testid="transfer-center-select">
+                  <SelectValue placeholder={language === "ar" ? "اختر المركز الجديد" : "Select new center"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {centers.filter(c => c.name !== selectedSupplier?.center_name).map((center) => (
+                    <SelectItem key={center.id} value={center.id}>
+                      {center.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setTransferDialogOpen(false)}>
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleTransfer} 
+              className="gradient-primary text-white"
+              data-testid="confirm-transfer-btn"
+            >
+              <ArrowRightLeft className="w-4 h-4 me-2" />
+              {language === "ar" ? "نقل المورد" : "Transfer Supplier"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
