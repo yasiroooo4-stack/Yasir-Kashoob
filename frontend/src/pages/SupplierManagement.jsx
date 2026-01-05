@@ -420,8 +420,16 @@ const SupplierManagement = () => {
                               <div className="flex items-center gap-2">
                                 <Button
                                   size="sm"
+                                  variant="outline"
+                                  onClick={() => openViewRequestDialog(request)}
+                                >
+                                  <Eye className="w-4 h-4 me-1" />
+                                  عرض
+                                </Button>
+                                <Button
+                                  size="sm"
                                   variant="default"
-                                  onClick={() => handleApproveRequest(request.id)}
+                                  onClick={() => openApproveDialog(request)}
                                   disabled={loading}
                                   className="bg-green-600 hover:bg-green-700"
                                 >
@@ -442,9 +450,19 @@ const SupplierManagement = () => {
                                 </Button>
                               </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground">
-                                {request.approved_by_name && `بواسطة: ${request.approved_by_name}`}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openViewRequestDialog(request)}
+                                >
+                                  <Eye className="w-4 h-4 me-1" />
+                                  عرض
+                                </Button>
+                                <span className="text-sm text-muted-foreground">
+                                  {request.approved_by_name && `بواسطة: ${request.approved_by_name}`}
+                                </span>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
