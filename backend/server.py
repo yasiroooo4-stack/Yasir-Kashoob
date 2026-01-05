@@ -4855,6 +4855,122 @@ async def delete_excuse_request(request_id: str, current_user: dict = Depends(ge
     
     return {"message": "Excuse request deleted successfully"}
 
+# ==================== HR - SALARY HISTORY (سجل تغييرات الرواتب) ====================
+
+@api_router.get("/hr/salary-history")
+async def get_all_salary_history(
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب سجل تغييرات الرواتب"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    history = await db.salary_history.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return history
+
+@api_router.get("/hr/salary-history/{employee_id}")
+async def get_employee_salary_history(
+    employee_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب سجل تغييرات راتب موظف معين"""
+    history = await db.salary_history.find(
+        {"employee_id": employee_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return history
+
+@api_router.post("/hr/salary-history")
+async def create_salary_history_record(
+    history_data: SalaryHistoryCreate,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """إضافة سجل تغيير راتب يدوياً"""
+    salary_history = SalaryHistory(
+        **history_data.model_dump(),
+        changed_by=current_user["id"],
+        changed_by_name=current_user["full_name"]
+    )
+    await db.salary_history.insert_one(salary_history.model_dump())
+    
+    # Update employee's current salary if this is the latest record
+    await db.hr_employees.update_one(
+        {"id": history_data.employee_id},
+        {"$set": {"salary": history_data.new_salary}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_salary_history",
+        entity_type="salary_history",
+        entity_id=salary_history.id,
+        entity_name=history_data.employee_name,
+        details=f"تسجيل تغيير راتب: {history_data.employee_name} من {history_data.old_salary} إلى {history_data.new_salary}"
+    )
+    
+    return salary_history
+
+@api_router.put("/hr/employees/{employee_id}/salary")
+async def update_employee_salary(
+    employee_id: str,
+    new_salary: float,
+    change_reason: str = "adjustment",
+    effective_date: Optional[str] = None,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تحديث راتب موظف مع التسجيل في السجل"""
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    old_salary = employee.get("salary", 0)
+    
+    if old_salary == new_salary:
+        raise HTTPException(status_code=400, detail="الراتب الجديد مطابق للراتب الحالي")
+    
+    # Create salary history record
+    salary_history = SalaryHistory(
+        employee_id=employee_id,
+        employee_name=employee.get("name"),
+        old_salary=old_salary,
+        new_salary=new_salary,
+        change_reason=change_reason,
+        effective_date=effective_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        changed_by=current_user["id"],
+        changed_by_name=current_user["full_name"],
+        notes=notes
+    )
+    await db.salary_history.insert_one(salary_history.model_dump())
+    
+    # Update employee salary
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"salary": new_salary}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_salary",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"تحديث راتب: {employee.get('name')} من {old_salary} إلى {new_salary} - السبب: {change_reason}"
+    )
+    
+    return {
+        "message": "تم تحديث الراتب بنجاح",
+        "employee_name": employee.get("name"),
+        "old_salary": old_salary,
+        "new_salary": new_salary,
+        "change_reason": change_reason,
+        "effective_date": salary_history.effective_date
+    }
+
 # ==================== HR - EXPENSE REQUESTS (طلبات المصاريف) ====================
 
 @api_router.post("/hr/expense-requests", response_model=ExpenseRequest)
