@@ -1809,6 +1809,41 @@ async def update_supplier(supplier_id: str, supplier_data: SupplierCreate, curre
     
     return supplier
 
+@api_router.put("/suppliers/{supplier_id}/transfer-center")
+async def transfer_supplier_to_center(
+    supplier_id: str,
+    new_center: str = Query(..., description="اسم المركز الجديد"),
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """نقل مورد من مركز إلى مركز آخر"""
+    supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="المورد غير موجود")
+    
+    old_center = supplier.get("center_name", "غير محدد")
+    
+    result = await db.suppliers.update_one(
+        {"id": supplier_id},
+        {"$set": {"center_name": new_center, "address": new_center}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="transfer_supplier",
+        entity_type="supplier",
+        entity_id=supplier_id,
+        entity_name=supplier.get("name"),
+        details=f"نقل المورد {supplier.get('name')} من {old_center} إلى {new_center}"
+    )
+    
+    return {
+        "message": f"تم نقل المورد بنجاح من {old_center} إلى {new_center}",
+        "supplier_id": supplier_id,
+        "old_center": old_center,
+        "new_center": new_center
+    }
+
 @api_router.delete("/suppliers/{supplier_id}")
 async def delete_supplier(supplier_id: str, current_user: dict = Depends(require_role(["admin"]))):
     supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
