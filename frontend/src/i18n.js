@@ -254,6 +254,7 @@ const resources = {
       "app_name": "Milk Collection Center",
       "dashboard": "Dashboard",
       "suppliers": "Suppliers",
+      "supplier_management": "Supplier Management",
       "milk_reception": "Milk Reception",
       "customers": "Customers",
       "sales": "Sales",
