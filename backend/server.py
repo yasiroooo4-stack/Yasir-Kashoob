@@ -126,7 +126,7 @@ class SupplierBase(BaseModel):
     milk_type: Optional[str] = "cow"  # cow (أبقار), camel (إبل), goat (ماعز), mixed (مختلط)
 
 class SupplierCreate(SupplierBase):
-    pass
+    password: Optional[str] = None  # كلمة مرور المورد
 
 class Supplier(SupplierBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -134,6 +134,7 @@ class Supplier(SupplierBase):
     is_active: bool = True
     total_supplied: float = 0.0
     balance: float = 0.0
+    password_hash: Optional[str] = None  # كلمة المرور المشفرة
 
 # Milk Reception Models
 class QualityTest(BaseModel):
