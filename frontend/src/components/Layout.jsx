@@ -288,6 +288,9 @@ const Layout = () => {
             {/* Employee Stats Widget */}
             <EmployeeStatsWidget currentUser={user} />
 
+            {/* Excuse Request Button */}
+            <ExcuseRequestButton currentUser={user} />
+
             {/* Letter Request Button */}
             <LetterRequestButton currentUser={user} />
 
