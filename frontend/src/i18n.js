@@ -257,6 +257,7 @@ const resources = {
       "dashboard": "Dashboard",
       "suppliers": "Suppliers",
       "supplier_management": "Supplier Management",
+      "employee_scheduling": "Employee Scheduling",
       "milk_reception": "Milk Reception",
       "customers": "Customers",
       "sales": "Sales",
