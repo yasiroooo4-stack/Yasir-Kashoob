@@ -73,6 +73,7 @@ import {
   Link,
 } from "lucide-react";
 import FingerprintManager from "../components/hr/FingerprintManager";
+import SalaryHistoryDialog from "../components/SalaryHistoryDialog";
 
 const HR = () => {
   const { t } = useTranslation();
