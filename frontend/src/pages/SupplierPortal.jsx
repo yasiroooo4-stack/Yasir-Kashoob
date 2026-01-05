@@ -402,7 +402,7 @@ const SupplierPortal = () => {
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    كلمة المرور الافتراضية: آخر 4 أرقام من رقم هاتفك
+                    كلمة المرور الافتراضية: <span className="font-bold">0000</span>
                   </p>
                 </div>
                 <Button type="submit" className="w-full gradient-primary text-white" disabled={loading}>
