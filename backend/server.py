@@ -7564,6 +7564,102 @@ async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
         "recent_expense_requests": recent_expenses
     }
 
+# ==================== AUTO JOURNAL ENTRY HELPER (إنشاء قيود محاسبية آلية) ====================
+
+async def create_auto_journal_entry(
+    description: str,
+    lines: list,  # [{account_number, debit, credit}]
+    reference_type: str,  # milk_purchase, milk_sale, feed_purchase, payment
+    reference_id: str,
+    created_by_id: str,
+    created_by_name: str
+):
+    """
+    إنشاء قيد يومية آلي للعمليات المالية
+    Auto-create journal entry for financial transactions
+    """
+    try:
+        # Get account IDs from account numbers
+        entry_lines = []
+        total_debit = 0
+        total_credit = 0
+        
+        for line in lines:
+            account = await db.chart_of_accounts.find_one(
+                {"account_number": line["account_number"], "is_active": True},
+                {"_id": 0}
+            )
+            if not account:
+                logging.warning(f"Account not found: {line['account_number']}")
+                continue
+            
+            debit = line.get("debit", 0)
+            credit = line.get("credit", 0)
+            total_debit += debit
+            total_credit += credit
+            
+            entry_lines.append({
+                "id": str(uuid.uuid4()),
+                "account_id": account["id"],
+                "account_number": account["account_number"],
+                "account_name": account["name"],
+                "debit": debit,
+                "credit": credit,
+                "description": line.get("description", "")
+            })
+        
+        if not entry_lines:
+            logging.warning(f"No valid accounts found for auto journal entry: {description}")
+            return None
+        
+        # Verify balance
+        if abs(total_debit - total_credit) > 0.01:
+            logging.error(f"Unbalanced auto journal entry: debit={total_debit}, credit={total_credit}")
+            return None
+        
+        # Generate entry number
+        count = await db.journal_entries.count_documents({})
+        entry_number = f"JV-{datetime.now().year}-{count + 1:05d}"
+        
+        entry = {
+            "id": str(uuid.uuid4()),
+            "entry_number": entry_number,
+            "entry_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "description": description,
+            "reference_type": reference_type,
+            "reference_id": reference_id,
+            "total_debit": total_debit,
+            "total_credit": total_credit,
+            "status": "posted",  # Auto entries are auto-posted
+            "created_by": created_by_id,
+            "created_by_name": created_by_name,
+            "posted_at": datetime.now(timezone.utc).isoformat(),
+            "posted_by": "النظام (آلي)",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.journal_entries.insert_one(entry)
+        
+        # Insert lines
+        for line in entry_lines:
+            line["journal_entry_id"] = entry["id"]
+            await db.journal_entry_lines.insert_one(line)
+        
+        # Update account balances
+        for line in entry_lines:
+            balance_change = line["debit"] - line["credit"]
+            await db.chart_of_accounts.update_one(
+                {"id": line["account_id"]},
+                {"$inc": {"balance": balance_change}}
+            )
+        
+        logging.info(f"Auto journal entry created: {entry_number} - {description}")
+        return entry
+        
+    except Exception as e:
+        logging.error(f"Error creating auto journal entry: {e}")
+        return None
+
 # ==================== FINANCIAL SYSTEM (النظام المالي) ====================
 
 # ---------- Chart of Accounts (شجرة الحسابات) ----------
