@@ -10672,6 +10672,219 @@ async def delete_payroll_period(period_id: str, current_user: dict = Depends(get
     
     return {"message": "تم حذف فترة الرواتب بنجاح"}
 
+# ==================== EMPLOYEE SALARY STRUCTURE (هيكل راتب الموظف) ====================
+
+@api_router.get("/hr/salary-structures")
+async def get_all_salary_structures(
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all salary structures or filter by employee"""
+    query = {"is_active": True}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    structures = await db.employee_salary_structures.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return structures
+
+@api_router.get("/hr/salary-structures/{employee_id}")
+async def get_employee_salary_structure(
+    employee_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get active salary structure for an employee"""
+    structure = await db.employee_salary_structures.find_one(
+        {"employee_id": employee_id, "is_active": True},
+        {"_id": 0}
+    )
+    if not structure:
+        # Return default structure if none exists
+        employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+        if employee:
+            return {
+                "employee_id": employee_id,
+                "employee_name": employee.get("name", ""),
+                "basic_salary": employee.get("salary", 0),
+                "allowances": {
+                    "housing_allowance": 0,
+                    "transportation_allowance": 0,
+                    "food_allowance": 0,
+                    "phone_allowance": 0,
+                    "fuel_allowance": 0,
+                    "education_allowance": 0,
+                    "medical_allowance": 0,
+                    "special_allowance": 0,
+                    "other_allowance": 0
+                },
+                "total_salary": employee.get("salary", 0)
+            }
+    return structure
+
+@api_router.post("/hr/salary-structures")
+async def create_salary_structure(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """Create or update salary structure for an employee"""
+    employee_id = data.get("employee_id")
+    if not employee_id:
+        raise HTTPException(status_code=400, detail="employee_id is required")
+    
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Deactivate existing structure
+    await db.employee_salary_structures.update_many(
+        {"employee_id": employee_id, "is_active": True},
+        {"$set": {"is_active": False}}
+    )
+    
+    # Parse allowances
+    allowances_data = data.get("allowances", {})
+    allowances = EmployeeAllowances(
+        housing_allowance=float(allowances_data.get("housing_allowance", 0)),
+        transportation_allowance=float(allowances_data.get("transportation_allowance", 0)),
+        food_allowance=float(allowances_data.get("food_allowance", 0)),
+        phone_allowance=float(allowances_data.get("phone_allowance", 0)),
+        fuel_allowance=float(allowances_data.get("fuel_allowance", 0)),
+        education_allowance=float(allowances_data.get("education_allowance", 0)),
+        medical_allowance=float(allowances_data.get("medical_allowance", 0)),
+        special_allowance=float(allowances_data.get("special_allowance", 0)),
+        other_allowance=float(allowances_data.get("other_allowance", 0))
+    )
+    
+    basic_salary = float(data.get("basic_salary", employee.get("salary", 0)))
+    total_allowances = sum([
+        allowances.housing_allowance,
+        allowances.transportation_allowance,
+        allowances.food_allowance,
+        allowances.phone_allowance,
+        allowances.fuel_allowance,
+        allowances.education_allowance,
+        allowances.medical_allowance,
+        allowances.special_allowance,
+        allowances.other_allowance
+    ])
+    
+    structure = EmployeeSalaryStructure(
+        employee_id=employee_id,
+        employee_name=employee.get("name", ""),
+        basic_salary=basic_salary,
+        allowances=allowances,
+        total_salary=basic_salary + total_allowances,
+        effective_date=data.get("effective_date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        notes=data.get("notes"),
+        created_by=current_user["id"]
+    )
+    
+    await db.employee_salary_structures.insert_one(structure.model_dump())
+    
+    # Update employee salary field
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"salary": basic_salary + total_allowances}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_salary_structure",
+        entity_type="salary_structure",
+        entity_id=structure.id,
+        entity_name=employee.get("name"),
+        details=f"تحديث هيكل راتب {employee.get('name')} - الأساسي: {basic_salary}, البدلات: {total_allowances}"
+    )
+    
+    return {"message": "تم تحديث هيكل الراتب بنجاح", "structure": structure.model_dump()}
+
+@api_router.put("/hr/salary-structures/{structure_id}")
+async def update_salary_structure(
+    structure_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """Update an existing salary structure"""
+    structure = await db.employee_salary_structures.find_one({"id": structure_id}, {"_id": 0})
+    if not structure:
+        raise HTTPException(status_code=404, detail="هيكل الراتب غير موجود")
+    
+    update_data = {}
+    if "basic_salary" in data:
+        update_data["basic_salary"] = float(data["basic_salary"])
+    
+    if "allowances" in data:
+        allowances_data = data["allowances"]
+        update_data["allowances"] = {
+            "housing_allowance": float(allowances_data.get("housing_allowance", 0)),
+            "transportation_allowance": float(allowances_data.get("transportation_allowance", 0)),
+            "food_allowance": float(allowances_data.get("food_allowance", 0)),
+            "phone_allowance": float(allowances_data.get("phone_allowance", 0)),
+            "fuel_allowance": float(allowances_data.get("fuel_allowance", 0)),
+            "education_allowance": float(allowances_data.get("education_allowance", 0)),
+            "medical_allowance": float(allowances_data.get("medical_allowance", 0)),
+            "special_allowance": float(allowances_data.get("special_allowance", 0)),
+            "other_allowance": float(allowances_data.get("other_allowance", 0))
+        }
+    
+    if update_data:
+        # Recalculate total
+        basic = update_data.get("basic_salary", structure.get("basic_salary", 0))
+        allowances = update_data.get("allowances", structure.get("allowances", {}))
+        total_allowances = sum(allowances.values()) if isinstance(allowances, dict) else 0
+        update_data["total_salary"] = basic + total_allowances
+        
+        await db.employee_salary_structures.update_one(
+            {"id": structure_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "تم تحديث هيكل الراتب بنجاح"}
+
+# ==================== PUBLIC HOLIDAYS (العطل الرسمية) ====================
+
+@api_router.get("/hr/public-holidays")
+async def get_public_holidays(
+    year: Optional[int] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get public holidays"""
+    query = {}
+    if year:
+        query["date"] = {"$regex": f"^{year}"}
+    
+    holidays = await db.public_holidays.find(query, {"_id": 0}).sort("date", 1).to_list(100)
+    return holidays
+
+@api_router.post("/hr/public-holidays")
+async def create_public_holiday(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """Create a public holiday"""
+    holiday = {
+        "id": str(uuid.uuid4()),
+        "name": data["name"],
+        "name_en": data.get("name_en", ""),
+        "date": data["date"],
+        "days": data.get("days", 1),
+        "is_paid": data.get("is_paid", True),
+        "notes": data.get("notes"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.public_holidays.insert_one(holiday)
+    return {"message": "تم إضافة العطلة الرسمية بنجاح", "holiday": holiday}
+
+@api_router.delete("/hr/public-holidays/{holiday_id}")
+async def delete_public_holiday(
+    holiday_id: str,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """Delete a public holiday"""
+    await db.public_holidays.delete_one({"id": holiday_id})
+    return {"message": "تم حذف العطلة الرسمية بنجاح"}
+
 # ==================== AI ANALYSIS (التحليل الذكي) ====================
 
 class AnalysisRequest(BaseModel):
