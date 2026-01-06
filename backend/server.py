@@ -839,54 +839,10 @@ async def delete_supplier(supplier_id: str, current_user: dict = Depends(require
 
 # ==================== SUPPLIER PORTAL (بوابة الموردين) ====================
 
-# Supplier Feed Request Models
-class SupplierFeedRequestBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    supplier_id: str
-    supplier_name: str
-    supplier_code: str
-    feed_type: str  # نوع العلف
-    quantity: float  # الكمية
-    amount_to_deduct: float  # المبلغ المخصوم من الرصيد
-    notes: Optional[str] = None
-
-class SupplierFeedRequestCreate(SupplierFeedRequestBase):
-    pass
-
-class SupplierFeedRequest(SupplierFeedRequestBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    status: str = "pending"  # pending, approved, rejected, delivered
-    approved_by: Optional[str] = None
-    approved_by_name: Optional[str] = None
-    approved_at: Optional[str] = None
-    rejection_reason: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-# Supplier Message Models
-class SupplierMessageBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    supplier_id: str
-    supplier_name: str
-    supplier_code: str
-    message_type: str  # increase_quantity (زيادة كمية), general (عام), complaint (شكوى), inquiry (استفسار)
-    subject: str
-    message: str
-
-class SupplierMessageCreate(SupplierMessageBase):
-    pass
-
-class SupplierMessage(SupplierMessageBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    status: str = "unread"  # unread, read, replied
-    reply: Optional[str] = None
-    replied_by: Optional[str] = None
-    replied_at: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-# Supplier Portal - Login by code and password
-class SupplierLoginRequest(BaseModel):
-    supplier_code: str
-    password: str
+# Models imported from models/all_models.py:
+# SupplierFeedRequestBase, SupplierFeedRequestCreate, SupplierFeedRequest
+# SupplierMessageBase, SupplierMessageCreate, SupplierMessage
+# SupplierLoginRequest
 
 @api_router.post("/supplier-portal/login")
 async def supplier_portal_login(login_data: SupplierLoginRequest):
