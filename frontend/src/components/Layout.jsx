@@ -116,6 +116,7 @@ const Layout = () => {
     { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
     { path: "/inventory", icon: Package, label: "inventory", departments: ["inventory", "sales", "admin", "it"] },
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
+    { path: "/finance-system", icon: Landmark, label: "finance_system", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/treasury", icon: PiggyBank, label: "treasury", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/analytics", icon: BarChart3, label: "analytics" },
     { path: "/hr", icon: Building2, label: "hr", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
