@@ -12174,6 +12174,514 @@ async def update_notification_settings(
     )
     return {"message": "تم تحديث إعدادات الإشعارات"}
 
+# ==================== SMS INTEGRATION (تكامل الرسائل النصية) ====================
+
+async def send_sms_tamimah(phone: str, message: str) -> dict:
+    """
+    إرسال رسالة SMS عبر Tamimah SMS
+    Tamimah SMS API Integration for Oman
+    
+    Configuration in .env:
+    - SMS_PROVIDER=tamimah
+    - SMS_API_URL=https://api.tamimahsms.com/send (example - get actual URL from provider)
+    - SMS_USERNAME=your_username
+    - SMS_PASSWORD=your_password
+    - SMS_SENDER_ID=your_sender_id
+    """
+    try:
+        # Get SMS settings from DB or env
+        sms_settings = await db.system_settings.find_one({"type": "sms"}, {"_id": 0})
+        
+        api_url = sms_settings.get("api_url") if sms_settings else os.environ.get("SMS_API_URL")
+        username = sms_settings.get("username") if sms_settings else os.environ.get("SMS_USERNAME")
+        password = sms_settings.get("password") if sms_settings else os.environ.get("SMS_PASSWORD")
+        sender_id = sms_settings.get("sender_id") if sms_settings else os.environ.get("SMS_SENDER_ID", "MAROOJ")
+        
+        if not all([api_url, username, password]):
+            return {
+                "success": False,
+                "error": "إعدادات SMS غير مكتملة - يرجى إضافة بيانات Tamimah SMS",
+                "saved": True  # Will save to DB for manual sending
+            }
+        
+        # Clean phone number (ensure it starts with 968 for Oman)
+        phone = phone.replace("+", "").replace(" ", "").replace("-", "")
+        if phone.startswith("00968"):
+            phone = phone[2:]
+        elif not phone.startswith("968"):
+            phone = "968" + phone
+        
+        # Send SMS via Tamimah API
+        # Note: Actual API format may vary - adjust based on Tamimah documentation
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(
+                api_url,
+                data={
+                    "username": username,
+                    "password": password,
+                    "sender": sender_id,
+                    "mobile": phone,
+                    "message": message,
+                    "type": "text"
+                }
+            )
+            
+            if response.status_code == 200:
+                result = response.text
+                # Check for success (adjust based on actual API response format)
+                if "success" in result.lower() or "sent" in result.lower() or result.startswith("1"):
+                    return {"success": True, "response": result}
+                else:
+                    return {"success": False, "error": result}
+            else:
+                return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+                
+    except Exception as e:
+        logging.error(f"SMS send error: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/sms/settings")
+async def get_sms_settings(current_user: dict = Depends(require_role(["admin"]))):
+    """Get SMS provider settings"""
+    settings = await db.system_settings.find_one({"type": "sms"}, {"_id": 0})
+    if settings and "password" in settings:
+        settings["password"] = "********"  # Hide password
+    return settings or {
+        "type": "sms",
+        "provider": "tamimah",
+        "api_url": "",
+        "username": "",
+        "sender_id": "MAROOJ",
+        "is_configured": False
+    }
+
+@api_router.post("/sms/settings")
+async def update_sms_settings(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Update SMS provider settings"""
+    update_data = {
+        "provider": data.get("provider", "tamimah"),
+        "api_url": data.get("api_url", ""),
+        "username": data.get("username", ""),
+        "sender_id": data.get("sender_id", "MAROOJ"),
+        "is_configured": bool(data.get("api_url") and data.get("username")),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Only update password if provided
+    if data.get("password") and data["password"] != "********":
+        update_data["password"] = data["password"]
+    
+    await db.system_settings.update_one(
+        {"type": "sms"},
+        {
+            "$set": update_data,
+            "$setOnInsert": {"type": "sms", "created_at": datetime.now(timezone.utc).isoformat()}
+        },
+        upsert=True
+    )
+    return {"message": "تم تحديث إعدادات SMS بنجاح"}
+
+@api_router.post("/sms/send")
+async def send_sms(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send SMS message"""
+    phone = data.get("phone")
+    message = data.get("message")
+    
+    if not phone or not message:
+        raise HTTPException(status_code=400, detail="رقم الهاتف والرسالة مطلوبان")
+    
+    result = await send_sms_tamimah(phone, message)
+    
+    # Log the SMS
+    sms_log = {
+        "id": str(uuid.uuid4()),
+        "phone": phone,
+        "message": message,
+        "status": "sent" if result["success"] else "failed",
+        "error": result.get("error"),
+        "sent_by": current_user["full_name"],
+        "sent_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.sms_logs.insert_one(sms_log)
+    
+    if result["success"]:
+        return {"message": "تم إرسال الرسالة بنجاح", "success": True}
+    else:
+        return {"message": f"فشل الإرسال: {result.get('error')}", "success": False}
+
+@api_router.post("/sms/send-otp")
+async def send_otp_sms(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send OTP via SMS for password reset"""
+    phone = data.get("phone")
+    
+    if not phone:
+        raise HTTPException(status_code=400, detail="رقم الهاتف مطلوب")
+    
+    # Generate OTP
+    otp = str(secrets.randbelow(900000) + 100000)  # 6-digit OTP
+    
+    # Store OTP with expiry (5 minutes)
+    otp_record = {
+        "id": str(uuid.uuid4()),
+        "phone": phone,
+        "otp": otp,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+        "used": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.otp_codes.insert_one(otp_record)
+    
+    # Send SMS
+    message = f"رمز التحقق الخاص بك في المروج للألبان: {otp}\nصالح لمدة 5 دقائق"
+    result = await send_sms_tamimah(phone, message)
+    
+    if result["success"]:
+        return {"message": "تم إرسال رمز التحقق", "success": True}
+    else:
+        # Even if SMS fails, return success for security (don't reveal if SMS works)
+        # But log the error
+        logging.warning(f"OTP SMS failed for {phone}: {result.get('error')}")
+        return {"message": "تم إرسال رمز التحقق", "success": True, "note": "يرجى التواصل مع الدعم إذا لم تصلك الرسالة"}
+
+@api_router.get("/sms/logs")
+async def get_sms_logs(
+    limit: int = 50,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Get SMS sending logs"""
+    logs = await db.sms_logs.find({}, {"_id": 0}).sort("sent_at", -1).limit(limit).to_list(limit)
+    return logs
+
+# ==================== SCHEDULED REPORTS (التقارير المجدولة) ====================
+
+@api_router.get("/reports/schedules")
+async def get_report_schedules(current_user: dict = Depends(require_role(["admin"]))):
+    """Get all scheduled reports"""
+    schedules = await db.report_schedules.find({}, {"_id": 0}).to_list(100)
+    return schedules
+
+@api_router.post("/reports/schedules")
+async def create_report_schedule(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Create a scheduled report"""
+    schedule = {
+        "id": str(uuid.uuid4()),
+        "name": data.get("name", "تقرير مجدول"),
+        "report_type": data.get("report_type"),  # daily_summary, weekly_summary, monthly_financial, inventory_alerts
+        "frequency": data.get("frequency", "daily"),  # daily, weekly, monthly
+        "day_of_week": data.get("day_of_week", 0),  # 0=Monday, 6=Sunday (for weekly)
+        "day_of_month": data.get("day_of_month", 1),  # 1-28 (for monthly)
+        "time": data.get("time", "08:00"),  # HH:MM
+        "recipients": data.get("recipients", []),  # List of emails
+        "is_active": data.get("is_active", True),
+        "last_sent": None,
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.report_schedules.insert_one(dict(schedule))
+    return {"message": "تم إنشاء الجدول بنجاح", "schedule": schedule}
+
+@api_router.put("/reports/schedules/{schedule_id}")
+async def update_report_schedule(
+    schedule_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Update a scheduled report"""
+    update_data = {}
+    for field in ["name", "report_type", "frequency", "day_of_week", "day_of_month", "time", "recipients", "is_active"]:
+        if field in data:
+            update_data[field] = data[field]
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.report_schedules.update_one({"id": schedule_id}, {"$set": update_data})
+    
+    return {"message": "تم تحديث الجدول بنجاح"}
+
+@api_router.delete("/reports/schedules/{schedule_id}")
+async def delete_report_schedule(
+    schedule_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Delete a scheduled report"""
+    await db.report_schedules.delete_one({"id": schedule_id})
+    return {"message": "تم حذف الجدول بنجاح"}
+
+@api_router.post("/reports/schedules/{schedule_id}/run")
+async def run_scheduled_report(
+    schedule_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Manually run a scheduled report"""
+    schedule = await db.report_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="الجدول غير موجود")
+    
+    result = await generate_and_send_scheduled_report(schedule, current_user)
+    return result
+
+async def generate_and_send_scheduled_report(schedule: dict, user: dict = None):
+    """Generate and send a scheduled report via email"""
+    report_type = schedule.get("report_type")
+    recipients = schedule.get("recipients", [])
+    
+    if not recipients:
+        return {"success": False, "error": "لا يوجد مستلمين"}
+    
+    # Generate report content based on type
+    today = datetime.now(timezone.utc)
+    html_content = ""
+    subject = ""
+    
+    if report_type == "daily_summary":
+        subject = f"📊 التقرير اليومي - {today.strftime('%Y-%m-%d')}"
+        
+        # Get today's data
+        today_str = today.strftime("%Y-%m-%d")
+        
+        receptions = await db.milk_receptions.find({"reception_date": {"$regex": f"^{today_str}"}}, {"_id": 0}).to_list(1000)
+        sales = await db.sales.find({"sale_date": {"$regex": f"^{today_str}"}}, {"_id": 0}).to_list(1000)
+        
+        total_milk = sum(r.get("quantity_liters", 0) for r in receptions)
+        total_milk_amount = sum(r.get("total_amount", 0) for r in receptions)
+        total_sales = sum(s.get("total_amount", 0) for s in sales)
+        
+        html_content = f"""
+        <html dir="rtl">
+        <head><style>
+            body {{ font-family: Arial; direction: rtl; }}
+            .header {{ background: #8B4513; color: white; padding: 20px; text-align: center; }}
+            .card {{ background: #f5f5f5; padding: 15px; margin: 10px; border-radius: 8px; }}
+            .value {{ font-size: 24px; font-weight: bold; color: #8B4513; }}
+        </style></head>
+        <body>
+            <div class="header"><h1>📊 التقرير اليومي</h1><p>{today_str}</p></div>
+            <div style="padding: 20px;">
+                <div class="card">
+                    <h3>🥛 استلام الحليب</h3>
+                    <p class="value">{total_milk:,.0f} لتر</p>
+                    <p>المبلغ: {total_milk_amount:,.3f} ر.ع</p>
+                    <p>عدد الاستلامات: {len(receptions)}</p>
+                </div>
+                <div class="card">
+                    <h3>💰 المبيعات</h3>
+                    <p class="value">{total_sales:,.3f} ر.ع</p>
+                    <p>عدد العمليات: {len(sales)}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    
+    elif report_type == "weekly_summary":
+        subject = f"📈 التقرير الأسبوعي - الأسبوع {today.isocalendar()[1]}"
+        
+        week_start = today - timedelta(days=today.weekday())
+        week_start_str = week_start.strftime("%Y-%m-%d")
+        
+        receptions = await db.milk_receptions.find({"reception_date": {"$gte": week_start_str}}, {"_id": 0}).to_list(5000)
+        sales = await db.sales.find({"sale_date": {"$gte": week_start_str}}, {"_id": 0}).to_list(5000)
+        
+        total_milk = sum(r.get("quantity_liters", 0) for r in receptions)
+        total_milk_amount = sum(r.get("total_amount", 0) for r in receptions)
+        total_sales = sum(s.get("total_amount", 0) for s in sales)
+        
+        html_content = f"""
+        <html dir="rtl">
+        <head><style>
+            body {{ font-family: Arial; direction: rtl; }}
+            .header {{ background: #8B4513; color: white; padding: 20px; text-align: center; }}
+            .card {{ background: #f5f5f5; padding: 15px; margin: 10px; border-radius: 8px; display: inline-block; width: 45%; }}
+            .value {{ font-size: 24px; font-weight: bold; color: #8B4513; }}
+        </style></head>
+        <body>
+            <div class="header"><h1>📈 التقرير الأسبوعي</h1><p>من {week_start_str}</p></div>
+            <div style="padding: 20px;">
+                <div class="card">
+                    <h3>🥛 إجمالي الحليب</h3>
+                    <p class="value">{total_milk:,.0f} لتر</p>
+                    <p>المبلغ: {total_milk_amount:,.3f} ر.ع</p>
+                </div>
+                <div class="card">
+                    <h3>💰 إجمالي المبيعات</h3>
+                    <p class="value">{total_sales:,.3f} ر.ع</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    
+    elif report_type == "monthly_financial":
+        subject = f"📊 التقرير المالي الشهري - {today.strftime('%Y-%m')}"
+        
+        # Get financial data for current month
+        year = today.year
+        month = today.month
+        start_date = f"{year}-{month:02d}-01"
+        
+        receptions = await db.milk_receptions.find({"reception_date": {"$regex": f"^{year}-{month:02d}"}}, {"_id": 0}).to_list(5000)
+        sales = await db.sales.find({"sale_date": {"$regex": f"^{year}-{month:02d}"}}, {"_id": 0}).to_list(5000)
+        
+        total_purchases = sum(r.get("total_amount", 0) for r in receptions)
+        total_sales_amount = sum(s.get("total_amount", 0) for s in sales)
+        gross_profit = total_sales_amount - total_purchases
+        
+        html_content = f"""
+        <html dir="rtl">
+        <head><style>
+            body {{ font-family: Arial; direction: rtl; }}
+            .header {{ background: #8B4513; color: white; padding: 20px; text-align: center; }}
+            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            th, td {{ border: 1px solid #ddd; padding: 12px; text-align: right; }}
+            th {{ background: #8B4513; color: white; }}
+            .profit {{ color: {"green" if gross_profit >= 0 else "red"}; font-weight: bold; }}
+        </style></head>
+        <body>
+            <div class="header"><h1>📊 التقرير المالي الشهري</h1><p>{today.strftime('%B %Y')}</p></div>
+            <table>
+                <tr><th>البند</th><th>المبلغ (ر.ع)</th></tr>
+                <tr><td>إجمالي المبيعات</td><td>{total_sales_amount:,.3f}</td></tr>
+                <tr><td>تكلفة المشتريات</td><td>{total_purchases:,.3f}</td></tr>
+                <tr><td class="profit">إجمالي الربح</td><td class="profit">{gross_profit:,.3f}</td></tr>
+            </table>
+        </body>
+        </html>
+        """
+    
+    elif report_type == "inventory_alerts":
+        subject = f"🚨 تنبيهات المخزون - {today.strftime('%Y-%m-%d')}"
+        
+        # Get inventory alerts
+        feed_types = await db.feed_types.find({}, {"_id": 0}).to_list(100)
+        alerts = []
+        for feed in feed_types:
+            stock = feed.get("stock_quantity", 0)
+            min_stock = feed.get("min_stock_quantity", 10)
+            if stock <= min_stock:
+                alerts.append({
+                    "name": feed.get("name"),
+                    "stock": stock,
+                    "min_stock": min_stock,
+                    "severity": "critical" if stock <= min_stock * 0.5 else "warning"
+                })
+        
+        if not alerts:
+            return {"success": True, "message": "لا توجد تنبيهات", "skipped": True}
+        
+        alerts_html = ""
+        for alert in alerts:
+            color = "#dc2626" if alert["severity"] == "critical" else "#f59e0b"
+            alerts_html += f"""
+            <tr style="background-color: {'#fee2e2' if alert['severity'] == 'critical' else '#fef3c7'}">
+                <td>{alert['name']}</td>
+                <td>{alert['stock']}</td>
+                <td>{alert['min_stock']}</td>
+                <td style="color: {color}; font-weight: bold;">{"🔴 حرج" if alert['severity'] == 'critical' else "🟡 تحذير"}</td>
+            </tr>
+            """
+        
+        html_content = f"""
+        <html dir="rtl">
+        <head><style>
+            body {{ font-family: Arial; direction: rtl; }}
+            .header {{ background: #dc2626; color: white; padding: 20px; text-align: center; }}
+            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            th, td {{ border: 1px solid #ddd; padding: 12px; text-align: right; }}
+            th {{ background: #8B4513; color: white; }}
+        </style></head>
+        <body>
+            <div class="header"><h1>🚨 تنبيهات المخزون</h1><p>{len(alerts)} منتج يحتاج تجديد</p></div>
+            <table>
+                <tr><th>المنتج</th><th>الكمية الحالية</th><th>الحد الأدنى</th><th>الحالة</th></tr>
+                {alerts_html}
+            </table>
+        </body>
+        </html>
+        """
+    
+    else:
+        return {"success": False, "error": f"نوع التقرير غير معروف: {report_type}"}
+    
+    # Send email to all recipients
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", 587))
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("SMTP_PASSWORD")
+    
+    if not smtp_user or not smtp_pass:
+        # Save for later
+        await db.pending_reports.insert_one({
+            "id": str(uuid.uuid4()),
+            "schedule_id": schedule.get("id"),
+            "subject": subject,
+            "content": html_content,
+            "recipients": recipients,
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        return {"success": False, "error": "إعدادات SMTP غير مكتملة - تم حفظ التقرير"}
+    
+    try:
+        for recipient in recipients:
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = smtp_user
+            message["To"] = recipient
+            message.attach(MIMEText(html_content, "html", "utf-8"))
+            
+            await aiosmtplib.send(
+                message,
+                hostname=smtp_host,
+                port=smtp_port,
+                username=smtp_user,
+                password=smtp_pass,
+                start_tls=True
+            )
+        
+        # Update last_sent
+        await db.report_schedules.update_one(
+            {"id": schedule.get("id")},
+            {"$set": {"last_sent": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        # Log
+        await db.report_logs.insert_one({
+            "id": str(uuid.uuid4()),
+            "schedule_id": schedule.get("id"),
+            "report_type": report_type,
+            "recipients": recipients,
+            "status": "sent",
+            "sent_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {"success": True, "message": f"تم إرسال التقرير إلى {len(recipients)} مستلم"}
+        
+    except Exception as e:
+        logging.error(f"Failed to send scheduled report: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/reports/logs")
+async def get_report_logs(
+    limit: int = 50,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Get report sending logs"""
+    logs = await db.report_logs.find({}, {"_id": 0}).sort("sent_at", -1).limit(limit).to_list(limit)
+    return logs
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
