@@ -11977,6 +11977,201 @@ async def set_inventory_threshold(
     
     return {"message": f"تم تعيين الحد الأدنى لـ {product_type} إلى {threshold}"}
 
+@api_router.post("/reports/inventory/send-alerts")
+async def send_inventory_alerts_email(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """
+    إرسال تنبيهات المخزون المنخفض عبر البريد الإلكتروني
+    Send low inventory alerts via email
+    """
+    email = data.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="البريد الإلكتروني مطلوب")
+    
+    # Get alerts
+    alerts_response = await get_inventory_alerts(current_user)
+    alerts = alerts_response.get("alerts", [])
+    
+    if not alerts:
+        return {"message": "لا توجد تنبيهات للإرسال", "sent": False}
+    
+    # Build email content
+    critical_alerts = [a for a in alerts if a["severity"] == "critical"]
+    warning_alerts = [a for a in alerts if a["severity"] == "warning"]
+    
+    html_content = f"""
+    <html dir="rtl">
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; direction: rtl; }}
+            .header {{ background-color: #8B4513; color: white; padding: 20px; text-align: center; }}
+            .content {{ padding: 20px; }}
+            .critical {{ background-color: #fee2e2; border-right: 4px solid #dc2626; padding: 10px; margin: 10px 0; }}
+            .warning {{ background-color: #fef3c7; border-right: 4px solid #f59e0b; padding: 10px; margin: 10px 0; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+            th, td {{ border: 1px solid #ddd; padding: 12px; text-align: right; }}
+            th {{ background-color: #8B4513; color: white; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🚨 تنبيه المخزون - المروج للألبان</h1>
+        </div>
+        <div class="content">
+            <p>السلام عليكم،</p>
+            <p>هناك <strong>{len(alerts)}</strong> تنبيه للمخزون المنخفض:</p>
+            
+            <h3>📊 ملخص التنبيهات:</h3>
+            <ul>
+                <li>🔴 تنبيهات حرجة: {len(critical_alerts)}</li>
+                <li>🟡 تنبيهات تحذيرية: {len(warning_alerts)}</li>
+            </ul>
+            
+            <table>
+                <tr>
+                    <th>المنتج</th>
+                    <th>الكمية الحالية</th>
+                    <th>الحد الأدنى</th>
+                    <th>النقص</th>
+                    <th>الحالة</th>
+                </tr>
+    """
+    
+    for alert in alerts:
+        severity_class = "critical" if alert["severity"] == "critical" else "warning"
+        severity_text = "🔴 حرج" if alert["severity"] == "critical" else "🟡 تحذير"
+        product_name = alert.get("product_name", alert.get("product_type", "غير معروف"))
+        
+        html_content += f"""
+                <tr class="{severity_class}">
+                    <td>{product_name}</td>
+                    <td>{alert.get('current_quantity', 0)} {alert.get('unit', 'لتر')}</td>
+                    <td>{alert.get('threshold', 0)}</td>
+                    <td>{alert.get('deficit', 0)}</td>
+                    <td>{severity_text}</td>
+                </tr>
+        """
+    
+    html_content += """
+            </table>
+            
+            <p style="margin-top: 20px;">يرجى اتخاذ الإجراءات اللازمة لتجديد المخزون.</p>
+            <hr>
+            <p style="color: #666; font-size: 12px;">
+                هذا البريد مرسل تلقائياً من نظام ERP المروج للألبان
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Try to send email
+    try:
+        smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.environ.get("SMTP_PORT", 587))
+        smtp_user = os.environ.get("SMTP_USER")
+        smtp_pass = os.environ.get("SMTP_PASSWORD")
+        
+        if not smtp_user or not smtp_pass:
+            # Store alert for manual notification
+            alert_record = {
+                "id": str(uuid.uuid4()),
+                "type": "inventory_alert",
+                "email": email,
+                "alerts_count": len(alerts),
+                "content": html_content,
+                "status": "pending",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_by": current_user["id"]
+            }
+            await db.pending_notifications.insert_one(alert_record)
+            
+            return {
+                "message": "تم حفظ التنبيه - إعدادات البريد الإلكتروني غير مكتملة",
+                "sent": False,
+                "alerts_count": len(alerts),
+                "note": "يرجى إضافة إعدادات SMTP في ملف .env"
+            }
+        
+        message = MIMEMultipart("alternative")
+        message["Subject"] = f"🚨 تنبيه المخزون - {len(alerts)} منتج يحتاج تجديد"
+        message["From"] = smtp_user
+        message["To"] = email
+        
+        message.attach(MIMEText(html_content, "html", "utf-8"))
+        
+        await aiosmtplib.send(
+            message,
+            hostname=smtp_host,
+            port=smtp_port,
+            username=smtp_user,
+            password=smtp_pass,
+            start_tls=True
+        )
+        
+        # Log the notification
+        await db.notification_logs.insert_one({
+            "id": str(uuid.uuid4()),
+            "type": "inventory_alert",
+            "email": email,
+            "alerts_count": len(alerts),
+            "status": "sent",
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "sent_by": current_user["full_name"]
+        })
+        
+        return {
+            "message": f"تم إرسال {len(alerts)} تنبيه إلى {email}",
+            "sent": True,
+            "alerts_count": len(alerts)
+        }
+        
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        return {
+            "message": f"فشل إرسال البريد: {str(e)}",
+            "sent": False,
+            "error": str(e)
+        }
+
+@api_router.get("/notifications/settings")
+async def get_notification_settings(
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب إعدادات الإشعارات"""
+    settings = await db.system_settings.find_one({"type": "notifications"}, {"_id": 0})
+    return settings or {
+        "type": "notifications",
+        "email_alerts_enabled": False,
+        "alert_email": "",
+        "inventory_threshold_alert": True,
+        "daily_report_email": False
+    }
+
+@api_router.post("/notifications/settings")
+async def update_notification_settings(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تحديث إعدادات الإشعارات"""
+    await db.system_settings.update_one(
+        {"type": "notifications"},
+        {
+            "$set": {
+                "email_alerts_enabled": data.get("email_alerts_enabled", False),
+                "alert_email": data.get("alert_email", ""),
+                "inventory_threshold_alert": data.get("inventory_threshold_alert", True),
+                "daily_report_email": data.get("daily_report_email", False),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$setOnInsert": {"type": "notifications", "created_at": datetime.now(timezone.utc).isoformat()}
+        },
+        upsert=True
+    )
+    return {"message": "تم تحديث إعدادات الإشعارات"}
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
