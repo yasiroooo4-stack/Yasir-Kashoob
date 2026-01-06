@@ -12200,9 +12200,14 @@ async def send_sms_tamimah(phone: str, message: str) -> dict:
         if not all([api_url, username, password]):
             return {
                 "success": False,
-                "error": "إعدادات SMS غير مكتملة - يرجى إضافة بيانات Tamimah SMS",
-                "saved": True  # Will save to DB for manual sending
+                "error": "إعدادات SMS غير مكتملة - يرجى إضافة بيانات Tamimah SMS الصحيحة",
+                "note": "تواصل مع دعم Tamimah للحصول على رابط API الصحيح"
             }
+        
+        # Check if using example URL
+        if "api.tamimahsms.com" in api_url and "example" not in api_url.lower():
+            # This might be the example URL - warn the user
+            logging.warning(f"SMS API URL might be example URL: {api_url}")
         
         # Clean phone number (ensure it starts with 968 for Oman)
         phone = phone.replace("+", "").replace(" ", "").replace("-", "")
@@ -12214,31 +12219,54 @@ async def send_sms_tamimah(phone: str, message: str) -> dict:
         # Send SMS via Tamimah API
         # Note: Actual API format may vary - adjust based on Tamimah documentation
         async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.post(
-                api_url,
-                data={
-                    "username": username,
-                    "password": password,
-                    "sender": sender_id,
-                    "mobile": phone,
-                    "message": message,
-                    "type": "text"
-                }
-            )
-            
-            if response.status_code == 200:
-                result = response.text
-                # Check for success (adjust based on actual API response format)
-                if "success" in result.lower() or "sent" in result.lower() or result.startswith("1"):
-                    return {"success": True, "response": result}
+            try:
+                response = await client.post(
+                    api_url,
+                    data={
+                        "username": username,
+                        "password": password,
+                        "sender": sender_id,
+                        "mobile": phone,
+                        "message": message,
+                        "type": "text"
+                    }
+                )
+                
+                if response.status_code == 200:
+                    result = response.text
+                    # Check for success (adjust based on actual API response format)
+                    if "success" in result.lower() or "sent" in result.lower() or result.startswith("1"):
+                        return {"success": True, "response": result}
+                    else:
+                        return {"success": False, "error": f"رد من Tamimah: {result}"}
                 else:
-                    return {"success": False, "error": result}
-            else:
-                return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+                    return {"success": False, "error": f"خطأ HTTP {response.status_code}: {response.text}"}
+            
+            except httpx.ConnectError:
+                return {
+                    "success": False, 
+                    "error": "تعذر الاتصال بخادم Tamimah SMS - تأكد من صحة رابط API",
+                    "note": "رابط API قد يكون غير صحيح. تواصل مع دعم Tamimah للحصول على الرابط الصحيح"
+                }
+            except httpx.TimeoutException:
+                return {
+                    "success": False,
+                    "error": "انتهت مهلة الاتصال - الخادم لا يستجيب"
+                }
                 
     except Exception as e:
+        error_msg = str(e)
         logging.error(f"SMS send error: {e}")
-        return {"success": False, "error": str(e)}
+        
+        # Provide more helpful error messages
+        if "Name or service not known" in error_msg or "Errno -2" in error_msg:
+            return {
+                "success": False, 
+                "error": "رابط API غير صحيح أو الخادم غير موجود",
+                "note": "يرجى التواصل مع دعم Tamimah SMS للحصول على رابط API الصحيح"
+            }
+        
+        return {"success": False, "error": error_msg}
 
 @api_router.get("/sms/settings")
 async def get_sms_settings(current_user: dict = Depends(require_role(["admin"]))):
