@@ -363,7 +363,7 @@ function App() {
                 } />
                 <Route path="cctv" element={
                   <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["admin", "it", "operations"]}>
-                    <CCTVSystem />
+                    <ErrorBoundary><CCTVSystem /></ErrorBoundary>
                   </ProtectedRoute>
                 } />
                 <Route path="hr" element={
