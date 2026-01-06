@@ -264,6 +264,7 @@ const resources = {
       "sales": "Sales",
       "inventory": "Inventory",
       "finance": "Finance",
+      "finance_system": "Finance System",
       "treasury": "Treasury",
       "employees": "Employees",
       "reports": "Reports",
