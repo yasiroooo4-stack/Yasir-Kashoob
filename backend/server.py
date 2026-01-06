@@ -9120,6 +9120,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
             gross_salary=round(gross_salary, 3),
             overtime_pay=round(overtime_pay, 3),
             absence_deduction=round(absence_deduction, 3),
+            loan_deduction=round(loan_deduction, 3),
             other_deduction=round(otp_deduction, 3),
             total_deductions=round(total_deductions, 3),
             deductions=round(total_deductions, 3),  # Legacy field
@@ -9132,6 +9133,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         record_dict["weekend_work_pay"] = round(weekend_work_pay, 3)
         record_dict["holiday_work_days"] = holiday_work_days
         record_dict["holiday_work_pay"] = round(holiday_work_pay, 3)
+        record_dict["unpaid_deduction"] = round(unpaid_deduction, 3)
         
         await db.payroll_records.insert_one(record_dict)
         payroll_records.append(record_dict)
