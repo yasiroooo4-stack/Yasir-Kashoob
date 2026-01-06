@@ -233,6 +233,7 @@ const resources = {
       
       // Payroll
       "payroll": "كشف الرواتب",
+      "salary_structures": "هيكل الرواتب",
       
       // Analysis
       "analysis": "التحليل الذكي",
