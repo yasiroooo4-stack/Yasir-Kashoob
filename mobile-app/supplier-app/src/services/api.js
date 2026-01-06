@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'https://milk-center-erp.preview.emergentagent.com/api';
+const API_BASE_URL = 'https://dairy-collection.preview.emergentagent.com/api';
 
 export const API = {
   BASE_URL: API_BASE_URL,

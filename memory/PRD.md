@@ -9,7 +9,7 @@
 
 ### 🔗 الرابط:
 ```
-https://milk-center-erp.preview.emergentagent.com/supplier-app
+https://dairy-collection.preview.emergentagent.com/supplier-app
 ```
 
 ### كيفية إضافته للشاشة الرئيسية على الهاتف:
