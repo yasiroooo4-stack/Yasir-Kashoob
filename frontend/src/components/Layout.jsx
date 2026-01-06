@@ -34,6 +34,7 @@ import {
   Landmark,
   DollarSign,
   PieChart,
+  Bell,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
