@@ -710,4 +710,6 @@ const CCTVSystem = () => {
       </Dialog>
     </div>
   );
-}
+};
+
+export default CCTVSystem;
