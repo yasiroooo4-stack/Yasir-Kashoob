@@ -4164,12 +4164,6 @@ async def check_if_holiday(date: str, current_user: dict = Depends(get_current_u
 
 # Models imported from models/all_models.py:
 # EmployeeWeeklyOffBase, EmployeeWeeklyOffCreate
-    employee_name: str
-    off_days: List[int]  # [4, 5] للجمعة والسبت (الإدارة) أو أي يومين آخرين للمراكز
-    # 0=الاثنين, 1=الثلاثاء, 2=الأربعاء, 3=الخميس, 4=الجمعة, 5=السبت, 6=الأحد
-
-class EmployeeWeeklyOffCreate(EmployeeWeeklyOffBase):
-    pass
 
 @api_router.put("/hr/employees/{employee_id}/weekly-off")
 async def set_employee_weekly_off(
