@@ -9699,20 +9699,10 @@ async def get_analysis_summary(current_user: dict = Depends(get_current_user)):
 
 # ==================== USER SETTINGS / APPEARANCE ====================
 
-# System background images
-SYSTEM_BACKGROUNDS = [
-    {"id": "bg1", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/368sq9v2_12.jpg", "name": "خلفية 1"},
-    {"id": "bg2", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/41nbrw0w_2.jpg", "name": "خلفية 2"},
-    {"id": "bg3", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/ftlid6jo_4.jpg", "name": "خلفية 3"},
-    {"id": "bg4", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/o1tpk5s2_6.jpg", "name": "خلفية 4"},
-    {"id": "bg5", "url": "https://customer-assets.emergentagent.com/job_agrodairy/artifacts/roy1cp0e_10.jpg", "name": "خلفية 5"},
-]
+# System background images - imported from utils/helpers.py
+from utils.helpers import SYSTEM_BACKGROUNDS
 
-class UserAppearanceSettings(BaseModel):
-    background_id: Optional[str] = "bg1"
-    background_url: Optional[str] = None
-    theme: str = "light"  # light, dark
-    sidebar_collapsed: bool = False
+# Model imported from models/all_models.py: UserAppearanceSettings
 
 @api_router.get("/user/settings")
 async def get_user_settings(current_user: dict = Depends(get_current_user)):
@@ -9766,26 +9756,8 @@ async def get_system_backgrounds(current_user: dict = Depends(get_current_user))
 
 # ==================== ZKTeco Sync Manager APIs ====================
 
-class ZKTecoDeviceBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    name: str
-    ip_address: str
-    port: int = 4370
-    location: Optional[str] = None
-
-class ZKTecoDeviceCreate(ZKTecoDeviceBase):
-    pass
-
-class ZKTecoDevice(ZKTecoDeviceBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    is_active: bool = True
-    is_online: bool = False
-    last_sync: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class ZKTecoSyncSettings(BaseModel):
-    auto_sync_enabled: bool = False
-    sync_interval: int = 60  # minutes
+# Models imported from models/all_models.py:
+# ZKTecoDeviceBase, ZKTecoDeviceCreate, ZKTecoDevice, ZKTecoSyncSettings
 
 @api_router.get("/hr/zkteco/devices")
 async def get_zkteco_devices(current_user: dict = Depends(get_current_user)):
