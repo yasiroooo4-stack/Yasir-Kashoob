@@ -322,6 +322,11 @@ function App() {
                     <Finance />
                   </ProtectedRoute>
                 } />
+                <Route path="finance-system" element={
+                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
+                    <FinanceSystem />
+                  </ProtectedRoute>
+                } />
                 <Route path="treasury" element={
                   <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
                     <Treasury />
