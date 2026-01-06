@@ -65,6 +65,7 @@ import SupplierApp from "./pages/SupplierApp";
 import SalaryStructures from "./pages/SalaryStructures";
 import AdvancedReports from "./pages/AdvancedReports";
 import NotificationSettings from "./pages/NotificationSettings";
+import CCTVSystem from "./pages/CCTVSystem";
 
 // Layout
 import Layout from "./components/Layout";
