@@ -4094,21 +4094,8 @@ async def get_uploaded_file(filename: str):
 
 # ==================== HR - OFFICIAL HOLIDAYS (العطلات الرسمية) ====================
 
-class OfficialHolidayBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    name: str  # اسم العطلة
-    date: str  # تاريخ العطلة
-    applies_to: str = "all"  # all, admin_only, centers_only
-    is_recurring: bool = False  # هل تتكرر سنوياً
-    notes: Optional[str] = None
-
-class OfficialHolidayCreate(OfficialHolidayBase):
-    pass
-
-class OfficialHoliday(OfficialHolidayBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_by: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+# Models imported from models/all_models.py:
+# OfficialHolidayBase, OfficialHolidayCreate, OfficialHoliday
 
 @api_router.post("/hr/official-holidays")
 async def create_official_holiday(
@@ -4175,9 +4162,8 @@ async def check_if_holiday(date: str, current_user: dict = Depends(get_current_u
 
 # ==================== HR - EMPLOYEE WEEKLY OFF DAYS (أيام الإجازة الأسبوعية للموظف) ====================
 
-class EmployeeWeeklyOffBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    employee_id: str
+# Models imported from models/all_models.py:
+# EmployeeWeeklyOffBase, EmployeeWeeklyOffCreate
     employee_name: str
     off_days: List[int]  # [4, 5] للجمعة والسبت (الإدارة) أو أي يومين آخرين للمراكز
     # 0=الاثنين, 1=الثلاثاء, 2=الأربعاء, 3=الخميس, 4=الجمعة, 5=السبت, 6=الأحد
