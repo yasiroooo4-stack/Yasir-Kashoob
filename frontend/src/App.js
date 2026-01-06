@@ -63,6 +63,7 @@ import SystemSettings from "./pages/SystemSettings";
 import EmployeeScheduling from "./pages/EmployeeScheduling";
 import SupplierApp from "./pages/SupplierApp";
 import SalaryStructures from "./pages/SalaryStructures";
+import AdvancedReports from "./pages/AdvancedReports";
 
 // Layout
 import Layout from "./components/Layout";
