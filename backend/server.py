@@ -1,9 +1,15 @@
+"""
+Milk Collection Center ERP - Main Server
+نظام ERP لمركز تجميع الحليب - المروج للألبان
+
+REFACTORED: Models imported from models/all_models.py
+REFACTORED: Config imported from config.py
+REFACTORED: Database imported from database.py
+"""
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Form, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
-from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -21,27 +27,117 @@ import httpx
 import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+# Import from refactored modules
+from database import db, client
+from config import (
+    SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_HOURS,
+    SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM_EMAIL,
+    DEFAULT_CENTERS
+)
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Import all models from centralized models file
+from models.all_models import (
+    # Auth models
+    UserBase, UserCreate, UserUpdate, PasswordChange, User, UserLogin, Token, PasswordResetToken,
+    # Supplier models
+    SupplierBase, SupplierCreate, Supplier, SupplierLoginRequest, SupplierModificationRequest,
+    SupplierFeedRequestBase, SupplierFeedRequestCreate, SupplierFeedRequest,
+    SupplierMessageBase, SupplierMessageCreate, SupplierMessage,
+    # Milk models
+    QualityTest, MilkReceptionBase, MilkReceptionCreate, MilkReception,
+    # Customer models
+    CustomerBase, CustomerCreate, Customer,
+    # Sale models
+    SaleBase, SaleCreate, Sale,
+    # Inventory models
+    InventoryBase, InventoryUpdate, Inventory,
+    # Payment models
+    PaymentBase, PaymentCreate, Payment, PaymentApproval,
+    # Treasury models
+    TreasuryTransaction, TreasuryBalance,
+    # Financial models
+    AccountType, Account, JournalEntry, JournalEntryLine,
+    AccountsPayable, AccountsReceivable, FixedAsset, Budget, BudgetLine, TaxRecord,
+    # Employee models
+    EmployeeBase, EmployeeCreate, Employee, EmployeeAllowances, EmployeeSalaryStructure,
+    SalaryHistoryBase, SalaryHistoryCreate, SalaryHistory,
+    # Attendance models
+    AttendanceBase, AttendanceCreate, Attendance,
+    # Leave models
+    LeaveRequestBase, LeaveRequestCreate, LeaveRequest,
+    # Excuse models
+    ExcuseRequestBase, ExcuseRequestCreate, ExcuseRequest,
+    # Expense models
+    ExpenseRequestBase, ExpenseRequestCreate, ExpenseRequest,
+    # Car contract models
+    CarContractBase, CarContractCreate, CarContract,
+    # Official letter models
+    OfficialLetterBase, OfficialLetterCreate, OfficialLetter,
+    # Fingerprint device models
+    FingerprintDeviceBase, FingerprintDeviceCreate, FingerprintDevice,
+    # Shift models
+    ShiftBase, ShiftCreate, Shift, EmployeeShiftBase, EmployeeShiftCreate, EmployeeShift,
+    # Overtime models
+    OvertimeBase, OvertimeCreate, Overtime,
+    # Loan models
+    LoanBase, LoanCreate, Loan, LoanPayment,
+    # Employee document models
+    EmployeeDocumentBase, EmployeeDocumentCreate, EmployeeDocument,
+    # Payroll models
+    PayrollPeriod, PayrollRecord,
+    # Collection center models
+    CollectionCenterBase, CollectionCenterCreate, CollectionCenter,
+    # Activity log models
+    ActivityLog, DeviceSettings,
+    # Feed models
+    FeedCompanyBase, FeedCompanyCreate, FeedCompany,
+    FeedTypeBase, FeedTypeCreate, FeedType,
+    FeedPurchaseBase, FeedPurchaseCreate, FeedPurchase,
+    # Legal models
+    LegalContractBase, LegalContractCreate, LegalContract,
+    LegalCaseBase, LegalCaseCreate, LegalCase,
+    LegalConsultationBase, LegalConsultationCreate, LegalConsultation,
+    LegalDocumentBase, LegalDocumentCreate, LegalDocument,
+    # Project models
+    ProjectBase, ProjectCreate, Project,
+    ProjectTaskBase, ProjectTaskCreate, ProjectTask,
+    ProjectTeamMemberBase, ProjectTeamMemberCreate, ProjectTeamMember,
+    ProjectMilestoneBase, ProjectMilestoneCreate, ProjectMilestone,
+    # Operations models
+    DailyOperationBase, DailyOperationCreate, DailyOperation,
+    EquipmentBase, EquipmentCreate, Equipment,
+    MaintenanceRecordBase, MaintenanceRecordCreate, MaintenanceRecord,
+    IncidentReportBase, IncidentReportCreate, IncidentReport,
+    VehicleBase, VehicleCreate, Vehicle,
+    # Marketing models
+    MarketingCampaignBase, MarketingCampaignCreate, MarketingCampaign,
+    LeadBase, LeadCreate, Lead,
+    SocialMediaPostBase, SocialMediaPostCreate, SocialMediaPost,
+    SalesOfferBase, SalesOfferCreate, SalesOffer,
+    MarketReturnBase, MarketReturnCreate, MarketReturn,
+    MarketSalesSummaryBase, MarketSalesSummaryCreate, MarketSalesSummary,
+    # Holiday models
+    OfficialHolidayBase, OfficialHolidayCreate, OfficialHoliday,
+    EmployeeWeeklyOffBase, EmployeeWeeklyOffCreate,
+    PublicHolidayBase, PublicHolidayCreate, PublicHoliday,
+    # Analysis models
+    AnalysisRequest,
+    # Settings models
+    UserAppearanceSettings,
+    # ZKTeco models
+    ZKTecoDeviceBase, ZKTecoDeviceCreate, ZKTecoDevice, ZKTecoSyncSettings,
+    # Warning models
+    WarningBase, WarningCreate, Warning,
+)
 
-# JWT Configuration
-SECRET_KEY = os.environ.get('SECRET_KEY', 'milk-erp-secret-key-2024')
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
-
-# Email Configuration
-SMTP_HOST = os.environ.get('SMTP_HOST', 'mail.almoroojdairy.om')
-SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
-SMTP_USER = os.environ.get('SMTP_USER', '')
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
-SMTP_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', 'noreply@almoroojdairy.om')
+# Try to import LLM chat
+try:
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    logging.warning("emergentintegrations not available - AI features disabled")
 
 security = HTTPBearer()
 
@@ -51,19 +147,11 @@ app = FastAPI(title="Milk Collection Center ERP")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Default collection centers (مراكز التجميع الافتراضية)
-DEFAULT_CENTERS = [
-    {"name": "حجيف", "code": "HAJIF", "address": "عُمان", "is_active": True},
-    {"name": "زيك", "code": "ZEEK", "address": "عُمان", "is_active": True},
-    {"name": "غدو", "code": "GHADU", "address": "عُمان", "is_active": True},
-]
-
 @app.on_event("startup")
 async def startup_event():
     """Initialize default collection centers on startup"""
     try:
         for center_data in DEFAULT_CENTERS:
-            # Check if center already exists by code
             existing = await db.collection_centers.find_one({"code": center_data["code"]})
             if not existing:
                 center = CollectionCenter(**center_data)
