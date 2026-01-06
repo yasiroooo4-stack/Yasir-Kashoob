@@ -355,6 +355,11 @@ function App() {
                     <SystemSettings />
                   </ProtectedRoute>
                 } />
+                <Route path="notification-settings" element={
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["admin", "it"]}>
+                    <NotificationSettings />
+                  </ProtectedRoute>
+                } />
                 <Route path="hr" element={
                   <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]}>
                     <HR />
