@@ -2978,6 +2978,34 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
         details=f"عملية بيع: {sale.quantity_liters} لتر إلى {sale.customer_name} - {sale.total_amount} ر.ع"
     )
     
+    # === AUTO JOURNAL ENTRY: Milk Sale ===
+    if sale.is_paid:
+        # Cash sale: Dr: الصندوق (1111) / Cr: إيرادات مبيعات الحليب (4100)
+        await create_auto_journal_entry(
+            description=f"بيع حليب نقدي إلى {sale.customer_name} - {sale.quantity_liters} لتر",
+            lines=[
+                {"account_number": "1111", "debit": sale.total_amount, "credit": 0, "description": "نقدية من بيع الحليب"},
+                {"account_number": "4100", "debit": 0, "credit": sale.total_amount, "description": "إيراد مبيعات الحليب"}
+            ],
+            reference_type="milk_sale",
+            reference_id=sale.id,
+            created_by_id=current_user["id"],
+            created_by_name=current_user["full_name"]
+        )
+    else:
+        # Credit sale: Dr: العملاء (1120) / Cr: إيرادات مبيعات الحليب (4100)
+        await create_auto_journal_entry(
+            description=f"بيع حليب آجل إلى {sale.customer_name} - {sale.quantity_liters} لتر",
+            lines=[
+                {"account_number": "1120", "debit": sale.total_amount, "credit": 0, "description": f"مستحق من العميل {sale.customer_name}"},
+                {"account_number": "4100", "debit": 0, "credit": sale.total_amount, "description": "إيراد مبيعات الحليب"}
+            ],
+            reference_type="milk_sale",
+            reference_id=sale.id,
+            created_by_id=current_user["id"],
+            created_by_name=current_user["full_name"]
+        )
+    
     return sale
 
 @api_router.get("/sales", response_model=List[Sale])
