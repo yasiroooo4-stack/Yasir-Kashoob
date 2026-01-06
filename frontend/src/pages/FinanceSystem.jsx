@@ -781,7 +781,373 @@ const FinanceSystem = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Journal Entry Dialog */}
+      <JournalEntryDialog
+        open={journalDialogOpen}
+        onOpenChange={setJournalDialogOpen}
+        accounts={accounts}
+        onSuccess={() => {
+          fetchJournalEntries();
+          setJournalDialogOpen(false);
+        }}
+      />
+
+      {/* Create Fixed Asset Dialog */}
+      <FixedAssetDialog
+        open={assetDialogOpen}
+        onOpenChange={setAssetDialogOpen}
+        onSuccess={() => {
+          fetchFixedAssets();
+          setAssetDialogOpen(false);
+        }}
+      />
     </div>
+  );
+};
+
+// Journal Entry Dialog Component
+const JournalEntryDialog = ({ open, onOpenChange, accounts, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
+  const [description, setDescription] = useState("");
+  const [entryDate, setEntryDate] = useState(new Date().toISOString().split("T")[0]);
+  const [lines, setLines] = useState([
+    { account_id: "", account_number: "", account_name: "", debit: 0, credit: 0 }
+  ]);
+
+  const addLine = () => {
+    setLines([...lines, { account_id: "", account_number: "", account_name: "", debit: 0, credit: 0 }]);
+  };
+
+  const removeLine = (index) => {
+    if (lines.length > 1) {
+      setLines(lines.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateLine = (index, field, value) => {
+    const newLines = [...lines];
+    if (field === "account_id") {
+      const account = accounts.find(a => a.id === value);
+      if (account) {
+        newLines[index] = {
+          ...newLines[index],
+          account_id: value,
+          account_number: account.account_number,
+          account_name: account.name
+        };
+      }
+    } else {
+      newLines[index][field] = field === "debit" || field === "credit" ? parseFloat(value) || 0 : value;
+    }
+    setLines(newLines);
+  };
+
+  const totalDebit = lines.reduce((sum, l) => sum + (l.debit || 0), 0);
+  const totalCredit = lines.reduce((sum, l) => sum + (l.credit || 0), 0);
+  const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
+
+  const handleSubmit = async () => {
+    if (!description || !isBalanced || lines.some(l => !l.account_id)) {
+      toast.error("يرجى ملء جميع الحقول والتأكد من توازن القيد");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post(`${API}/finance/journal-entries`, {
+        description,
+        entry_date: entryDate,
+        lines: lines.filter(l => l.account_id && (l.debit > 0 || l.credit > 0))
+      });
+      toast.success("تم إنشاء القيد بنجاح");
+      setDescription("");
+      setLines([{ account_id: "", account_number: "", account_name: "", debit: 0, credit: 0 }]);
+      onSuccess();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل إنشاء القيد");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>قيد يومية جديد</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>التاريخ *</Label>
+              <Input
+                type="date"
+                value={entryDate}
+                onChange={(e) => setEntryDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>الوصف *</Label>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="وصف القيد"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label>بنود القيد</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addLine}>
+                <Plus className="w-4 h-4 me-1" /> إضافة سطر
+              </Button>
+            </div>
+            
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الحساب</TableHead>
+                  <TableHead className="w-28">مدين</TableHead>
+                  <TableHead className="w-28">دائن</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lines.map((line, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Select
+                        value={line.account_id}
+                        onValueChange={(v) => updateLine(index, "account_id", v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر حساب" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accounts.map((acc) => (
+                            <SelectItem key={acc.id} value={acc.id}>
+                              {acc.account_number} - {acc.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={line.debit || ""}
+                        onChange={(e) => updateLine(index, "debit", e.target.value)}
+                        placeholder="0"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={line.credit || ""}
+                        onChange={(e) => updateLine(index, "credit", e.target.value)}
+                        placeholder="0"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeLine(index)}
+                        disabled={lines.length <= 1}
+                      >
+                        <X className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow className="bg-muted/50 font-bold">
+                  <TableCell>المجموع</TableCell>
+                  <TableCell className={totalDebit !== totalCredit ? "text-red-500" : "text-green-600"}>
+                    {totalDebit.toLocaleString()} ريال
+                  </TableCell>
+                  <TableCell className={totalDebit !== totalCredit ? "text-red-500" : "text-green-600"}>
+                    {totalCredit.toLocaleString()} ريال
+                  </TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+
+            {!isBalanced && totalDebit > 0 && (
+              <p className="text-sm text-red-500 flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                القيد غير متوازن - الفرق: {Math.abs(totalDebit - totalCredit).toLocaleString()} ريال
+              </p>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>إلغاء</Button>
+          <Button onClick={handleSubmit} disabled={loading || !isBalanced}>
+            {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : null}
+            إنشاء القيد
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Fixed Asset Dialog Component
+const FixedAssetDialog = ({ open, onOpenChange, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    category: "equipment",
+    purchase_date: new Date().toISOString().split("T")[0],
+    purchase_cost: "",
+    useful_life_years: 5,
+    salvage_value: 0,
+    location: "",
+    notes: ""
+  });
+
+  const categories = [
+    { value: "buildings", label: "مباني" },
+    { value: "equipment", label: "معدات وآلات" },
+    { value: "vehicles", label: "سيارات" },
+    { value: "furniture", label: "أثاث وتجهيزات" },
+    { value: "computers", label: "أجهزة كمبيوتر" },
+    { value: "other", label: "أخرى" }
+  ];
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.purchase_cost) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post(`${API}/finance/fixed-assets`, {
+        ...form,
+        purchase_cost: parseFloat(form.purchase_cost),
+        salvage_value: parseFloat(form.salvage_value) || 0
+      });
+      toast.success("تم إضافة الأصل بنجاح");
+      setForm({
+        name: "",
+        category: "equipment",
+        purchase_date: new Date().toISOString().split("T")[0],
+        purchase_cost: "",
+        useful_life_years: 5,
+        salvage_value: 0,
+        location: "",
+        notes: ""
+      });
+      onSuccess();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل إضافة الأصل");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>إضافة أصل ثابت</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>اسم الأصل *</Label>
+            <Input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="مثال: شاحنة نقل الحليب"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>التصنيف</Label>
+              <Select
+                value={form.category}
+                onValueChange={(v) => setForm({ ...form, category: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الشراء</Label>
+              <Input
+                type="date"
+                value={form.purchase_date}
+                onChange={(e) => setForm({ ...form, purchase_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>تكلفة الشراء (ريال) *</Label>
+              <Input
+                type="number"
+                value={form.purchase_cost}
+                onChange={(e) => setForm({ ...form, purchase_cost: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>العمر الإنتاجي (سنوات)</Label>
+              <Input
+                type="number"
+                value={form.useful_life_years}
+                onChange={(e) => setForm({ ...form, useful_life_years: parseInt(e.target.value) || 5 })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>قيمة الخردة</Label>
+              <Input
+                type="number"
+                value={form.salvage_value}
+                onChange={(e) => setForm({ ...form, salvage_value: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>الموقع</Label>
+              <Input
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder="مثال: مركز حجيف"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>ملاحظات</Label>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="ملاحظات إضافية"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>إلغاء</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : null}
+            إضافة الأصل
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
