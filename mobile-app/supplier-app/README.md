@@ -92,7 +92,7 @@ eas build --platform ios --profile production
 ## API Endpoints
 
 التطبيق يتصل بـ:
-- `https://dairy-collection.preview.emergentagent.com/api`
+- `https://dairymanage-erp.preview.emergentagent.com/api`
 
 ### Endpoints المستخدمة:
 - `POST /supplier-portal/login` - تسجيل الدخول
