@@ -17,6 +17,8 @@ import bcrypt
 import io
 import secrets
 import aiosmtplib
+import httpx
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from emergentintegrations.llm.chat import LlmChat, UserMessage
