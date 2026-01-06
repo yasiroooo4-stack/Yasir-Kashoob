@@ -277,10 +277,10 @@ export default function CCTVSystem() {
   };
 
   return (
-    <div className="space-y-6" data-testid="cctv-system">
+    <div className="space-y-6 p-6" data-testid="cctv-system">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">نظام الكاميرات CCTV</h1>
+          <h1 className="text-3xl font-bold text-gray-900">نظام الكاميرات CCTV</h1>
           <p className="text-gray-500">Hikvision Integration</p>
         </div>
         <div className="flex gap-2">
