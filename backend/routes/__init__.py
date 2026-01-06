@@ -1,15 +1,37 @@
 """
 Routes Package - حزمة المسارات
+
+يحتوي هذا المجلد على جميع مسارات API مقسمة حسب الوظيفة.
+
+الهيكل المستهدف:
+- auth_routes.py: المصادقة والمستخدمين
+- suppliers_routes.py: الموردين وبوابة الموردين
+- milk_routes.py: استقبال الحليب
+- customers_routes.py: العملاء
+- sales_routes.py: المبيعات
+- payments_routes.py: المدفوعات
+- inventory_routes.py: المخزون
+- feed_routes.py: الأعلاف
+- treasury_routes.py: الخزينة
+- hr_routes.py: الموارد البشرية
+- finance_routes.py: النظام المالي
+- legal_routes.py: القانون
+- projects_routes.py: المشاريع
+- operations_routes.py: العمليات
+- marketing_routes.py: التسويق
+- reports_routes.py: التقارير
+- settings_routes.py: الإعدادات
+- sms_routes.py: الرسائل النصية
+
+ملاحظة: حالياً جميع المسارات موجودة في server.py
+سيتم نقلها تدريجياً لهذه الملفات
 """
 
-from .feed_routes import router as feed_router
-from .hr_routes import router as hr_router
-from .treasury_routes import router as treasury_router
-from .suppliers_routes import router as suppliers_router
+# Import routers when they are fully implemented
+# from .auth_routes import router as auth_router
+# from .sms_routes import router as sms_router
 
 __all__ = [
-    "feed_router",
-    "hr_router", 
-    "treasury_router",
-    "suppliers_router"
+    # "auth_router",
+    # "sms_router",
 ]
