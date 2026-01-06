@@ -33,6 +33,7 @@ import {
   CalendarClock,
   Landmark,
   DollarSign,
+  PieChart,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
