@@ -9940,24 +9940,8 @@ async def sync_zkteco_attendance(current_user: dict = Depends(require_role(["adm
 
 # ==================== HR - WARNINGS (الإنذارات) ====================
 
-class WarningBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    employee_id: str
-    employee_name: str
-    warning_type: str  # verbal, written, final
-    reason: str
-    date: str
-    notes: Optional[str] = None
-
-class WarningCreate(WarningBase):
-    pass
-
-class Warning(WarningBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    status: str = "active"
-    issued_by: Optional[str] = None
-    issued_by_name: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+# Models imported from models/all_models.py:
+# WarningBase, WarningCreate, Warning
 
 @api_router.get("/hr/warnings")
 async def get_warnings(
