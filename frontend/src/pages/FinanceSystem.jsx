@@ -50,7 +50,8 @@ import {
   Wallet,
   BarChart3,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  X
 } from "lucide-react";
 
 const FinanceSystem = () => {
