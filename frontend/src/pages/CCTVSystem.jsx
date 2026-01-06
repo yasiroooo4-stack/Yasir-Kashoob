@@ -709,6 +709,7 @@ const CCTVSystem = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
