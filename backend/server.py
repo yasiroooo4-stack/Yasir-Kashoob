@@ -11516,6 +11516,467 @@ async def delete_warning(warning_id: str, current_user: dict = Depends(require_r
     
     return {"message": "Warning deleted successfully"}
 
+# ==================== ADVANCED REPORTS (التقارير المتقدمة) ====================
+
+@api_router.get("/reports/payroll/comparison")
+async def get_payroll_comparison_report(
+    period1_id: str,
+    period2_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    تقرير مقارنة الرواتب بين فترتين
+    Payroll comparison report between two periods
+    """
+    # Get period details
+    period1 = await db.payroll_periods.find_one({"id": period1_id}, {"_id": 0})
+    period2 = await db.payroll_periods.find_one({"id": period2_id}, {"_id": 0})
+    
+    if not period1 or not period2:
+        raise HTTPException(status_code=404, detail="فترة واحدة أو أكثر غير موجودة")
+    
+    # Get records for both periods
+    records1 = await db.payroll_records.find({"period_id": period1_id}, {"_id": 0}).to_list(1000)
+    records2 = await db.payroll_records.find({"period_id": period2_id}, {"_id": 0}).to_list(1000)
+    
+    # Create lookup maps
+    records1_map = {r["employee_id"]: r for r in records1}
+    records2_map = {r["employee_id"]: r for r in records2}
+    
+    # All employee IDs
+    all_employees = set(records1_map.keys()) | set(records2_map.keys())
+    
+    # Build comparison
+    comparisons = []
+    summary = {
+        "period1_total_gross": 0,
+        "period2_total_gross": 0,
+        "period1_total_net": 0,
+        "period2_total_net": 0,
+        "period1_total_allowances": 0,
+        "period2_total_allowances": 0,
+        "period1_total_deductions": 0,
+        "period2_total_deductions": 0,
+        "employees_with_increase": 0,
+        "employees_with_decrease": 0,
+        "employees_unchanged": 0,
+        "new_employees": 0,
+        "removed_employees": 0
+    }
+    
+    for emp_id in all_employees:
+        r1 = records1_map.get(emp_id, {})
+        r2 = records2_map.get(emp_id, {})
+        
+        period1_net = r1.get("net_salary", 0)
+        period2_net = r2.get("net_salary", 0)
+        
+        # Calculate changes
+        net_change = period2_net - period1_net
+        basic_change = r2.get("basic_salary", 0) - r1.get("basic_salary", 0)
+        allowances_change = r2.get("total_allowances", r2.get("allowances", 0)) - r1.get("total_allowances", r1.get("allowances", 0))
+        deductions_change = r2.get("total_deductions", r2.get("deductions", 0)) - r1.get("total_deductions", r1.get("deductions", 0))
+        
+        status = "unchanged"
+        if not r1:
+            status = "new"
+            summary["new_employees"] += 1
+        elif not r2:
+            status = "removed"
+            summary["removed_employees"] += 1
+        elif net_change > 0:
+            status = "increase"
+            summary["employees_with_increase"] += 1
+        elif net_change < 0:
+            status = "decrease"
+            summary["employees_with_decrease"] += 1
+        else:
+            summary["employees_unchanged"] += 1
+        
+        comparisons.append({
+            "employee_id": emp_id,
+            "employee_name": r2.get("employee_name") or r1.get("employee_name"),
+            "employee_code": r2.get("employee_code") or r1.get("employee_code"),
+            "department": r2.get("department") or r1.get("department"),
+            "period1": {
+                "basic_salary": r1.get("basic_salary", 0),
+                "allowances": r1.get("total_allowances", r1.get("allowances", 0)),
+                "deductions": r1.get("total_deductions", r1.get("deductions", 0)),
+                "overtime_pay": r1.get("overtime_pay", 0),
+                "gross_salary": r1.get("gross_salary", 0),
+                "net_salary": period1_net,
+                "working_days": r1.get("working_days", 0),
+                "absent_days": r1.get("absent_days", 0)
+            },
+            "period2": {
+                "basic_salary": r2.get("basic_salary", 0),
+                "allowances": r2.get("total_allowances", r2.get("allowances", 0)),
+                "deductions": r2.get("total_deductions", r2.get("deductions", 0)),
+                "overtime_pay": r2.get("overtime_pay", 0),
+                "gross_salary": r2.get("gross_salary", 0),
+                "net_salary": period2_net,
+                "working_days": r2.get("working_days", 0),
+                "absent_days": r2.get("absent_days", 0)
+            },
+            "changes": {
+                "basic_salary": basic_change,
+                "allowances": allowances_change,
+                "deductions": deductions_change,
+                "net_salary": net_change,
+                "percentage": round((net_change / period1_net * 100) if period1_net > 0 else 0, 2)
+            },
+            "status": status
+        })
+        
+        summary["period1_total_gross"] += r1.get("gross_salary", 0)
+        summary["period2_total_gross"] += r2.get("gross_salary", 0)
+        summary["period1_total_net"] += period1_net
+        summary["period2_total_net"] += period2_net
+        summary["period1_total_allowances"] += r1.get("total_allowances", r1.get("allowances", 0))
+        summary["period2_total_allowances"] += r2.get("total_allowances", r2.get("allowances", 0))
+        summary["period1_total_deductions"] += r1.get("total_deductions", r1.get("deductions", 0))
+        summary["period2_total_deductions"] += r2.get("total_deductions", r2.get("deductions", 0))
+    
+    # Calculate net change
+    summary["net_change"] = summary["period2_total_net"] - summary["period1_total_net"]
+    summary["percentage_change"] = round(
+        (summary["net_change"] / summary["period1_total_net"] * 100) if summary["period1_total_net"] > 0 else 0, 2
+    )
+    
+    return {
+        "period1": {
+            "id": period1_id,
+            "name": period1.get("name"),
+            "start_date": period1.get("start_date"),
+            "end_date": period1.get("end_date")
+        },
+        "period2": {
+            "id": period2_id,
+            "name": period2.get("name"),
+            "start_date": period2.get("start_date"),
+            "end_date": period2.get("end_date")
+        },
+        "summary": summary,
+        "comparisons": sorted(comparisons, key=lambda x: abs(x["changes"]["net_salary"]), reverse=True)
+    }
+
+@api_router.get("/reports/financial/monthly")
+async def get_monthly_financial_report(
+    year: int,
+    month: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    تقرير مالي شهري شامل
+    Comprehensive monthly financial report
+    """
+    from calendar import monthrange
+    
+    start_date = f"{year}-{month:02d}-01"
+    last_day = monthrange(year, month)[1]
+    end_date = f"{year}-{month:02d}-{last_day}"
+    
+    # Get milk receptions (purchases)
+    milk_receptions = await db.milk_receptions.find({
+        "reception_date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(5000)
+    
+    # Get sales
+    sales = await db.sales.find({
+        "sale_date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(5000)
+    
+    # Get payroll records for this period
+    payroll_period = await db.payroll_periods.find_one({
+        "start_date": {"$gte": start_date},
+        "end_date": {"$lte": end_date}
+    }, {"_id": 0})
+    
+    payroll_records = []
+    if payroll_period:
+        payroll_records = await db.payroll_records.find({
+            "period_id": payroll_period["id"]
+        }, {"_id": 0}).to_list(1000)
+    
+    # Get journal entries
+    journal_entries = await db.journal_entries.find({
+        "entry_date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(1000)
+    
+    # Calculate milk purchases by center
+    purchases_by_center = {}
+    total_milk_quantity = 0
+    total_milk_amount = 0
+    
+    for r in milk_receptions:
+        center = r.get("center_name", "غير محدد")
+        if center not in purchases_by_center:
+            purchases_by_center[center] = {"quantity": 0, "amount": 0, "count": 0}
+        purchases_by_center[center]["quantity"] += r.get("quantity_liters", 0)
+        purchases_by_center[center]["amount"] += r.get("total_amount", 0)
+        purchases_by_center[center]["count"] += 1
+        total_milk_quantity += r.get("quantity_liters", 0)
+        total_milk_amount += r.get("total_amount", 0)
+    
+    # Calculate sales summary
+    total_sales_quantity = sum(s.get("quantity_liters", 0) for s in sales)
+    total_sales_amount = sum(s.get("total_amount", 0) for s in sales)
+    cash_sales = sum(s.get("total_amount", 0) for s in sales if s.get("is_paid"))
+    credit_sales = sum(s.get("total_amount", 0) for s in sales if not s.get("is_paid"))
+    
+    # Calculate payroll summary
+    total_gross_salary = sum(p.get("gross_salary", 0) for p in payroll_records)
+    total_net_salary = sum(p.get("net_salary", 0) for p in payroll_records)
+    total_allowances = sum(p.get("total_allowances", p.get("allowances", 0)) for p in payroll_records)
+    total_deductions = sum(p.get("total_deductions", p.get("deductions", 0)) for p in payroll_records)
+    
+    # Gross profit
+    gross_profit = total_sales_amount - total_milk_amount
+    net_profit = gross_profit - total_net_salary
+    
+    return {
+        "period": {
+            "year": year,
+            "month": month,
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "revenue": {
+            "total_sales": total_sales_amount,
+            "cash_sales": cash_sales,
+            "credit_sales": credit_sales,
+            "quantity_sold_liters": total_sales_quantity,
+            "sales_count": len(sales)
+        },
+        "cost_of_goods": {
+            "total_purchases": total_milk_amount,
+            "quantity_purchased_liters": total_milk_quantity,
+            "purchases_count": len(milk_receptions),
+            "by_center": purchases_by_center
+        },
+        "operating_expenses": {
+            "salaries_and_wages": total_net_salary,
+            "gross_salaries": total_gross_salary,
+            "allowances": total_allowances,
+            "deductions": total_deductions,
+            "employee_count": len(payroll_records)
+        },
+        "profitability": {
+            "gross_profit": gross_profit,
+            "gross_margin_percentage": round((gross_profit / total_sales_amount * 100) if total_sales_amount > 0 else 0, 2),
+            "net_profit": net_profit,
+            "net_margin_percentage": round((net_profit / total_sales_amount * 100) if total_sales_amount > 0 else 0, 2)
+        },
+        "journal_entries_count": len(journal_entries)
+    }
+
+@api_router.get("/reports/centers/performance")
+async def get_centers_performance_report(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    تقرير أداء مراكز التجميع
+    Collection centers performance report
+    """
+    query = {}
+    if start_date:
+        query["reception_date"] = {"$gte": start_date}
+    if end_date:
+        if "reception_date" in query:
+            query["reception_date"]["$lte"] = end_date
+        else:
+            query["reception_date"] = {"$lte": end_date}
+    
+    # Get milk receptions
+    receptions = await db.milk_receptions.find(query, {"_id": 0}).to_list(10000)
+    
+    # Get suppliers by center
+    suppliers = await db.suppliers.find({"is_active": True}, {"_id": 0}).to_list(5000)
+    suppliers_by_center = {}
+    for s in suppliers:
+        center = s.get("center_name", "غير محدد")
+        if center not in suppliers_by_center:
+            suppliers_by_center[center] = 0
+        suppliers_by_center[center] += 1
+    
+    # Group by center
+    centers_data = {}
+    for r in receptions:
+        center = r.get("center_name", "غير محدد")
+        if center not in centers_data:
+            centers_data[center] = {
+                "name": center,
+                "total_quantity": 0,
+                "total_amount": 0,
+                "reception_count": 0,
+                "suppliers_count": suppliers_by_center.get(center, 0),
+                "avg_fat": [],
+                "avg_snf": [],
+                "camel_milk": 0,
+                "cow_milk": 0,
+                "daily_data": {}
+            }
+        
+        centers_data[center]["total_quantity"] += r.get("quantity_liters", 0)
+        centers_data[center]["total_amount"] += r.get("total_amount", 0)
+        centers_data[center]["reception_count"] += 1
+        
+        if r.get("fat_percentage"):
+            centers_data[center]["avg_fat"].append(r["fat_percentage"])
+        if r.get("snf_percentage"):
+            centers_data[center]["avg_snf"].append(r["snf_percentage"])
+        
+        milk_type = r.get("milk_type", "")
+        if "إبل" in milk_type or "camel" in milk_type.lower():
+            centers_data[center]["camel_milk"] += r.get("quantity_liters", 0)
+        else:
+            centers_data[center]["cow_milk"] += r.get("quantity_liters", 0)
+        
+        # Daily breakdown
+        date = r.get("reception_date", "").split("T")[0]
+        if date:
+            if date not in centers_data[center]["daily_data"]:
+                centers_data[center]["daily_data"][date] = {"quantity": 0, "amount": 0}
+            centers_data[center]["daily_data"][date]["quantity"] += r.get("quantity_liters", 0)
+            centers_data[center]["daily_data"][date]["amount"] += r.get("total_amount", 0)
+    
+    # Calculate averages and rankings
+    result = []
+    for center, data in centers_data.items():
+        avg_fat = round(sum(data["avg_fat"]) / len(data["avg_fat"]), 2) if data["avg_fat"] else 0
+        avg_snf = round(sum(data["avg_snf"]) / len(data["avg_snf"]), 2) if data["avg_snf"] else 0
+        avg_price = round(data["total_amount"] / data["total_quantity"], 3) if data["total_quantity"] > 0 else 0
+        
+        result.append({
+            "center_name": center,
+            "total_quantity": round(data["total_quantity"], 2),
+            "total_amount": round(data["total_amount"], 3),
+            "reception_count": data["reception_count"],
+            "suppliers_count": data["suppliers_count"],
+            "avg_fat_percentage": avg_fat,
+            "avg_snf_percentage": avg_snf,
+            "avg_price_per_liter": avg_price,
+            "camel_milk_liters": round(data["camel_milk"], 2),
+            "cow_milk_liters": round(data["cow_milk"], 2),
+            "camel_percentage": round((data["camel_milk"] / data["total_quantity"] * 100) if data["total_quantity"] > 0 else 0, 1),
+            "daily_average_quantity": round(data["total_quantity"] / len(data["daily_data"]) if data["daily_data"] else 0, 2),
+            "active_days": len(data["daily_data"])
+        })
+    
+    # Sort by total quantity (highest first)
+    result = sorted(result, key=lambda x: x["total_quantity"], reverse=True)
+    
+    # Add ranking
+    for i, r in enumerate(result):
+        r["rank"] = i + 1
+    
+    # Calculate totals
+    totals = {
+        "total_quantity": sum(r["total_quantity"] for r in result),
+        "total_amount": sum(r["total_amount"] for r in result),
+        "total_receptions": sum(r["reception_count"] for r in result),
+        "total_suppliers": sum(r["suppliers_count"] for r in result),
+        "centers_count": len(result)
+    }
+    
+    return {
+        "period": {"start_date": start_date, "end_date": end_date},
+        "totals": totals,
+        "centers": result
+    }
+
+@api_router.get("/reports/inventory/alerts")
+async def get_inventory_alerts(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    تنبيهات المخزون المنخفض
+    Low inventory alerts
+    """
+    # Get inventory items
+    inventory = await db.inventory.find({}, {"_id": 0}).to_list(100)
+    
+    # Get inventory settings (thresholds)
+    settings = await db.system_settings.find_one({"type": "inventory"}, {"_id": 0})
+    default_threshold = 100  # Default threshold for milk in liters
+    
+    alerts = []
+    for item in inventory:
+        product_type = item.get("product_type", "unknown")
+        quantity = item.get("quantity_liters", item.get("quantity", 0))
+        
+        # Get threshold for this product
+        threshold = default_threshold
+        if settings and settings.get("thresholds"):
+            threshold = settings["thresholds"].get(product_type, default_threshold)
+        
+        if quantity <= threshold:
+            alerts.append({
+                "product_type": product_type,
+                "current_quantity": quantity,
+                "threshold": threshold,
+                "deficit": threshold - quantity,
+                "severity": "critical" if quantity <= threshold * 0.5 else "warning",
+                "last_updated": item.get("last_updated")
+            })
+    
+    # Get feed types inventory
+    feed_types = await db.feed_types.find({}, {"_id": 0}).to_list(100)
+    for feed in feed_types:
+        stock = feed.get("stock_quantity", 0)
+        min_stock = feed.get("min_stock_quantity", 10)
+        
+        if stock <= min_stock:
+            alerts.append({
+                "product_type": f"feed_{feed.get('name')}",
+                "product_name": feed.get("name"),
+                "current_quantity": stock,
+                "threshold": min_stock,
+                "deficit": min_stock - stock,
+                "unit": feed.get("unit", "كيس"),
+                "severity": "critical" if stock <= min_stock * 0.5 else "warning",
+                "category": "feed"
+            })
+    
+    # Sort by severity (critical first)
+    alerts = sorted(alerts, key=lambda x: (0 if x["severity"] == "critical" else 1, -x.get("deficit", 0)))
+    
+    return {
+        "alerts_count": len(alerts),
+        "critical_count": len([a for a in alerts if a["severity"] == "critical"]),
+        "warning_count": len([a for a in alerts if a["severity"] == "warning"]),
+        "alerts": alerts
+    }
+
+@api_router.post("/reports/inventory/set-threshold")
+async def set_inventory_threshold(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """
+    تعيين حد أدنى للمخزون
+    Set minimum inventory threshold
+    """
+    product_type = data.get("product_type")
+    threshold = data.get("threshold")
+    
+    if not product_type or threshold is None:
+        raise HTTPException(status_code=400, detail="product_type and threshold are required")
+    
+    # Update or create settings
+    await db.system_settings.update_one(
+        {"type": "inventory"},
+        {
+            "$set": {f"thresholds.{product_type}": threshold},
+            "$setOnInsert": {"type": "inventory", "created_at": datetime.now(timezone.utc).isoformat()}
+        },
+        upsert=True
+    )
+    
+    return {"message": f"تم تعيين الحد الأدنى لـ {product_type} إلى {threshold}"}
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
