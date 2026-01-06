@@ -10322,11 +10322,24 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         "date": {"$gte": start_date, "$lte": end_date}
     }, {"_id": 0}).to_list(10000)
     
-    # Get official holidays for the period
+    # Get official holidays for the period (from both collections)
     official_holidays = await db.hr_official_holidays.find({
         "date": {"$gte": start_date, "$lte": end_date}
     }, {"_id": 0}).to_list(100)
+    
+    public_holidays_list = await db.public_holidays.find({
+        "date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(100)
+    
+    # Combine holiday dates
     holiday_dates = {h["date"] for h in official_holidays}
+    holiday_dates.update({h["date"] for h in public_holidays_list})
+    
+    # Get all salary structures for efficient lookup
+    salary_structures = await db.employee_salary_structures.find(
+        {"is_active": True}, {"_id": 0}
+    ).to_list(1000)
+    salary_structure_map = {s["employee_id"]: s for s in salary_structures}
     
     # Delete existing payroll records for this period
     await db.payroll_records.delete_many({"period_id": period_id})
@@ -10345,6 +10358,9 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         # Get employee's weekly off days (default Friday & Saturday)
         employee_weekly_off_days = emp.get("weekly_off_days", [4, 5])  # 4=Friday, 5=Saturday
         
+        # Get salary structure for this employee
+        salary_struct = salary_structure_map.get(emp.get("id"), {})
+        
         # Filter attendance for this employee
         emp_attendance = [a for a in attendance_records if a.get("employee_id") == emp.get("id") or a.get("employee_name") == emp.get("name")]
         
@@ -10355,12 +10371,17 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         working_days = 0
         day_off = 0
         sick_leave = 0
+        compensation_leave = 0
         annual_leave = 0
         public_holiday = 0
         emergency_leave = 0
         on_duty = 0
+        exam_leave = 0
+        father_leave = 0
+        accompanying_leave = 0
         absent_days = 0
         unpaid_leave = 0
+        otp_days = 0
         weekend_work_days = 0  # أيام عمل في الإجازة الأسبوعية
         holiday_work_days = 0  # أيام عمل في العطل الرسمية
         
@@ -10400,6 +10421,8 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
                     day_off += 1
                 elif status == "sick_leave":
                     sick_leave += 1
+                elif status == "compensation_leave":
+                    compensation_leave += 1
                 elif status == "annual_leave":
                     annual_leave += 1
                 elif status == "public_holiday":
@@ -10408,10 +10431,18 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
                     emergency_leave += 1
                 elif status == "on_duty":
                     on_duty += 1
+                elif status == "exam_leave":
+                    exam_leave += 1
+                elif status == "father_leave":
+                    father_leave += 1
+                elif status == "accompanying_leave":
+                    accompanying_leave += 1
                 elif status == "absent":
                     absent_days += 1
                 elif status == "unpaid_leave":
                     unpaid_leave += 1
+                elif status == "otp":
+                    otp_days += 1
             else:
                 # No attendance record - check if it's a holiday/weekend
                 if is_official_holiday:
@@ -10423,57 +10454,106 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
             
             current_date += timedelta(days=1)
         
-        # Calculate salary
-        basic_salary = emp.get("salary", 0)
-        daily_rate = basic_salary / 30 if basic_salary > 0 else 0
+        # Get salary components from structure or employee record
+        basic_salary = salary_struct.get("basic_salary", emp.get("salary", 0))
+        
+        # Get detailed allowances
+        allowances_data = salary_struct.get("allowances", {})
+        housing_allowance = allowances_data.get("housing_allowance", 0) if isinstance(allowances_data, dict) else 0
+        transportation_allowance = allowances_data.get("transportation_allowance", 0) if isinstance(allowances_data, dict) else 0
+        food_allowance = allowances_data.get("food_allowance", 0) if isinstance(allowances_data, dict) else 0
+        phone_allowance = allowances_data.get("phone_allowance", 0) if isinstance(allowances_data, dict) else 0
+        fuel_allowance = allowances_data.get("fuel_allowance", 0) if isinstance(allowances_data, dict) else 0
+        education_allowance = allowances_data.get("education_allowance", 0) if isinstance(allowances_data, dict) else 0
+        medical_allowance = allowances_data.get("medical_allowance", 0) if isinstance(allowances_data, dict) else 0
+        special_allowance = allowances_data.get("special_allowance", 0) if isinstance(allowances_data, dict) else 0
+        other_allowance = allowances_data.get("other_allowance", 0) if isinstance(allowances_data, dict) else 0
+        
+        total_allowances = (
+            housing_allowance + transportation_allowance + food_allowance +
+            phone_allowance + fuel_allowance + education_allowance +
+            medical_allowance + special_allowance + other_allowance
+        )
+        
+        # Calculate rates
+        total_monthly_salary = basic_salary + total_allowances
+        daily_rate = total_monthly_salary / 30 if total_monthly_salary > 0 else 0
         hourly_rate = daily_rate / STANDARD_HOURS_PER_DAY if daily_rate > 0 else 0
         
-        # Total pay days = working + paid leaves
-        total_pay_days = working_days + day_off + sick_leave + annual_leave + public_holiday + emergency_leave + on_duty
+        # Total pay days = working + all paid leaves
+        total_pay_days = (
+            working_days + day_off + sick_leave + compensation_leave + annual_leave + 
+            public_holiday + emergency_leave + on_duty + exam_leave + 
+            father_leave + accompanying_leave + weekend_work_days + holiday_work_days
+        )
         
         # Gross salary for regular work
         gross_salary = daily_rate * total_pay_days
         
         # Weekend work pay (1.5x)
-        weekend_work_pay = daily_rate * weekend_work_days * WEEKEND_WORK_MULTIPLIER
+        weekend_work_pay = daily_rate * weekend_work_days * (WEEKEND_WORK_MULTIPLIER - 1)  # Extra pay only
         
         # Holiday work pay (2x)
-        holiday_work_pay = daily_rate * holiday_work_days * HOLIDAY_WORK_MULTIPLIER
+        holiday_work_pay = daily_rate * holiday_work_days * (HOLIDAY_WORK_MULTIPLIER - 1)  # Extra pay only
         
         # Overtime pay (1.5x hourly rate)
         overtime_pay = total_overtime_hours * hourly_rate * OVERTIME_MULTIPLIER
         
-        # Deductions for unpaid leave and absences
-        deductions = daily_rate * (absent_days + unpaid_leave)
+        # Deductions
+        absence_deduction = daily_rate * absent_days
+        unpaid_deduction = daily_rate * unpaid_leave
+        otp_deduction = daily_rate * otp_days * 0.5  # Half day deduction for OTP issues
+        total_deductions = absence_deduction + unpaid_deduction + otp_deduction
         
-        # Net salary = gross + overtime + weekend_work + holiday_work - deductions
-        net_salary = gross_salary + overtime_pay + weekend_work_pay + holiday_work_pay - deductions
+        # Net salary
+        net_salary = gross_salary + overtime_pay + weekend_work_pay + holiday_work_pay - total_deductions
         
         record = PayrollRecord(
             period_id=period_id,
             employee_id=emp.get("id"),
             employee_name=emp.get("name"),
-            employee_code=emp.get("employee_code"),
+            employee_code=emp.get("employee_code") or emp.get("employee_id"),
             department=emp.get("department"),
             position=emp.get("position"),
             work_location=emp.get("work_location"),
+            nationality=emp.get("nationality"),
             working_days=working_days,
             day_off=day_off,
             sick_leave=sick_leave,
+            compensation_leave=compensation_leave,
             annual_leave=annual_leave,
             public_holiday=public_holiday,
             emergency_leave=emergency_leave,
             on_duty=on_duty,
+            exam_leave=exam_leave,
+            father_leave=father_leave,
+            accompanying_leave=accompanying_leave,
             absent_days=absent_days,
             unpaid_leave=unpaid_leave,
+            otp_days=otp_days,
             total_overtime_hours=round(total_overtime_hours, 2),
-            basic_salary=basic_salary,
+            basic_salary=round(basic_salary, 3),
             daily_rate=round(daily_rate, 3),
             hourly_rate=round(hourly_rate, 3),
             total_pay_days=total_pay_days,
+            # Detailed allowances
+            housing_allowance=round(housing_allowance, 3),
+            transportation_allowance=round(transportation_allowance, 3),
+            food_allowance=round(food_allowance, 3),
+            phone_allowance=round(phone_allowance, 3),
+            fuel_allowance=round(fuel_allowance, 3),
+            education_allowance=round(education_allowance, 3),
+            medical_allowance=round(medical_allowance, 3),
+            special_allowance=round(special_allowance, 3),
+            other_allowance=round(other_allowance, 3),
+            total_allowances=round(total_allowances, 3),
+            allowances=round(total_allowances, 3),  # Legacy field
             gross_salary=round(gross_salary, 3),
             overtime_pay=round(overtime_pay, 3),
-            deductions=round(deductions, 3),
+            absence_deduction=round(absence_deduction, 3),
+            other_deduction=round(otp_deduction, 3),
+            total_deductions=round(total_deductions, 3),
+            deductions=round(total_deductions, 3),  # Legacy field
             net_salary=round(net_salary, 3)
         )
         
