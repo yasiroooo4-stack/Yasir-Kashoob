@@ -489,6 +489,7 @@ const resources = {
       "salary_structures": "Salary Structures",
       "advanced_reports": "Advanced Reports",
       "notification_settings": "Notification Settings",
+      "cctv_system": "CCTV System",
       
       // Analysis
       "analysis": "Smart Analysis",
