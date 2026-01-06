@@ -485,6 +485,7 @@ const resources = {
       // Payroll
       "payroll": "Payroll",
       "salary_structures": "Salary Structures",
+      "advanced_reports": "Advanced Reports",
       
       // Analysis
       "analysis": "Smart Analysis",
