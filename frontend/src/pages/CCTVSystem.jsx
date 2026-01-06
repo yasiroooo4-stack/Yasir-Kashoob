@@ -277,12 +277,13 @@ const CCTVSystem = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-white/90 min-h-screen" data-testid="cctv-system">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">نظام الكاميرات CCTV</h1>
-          <p className="text-gray-600">Hikvision Integration</p>
-        </div>
+    <div className="min-h-screen" data-testid="cctv-system">
+      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 m-4 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">نظام الكاميرات CCTV</h1>
+            <p className="text-gray-600">Hikvision Integration</p>
+          </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
             <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
