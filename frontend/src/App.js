@@ -378,6 +378,11 @@ function App() {
                     <Payroll />
                   </ProtectedRoute>
                 } />
+                <Route path="salary-structures" element={
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                    <SalaryStructures />
+                  </ProtectedRoute>
+                } />
                 <Route path="analytics" element={
                   <ProtectedRoute>
                     <Analytics />
