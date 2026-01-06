@@ -474,6 +474,34 @@ class Employee(EmployeeBase):
     weekly_off_days: Optional[List[int]] = None  # أيام الإجازة الأسبوعية
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# Employee Allowances Model (بدلات الموظفين)
+class EmployeeAllowances(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    housing_allowance: float = 0.0           # بدل السكن
+    transportation_allowance: float = 0.0    # بدل النقل
+    food_allowance: float = 0.0              # بدل الطعام
+    phone_allowance: float = 0.0             # بدل الهاتف
+    fuel_allowance: float = 0.0              # بدل الوقود
+    education_allowance: float = 0.0         # بدل التعليم
+    medical_allowance: float = 0.0           # بدل طبي
+    special_allowance: float = 0.0           # بدل خاص
+    other_allowance: float = 0.0             # بدلات أخرى
+
+# Employee Salary Structure (هيكل الراتب)
+class EmployeeSalaryStructure(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: str
+    basic_salary: float = 0.0                # الراتب الأساسي
+    allowances: EmployeeAllowances = Field(default_factory=EmployeeAllowances)
+    total_salary: float = 0.0                # إجمالي الراتب
+    effective_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    is_active: bool = True
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Salary History Models (سجل تغييرات الرواتب)
 class SalaryHistoryBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
