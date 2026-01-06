@@ -182,15 +182,17 @@ class TestDashboardStats:
         return response.json()["access_token"]
     
     def test_get_dashboard_stats(self, auth_token):
-        """Test /api/reports/dashboard-stats returns dashboard statistics"""
+        """Test /api/dashboard/stats returns dashboard statistics"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/reports/dashboard-stats", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/dashboard/stats", headers=headers)
         assert response.status_code == 200
         data = response.json()
         # Verify dashboard stats structure
-        assert "total_suppliers" in data or "suppliers_count" in data or isinstance(data, dict)
+        assert "suppliers_count" in data
+        assert "customers_count" in data
+        assert "today_milk_quantity" in data
         print(f"✓ Dashboard stats endpoint working")
-        print(f"  Stats: {list(data.keys())[:5]}...")
+        print(f"  Suppliers: {data.get('suppliers_count')}, Stock: {data.get('current_stock')}")
 
 
 class TestAdditionalEndpoints:
