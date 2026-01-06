@@ -133,6 +133,7 @@ const Layout = () => {
     { path: "/employees", icon: UserCog, label: "employees", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/advanced-reports", icon: PieChart, label: "advanced_reports", roles: ["admin", "hr_manager", "accountant"], departments: ["hr", "finance", "admin", "it"] },
+    { path: "/notification-settings", icon: Bell, label: "notification_settings", roles: ["admin"], departments: ["admin", "it"] },
     { path: "/system-settings", icon: Settings, label: "system_settings", roles: ["admin"], departments: ["admin", "it"] },
   ];
 
