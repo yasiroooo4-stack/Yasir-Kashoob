@@ -9054,11 +9054,25 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         # Overtime pay (1.5x hourly rate)
         overtime_pay = total_overtime_hours * hourly_rate * OVERTIME_MULTIPLIER
         
+        # Get active loans for this employee to calculate loan deduction
+        employee_loans = await db.hr_loans.find({
+            "employee_id": emp.get("id"),
+            "status": "approved"
+        }, {"_id": 0}).to_list(100)
+        
+        loan_deduction = 0.0
+        for loan in employee_loans:
+            remaining = loan.get("remaining_amount", loan.get("amount", 0))
+            if remaining > 0:
+                installment = loan.get("installment_amount", 0)
+                if installment > 0:
+                    loan_deduction += installment
+        
         # Deductions
         absence_deduction = daily_rate * absent_days
         unpaid_deduction = daily_rate * unpaid_leave
         otp_deduction = daily_rate * otp_days * 0.5  # Half day deduction for OTP issues
-        total_deductions = absence_deduction + unpaid_deduction + otp_deduction
+        total_deductions = absence_deduction + unpaid_deduction + otp_deduction + loan_deduction
         
         # Net salary
         net_salary = gross_salary + overtime_pay + weekend_work_pay + holiday_work_pay - total_deductions
