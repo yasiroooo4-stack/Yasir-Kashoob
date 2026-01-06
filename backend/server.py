@@ -270,6 +270,157 @@ class TreasuryBalance(BaseModel):
     total_withdrawals: float = 0.0
     last_updated: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ==================== FINANCIAL SYSTEM MODELS ====================
+
+# Chart of Accounts - شجرة الحسابات
+class AccountType(str, Enum):
+    ASSET = "asset"              # أصول
+    LIABILITY = "liability"      # خصوم
+    EQUITY = "equity"            # حقوق الملكية
+    REVENUE = "revenue"          # إيرادات
+    EXPENSE = "expense"          # مصروفات
+
+class Account(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    account_number: str          # رقم الحساب
+    name: str                    # اسم الحساب
+    name_en: Optional[str] = None
+    account_type: str            # نوع الحساب
+    parent_id: Optional[str] = None  # الحساب الأب
+    description: Optional[str] = None
+    is_active: bool = True
+    balance: float = 0.0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Journal Entry - قيد يومية
+class JournalEntry(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    entry_number: str            # رقم القيد
+    entry_date: str              # تاريخ القيد
+    description: str             # وصف القيد
+    reference_type: Optional[str] = None  # نوع المرجع (invoice, payment, etc)
+    reference_id: Optional[str] = None
+    total_debit: float = 0.0     # إجمالي المدين
+    total_credit: float = 0.0    # إجمالي الدائن
+    status: str = "draft"        # draft, posted, cancelled
+    created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    posted_at: Optional[str] = None
+    posted_by: Optional[str] = None
+
+# Journal Entry Line - سطر قيد يومية
+class JournalEntryLine(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    journal_entry_id: str
+    account_id: str
+    account_number: str
+    account_name: str
+    debit: float = 0.0           # مدين
+    credit: float = 0.0          # دائن
+    description: Optional[str] = None
+
+# Accounts Payable - الحسابات الدائنة (المستحقة للموردين)
+class AccountsPayable(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    supplier_id: str
+    supplier_name: str
+    supplier_code: str
+    invoice_number: Optional[str] = None
+    invoice_date: str
+    due_date: str
+    amount: float
+    paid_amount: float = 0.0
+    balance: float = 0.0
+    status: str = "unpaid"       # unpaid, partial, paid
+    description: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Accounts Receivable - الحسابات المدينة (المستحقة من العملاء)
+class AccountsReceivable(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    customer_name: str
+    invoice_number: Optional[str] = None
+    invoice_date: str
+    due_date: str
+    amount: float
+    received_amount: float = 0.0
+    balance: float = 0.0
+    status: str = "unpaid"       # unpaid, partial, paid
+    description: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Fixed Asset - الأصول الثابتة
+class FixedAsset(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    asset_number: str            # رقم الأصل
+    name: str                    # اسم الأصل
+    category: str                # التصنيف (vehicles, equipment, buildings, etc)
+    purchase_date: str           # تاريخ الشراء
+    purchase_cost: float         # تكلفة الشراء
+    useful_life_years: int       # العمر الإنتاجي بالسنوات
+    salvage_value: float = 0.0   # قيمة الخردة
+    depreciation_method: str = "straight_line"  # طريقة الإهلاك
+    accumulated_depreciation: float = 0.0  # الإهلاك المتراكم
+    current_value: float = 0.0   # القيمة الدفترية الحالية
+    location: Optional[str] = None
+    assigned_to: Optional[str] = None
+    status: str = "active"       # active, disposed, sold
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Budget - الميزانية
+class Budget(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str                    # اسم الميزانية
+    fiscal_year: int             # السنة المالية
+    start_date: str
+    end_date: str
+    status: str = "draft"        # draft, approved, active, closed
+    total_amount: float = 0.0
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+
+# Budget Line - بند الميزانية
+class BudgetLine(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    budget_id: str
+    account_id: str
+    account_name: str
+    budgeted_amount: float = 0.0  # المبلغ المخطط
+    actual_amount: float = 0.0    # المبلغ الفعلي
+    variance: float = 0.0         # الفرق
+    notes: Optional[str] = None
+
+# Tax Record - سجل الضرائب
+class TaxRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    tax_type: str                # نوع الضريبة (vat, income, withholding)
+    period: str                  # الفترة (monthly, quarterly, yearly)
+    period_start: str
+    period_end: str
+    taxable_amount: float = 0.0  # المبلغ الخاضع للضريبة
+    tax_rate: float = 0.0        # نسبة الضريبة
+    tax_amount: float = 0.0      # مبلغ الضريبة
+    status: str = "calculated"   # calculated, filed, paid
+    due_date: Optional[str] = None
+    paid_date: Optional[str] = None
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Supplier Modification Request (طلب تعديل/نقل المورد - يحتاج موافقة المدير)
 class SupplierModificationRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
