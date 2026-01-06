@@ -2225,6 +2225,101 @@ async def supplier_change_password(
     
     return {"message": "تم تغيير كلمة المرور بنجاح"}
 
+# Supplier Portal - Send OTP for password recovery
+@api_router.post("/supplier-portal/send-otp")
+async def send_otp_for_recovery(data: dict):
+    """إرسال رمز التحقق لاسترجاع كلمة المرور"""
+    import random
+    
+    phone = data.get("phone", "").strip()
+    if not phone:
+        raise HTTPException(status_code=400, detail="يرجى إدخال رقم الهاتف")
+    
+    # Find supplier by phone
+    supplier = await db.suppliers.find_one({"phone": phone, "is_active": True}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="رقم الهاتف غير مسجل في النظام")
+    
+    # Generate 4-digit OTP
+    otp = str(random.randint(1000, 9999))
+    
+    # Store OTP with expiry (5 minutes)
+    otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=5)
+    await db.otp_codes.update_one(
+        {"phone": phone},
+        {"$set": {
+            "phone": phone,
+            "otp": otp,
+            "expiry": otp_expiry.isoformat(),
+            "supplier_id": supplier["id"],
+            "used": False
+        }},
+        upsert=True
+    )
+    
+    # In production, send SMS here
+    # For now, log the OTP (in real app, use SMS gateway like Twilio)
+    logging.info(f"OTP for {phone}: {otp}")
+    
+    return {
+        "message": "تم إرسال رمز التحقق إلى هاتفك",
+        "otp_sent": True,
+        # For testing only - remove in production
+        "debug_otp": otp
+    }
+
+# Supplier Portal - Verify OTP and reset password
+@api_router.post("/supplier-portal/verify-otp-reset")
+async def verify_otp_and_reset_password(data: dict):
+    """التحقق من رمز OTP وتغيير كلمة المرور"""
+    import hashlib
+    
+    phone = data.get("phone", "").strip()
+    otp = data.get("otp", "").strip()
+    new_password = data.get("new_password", "")
+    
+    if not phone or not otp or not new_password:
+        raise HTTPException(status_code=400, detail="يرجى ملء جميع الحقول")
+    
+    if len(new_password) < 4:
+        raise HTTPException(status_code=400, detail="كلمة المرور يجب أن تكون 4 أحرف على الأقل")
+    
+    # Find OTP record
+    otp_record = await db.otp_codes.find_one({"phone": phone, "used": False}, {"_id": 0})
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="لم يتم إرسال رمز التحقق لهذا الرقم")
+    
+    # Check if OTP expired
+    expiry = datetime.fromisoformat(otp_record["expiry"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="انتهت صلاحية رمز التحقق. يرجى طلب رمز جديد")
+    
+    # Verify OTP
+    if otp_record["otp"] != otp:
+        raise HTTPException(status_code=400, detail="رمز التحقق غير صحيح")
+    
+    # Mark OTP as used
+    await db.otp_codes.update_one(
+        {"phone": phone},
+        {"$set": {"used": True}}
+    )
+    
+    # Update supplier password
+    supplier_id = otp_record["supplier_id"]
+    new_password_hash = hash_password(new_password)
+    new_portal_password = hashlib.sha256(new_password.encode()).hexdigest()
+    
+    await db.suppliers.update_one(
+        {"id": supplier_id},
+        {"$set": {
+            "password_hash": new_password_hash,
+            "portal_password": new_portal_password,
+            "password_changed": True
+        }}
+    )
+    
+    return {"message": "تم تغيير كلمة المرور بنجاح"}
+
 # Supplier Portal - Set password for supplier (Admin only)
 @api_router.put("/admin/suppliers/{supplier_id}/set-password")
 async def admin_set_supplier_password(
