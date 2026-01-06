@@ -15,6 +15,7 @@ const resources = {
       "sales": "المبيعات",
       "inventory": "المخزون",
       "finance": "المالية",
+      "finance_system": "النظام المالي",
       "treasury": "الخزينة",
       "employees": "الموظفين",
       "reports": "التقارير",
