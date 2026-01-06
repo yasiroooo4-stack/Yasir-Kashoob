@@ -235,6 +235,7 @@ const resources = {
       "payroll": "كشف الرواتب",
       "salary_structures": "هيكل الرواتب",
       "advanced_reports": "التقارير المتقدمة",
+      "notification_settings": "إعدادات الإشعارات",
       
       // Analysis
       "analysis": "التحليل الذكي",
