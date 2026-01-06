@@ -7518,6 +7518,605 @@ async def get_hr_dashboard(current_user: dict = Depends(get_current_user)):
         "recent_expense_requests": recent_expenses
     }
 
+# ==================== FINANCIAL SYSTEM (النظام المالي) ====================
+
+# ---------- Chart of Accounts (شجرة الحسابات) ----------
+
+@api_router.get("/finance/accounts")
+async def get_all_accounts(
+    account_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب شجرة الحسابات"""
+    query = {"is_active": True}
+    if account_type:
+        query["account_type"] = account_type
+    
+    accounts = await db.chart_of_accounts.find(query, {"_id": 0}).sort("account_number", 1).to_list(1000)
+    return accounts
+
+@api_router.post("/finance/accounts")
+async def create_account(
+    account: Account,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """إنشاء حساب جديد"""
+    # Check if account number exists
+    existing = await db.chart_of_accounts.find_one({"account_number": account.account_number})
+    if existing:
+        raise HTTPException(status_code=400, detail="رقم الحساب موجود مسبقاً")
+    
+    await db.chart_of_accounts.insert_one(account.model_dump())
+    return {"message": "تم إنشاء الحساب بنجاح", "account": account.model_dump()}
+
+@api_router.put("/finance/accounts/{account_id}")
+async def update_account(
+    account_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """تحديث حساب"""
+    await db.chart_of_accounts.update_one(
+        {"id": account_id},
+        {"$set": data}
+    )
+    return {"message": "تم تحديث الحساب بنجاح"}
+
+# Initialize default accounts if none exist
+@api_router.post("/finance/accounts/initialize")
+async def initialize_chart_of_accounts(
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تهيئة شجرة الحسابات الافتراضية"""
+    existing = await db.chart_of_accounts.count_documents({})
+    if existing > 0:
+        return {"message": "شجرة الحسابات موجودة مسبقاً", "count": existing}
+    
+    default_accounts = [
+        # Assets - الأصول
+        {"account_number": "1000", "name": "الأصول", "account_type": "asset", "parent_id": None},
+        {"account_number": "1100", "name": "الأصول المتداولة", "account_type": "asset", "parent_id": "1000"},
+        {"account_number": "1110", "name": "النقدية والبنوك", "account_type": "asset", "parent_id": "1100"},
+        {"account_number": "1111", "name": "الصندوق", "account_type": "asset", "parent_id": "1110"},
+        {"account_number": "1112", "name": "البنك", "account_type": "asset", "parent_id": "1110"},
+        {"account_number": "1120", "name": "العملاء (المدينون)", "account_type": "asset", "parent_id": "1100"},
+        {"account_number": "1130", "name": "المخزون", "account_type": "asset", "parent_id": "1100"},
+        {"account_number": "1200", "name": "الأصول الثابتة", "account_type": "asset", "parent_id": "1000"},
+        {"account_number": "1210", "name": "المباني", "account_type": "asset", "parent_id": "1200"},
+        {"account_number": "1220", "name": "المعدات والآلات", "account_type": "asset", "parent_id": "1200"},
+        {"account_number": "1230", "name": "السيارات", "account_type": "asset", "parent_id": "1200"},
+        {"account_number": "1240", "name": "الأثاث والتجهيزات", "account_type": "asset", "parent_id": "1200"},
+        {"account_number": "1290", "name": "مجمع الإهلاك", "account_type": "asset", "parent_id": "1200"},
+        
+        # Liabilities - الخصوم
+        {"account_number": "2000", "name": "الخصوم", "account_type": "liability", "parent_id": None},
+        {"account_number": "2100", "name": "الخصوم المتداولة", "account_type": "liability", "parent_id": "2000"},
+        {"account_number": "2110", "name": "الموردون (الدائنون)", "account_type": "liability", "parent_id": "2100"},
+        {"account_number": "2120", "name": "الرواتب المستحقة", "account_type": "liability", "parent_id": "2100"},
+        {"account_number": "2130", "name": "الضرائب المستحقة", "account_type": "liability", "parent_id": "2100"},
+        {"account_number": "2200", "name": "الخصوم طويلة الأجل", "account_type": "liability", "parent_id": "2000"},
+        {"account_number": "2210", "name": "القروض", "account_type": "liability", "parent_id": "2200"},
+        
+        # Equity - حقوق الملكية
+        {"account_number": "3000", "name": "حقوق الملكية", "account_type": "equity", "parent_id": None},
+        {"account_number": "3100", "name": "رأس المال", "account_type": "equity", "parent_id": "3000"},
+        {"account_number": "3200", "name": "الأرباح المحتجزة", "account_type": "equity", "parent_id": "3000"},
+        
+        # Revenue - الإيرادات
+        {"account_number": "4000", "name": "الإيرادات", "account_type": "revenue", "parent_id": None},
+        {"account_number": "4100", "name": "إيرادات مبيعات الحليب", "account_type": "revenue", "parent_id": "4000"},
+        {"account_number": "4200", "name": "إيرادات أخرى", "account_type": "revenue", "parent_id": "4000"},
+        
+        # Expenses - المصروفات
+        {"account_number": "5000", "name": "المصروفات", "account_type": "expense", "parent_id": None},
+        {"account_number": "5100", "name": "تكلفة شراء الحليب", "account_type": "expense", "parent_id": "5000"},
+        {"account_number": "5200", "name": "الرواتب والأجور", "account_type": "expense", "parent_id": "5000"},
+        {"account_number": "5300", "name": "مصاريف التشغيل", "account_type": "expense", "parent_id": "5000"},
+        {"account_number": "5310", "name": "الكهرباء والماء", "account_type": "expense", "parent_id": "5300"},
+        {"account_number": "5320", "name": "الوقود والنقل", "account_type": "expense", "parent_id": "5300"},
+        {"account_number": "5330", "name": "الصيانة والإصلاح", "account_type": "expense", "parent_id": "5300"},
+        {"account_number": "5400", "name": "مصاريف إدارية", "account_type": "expense", "parent_id": "5000"},
+        {"account_number": "5500", "name": "مصاريف الإهلاك", "account_type": "expense", "parent_id": "5000"},
+    ]
+    
+    for acc in default_accounts:
+        account = Account(
+            account_number=acc["account_number"],
+            name=acc["name"],
+            account_type=acc["account_type"],
+            parent_id=acc.get("parent_id")
+        )
+        await db.chart_of_accounts.insert_one(account.model_dump())
+    
+    return {"message": "تم إنشاء شجرة الحسابات بنجاح", "count": len(default_accounts)}
+
+# ---------- Journal Entries (القيود اليومية) ----------
+
+@api_router.get("/finance/journal-entries")
+async def get_journal_entries(
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب القيود اليومية"""
+    query = {}
+    if status:
+        query["status"] = status
+    if start_date:
+        query["entry_date"] = {"$gte": start_date}
+    if end_date:
+        if "entry_date" in query:
+            query["entry_date"]["$lte"] = end_date
+        else:
+            query["entry_date"] = {"$lte": end_date}
+    
+    entries = await db.journal_entries.find(query, {"_id": 0}).sort("entry_date", -1).to_list(500)
+    
+    # Get lines for each entry
+    for entry in entries:
+        lines = await db.journal_entry_lines.find({"journal_entry_id": entry["id"]}, {"_id": 0}).to_list(100)
+        entry["lines"] = lines
+    
+    return entries
+
+@api_router.post("/finance/journal-entries")
+async def create_journal_entry(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """إنشاء قيد يومية جديد"""
+    # Generate entry number
+    count = await db.journal_entries.count_documents({})
+    entry_number = f"JV-{datetime.now().year}-{count + 1:05d}"
+    
+    lines = data.pop("lines", [])
+    
+    # Calculate totals
+    total_debit = sum(line.get("debit", 0) for line in lines)
+    total_credit = sum(line.get("credit", 0) for line in lines)
+    
+    if abs(total_debit - total_credit) > 0.01:
+        raise HTTPException(status_code=400, detail="القيد غير متوازن - المدين لا يساوي الدائن")
+    
+    entry = JournalEntry(
+        entry_number=entry_number,
+        entry_date=data.get("entry_date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        description=data.get("description", ""),
+        reference_type=data.get("reference_type"),
+        reference_id=data.get("reference_id"),
+        total_debit=total_debit,
+        total_credit=total_credit,
+        status="draft",
+        created_by=current_user["id"],
+        created_by_name=current_user["full_name"]
+    )
+    
+    await db.journal_entries.insert_one(entry.model_dump())
+    
+    # Insert lines
+    for line in lines:
+        entry_line = JournalEntryLine(
+            journal_entry_id=entry.id,
+            account_id=line["account_id"],
+            account_number=line["account_number"],
+            account_name=line["account_name"],
+            debit=line.get("debit", 0),
+            credit=line.get("credit", 0),
+            description=line.get("description")
+        )
+        await db.journal_entry_lines.insert_one(entry_line.model_dump())
+    
+    return {"message": "تم إنشاء القيد بنجاح", "entry_number": entry_number, "id": entry.id}
+
+@api_router.put("/finance/journal-entries/{entry_id}/post")
+async def post_journal_entry(
+    entry_id: str,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """ترحيل قيد يومية"""
+    entry = await db.journal_entries.find_one({"id": entry_id}, {"_id": 0})
+    if not entry:
+        raise HTTPException(status_code=404, detail="القيد غير موجود")
+    
+    if entry["status"] == "posted":
+        raise HTTPException(status_code=400, detail="القيد مرحل مسبقاً")
+    
+    # Update account balances
+    lines = await db.journal_entry_lines.find({"journal_entry_id": entry_id}, {"_id": 0}).to_list(100)
+    for line in lines:
+        balance_change = line["debit"] - line["credit"]
+        await db.chart_of_accounts.update_one(
+            {"id": line["account_id"]},
+            {"$inc": {"balance": balance_change}}
+        )
+    
+    await db.journal_entries.update_one(
+        {"id": entry_id},
+        {"$set": {
+            "status": "posted",
+            "posted_at": datetime.now(timezone.utc).isoformat(),
+            "posted_by": current_user["full_name"]
+        }}
+    )
+    
+    return {"message": "تم ترحيل القيد بنجاح"}
+
+# ---------- Fixed Assets (الأصول الثابتة) ----------
+
+@api_router.get("/finance/fixed-assets")
+async def get_fixed_assets(
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب الأصول الثابتة"""
+    query = {}
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    
+    assets = await db.fixed_assets.find(query, {"_id": 0}).sort("purchase_date", -1).to_list(500)
+    return assets
+
+@api_router.post("/finance/fixed-assets")
+async def create_fixed_asset(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """إضافة أصل ثابت جديد"""
+    # Generate asset number
+    count = await db.fixed_assets.count_documents({})
+    asset_number = f"FA-{count + 1:04d}"
+    
+    asset = FixedAsset(
+        asset_number=asset_number,
+        name=data["name"],
+        category=data["category"],
+        purchase_date=data["purchase_date"],
+        purchase_cost=data["purchase_cost"],
+        useful_life_years=data.get("useful_life_years", 5),
+        salvage_value=data.get("salvage_value", 0),
+        depreciation_method=data.get("depreciation_method", "straight_line"),
+        current_value=data["purchase_cost"],
+        location=data.get("location"),
+        assigned_to=data.get("assigned_to"),
+        notes=data.get("notes")
+    )
+    
+    await db.fixed_assets.insert_one(asset.model_dump())
+    return {"message": "تم إضافة الأصل بنجاح", "asset_number": asset_number}
+
+@api_router.post("/finance/fixed-assets/calculate-depreciation")
+async def calculate_depreciation(
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """حساب الإهلاك الشهري لجميع الأصول"""
+    assets = await db.fixed_assets.find({"status": "active"}, {"_id": 0}).to_list(500)
+    
+    depreciation_entries = []
+    
+    for asset in assets:
+        if asset["depreciation_method"] == "straight_line":
+            # القسط الثابت
+            annual_depreciation = (asset["purchase_cost"] - asset["salvage_value"]) / asset["useful_life_years"]
+            monthly_depreciation = annual_depreciation / 12
+            
+            new_accumulated = asset["accumulated_depreciation"] + monthly_depreciation
+            new_current_value = asset["purchase_cost"] - new_accumulated
+            
+            if new_current_value >= asset["salvage_value"]:
+                await db.fixed_assets.update_one(
+                    {"id": asset["id"]},
+                    {"$set": {
+                        "accumulated_depreciation": new_accumulated,
+                        "current_value": new_current_value
+                    }}
+                )
+                depreciation_entries.append({
+                    "asset_name": asset["name"],
+                    "depreciation": monthly_depreciation
+                })
+    
+    return {
+        "message": f"تم حساب الإهلاك لـ {len(depreciation_entries)} أصل",
+        "entries": depreciation_entries
+    }
+
+# ---------- Budgets (الميزانيات) ----------
+
+@api_router.get("/finance/budgets")
+async def get_budgets(
+    fiscal_year: Optional[int] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب الميزانيات"""
+    query = {}
+    if fiscal_year:
+        query["fiscal_year"] = fiscal_year
+    if status:
+        query["status"] = status
+    
+    budgets = await db.budgets.find(query, {"_id": 0}).sort("fiscal_year", -1).to_list(100)
+    
+    for budget in budgets:
+        lines = await db.budget_lines.find({"budget_id": budget["id"]}, {"_id": 0}).to_list(100)
+        budget["lines"] = lines
+        budget["total_budgeted"] = sum(l.get("budgeted_amount", 0) for l in lines)
+        budget["total_actual"] = sum(l.get("actual_amount", 0) for l in lines)
+    
+    return budgets
+
+@api_router.post("/finance/budgets")
+async def create_budget(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """إنشاء ميزانية جديدة"""
+    budget = Budget(
+        name=data["name"],
+        fiscal_year=data["fiscal_year"],
+        start_date=data["start_date"],
+        end_date=data["end_date"],
+        created_by=current_user["id"]
+    )
+    
+    await db.budgets.insert_one(budget.model_dump())
+    
+    # Create budget lines if provided
+    lines = data.get("lines", [])
+    for line in lines:
+        budget_line = BudgetLine(
+            budget_id=budget.id,
+            account_id=line["account_id"],
+            account_name=line["account_name"],
+            budgeted_amount=line.get("budgeted_amount", 0)
+        )
+        await db.budget_lines.insert_one(budget_line.model_dump())
+    
+    return {"message": "تم إنشاء الميزانية بنجاح", "id": budget.id}
+
+# ---------- Tax Records (الضرائب) ----------
+
+@api_router.get("/finance/taxes")
+async def get_tax_records(
+    tax_type: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب سجلات الضرائب"""
+    query = {}
+    if tax_type:
+        query["tax_type"] = tax_type
+    if status:
+        query["status"] = status
+    
+    records = await db.tax_records.find(query, {"_id": 0}).sort("period_end", -1).to_list(200)
+    return records
+
+@api_router.post("/finance/taxes")
+async def create_tax_record(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant"]))
+):
+    """إنشاء سجل ضريبي"""
+    tax_amount = data["taxable_amount"] * (data["tax_rate"] / 100)
+    
+    record = TaxRecord(
+        tax_type=data["tax_type"],
+        period=data["period"],
+        period_start=data["period_start"],
+        period_end=data["period_end"],
+        taxable_amount=data["taxable_amount"],
+        tax_rate=data["tax_rate"],
+        tax_amount=tax_amount,
+        due_date=data.get("due_date"),
+        notes=data.get("notes")
+    )
+    
+    await db.tax_records.insert_one(record.model_dump())
+    return {"message": "تم إنشاء السجل الضريبي بنجاح", "id": record.id, "tax_amount": tax_amount}
+
+# ---------- Accounts Payable (الحسابات الدائنة) ----------
+
+@api_router.get("/finance/accounts-payable")
+async def get_accounts_payable(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب الحسابات الدائنة (مستحقات الموردين)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    records = await db.accounts_payable.find(query, {"_id": 0}).sort("due_date", 1).to_list(500)
+    return records
+
+@api_router.get("/finance/accounts-payable/summary")
+async def get_accounts_payable_summary(current_user: dict = Depends(get_current_user)):
+    """ملخص الحسابات الدائنة"""
+    records = await db.accounts_payable.find({}, {"_id": 0}).to_list(1000)
+    
+    total_payable = sum(r.get("balance", 0) for r in records)
+    overdue = [r for r in records if r["status"] != "paid" and r["due_date"] < datetime.now(timezone.utc).strftime("%Y-%m-%d")]
+    
+    return {
+        "total_payable": total_payable,
+        "total_records": len(records),
+        "unpaid_count": len([r for r in records if r["status"] == "unpaid"]),
+        "partial_count": len([r for r in records if r["status"] == "partial"]),
+        "overdue_count": len(overdue),
+        "overdue_amount": sum(r.get("balance", 0) for r in overdue)
+    }
+
+# ---------- Accounts Receivable (الحسابات المدينة) ----------
+
+@api_router.get("/finance/accounts-receivable")
+async def get_accounts_receivable(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب الحسابات المدينة (مستحقات من العملاء)"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    records = await db.accounts_receivable.find(query, {"_id": 0}).sort("due_date", 1).to_list(500)
+    return records
+
+@api_router.get("/finance/accounts-receivable/summary")
+async def get_accounts_receivable_summary(current_user: dict = Depends(get_current_user)):
+    """ملخص الحسابات المدينة"""
+    records = await db.accounts_receivable.find({}, {"_id": 0}).to_list(1000)
+    
+    total_receivable = sum(r.get("balance", 0) for r in records)
+    overdue = [r for r in records if r["status"] != "paid" and r["due_date"] < datetime.now(timezone.utc).strftime("%Y-%m-%d")]
+    
+    return {
+        "total_receivable": total_receivable,
+        "total_records": len(records),
+        "unpaid_count": len([r for r in records if r["status"] == "unpaid"]),
+        "partial_count": len([r for r in records if r["status"] == "partial"]),
+        "overdue_count": len(overdue),
+        "overdue_amount": sum(r.get("balance", 0) for r in overdue)
+    }
+
+# ---------- Financial Reports (التقارير المالية) ----------
+
+@api_router.get("/finance/reports/trial-balance")
+async def get_trial_balance(
+    as_of_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """ميزان المراجعة"""
+    accounts = await db.chart_of_accounts.find({"is_active": True}, {"_id": 0}).sort("account_number", 1).to_list(1000)
+    
+    total_debit = 0
+    total_credit = 0
+    
+    for acc in accounts:
+        balance = acc.get("balance", 0)
+        if balance >= 0:
+            acc["debit_balance"] = balance
+            acc["credit_balance"] = 0
+            total_debit += balance
+        else:
+            acc["debit_balance"] = 0
+            acc["credit_balance"] = abs(balance)
+            total_credit += abs(balance)
+    
+    return {
+        "accounts": accounts,
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+        "is_balanced": abs(total_debit - total_credit) < 0.01
+    }
+
+@api_router.get("/finance/reports/income-statement")
+async def get_income_statement(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """قائمة الدخل"""
+    revenue_accounts = await db.chart_of_accounts.find(
+        {"account_type": "revenue", "is_active": True}, {"_id": 0}
+    ).to_list(100)
+    
+    expense_accounts = await db.chart_of_accounts.find(
+        {"account_type": "expense", "is_active": True}, {"_id": 0}
+    ).to_list(100)
+    
+    total_revenue = sum(abs(acc.get("balance", 0)) for acc in revenue_accounts)
+    total_expenses = sum(abs(acc.get("balance", 0)) for acc in expense_accounts)
+    net_income = total_revenue - total_expenses
+    
+    return {
+        "revenue": revenue_accounts,
+        "total_revenue": total_revenue,
+        "expenses": expense_accounts,
+        "total_expenses": total_expenses,
+        "net_income": net_income,
+        "period": {"start": start_date, "end": end_date}
+    }
+
+@api_router.get("/finance/reports/balance-sheet")
+async def get_balance_sheet(
+    as_of_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """الميزانية العمومية"""
+    assets = await db.chart_of_accounts.find(
+        {"account_type": "asset", "is_active": True}, {"_id": 0}
+    ).to_list(100)
+    
+    liabilities = await db.chart_of_accounts.find(
+        {"account_type": "liability", "is_active": True}, {"_id": 0}
+    ).to_list(100)
+    
+    equity = await db.chart_of_accounts.find(
+        {"account_type": "equity", "is_active": True}, {"_id": 0}
+    ).to_list(100)
+    
+    total_assets = sum(acc.get("balance", 0) for acc in assets)
+    total_liabilities = sum(abs(acc.get("balance", 0)) for acc in liabilities)
+    total_equity = sum(abs(acc.get("balance", 0)) for acc in equity)
+    
+    return {
+        "assets": assets,
+        "total_assets": total_assets,
+        "liabilities": liabilities,
+        "total_liabilities": total_liabilities,
+        "equity": equity,
+        "total_equity": total_equity,
+        "is_balanced": abs(total_assets - (total_liabilities + total_equity)) < 0.01,
+        "as_of_date": as_of_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    }
+
+@api_router.get("/finance/dashboard")
+async def get_finance_dashboard(current_user: dict = Depends(get_current_user)):
+    """لوحة تحكم النظام المالي"""
+    # Get account summaries
+    assets = await db.chart_of_accounts.find({"account_type": "asset"}, {"_id": 0}).to_list(100)
+    liabilities = await db.chart_of_accounts.find({"account_type": "liability"}, {"_id": 0}).to_list(100)
+    revenue = await db.chart_of_accounts.find({"account_type": "revenue"}, {"_id": 0}).to_list(100)
+    expenses = await db.chart_of_accounts.find({"account_type": "expense"}, {"_id": 0}).to_list(100)
+    
+    # Get recent transactions
+    recent_entries = await db.journal_entries.find(
+        {"status": "posted"}, {"_id": 0}
+    ).sort("posted_at", -1).limit(10).to_list(10)
+    
+    # Get AP/AR summaries
+    ap_total = await db.accounts_payable.aggregate([
+        {"$match": {"status": {"$ne": "paid"}}},
+        {"$group": {"_id": None, "total": {"$sum": "$balance"}}}
+    ]).to_list(1)
+    
+    ar_total = await db.accounts_receivable.aggregate([
+        {"$match": {"status": {"$ne": "paid"}}},
+        {"$group": {"_id": None, "total": {"$sum": "$balance"}}}
+    ]).to_list(1)
+    
+    # Get fixed assets summary
+    fixed_assets = await db.fixed_assets.find({"status": "active"}, {"_id": 0}).to_list(500)
+    
+    return {
+        "summary": {
+            "total_assets": sum(a.get("balance", 0) for a in assets),
+            "total_liabilities": sum(abs(l.get("balance", 0)) for l in liabilities),
+            "total_revenue": sum(abs(r.get("balance", 0)) for r in revenue),
+            "total_expenses": sum(abs(e.get("balance", 0)) for e in expenses),
+            "accounts_payable": ap_total[0]["total"] if ap_total else 0,
+            "accounts_receivable": ar_total[0]["total"] if ar_total else 0,
+            "fixed_assets_value": sum(a.get("current_value", 0) for a in fixed_assets),
+            "fixed_assets_count": len(fixed_assets)
+        },
+        "recent_entries": recent_entries
+    }
+
 # ==================== REPORTS EXPORT (تصدير التقارير) ====================
 
 @api_router.get("/reports/export/suppliers/excel")
