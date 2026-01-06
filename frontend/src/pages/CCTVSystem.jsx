@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import {
@@ -20,7 +20,6 @@ import {
   Settings,
   RefreshCw,
   Play,
-  Eye,
   Trash2,
   Edit,
   Activity,
@@ -31,7 +30,7 @@ import {
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function CCTVSystem() {
+const CCTVSystem = () => {
   const { t } = useTranslation();
   const [cameras, setCameras] = useState([]);
   const [events, setEvents] = useState([]);
