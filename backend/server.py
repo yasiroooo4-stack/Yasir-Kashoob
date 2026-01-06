@@ -11240,6 +11240,10 @@ async def root():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Include CCTV router
+from routes.cctv_routes import router as cctv_router
+app.include_router(cctv_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
