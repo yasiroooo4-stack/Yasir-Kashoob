@@ -2824,6 +2824,20 @@ async def create_milk_reception(reception_data: MilkReceptionCreate, current_use
         details=f"استلام حليب: {reception.quantity_liters} لتر من {reception.supplier_name}"
     )
     
+    # === AUTO JOURNAL ENTRY: Milk Purchase ===
+    # Dr: مشتريات الحليب (5100) / Cr: الموردين (2110)
+    await create_auto_journal_entry(
+        description=f"شراء حليب من {reception.supplier_name} - {reception.quantity_liters} لتر",
+        lines=[
+            {"account_number": "5100", "debit": reception.total_amount, "credit": 0, "description": "تكلفة شراء الحليب"},
+            {"account_number": "2110", "debit": 0, "credit": reception.total_amount, "description": f"مستحق للمورد {reception.supplier_name}"}
+        ],
+        reference_type="milk_purchase",
+        reference_id=reception.id,
+        created_by_id=current_user["id"],
+        created_by_name=current_user["full_name"]
+    )
+    
     return reception
 
 @api_router.get("/milk-receptions", response_model=List[MilkReception])
