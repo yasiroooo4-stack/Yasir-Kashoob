@@ -60,6 +60,7 @@ export default function CCTVSystem() {
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   useEffect(() => {
+    console.log('CCTVSystem mounted');
     fetchDashboard();
     fetchCameras();
     fetchEvents();
