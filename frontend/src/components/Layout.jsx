@@ -32,6 +32,7 @@ import {
   PackageSearch,
   CalendarClock,
   Landmark,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
