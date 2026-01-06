@@ -236,6 +236,7 @@ const resources = {
       "salary_structures": "هيكل الرواتب",
       "advanced_reports": "التقارير المتقدمة",
       "notification_settings": "إعدادات الإشعارات",
+      "cctv_system": "نظام الكاميرات",
       
       // Analysis
       "analysis": "التحليل الذكي",
