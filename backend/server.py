@@ -865,16 +865,33 @@ class PayrollRecord(BaseModel):
     otp_days: int = 0  # عطل بصمة OTP
     # Overtime
     total_overtime_hours: float = 0.0  # إجمالي ساعات العمل الإضافي
-    # Salary calculation
-    basic_salary: float = 0.0
-    daily_rate: float = 0.0
-    hourly_rate: float = 0.0  # سعر الساعة
-    total_pay_days: int = 0  # إجمالي الأيام المستحقة
-    gross_salary: float = 0.0  # الراتب الإجمالي
-    deductions: float = 0.0  # الخصومات
-    overtime_pay: float = 0.0  # بدل العمل الإضافي
-    allowances: float = 0.0  # البدلات
-    net_salary: float = 0.0  # صافي الراتب
+    # Salary calculation - Enhanced with detailed allowances
+    basic_salary: float = 0.0              # الراتب الأساسي
+    daily_rate: float = 0.0                # المعدل اليومي
+    hourly_rate: float = 0.0               # سعر الساعة
+    total_pay_days: int = 0                # إجمالي الأيام المستحقة
+    # Detailed Allowances (البدلات المفصلة)
+    housing_allowance: float = 0.0         # بدل السكن
+    transportation_allowance: float = 0.0  # بدل النقل
+    food_allowance: float = 0.0            # بدل الطعام
+    phone_allowance: float = 0.0           # بدل الهاتف
+    fuel_allowance: float = 0.0            # بدل الوقود
+    education_allowance: float = 0.0       # بدل التعليم
+    medical_allowance: float = 0.0         # بدل طبي
+    special_allowance: float = 0.0         # بدل خاص
+    other_allowance: float = 0.0           # بدلات أخرى
+    total_allowances: float = 0.0          # إجمالي البدلات
+    # Legacy field (kept for backward compatibility)
+    allowances: float = 0.0                # البدلات (قديم)
+    # Salary totals
+    gross_salary: float = 0.0              # الراتب الإجمالي
+    deductions: float = 0.0                # الخصومات
+    loan_deduction: float = 0.0            # خصم القرض
+    absence_deduction: float = 0.0         # خصم الغياب
+    other_deduction: float = 0.0           # خصومات أخرى
+    total_deductions: float = 0.0          # إجمالي الخصومات
+    overtime_pay: float = 0.0              # بدل العمل الإضافي
+    net_salary: float = 0.0                # صافي الراتب
     notes: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
