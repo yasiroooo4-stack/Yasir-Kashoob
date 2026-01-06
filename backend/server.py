@@ -10953,7 +10953,9 @@ async def create_public_holiday(
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db.public_holidays.insert_one(holiday)
+    await db.public_holidays.insert_one(dict(holiday))
+    
+    # Return without _id
     return {"message": "تم إضافة العطلة الرسمية بنجاح", "holiday": holiday}
 
 @api_router.delete("/hr/public-holidays/{holiday_id}")
