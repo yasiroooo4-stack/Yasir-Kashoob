@@ -428,7 +428,7 @@ const FinanceSystem = () => {
                   {accounts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        لا توجد حسابات - اضغط "تهيئة شجرة الحسابات" للبدء
+                        لا توجد حسابات - اضغط &quot;تهيئة شجرة الحسابات&quot; للبدء
                       </TableCell>
                     </TableRow>
                   ) : (
