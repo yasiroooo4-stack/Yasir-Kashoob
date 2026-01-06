@@ -9524,9 +9524,7 @@ async def delete_public_holiday(
 
 # ==================== AI ANALYSIS (التحليل الذكي) ====================
 
-class AnalysisRequest(BaseModel):
-    question: str
-    category: Optional[str] = "general"  # general, hr, attendance, sales, milk
+# Model imported from models/all_models.py: AnalysisRequest
 
 # Initialize Gemini chat with Emergent key
 def get_llm_chat(session_id: str = "analysis"):
