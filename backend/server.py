@@ -3568,7 +3568,7 @@ async def get_employee_work_location(employee_id: str) -> str:
     return employee.get("work_location") if employee else None
 
 
-@api_router.put("/hr/employees/bulk-set-weekly-off")
+@api_router.post("/hr/bulk-update-weekly-off")
 async def bulk_set_weekly_off_days(
     data: dict,
     current_user: dict = Depends(require_role(["admin"]))
