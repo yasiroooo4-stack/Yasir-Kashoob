@@ -357,7 +357,7 @@ const Legal = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-4xl grid-cols-6">
           <TabsTrigger value="contracts" className="gap-2">
             <FileText className="w-4 h-4" />
             {language === "ar" ? "العقود" : "Contracts"}
@@ -373,6 +373,14 @@ const Legal = () => {
           <TabsTrigger value="documents" className="gap-2">
             <FolderOpen className="w-4 h-4" />
             {language === "ar" ? "المستندات" : "Documents"}
+          </TabsTrigger>
+          <TabsTrigger value="reviews" className="gap-2">
+            <Eye className="w-4 h-4" />
+            {language === "ar" ? "المراجعات" : "Reviews"}
+          </TabsTrigger>
+          <TabsTrigger value="waivers" className="gap-2">
+            <Scale className="w-4 h-4" />
+            {language === "ar" ? "التنازلات" : "Waivers"}
           </TabsTrigger>
         </TabsList>
 
