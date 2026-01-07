@@ -2233,6 +2233,127 @@ const CCTVSystem = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Add Hik-Connect Device Dialog */}
+      <Dialog open={showAddDevice} onOpenChange={setShowAddDevice}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-red-500" />
+              إضافة جهاز Hikvision جديد
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <p className="text-sm text-red-700">
+                أدخل بيانات الجهاز (NVR/DVR/Camera) للاتصال مباشرة عبر الشبكة المحلية
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label>عنوان IP الجهاز *</Label>
+                <Input
+                  placeholder="192.168.1.64"
+                  value={newDeviceForm.host}
+                  onChange={(e) => setNewDeviceForm({...newDeviceForm, host: e.target.value})}
+                  data-testid="hikconnect-host-input"
+                />
+              </div>
+              <div>
+                <Label>منفذ HTTP</Label>
+                <Input
+                  type="number"
+                  value={newDeviceForm.port}
+                  onChange={(e) => setNewDeviceForm({...newDeviceForm, port: parseInt(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label>منفذ RTSP</Label>
+                <Input
+                  type="number"
+                  value={newDeviceForm.rtsp_port}
+                  onChange={(e) => setNewDeviceForm({...newDeviceForm, rtsp_port: parseInt(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label>اسم المستخدم *</Label>
+                <Input
+                  placeholder="admin"
+                  value={newDeviceForm.username}
+                  onChange={(e) => setNewDeviceForm({...newDeviceForm, username: e.target.value})}
+                  data-testid="hikconnect-username-input"
+                />
+              </div>
+              <div>
+                <Label>كلمة المرور *</Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={newDeviceForm.password}
+                  onChange={(e) => setNewDeviceForm({...newDeviceForm, password: e.target.value})}
+                  data-testid="hikconnect-password-input"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label>اسم الجهاز (اختياري)</Label>
+                <Input
+                  placeholder="مركز المراقبة الرئيسي"
+                  value={newDeviceForm.device_name}
+                  onChange={(e) => setNewDeviceForm({...newDeviceForm, device_name: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2 justify-end pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowAddDevice(false)}>إلغاء</Button>
+              <Button 
+                className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600"
+                onClick={handleConnectDevice}
+                disabled={connectingDevice}
+                data-testid="hikconnect-connect-btn"
+              >
+                {connectingDevice ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 ml-2 animate-spin" />
+                    جاري الاتصال...
+                  </>
+                ) : (
+                  <>
+                    <Wifi className="h-4 w-4 ml-2" />
+                    اتصال
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Snapshot Preview Dialog */}
+      {snapshot && (
+        <Dialog open={!!snapshot} onOpenChange={() => setSnapshot(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>لقطة مباشرة</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center">
+              <img src={snapshot} alt="Camera Snapshot" className="max-w-full rounded-lg shadow-lg" />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setSnapshot(null)}>إغلاق</Button>
+              <Button onClick={() => {
+                const link = document.createElement('a');
+                link.href = snapshot;
+                link.download = `snapshot_${Date.now()}.jpg`;
+                link.click();
+              }}>
+                تحميل الصورة
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Event Detection Settings in Main Settings Tab */}
       </div>
     </div>
