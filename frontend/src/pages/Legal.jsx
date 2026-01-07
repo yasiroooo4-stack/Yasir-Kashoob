@@ -33,12 +33,17 @@ const Legal = () => {
   const [consultations, setConsultations] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [dashboard, setDashboard] = useState({});
+  const [reviews, setReviews] = useState([]);
+  const [waivers, setWaivers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   
   // Dialog states
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [caseDialogOpen, setCaseDialogOpen] = useState(false);
   const [consultationDialogOpen, setConsultationDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [waiverDialogOpen, setWaiverDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   
   // Form states
@@ -58,10 +63,29 @@ const Legal = () => {
     document_type: "", title: "", description: "", issue_date: "",
     expiry_date: "", issuing_authority: "", reference_number: ""
   });
+  const [reviewForm, setReviewForm] = useState({
+    review_type: "", title: "", description: "", reviewer_name: "",
+    review_date: "", status: "pending", findings: "", recommendations: ""
+  });
+  const [waiverForm, setWaiverForm] = useState({
+    from_supplier_id: "", from_supplier_name: "", to_supplier_id: "", to_supplier_name: "",
+    quota_amount: 0, waiver_date: "", reason: "", notes: "", 
+    documents: [], status: "pending"
+  });
 
   useEffect(() => {
     fetchAllData();
+    fetchSuppliers();
   }, []);
+
+  const fetchSuppliers = async () => {
+    try {
+      const res = await axios.get(`${API}/suppliers`);
+      setSuppliers(res.data || []);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+    }
+  };
 
   const fetchAllData = async () => {
     try {
