@@ -209,3 +209,20 @@ GET  /api/reports/financial/monthly
 GET  /api/reports/centers/performance
 GET  /api/reports/inventory/alerts
 ```
+
+### أسعار الحليب (جديد):
+```
+GET  /api/settings/milk-prices
+POST /api/settings/milk-prices
+```
+
+---
+
+## الصفحات الرئيسية
+| الصفحة | الرابط | الوصف |
+|--------|--------|-------|
+| لوحة التحكم | `/dashboard` | الصفحة الرئيسية |
+| إعدادات المظهر | `/settings` | تغيير الثيمات والوضع الليلي |
+| إعدادات النظام | `/system-settings` | المراكز، الأسعار، الأعلاف |
+| نظام CCTV | `/cctv` | 5 خانات كاميرات |
+| الموارد البشرية | `/hr` | الموظفين والحضور |
