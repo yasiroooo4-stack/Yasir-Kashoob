@@ -351,6 +351,11 @@ function App() {
                     <AdvancedReports />
                   </ProtectedRoute>
                 } />
+                <Route path="settings" element={
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["admin", "it"]}>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
                 <Route path="system-settings" element={
                   <ProtectedRoute>
                     <SystemSettings />
