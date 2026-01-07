@@ -11626,6 +11626,10 @@ app.include_router(api_router)
 from routes.cctv_routes import router as cctv_router
 app.include_router(cctv_router)
 
+# Include Hik-Connect router
+from routes.hikconnect_routes import router as hikconnect_router
+app.include_router(hikconnect_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
