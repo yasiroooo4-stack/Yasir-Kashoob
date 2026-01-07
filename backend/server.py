@@ -7653,6 +7653,136 @@ async def get_legal_dashboard(current_user: dict = Depends(get_current_user)):
         "consultations_pending": consultations_pending
     }
 
+
+# ==================== LEGAL REVIEWS (المراجعات القانونية) ====================
+
+@api_router.get("/legal/reviews")
+async def get_legal_reviews(current_user: dict = Depends(get_current_user)):
+    """جلب جميع المراجعات القانونية"""
+    reviews = await db.legal_reviews.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return reviews
+
+@api_router.post("/legal/reviews")
+async def create_legal_review(data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء مراجعة قانونية جديدة"""
+    review = {
+        "id": str(uuid.uuid4()),
+        "review_type": data.get("review_type"),
+        "title": data.get("title"),
+        "description": data.get("description", ""),
+        "reviewer_name": data.get("reviewer_name"),
+        "review_date": data.get("review_date"),
+        "status": data.get("status", "pending"),
+        "findings": data.get("findings", ""),
+        "recommendations": data.get("recommendations", ""),
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.legal_reviews.insert_one(review)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_legal_review",
+        entity_type="legal_review",
+        entity_id=review["id"],
+        entity_name=review["title"],
+        details=f"مراجعة جديدة: {review['title']}"
+    )
+    
+    return {"message": "تم إنشاء المراجعة بنجاح", "id": review["id"]}
+
+@api_router.put("/legal/reviews/{review_id}")
+async def update_legal_review(review_id: str, data: dict, current_user: dict = Depends(get_current_user)):
+    """تحديث مراجعة قانونية"""
+    update_data = {k: v for k, v in data.items() if k not in ["id", "created_at", "created_by"]}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["updated_by"] = current_user["id"]
+    
+    result = await db.legal_reviews.update_one({"id": review_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="المراجعة غير موجودة")
+    
+    return {"message": "تم تحديث المراجعة بنجاح"}
+
+
+# ==================== SUPPLIER WAIVERS (تنازلات الموردين) ====================
+
+@api_router.get("/legal/waivers")
+async def get_supplier_waivers(current_user: dict = Depends(get_current_user)):
+    """جلب جميع تنازلات الموردين"""
+    waivers = await db.supplier_waivers.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return waivers
+
+@api_router.post("/legal/waivers")
+async def create_supplier_waiver(data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء تنازل جديد"""
+    waiver = {
+        "id": str(uuid.uuid4()),
+        "from_supplier_id": data.get("from_supplier_id"),
+        "from_supplier_name": data.get("from_supplier_name"),
+        "to_supplier_id": data.get("to_supplier_id"),
+        "to_supplier_name": data.get("to_supplier_name"),
+        "quota_amount": float(data.get("quota_amount", 0)),
+        "waiver_date": data.get("waiver_date"),
+        "reason": data.get("reason"),
+        "notes": data.get("notes", ""),
+        "documents": data.get("documents", []),
+        "status": data.get("status", "pending"),
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.supplier_waivers.insert_one(waiver)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_supplier_waiver",
+        entity_type="supplier_waiver",
+        entity_id=waiver["id"],
+        entity_name=f"{waiver['from_supplier_name']} → {waiver['to_supplier_name']}",
+        details=f"تنازل جديد: {waiver['from_supplier_name']} → {waiver['to_supplier_name']} ({waiver['quota_amount']} لتر)"
+    )
+    
+    return {"message": "تم إنشاء التنازل بنجاح", "id": waiver["id"]}
+
+@api_router.put("/legal/waivers/{waiver_id}")
+async def update_supplier_waiver(waiver_id: str, data: dict, current_user: dict = Depends(get_current_user)):
+    """تحديث تنازل"""
+    update_data = {k: v for k, v in data.items() if k not in ["id", "created_at", "created_by"]}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["updated_by"] = current_user["id"]
+    
+    result = await db.supplier_waivers.update_one({"id": waiver_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="التنازل غير موجود")
+    
+    # If approved, update supplier quotas
+    if data.get("status") == "approved":
+        # Update from_supplier quota
+        await db.suppliers.update_one(
+            {"id": data.get("from_supplier_id")},
+            {"$inc": {"quota": -float(data.get("quota_amount", 0))}}
+        )
+        # Update to_supplier quota
+        await db.suppliers.update_one(
+            {"id": data.get("to_supplier_id")},
+            {"$inc": {"quota": float(data.get("quota_amount", 0))}}
+        )
+    
+    return {"message": "تم تحديث التنازل بنجاح"}
+
+@api_router.get("/legal/waivers/{waiver_id}")
+async def get_supplier_waiver(waiver_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل تنازل"""
+    waiver = await db.supplier_waivers.find_one({"id": waiver_id}, {"_id": 0})
+    if not waiver:
+        raise HTTPException(status_code=404, detail="التنازل غير موجود")
+    return waiver
+
+
 # ==================== PROJECTS MODULE ROUTES (قسم المشاريع) ====================
 
 # Projects
