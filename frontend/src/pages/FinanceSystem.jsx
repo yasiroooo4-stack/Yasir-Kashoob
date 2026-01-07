@@ -906,14 +906,47 @@ const FinanceSystem = () => {
 
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
+          {/* Export Buttons */}
+          <div className="flex flex-wrap gap-3 justify-end">
+            <Button 
+              onClick={exportAllReportsToExcel} 
+              variant="outline" 
+              className="gap-2 bg-green-50 hover:bg-green-100 border-green-300"
+              data-testid="export-all-excel-btn"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-green-600" />
+              <span>تصدير الكل Excel</span>
+            </Button>
+            <Button 
+              onClick={exportReportsToPDF} 
+              variant="outline" 
+              className="gap-2 bg-red-50 hover:bg-red-100 border-red-300"
+              data-testid="export-all-pdf-btn"
+            >
+              <Download className="w-4 h-4 text-red-600" />
+              <span>تصدير PDF</span>
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Trial Balance */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  ميزان المراجعة
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    ميزان المراجعة
+                  </CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={exportTrialBalanceToExcel}
+                    className="gap-1"
+                    data-testid="export-trial-balance-btn"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </Button>
+                </div>
                 <CardDescription>
                   {trialBalance?.is_balanced ? (
                     <span className="text-green-600 flex items-center gap-1">
@@ -949,10 +982,21 @@ const FinanceSystem = () => {
             {/* Income Statement */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  قائمة الدخل
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    قائمة الدخل
+                  </CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={exportIncomeStatementToExcel}
+                    className="gap-1"
+                    data-testid="export-income-statement-btn"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
