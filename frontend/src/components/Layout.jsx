@@ -36,6 +36,7 @@ import {
   PieChart,
   Bell,
   Video,
+  Palette,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
