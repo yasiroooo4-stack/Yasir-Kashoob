@@ -766,10 +766,22 @@ const FinanceSystem = () => {
         <TabsContent value="journal" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-bold">القيود اليومية</h2>
-            <Button onClick={() => setJournalDialogOpen(true)}>
-              <Plus className="w-4 h-4 me-2" />
-              قيد جديد
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={exportJournalEntriesToExcel}
+                className="gap-2 bg-green-50 hover:bg-green-100 border-green-300"
+                disabled={journalEntries.length === 0}
+                data-testid="export-journal-excel-btn"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                تصدير Excel
+              </Button>
+              <Button onClick={() => setJournalDialogOpen(true)}>
+                <Plus className="w-4 h-4 me-2" />
+                قيد جديد
+              </Button>
+            </div>
           </div>
 
           <Card>
