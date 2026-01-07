@@ -1029,10 +1029,21 @@ const FinanceSystem = () => {
             {/* Balance Sheet */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5" />
-                  الميزانية العمومية
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5" />
+                    الميزانية العمومية
+                  </CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={exportBalanceSheetToExcel}
+                    className="gap-1"
+                    data-testid="export-balance-sheet-btn"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </Button>
+                </div>
                 <CardDescription>
                   كما في {balanceSheet?.as_of_date}
                 </CardDescription>
