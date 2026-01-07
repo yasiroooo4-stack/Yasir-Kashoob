@@ -201,30 +201,182 @@ const CCTVSystem = () => {
     }
     
     setStreamingDevice(device);
+    setLoadingSnapshot(true);
     
     try {
       // Get stream URL from backend
-      const res = await fetch(`${API_URL}/api/cctv/hikvision/stream/${device.id || device.name}`, { headers });
+      const res = await fetch(`${API_URL}/api/cctv/stream/start`, { 
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          camera_id: device.id || device.name,
+          quality: 'main',
+          protocol: 'rtsp'
+        })
+      });
       if (res.ok) {
         const data = await res.json();
-        setStreamUrl(data.stream_url || '');
+        setStreamUrl(data.stream_urls?.rtsp || '');
+        
+        // Also get snapshot
+        const snapshotRes = await fetch(`${API_URL}/api/cctv/stream/snapshot/${device.id || device.name}`, { headers });
+        if (snapshotRes.ok) {
+          const snapshotData = await snapshotRes.json();
+          setSnapshot(snapshotData.snapshot);
+        }
       }
     } catch (error) {
       console.error('Error getting stream URL:', error);
+      toast.error('فشل في جلب البث');
     }
     
+    setLoadingSnapshot(false);
     setShowLiveStream(true);
   };
 
-  const handleViewRecordings = async (device) => {
+  const handleGetSnapshot = async (device) => {
+    setLoadingSnapshot(true);
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/stream/snapshot/${device.id || device.name}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setSnapshot(data.snapshot);
+        toast.success('تم جلب الصورة');
+      } else {
+        toast.error('فشل في جلب الصورة');
+      }
+    } catch (error) {
+      toast.error('خطأ في الاتصال');
+    }
+    setLoadingSnapshot(false);
+  };
+
+  // Playback Functions
+  const handleOpenPlayback = (device) => {
     if (!device.is_online) {
       toast.error('الجهاز غير متصل');
       return;
     }
-    toast.info('جاري تحميل التسجيلات...');
-    // Navigate to recordings or open dialog
-    setSelectedCamera(device);
-    setActiveTab('events');
+    
+    setPlaybackDevice(device);
+    // Set default times (last 24 hours)
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    setPlaybackStartTime(yesterday.toISOString().slice(0, 16));
+    setPlaybackEndTime(now.toISOString().slice(0, 16));
+    setRecordings([]);
+    setShowPlayback(true);
+  };
+
+  const handleSearchRecordings = async () => {
+    if (!playbackDevice) return;
+    
+    setSearchingRecordings(true);
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/playback/search`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          camera_id: playbackDevice.id || playbackDevice.name,
+          start_time: playbackStartTime,
+          end_time: playbackEndTime,
+          channel: playbackDevice.channel || 1
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setRecordings(data.recordings || []);
+        if (data.recordings?.length === 0) {
+          toast.info('لا توجد تسجيلات في هذه الفترة');
+        } else {
+          toast.success(`تم العثور على ${data.recordings.length} تسجيل`);
+        }
+      }
+    } catch (error) {
+      toast.error('خطأ في البحث');
+    }
+    setSearchingRecordings(false);
+  };
+
+  const handleStartPlayback = async (recording) => {
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/playback/start`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          camera_id: playbackDevice.id || playbackDevice.name,
+          start_time: recording.start_time,
+          end_time: recording.end_time,
+          channel: playbackDevice.channel || 1
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // Open playback URL or show in player
+        if (data.playback_url) {
+          toast.success('جاري تشغيل التسجيل');
+          // Could open in new window or embedded player
+          window.open(data.playback_url, '_blank');
+        }
+      }
+    } catch (error) {
+      toast.error('فشل في تشغيل التسجيل');
+    }
+  };
+
+  // Export Functions
+  const handleOpenExport = (device) => {
+    setExportRequest({
+      camera_id: device?.id || device?.name || '',
+      start_time: '',
+      end_time: '',
+      format: 'mp4'
+    });
+    fetchExportJobs();
+    setShowExport(true);
+  };
+
+  const fetchExportJobs = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/export/list`, { headers });
+      if (res.ok) {
+        const jobs = await res.json();
+        setExportJobs(jobs);
+      }
+    } catch (error) {
+      console.error('Error fetching export jobs:', error);
+    }
+  };
+
+  const handleRequestExport = async () => {
+    if (!exportRequest.start_time || !exportRequest.end_time) {
+      toast.error('يرجى تحديد وقت البداية والنهاية');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/export/request`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(exportRequest)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        toast.success('تم إنشاء طلب التصدير');
+        fetchExportJobs();
+      } else {
+        toast.error('فشل في إنشاء الطلب');
+      }
+    } catch (error) {
+      toast.error('خطأ في الاتصال');
+    }
+  };
+
+  const handleViewRecordings = async (device) => {
+    handleOpenPlayback(device);
   };
 
   const handleViewEvents = async (device) => {
