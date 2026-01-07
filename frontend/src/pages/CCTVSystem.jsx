@@ -1167,70 +1167,132 @@ const CCTVSystem = () => {
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>إعدادات CCTV</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              إعدادات CCTV
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>رابط نظام الألبان</Label>
-              <Input
-                value={settings.dairy_system_url || ''}
-                onChange={(e) => setSettings({...settings, dairy_system_url: e.target.value})}
-                placeholder="https://dairy-system.com"
-              />
+            {/* Dairy System Integration */}
+            <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-blue-700">🔗 ربط نظام الألبان</h3>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-700"
+                  onClick={() => {
+                    setSettings({
+                      ...settings, 
+                      dairy_system_url: 'https://dairy-erp-1.preview.emergentagent.com',
+                      dairy_api_key: 'sk-emergent-57a636238E2E8C04f1'
+                    });
+                    toast.success('تم تحديث البيانات تلقائياً');
+                  }}
+                  data-testid="auto-fill-settings-btn"
+                >
+                  <RefreshCw className="h-4 w-4 ml-1" />
+                  تحديث تلقائي
+                </Button>
+              </div>
+              <div>
+                <Label>رابط نظام الألبان</Label>
+                <Input
+                  value={settings.dairy_system_url || ''}
+                  onChange={(e) => setSettings({...settings, dairy_system_url: e.target.value})}
+                  placeholder="https://dairy-system.com"
+                  className="bg-white"
+                  data-testid="dairy-system-url-input"
+                />
+              </div>
+              <div>
+                <Label>API Key</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="password"
+                    value={settings.dairy_api_key || ''}
+                    onChange={(e) => setSettings({...settings, dairy_api_key: e.target.value})}
+                    className="bg-white"
+                    data-testid="dairy-api-key-input"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => {
+                      const input = document.querySelector('[data-testid="dairy-api-key-input"]');
+                      if (input) {
+                        input.type = input.type === 'password' ? 'text' : 'password';
+                      }
+                    }}
+                  >
+                    👁
+                  </Button>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="w-full bg-white" 
+                onClick={handleTestConnection}
+                data-testid="test-connection-btn"
+              >
+                <Wifi className="h-4 w-4 ml-2" />
+                اختبار الاتصال بنظام الألبان
+              </Button>
             </div>
-            <div>
-              <Label>API Key</Label>
-              <Input
-                type="password"
-                value={settings.dairy_api_key || ''}
-                onChange={(e) => setSettings({...settings, dairy_api_key: e.target.value})}
-              />
+
+            {/* Sync Settings */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <Label className="text-sm">المزامنة التلقائية</Label>
+                <input
+                  type="checkbox"
+                  checked={settings.auto_sync_enabled || false}
+                  onChange={(e) => setSettings({...settings, auto_sync_enabled: e.target.checked})}
+                  className="h-5 w-5 accent-blue-600"
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <Label className="text-sm">كشف الحركة</Label>
+                <input
+                  type="checkbox"
+                  checked={settings.motion_detection_enabled !== false}
+                  onChange={(e) => setSettings({...settings, motion_detection_enabled: e.target.checked})}
+                  className="h-5 w-5 accent-green-600"
+                />
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Label>المزامنة التلقائية</Label>
-              <input
-                type="checkbox"
-                checked={settings.auto_sync_enabled || false}
-                onChange={(e) => setSettings({...settings, auto_sync_enabled: e.target.checked})}
-                className="h-4 w-4"
-              />
-            </div>
-            <div>
-              <Label>كشف الحركة</Label>
-              <input
-                type="checkbox"
-                checked={settings.motion_detection_enabled !== false}
-                onChange={(e) => setSettings({...settings, motion_detection_enabled: e.target.checked})}
-                className="h-4 w-4 mr-2"
-              />
-            </div>
-            <div>
-              <Label>بريد التنبيهات</Label>
-              <Input
-                type="email"
-                value={settings.alert_email || ''}
-                onChange={(e) => setSettings({...settings, alert_email: e.target.value})}
-                placeholder="alerts@company.com"
-              />
-            </div>
-            <div>
-              <Label>مدة الاحتفاظ بالتسجيلات (أيام)</Label>
-              <Input
-                type="number"
-                value={settings.retention_days || 30}
-                onChange={(e) => setSettings({...settings, retention_days: parseInt(e.target.value)})}
-              />
+
+            {/* Alerts & Retention */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>بريد التنبيهات</Label>
+                <Input
+                  type="email"
+                  value={settings.alert_email || ''}
+                  onChange={(e) => setSettings({...settings, alert_email: e.target.value})}
+                  placeholder="alerts@company.com"
+                />
+              </div>
+              <div>
+                <Label>مدة الاحتفاظ (أيام)</Label>
+                <Input
+                  type="number"
+                  value={settings.retention_days || 30}
+                  onChange={(e) => setSettings({...settings, retention_days: parseInt(e.target.value)})}
+                  min={1}
+                  max={365}
+                />
+              </div>
             </div>
             
-            <Button variant="outline" className="w-full" onClick={handleTestConnection}>
-              اختبار الاتصال بنظام الألبان
-            </Button>
-            
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-end pt-4 border-t">
               <Button variant="outline" onClick={() => setShowSettings(false)}>إلغاء</Button>
-              <Button onClick={handleSaveSettings}>حفظ</Button>
+              <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+                <CheckCircle className="h-4 w-4 ml-2" />
+                حفظ الإعدادات
+              </Button>
             </div>
           </div>
         </DialogContent>
