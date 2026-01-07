@@ -65,6 +65,28 @@ const CCTVSystem = () => {
   const [deviceEvents, setDeviceEvents] = useState([]);
   const [selectedDeviceForEvents, setSelectedDeviceForEvents] = useState(null);
   
+  // Playback State
+  const [showPlayback, setShowPlayback] = useState(false);
+  const [playbackDevice, setPlaybackDevice] = useState(null);
+  const [playbackStartTime, setPlaybackStartTime] = useState('');
+  const [playbackEndTime, setPlaybackEndTime] = useState('');
+  const [recordings, setRecordings] = useState([]);
+  const [searchingRecordings, setSearchingRecordings] = useState(false);
+  
+  // Export State
+  const [showExport, setShowExport] = useState(false);
+  const [exportJobs, setExportJobs] = useState([]);
+  const [exportRequest, setExportRequest] = useState({
+    camera_id: '',
+    start_time: '',
+    end_time: '',
+    format: 'mp4'
+  });
+  
+  // Snapshot State
+  const [snapshot, setSnapshot] = useState(null);
+  const [loadingSnapshot, setLoadingSnapshot] = useState(false);
+  
   // Event Detection Settings
   const [eventSettings, setEventSettings] = useState({
     motion_detection: true,
