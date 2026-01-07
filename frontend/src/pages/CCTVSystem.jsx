@@ -858,25 +858,25 @@ const CCTVSystem = () => {
 
       {/* Dashboard Stats */}
       {dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">إجمالي الكاميرات</p>
-                  <p className="text-2xl font-bold">{dashboard.cameras?.total || 0}</p>
+                  <p className="text-sm text-blue-600">إجمالي الكاميرات</p>
+                  <p className="text-2xl font-bold text-blue-700">{dashboard.cameras?.total || 0}</p>
                 </div>
                 <Camera className="h-10 w-10 text-blue-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">متصلة</p>
-                  <p className="text-2xl font-bold text-green-600">{dashboard.cameras?.online || 0}</p>
+                  <p className="text-sm text-green-600">متصلة</p>
+                  <p className="text-2xl font-bold text-green-700">{dashboard.cameras?.online || 0}</p>
                 </div>
                 <Wifi className="h-10 w-10 text-green-500" />
               </div>
