@@ -76,7 +76,78 @@ const CCTVSystem = () => {
     fetchEvents();
     fetchAlerts();
     fetchSettings();
+    fetchHikvisionConfig();
   }, []);
+
+  const fetchHikvisionConfig = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/hikvision/config`, { headers });
+      if (res.ok) {
+        const config = await res.json();
+        setHikvisionConfig(config);
+        if (config.is_connected) {
+          fetchHikvisionDevices();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching Hikvision config:', error);
+    }
+  };
+
+  const fetchHikvisionDevices = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/hikvision/devices`, { headers });
+      if (res.ok) {
+        setHikvisionDevices(await res.json());
+      }
+    } catch (error) {
+      console.error('Error fetching Hikvision devices:', error);
+    }
+  };
+
+  const handleHikvisionLogin = async () => {
+    setIsConnecting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/hikvision/connect`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          server_url: hikvisionConfig.server_url,
+          username: hikvisionConfig.username,
+          password: hikvisionConfig.password
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setHikvisionConfig(prev => ({ ...prev, is_connected: true }));
+        setHikvisionDevices(data.devices || []);
+        toast.success('تم الاتصال بـ Hikvision بنجاح');
+        setShowHikvisionLogin(false);
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'فشل في الاتصال');
+      }
+    } catch (error) {
+      toast.error('حدث خطأ في الاتصال');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleHikvisionDisconnect = async () => {
+    try {
+      await fetch(`${API_URL}/api/cctv/hikvision/disconnect`, {
+        method: 'POST',
+        headers
+      });
+      setHikvisionConfig(prev => ({ ...prev, is_connected: false }));
+      setHikvisionDevices([]);
+      toast.success('تم قطع الاتصال');
+    } catch (error) {
+      toast.error('حدث خطأ');
+    }
+  };
 
   const fetchDashboard = async () => {
     try {
