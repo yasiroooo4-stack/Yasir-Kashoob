@@ -265,6 +265,10 @@ GET  /api/cctv/hikvision/config
 POST /api/cctv/hikvision/connect
 POST /api/cctv/hikvision/disconnect
 GET  /api/cctv/hikvision/devices
+GET  /api/cctv/hikvision/stream/{device_id}
+GET  /api/cctv/event-settings
+PUT  /api/cctv/event-settings
+POST /api/cctv/events/notify
 ```
 
 ---
