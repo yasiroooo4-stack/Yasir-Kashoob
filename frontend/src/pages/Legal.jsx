@@ -881,6 +881,15 @@ const Legal = () => {
               <Label>{language === "ar" ? "الوصف" : "Description"} *</Label>
               <Textarea value={caseForm.description} onChange={(e) => setCaseForm({...caseForm, description: e.target.value})} rows={3} required />
             </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الرأي القانوني" : "Legal Opinion"}</Label>
+              <Textarea 
+                value={caseForm.legal_opinion} 
+                onChange={(e) => setCaseForm({...caseForm, legal_opinion: e.target.value})} 
+                rows={4} 
+                placeholder={language === "ar" ? "أدخل الرأي القانوني للقضية..." : "Enter the legal opinion for this case..."}
+              />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCaseDialogOpen(false)}>
                 {language === "ar" ? "إلغاء" : "Cancel"}
