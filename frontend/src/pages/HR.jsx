@@ -1729,6 +1729,15 @@ const HR = () => {
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2 items-center">
+                <Button 
+                  variant="outline" 
+                  onClick={fetchAttendance} 
+                  className="gap-1"
+                  data-testid="refresh-attendance-btn"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {language === "ar" ? "تحديث" : "Refresh"}
+                </Button>
                 <Button onClick={() => setAttendanceDialogOpen(true)} className="gradient-primary text-white gap-1">
                   <Plus className="w-4 h-4" />
                   {language === "ar" ? "إضافة حضور" : "Add Attendance"}

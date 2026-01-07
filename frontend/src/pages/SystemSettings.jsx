@@ -66,10 +66,7 @@ const SystemSettings = () => {
   const [centerForm, setCenterForm] = useState({ name: "", code: "", location: "", phone: "", is_active: true });
   
   // Milk Prices
-  const [milkPrices, setMilkPrices] = useState([
-    { id: "camel", name: "حليب الإبل", price: 0.350, is_active: true },
-    { id: "cow", name: "حليب الأبقار", price: 0.250, is_active: true },
-  ]);
+  const [milkPrices, setMilkPrices] = useState([]);
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState(null);
   
@@ -111,6 +108,26 @@ const SystemSettings = () => {
         suppliers_count: (suppliersRes.data || []).filter(s => s.center_name === name).length,
       }));
       setCenters(centersData);
+      
+      // Fetch milk prices
+      try {
+        const pricesRes = await axios.get(`${API}/api/settings/milk-prices`, { headers });
+        if (pricesRes.data && pricesRes.data.length > 0) {
+          setMilkPrices(pricesRes.data);
+        } else {
+          // Use default prices if no data
+          setMilkPrices([
+            { id: "camel", name: "حليب الإبل", price: 0.350, is_active: true },
+            { id: "cow", name: "حليب الأبقار", price: 0.250, is_active: true },
+          ]);
+        }
+      } catch {
+        // Use default prices
+        setMilkPrices([
+          { id: "camel", name: "حليب الإبل", price: 0.350, is_active: true },
+          { id: "cow", name: "حليب الأبقار", price: 0.250, is_active: true },
+        ]);
+      }
       
       // Fetch feed types
       try {
@@ -182,15 +199,29 @@ const SystemSettings = () => {
     setPriceDialogOpen(true);
   };
 
-  const savePrice = () => {
+  const savePrice = async () => {
     if (!editingPrice) return;
     
-    const updatedPrices = milkPrices.map(p => 
-      p.id === editingPrice.id ? editingPrice : p
-    );
-    setMilkPrices(updatedPrices);
-    setPriceDialogOpen(false);
-    toast.success("تم تحديث السعر بنجاح");
+    try {
+      // Save to backend
+      await axios.post(`${API}/api/settings/milk-prices`, {
+        milk_type: editingPrice.id,
+        name: editingPrice.name,
+        price: editingPrice.price,
+        is_active: editingPrice.is_active
+      }, { headers });
+      
+      // Update local state
+      const updatedPrices = milkPrices.map(p => 
+        p.id === editingPrice.id ? editingPrice : p
+      );
+      setMilkPrices(updatedPrices);
+      setPriceDialogOpen(false);
+      toast.success("تم حفظ السعر بنجاح");
+    } catch (error) {
+      console.error("Error saving price:", error);
+      toast.error("فشل في حفظ السعر");
+    }
   };
 
   // Feed Functions
