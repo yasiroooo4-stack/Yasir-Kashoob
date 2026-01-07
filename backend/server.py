@@ -11238,15 +11238,32 @@ async def get_report_logs(
 @api_router.get("/settings/milk-prices")
 async def get_milk_prices(current_user: dict = Depends(get_current_user)):
     """Get milk prices settings"""
-    prices = await db.milk_prices.find({}, {"_id": 0}).to_list(100)
-    if not prices:
-        # Return default prices
-        default_prices = [
-            {"id": "camel", "name": "حليب الإبل", "price": 0.350, "is_active": True},
-            {"id": "cow", "name": "حليب الأبقار", "price": 0.250, "is_active": True},
-        ]
-        return default_prices
-    return prices
+    # Default prices
+    default_prices = [
+        {"id": "camel", "name": "حليب الإبل", "price": 0.350, "is_active": True},
+        {"id": "cow", "name": "حليب الأبقار", "price": 0.250, "is_active": True},
+    ]
+    
+    # Get saved prices from DB
+    saved_prices = await db.milk_prices.find({}, {"_id": 0}).to_list(100)
+    
+    # Merge saved with defaults (use saved if exists, otherwise use default)
+    result = []
+    for default in default_prices:
+        saved = next((p for p in saved_prices if p.get("id") == default["id"]), None)
+        if saved:
+            result.append(saved)
+        else:
+            result.append(default)
+    
+    # Add any extra prices not in defaults
+    saved_ids = [p.get("id") for p in saved_prices]
+    default_ids = [p["id"] for p in default_prices]
+    for saved in saved_prices:
+        if saved.get("id") not in default_ids:
+            result.append(saved)
+    
+    return result
 
 @api_router.post("/settings/milk-prices")
 async def save_milk_price(
