@@ -615,6 +615,129 @@ const Legal = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Reviews Tab */}
+        <TabsContent value="reviews">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "المراجعات القانونية" : "Legal Reviews"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تتبع المراجعات والتدقيق القانوني" : "Track legal reviews and audits"}
+                </CardDescription>
+              </div>
+              <Button onClick={() => { resetReviewForm(); setReviewDialogOpen(true); }} className="gradient-primary text-white">
+                <Plus className="w-4 h-4 me-2" />
+                {language === "ar" ? "مراجعة جديدة" : "New Review"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "العنوان" : "Title"}</TableHead>
+                    <TableHead>{language === "ar" ? "النوع" : "Type"}</TableHead>
+                    <TableHead>{language === "ar" ? "المراجع" : "Reviewer"}</TableHead>
+                    <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                    <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reviews.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {language === "ar" ? "لا توجد مراجعات" : "No reviews"}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    reviews.map((review) => (
+                      <TableRow key={review.id}>
+                        <TableCell className="font-medium">{review.title}</TableCell>
+                        <TableCell>{review.review_type}</TableCell>
+                        <TableCell>{review.reviewer_name}</TableCell>
+                        <TableCell>{review.review_date?.split('T')[0]}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusBadge(review.status)}>{review.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="ghost" onClick={() => { setSelectedItem(review); setReviewForm(review); setReviewDialogOpen(true); }}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Waivers Tab (التنازلات) */}
+        <TabsContent value="waivers">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "تنازلات الموردين" : "Supplier Waivers"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "تنازل الموردين عن الحصص (الكوادر) لمورد آخر" : "Transfer supplier quotas to another supplier"}
+                </CardDescription>
+              </div>
+              <Button onClick={() => { resetWaiverForm(); setWaiverDialogOpen(true); }} className="gradient-primary text-white">
+                <Plus className="w-4 h-4 me-2" />
+                {language === "ar" ? "تنازل جديد" : "New Waiver"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "المورد المتنازل" : "From Supplier"}</TableHead>
+                    <TableHead>{language === "ar" ? "المورد المستلم" : "To Supplier"}</TableHead>
+                    <TableHead>{language === "ar" ? "الكمية" : "Amount"}</TableHead>
+                    <TableHead>{language === "ar" ? "تاريخ التنازل" : "Waiver Date"}</TableHead>
+                    <TableHead>{language === "ar" ? "السبب" : "Reason"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                    <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {waivers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        {language === "ar" ? "لا توجد تنازلات" : "No waivers"}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    waivers.map((waiver) => (
+                      <TableRow key={waiver.id}>
+                        <TableCell className="font-medium">{waiver.from_supplier_name}</TableCell>
+                        <TableCell>{waiver.to_supplier_name}</TableCell>
+                        <TableCell>{waiver.quota_amount} {language === "ar" ? "لتر" : "L"}</TableCell>
+                        <TableCell>{waiver.waiver_date?.split('T')[0]}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{waiver.reason}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusBadge(waiver.status)}>{waiver.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => { setSelectedItem(waiver); setWaiverForm(waiver); setWaiverDialogOpen(true); }}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Contract Dialog */}
