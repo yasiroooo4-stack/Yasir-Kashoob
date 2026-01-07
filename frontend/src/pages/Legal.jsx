@@ -55,7 +55,8 @@ const Legal = () => {
   });
   const [caseForm, setCaseForm] = useState({
     case_type: "", title: "", description: "", plaintiff: "", defendant: "",
-    court_name: "", filing_date: "", hearing_date: "", lawyer_name: "", priority: "medium"
+    court_name: "", filing_date: "", hearing_date: "", lawyer_name: "", priority: "medium",
+    legal_opinion: ""
   });
   const [consultationForm, setConsultationForm] = useState({
     requester_name: "", requester_id: "", department: "", subject: "",
