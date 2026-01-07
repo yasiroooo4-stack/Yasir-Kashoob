@@ -137,7 +137,152 @@ const CCTVSystem = () => {
     fetchSettings();
     fetchHikvisionConfig();
     fetchEventSettings();
+    fetchHikConnectDevices();
+    fetchHikConnectDashboard();
   }, []);
+
+  // Hik-Connect Functions
+  const fetchHikConnectDevices = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/devices`, { headers });
+      if (res.ok) {
+        const devices = await res.json();
+        setHikConnectDevices(devices);
+      }
+    } catch (error) {
+      console.error('Error fetching Hik-Connect devices:', error);
+    }
+  };
+
+  const fetchHikConnectDashboard = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/dashboard`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setHikConnectDashboard(data);
+      }
+    } catch (error) {
+      console.error('Error fetching Hik-Connect dashboard:', error);
+    }
+  };
+
+  const handleConnectDevice = async () => {
+    if (!newDeviceForm.host || !newDeviceForm.username || !newDeviceForm.password) {
+      toast.error('يرجى إدخال جميع البيانات المطلوبة');
+      return;
+    }
+    
+    setConnectingDevice(true);
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/devices/connect`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(newDeviceForm)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`تم الاتصال بنجاح - ${data.channels_count} كاميرا`);
+        setShowAddDevice(false);
+        setNewDeviceForm({ host: '', port: 80, username: 'admin', password: '', rtsp_port: 554, device_name: '' });
+        fetchHikConnectDevices();
+        fetchHikConnectDashboard();
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'فشل في الاتصال');
+      }
+    } catch (error) {
+      toast.error('خطأ في الاتصال بالجهاز');
+    }
+    setConnectingDevice(false);
+  };
+
+  const handleDeleteDevice = async (deviceId) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا الجهاز؟')) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/devices/${deviceId}`, {
+        method: 'DELETE',
+        headers
+      });
+      
+      if (res.ok) {
+        toast.success('تم حذف الجهاز بنجاح');
+        fetchHikConnectDevices();
+        fetchHikConnectDashboard();
+      }
+    } catch (error) {
+      toast.error('خطأ في حذف الجهاز');
+    }
+  };
+
+  const handleRefreshDeviceStatus = async (deviceId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/devices/${deviceId}/refresh`, {
+        method: 'POST',
+        headers
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(data.is_online ? 'الجهاز متصل ✓' : 'الجهاز غير متصل ✗');
+        fetchHikConnectDevices();
+      }
+    } catch (error) {
+      toast.error('خطأ في فحص الحالة');
+    }
+  };
+
+  const handleViewDeviceChannels = async (device) => {
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/devices/${device.id}/channels`, { headers });
+      if (res.ok) {
+        const channels = await res.json();
+        setSelectedDeviceChannels(channels);
+        setShowDeviceChannels(true);
+        setStreamingDevice(device);
+      }
+    } catch (error) {
+      toast.error('خطأ في جلب القنوات');
+    }
+  };
+
+  const handleGetHikConnectSnapshot = async (deviceId, channel = 1) => {
+    setLoadingSnapshot(true);
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/stream/snapshot/${deviceId}/${channel}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setSnapshot(data.snapshot);
+        toast.success('تم جلب الصورة');
+      } else {
+        toast.error('فشل في جلب الصورة - تأكد من اتصال الجهاز');
+      }
+    } catch (error) {
+      toast.error('خطأ في الاتصال');
+    }
+    setLoadingSnapshot(false);
+  };
+
+  const handleGetStreamInfo = async (deviceId, channel = 1) => {
+    try {
+      const res = await fetch(`${API_URL}/api/hikconnect/stream/info`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ device_id: deviceId, channel, stream_type: 'main' })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // Show stream URLs
+        toast.info(`RTSP: ${data.urls.rtsp.substring(0, 50)}...`);
+        return data;
+      }
+    } catch (error) {
+      toast.error('خطأ في جلب معلومات البث');
+    }
+    return null;
+  };
 
   const fetchHikvisionConfig = async () => {
     try {
