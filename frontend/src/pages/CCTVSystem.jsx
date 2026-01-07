@@ -1263,6 +1263,157 @@ const CCTVSystem = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Live Stream Dialog */}
+      <Dialog open={showLiveStream} onOpenChange={setShowLiveStream}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-red-500" />
+              بث مباشر - {streamingDevice?.name || 'كاميرا'}
+              <div className="flex items-center gap-1 mr-4">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span className="text-xs text-red-500">LIVE</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Video Player Area */}
+            <div className="bg-black aspect-video rounded-lg flex items-center justify-center relative">
+              {streamUrl ? (
+                <iframe 
+                  src={streamUrl} 
+                  className="w-full h-full rounded-lg"
+                  allow="autoplay; fullscreen"
+                  title="Live Stream"
+                />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <Video className="h-16 w-16 mx-auto mb-4" />
+                  <p className="text-lg">البث المباشر</p>
+                  <p className="text-sm mt-2">
+                    رابط RTSP: rtsp://{streamingDevice?.ip_address}:{streamingDevice?.port || 554}/Streaming/Channels/101
+                  </p>
+                  <p className="text-xs mt-4 text-gray-500">
+                    للمشاهدة المباشرة، استخدم تطبيق Hik-Connect أو VLC Player
+                  </p>
+                </div>
+              )}
+              
+              {/* Overlay Controls */}
+              <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" className="bg-black/50 hover:bg-black/70">
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" className="bg-black/50 hover:bg-black/70">
+                    تسجيل
+                  </Button>
+                  <Button size="sm" variant="secondary" className="bg-black/50 hover:bg-black/70">
+                    ملء الشاشة
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Device Info */}
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-gray-500">الجهاز</p>
+                <p className="font-semibold">{streamingDevice?.name}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-gray-500">IP</p>
+                <p className="font-mono">{streamingDevice?.ip_address}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-gray-500">الحالة</p>
+                <p className="text-green-600 font-semibold">● متصل</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowLiveStream(false)}>إغلاق</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Device Events Dialog */}
+      <Dialog open={showDeviceEvents} onOpenChange={setShowDeviceEvents}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              أحداث الجهاز - {selectedDeviceForEvents?.name || 'كاميرا'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Event Filters */}
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="outline" className="cursor-pointer hover:bg-blue-50">الكل</Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-yellow-50">
+                <AlertTriangle className="h-3 w-3 ml-1" />
+                حركة
+              </Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-red-50">
+                <XCircle className="h-3 w-3 ml-1" />
+                تسلل
+              </Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-purple-50">
+                <Activity className="h-3 w-3 ml-1" />
+                عبور خط
+              </Badge>
+            </div>
+            
+            {/* Events List */}
+            <div className="space-y-2">
+              {deviceEvents.length > 0 ? (
+                deviceEvents.map((event, index) => (
+                  <div key={index} className="border rounded-lg p-3 hover:bg-gray-50 flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      event.severity === 'critical' ? 'bg-red-100 text-red-600' :
+                      event.severity === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                      'bg-blue-100 text-blue-600'
+                    }`}>
+                      {event.event_type === 'motion' ? <Activity className="h-5 w-5" /> :
+                       event.event_type === 'intrusion' ? <AlertTriangle className="h-5 w-5" /> :
+                       <Bell className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold">{event.description || getEventTypeLabel(event.event_type)}</p>
+                          <p className="text-sm text-gray-500">{event.camera_name}</p>
+                        </div>
+                        <span className="text-xs text-gray-400">{new Date(event.created_at).toLocaleString('ar-OM')}</span>
+                      </div>
+                    </div>
+                    {event.snapshot_url && (
+                      <div className="w-20 h-14 bg-gray-200 rounded overflow-hidden">
+                        <img src={event.snapshot_url} alt="Snapshot" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-300" />
+                  <p>لا توجد أحداث مسجلة</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowDeviceEvents(false)}>إغلاق</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Event Detection Settings in Main Settings Tab */}
       </div>
     </div>
   );
