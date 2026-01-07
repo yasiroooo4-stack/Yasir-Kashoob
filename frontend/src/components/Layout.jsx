@@ -378,12 +378,12 @@ const Layout = () => {
           {backgroundUrl && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
           )}
-          <div className="animate-fade-in relative z-10">
+          <div className="animate-fade-in relative z-10 min-h-[calc(100vh-200px)]">
             <Outlet />
           </div>
           
           {/* Footer */}
-          <footer className="mt-8 py-4 text-center text-sm text-gray-500 border-t border-gray-200/50">
+          <footer className="relative z-10 mt-8 py-4 text-center text-sm text-gray-500 border-t border-gray-200/50 bg-white/80 backdrop-blur-sm rounded-t-lg">
             <p>
               © {new Date().getFullYear()} المروج للألبان - Al Marooj Dairy
             </p>
