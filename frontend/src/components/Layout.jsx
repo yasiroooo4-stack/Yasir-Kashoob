@@ -381,6 +381,16 @@ const Layout = () => {
           <div className="animate-fade-in relative z-10">
             <Outlet />
           </div>
+          
+          {/* Footer */}
+          <footer className="mt-8 py-4 text-center text-sm text-gray-500 border-t border-gray-200/50">
+            <p>
+              © {new Date().getFullYear()} المروج للألبان - Al Marooj Dairy
+            </p>
+            <p className="text-xs mt-1 text-gray-400">
+              Developed by <span className="font-semibold text-blue-600">Yasir Ahmed Hassan Kashoob</span> - IT Department
+            </p>
+          </footer>
         </main>
       </div>
 
