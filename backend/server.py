@@ -11557,6 +11557,10 @@ app.include_router(cctv_router)
 from routes.hikconnect_routes import router as hikconnect_router
 app.include_router(hikconnect_router)
 
+# Include SMS router
+from routes.sms_routes import router as sms_router
+app.include_router(sms_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
