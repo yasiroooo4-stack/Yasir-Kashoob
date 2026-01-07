@@ -3860,6 +3860,78 @@ async def delete_attendance(
     return {"message": "Attendance record deleted", "id": attendance_id}
 
 
+@api_router.delete("/hr/attendance/employee/{employee_id}/all")
+async def delete_all_employee_attendance(
+    employee_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """حذف جميع سجلات حضور موظف معين"""
+    # Get employee info first
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Count records before deletion
+    count = await db.hr_attendance.count_documents({"employee_id": employee_id})
+    
+    if count == 0:
+        return {"message": "لا توجد سجلات حضور لهذا الموظف", "deleted_count": 0}
+    
+    # Delete all attendance records
+    result = await db.hr_attendance.delete_many({"employee_id": employee_id})
+    
+    # Log the activity
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_all_attendance",
+        entity_type="attendance",
+        entity_id=employee_id,
+        entity_name=employee.get("name", ""),
+        details=f"حذف جميع سجلات حضور: {employee.get('name')} ({result.deleted_count} سجل)"
+    )
+    
+    return {
+        "message": f"تم حذف {result.deleted_count} سجل حضور للموظف {employee.get('name')}",
+        "deleted_count": result.deleted_count,
+        "employee_name": employee.get("name")
+    }
+
+
+@api_router.put("/hr/employees/{employee_id}/clear-fingerprint")
+async def clear_employee_fingerprint(
+    employee_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """مسح معرف البصمة للموظف"""
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    old_fingerprint = employee.get("fingerprint_id")
+    
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"fingerprint_id": None, "fingerprint_cleared_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Log the activity
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="clear_fingerprint",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name", ""),
+        details=f"مسح بصمة: {employee.get('name')} (البصمة القديمة: {old_fingerprint})"
+    )
+    
+    return {
+        "message": f"تم مسح بصمة الموظف {employee.get('name')}",
+        "old_fingerprint_id": old_fingerprint
+    }
+
+
 @api_router.get("/hr/attendance")
 async def get_attendance(
     employee_id: Optional[str] = None,
