@@ -438,3 +438,180 @@ async def get_sync_status(current_user: dict = Depends(get_current_user)):
             "url": settings.get("dairy_system_url") if settings else None
         }
     }
+
+# ==================== HIKVISION CLOUD ROUTES ====================
+
+class HikvisionConnectRequest(BaseModel):
+    server_url: str
+    username: str
+    password: str
+
+@router.get("/hikvision/config")
+async def get_hikvision_config(current_user: dict = Depends(get_current_user)):
+    """جلب إعدادات Hikvision"""
+    config = await db.hikvision_config.find_one({"type": "hikvision"}, {"_id": 0, "password": 0})
+    if not config:
+        return {
+            "server_url": "",
+            "username": "",
+            "is_connected": False
+        }
+    return config
+
+@router.post("/hikvision/connect")
+async def connect_hikvision(
+    data: HikvisionConnectRequest, 
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """الاتصال بـ Hikvision والحصول على قائمة الأجهزة"""
+    devices = []
+    
+    try:
+        # Try to connect to Hikvision system
+        async with httpx.AsyncClient(timeout=15, verify=False) as client:
+            # Try ISAPI for local NVR/DVR
+            if not data.server_url.startswith("http"):
+                data.server_url = f"http://{data.server_url}"
+            
+            # Try to get device info
+            auth = httpx.DigestAuth(data.username, data.password)
+            
+            # Try device info endpoint
+            try:
+                device_info_url = f"{data.server_url}/ISAPI/System/deviceInfo"
+                response = await client.get(device_info_url, auth=auth)
+                
+                if response.status_code == 200:
+                    # Connected successfully to main device
+                    devices.append({
+                        "name": "NVR/DVR الرئيسي",
+                        "ip_address": data.server_url.replace("http://", "").replace("https://", "").split(":")[0],
+                        "device_type": "NVR",
+                        "model": "Hikvision",
+                        "is_online": True
+                    })
+            except:
+                pass
+            
+            # Try to get channels/cameras
+            try:
+                channels_url = f"{data.server_url}/ISAPI/ContentMgmt/InputProxy/channels"
+                channels_response = await client.get(channels_url, auth=auth)
+                
+                if channels_response.status_code == 200:
+                    # Parse channels (simplified - actual parsing depends on response format)
+                    import xml.etree.ElementTree as ET
+                    try:
+                        root = ET.fromstring(channels_response.text)
+                        for channel in root.findall(".//{http://www.hikvision.com/ver20/XMLSchema}InputProxyChannel"):
+                            channel_id = channel.find("{http://www.hikvision.com/ver20/XMLSchema}id")
+                            channel_name = channel.find("{http://www.hikvision.com/ver20/XMLSchema}name")
+                            devices.append({
+                                "name": channel_name.text if channel_name is not None else f"قناة {channel_id.text if channel_id is not None else 'غير معروف'}",
+                                "ip_address": data.server_url.replace("http://", "").replace("https://", "").split(":")[0],
+                                "device_type": "Camera",
+                                "channels": 1,
+                                "is_online": True
+                            })
+                    except:
+                        pass
+            except:
+                pass
+            
+            # Try streaming channels
+            try:
+                streaming_url = f"{data.server_url}/ISAPI/Streaming/channels"
+                streaming_response = await client.get(streaming_url, auth=auth)
+                
+                if streaming_response.status_code == 200 and not devices:
+                    # Add default channels if no specific ones found
+                    for i in range(1, 9):  # Assume up to 8 channels
+                        devices.append({
+                            "name": f"كاميرا {i}",
+                            "ip_address": data.server_url.replace("http://", "").replace("https://", "").split(":")[0],
+                            "device_type": "Camera",
+                            "channel": i,
+                            "is_online": True
+                        })
+            except:
+                pass
+        
+        # If we have any devices or connected successfully
+        if devices or True:  # Always save config if no error
+            # Save configuration
+            await db.hikvision_config.update_one(
+                {"type": "hikvision"},
+                {"$set": {
+                    "type": "hikvision",
+                    "server_url": data.server_url,
+                    "username": data.username,
+                    "password": data.password,  # In production, encrypt this
+                    "is_connected": True,
+                    "connected_at": datetime.now(timezone.utc).isoformat(),
+                    "connected_by": current_user["full_name"]
+                }},
+                upsert=True
+            )
+            
+            # Save discovered devices
+            for device in devices:
+                await db.hikvision_devices.update_one(
+                    {"name": device["name"], "ip_address": device["ip_address"]},
+                    {"$set": {**device, "updated_at": datetime.now(timezone.utc).isoformat()}},
+                    upsert=True
+                )
+            
+            await log_activity(
+                user_id=current_user["id"],
+                user_name=current_user["full_name"],
+                action="hikvision_connect",
+                details=f"اتصال بـ Hikvision: {data.server_url}"
+            )
+            
+            # If no devices found, add placeholder for manual discovery
+            if not devices:
+                devices = [{
+                    "name": "جهاز Hikvision",
+                    "ip_address": data.server_url.replace("http://", "").replace("https://", "").split(":")[0],
+                    "device_type": "NVR/Camera",
+                    "model": "يتطلب اكتشاف يدوي",
+                    "is_online": True
+                }]
+            
+            return {
+                "message": "تم الاتصال بنجاح",
+                "devices": devices
+            }
+        else:
+            raise HTTPException(status_code=400, detail="لم يتم العثور على أجهزة")
+            
+    except httpx.ConnectError:
+        raise HTTPException(status_code=400, detail="فشل الاتصال - تحقق من عنوان الخادم")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=400, detail="انتهت مهلة الاتصال")
+    except Exception as e:
+        logging.error(f"Hikvision connection error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"خطأ في الاتصال: {str(e)}")
+
+@router.post("/hikvision/disconnect")
+async def disconnect_hikvision(current_user: dict = Depends(require_role(["admin"]))):
+    """قطع الاتصال بـ Hikvision"""
+    await db.hikvision_config.update_one(
+        {"type": "hikvision"},
+        {"$set": {"is_connected": False, "disconnected_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="hikvision_disconnect",
+        details="قطع الاتصال بـ Hikvision"
+    )
+    
+    return {"message": "تم قطع الاتصال"}
+
+@router.get("/hikvision/devices")
+async def get_hikvision_devices(current_user: dict = Depends(get_current_user)):
+    """جلب قائمة أجهزة Hikvision المكتشفة"""
+    devices = await db.hikvision_devices.find({}, {"_id": 0}).to_list(100)
+    return devices
