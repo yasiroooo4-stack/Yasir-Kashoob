@@ -11242,6 +11242,7 @@ async def get_milk_prices(current_user: dict = Depends(get_current_user)):
     default_prices = [
         {"id": "camel", "name": "حليب الإبل", "price": 0.350, "is_active": True},
         {"id": "cow", "name": "حليب الأبقار", "price": 0.250, "is_active": True},
+        {"id": "sheep", "name": "حليب الأغنام", "price": 0.300, "is_active": True},
     ]
     
     # Get saved prices from DB
