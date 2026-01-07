@@ -375,85 +375,186 @@ const CCTVSystem = () => {
 
         {/* Cameras Tab */}
         <TabsContent value="cameras">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cameras.map((camera) => (
-              <Card key={camera.id} className={`relative ${!camera.is_online ? 'border-red-300' : 'border-green-300'}`}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">{camera.name}</CardTitle>
-                      <p className="text-sm text-gray-500">{camera.ip_address}:{camera.port}</p>
-                    </div>
-                    <Badge variant={camera.is_online ? "success" : "destructive"}>
-                      {camera.is_online ? 'متصل' : 'غير متصل'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gray-900 h-40 rounded-lg flex items-center justify-center mb-4">
-                    {camera.is_online ? (
-                      <div className="text-center">
-                        <Video className="h-12 w-12 text-gray-500 mx-auto mb-2" />
-                        <p className="text-gray-400 text-sm">البث المباشر</p>
+          {/* Camera Slots Grid - 5 Fixed Slots */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4">{t('camera_slots') || 'خانات الكاميرات'}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((slotNum) => {
+                const camera = cameras[slotNum - 1];
+                return (
+                  <Card 
+                    key={slotNum} 
+                    className={`relative ${camera ? (camera.is_online ? 'border-green-300' : 'border-red-300') : 'border-dashed border-gray-300'}`}
+                    data-testid={`camera-slot-${slotNum}`}
+                  >
+                    <CardHeader className="pb-2 p-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${camera ? (camera.is_online ? 'bg-green-500' : 'bg-red-500') : 'bg-gray-400'}`}>
+                            {slotNum}
+                          </div>
+                          <div>
+                            <CardTitle className="text-sm">
+                              {camera ? camera.name : `خانة ${slotNum}`}
+                            </CardTitle>
+                            {camera && (
+                              <p className="text-xs text-gray-500">{camera.ip_address}:{camera.port}</p>
+                            )}
+                          </div>
+                        </div>
+                        {camera && (
+                          <Badge variant={camera.is_online ? "success" : "destructive"} className="text-xs">
+                            {camera.is_online ? 'متصل' : 'غير متصل'}
+                          </Badge>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-center">
-                        <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
-                        <p className="text-red-400 text-sm">غير متصل</p>
+                    </CardHeader>
+                    <CardContent className="p-3">
+                      {/* Camera Preview Area */}
+                      <div className="bg-gray-900 h-32 rounded-lg flex items-center justify-center mb-3">
+                        {camera ? (
+                          camera.is_online ? (
+                            <div className="text-center">
+                              <Video className="h-8 w-8 text-gray-500 mx-auto mb-1" />
+                              <p className="text-gray-400 text-xs">البث المباشر</p>
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <XCircle className="h-8 w-8 text-red-500 mx-auto mb-1" />
+                              <p className="text-red-400 text-xs">غير متصل</p>
+                            </div>
+                          )
+                        ) : (
+                          <div className="text-center">
+                            <Plus className="h-8 w-8 text-gray-500 mx-auto mb-1" />
+                            <p className="text-gray-400 text-xs">خانة فارغة</p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">الموقع:</span>
-                      <span>{camera.location || 'غير محدد'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">القناة:</span>
-                      <span>{camera.channel}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">النوع:</span>
-                      <span className="capitalize">{camera.camera_type}</span>
-                    </div>
-                    {camera.last_check && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">آخر فحص:</span>
-                        <span>{new Date(camera.last_check).toLocaleString('ar-OM')}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm" variant="outline" className="flex-1" disabled={!camera.is_online}>
-                      <Play className="h-4 w-4 ml-1" />
-                      مشاهدة
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedCamera(camera)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteCamera(camera.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {cameras.length === 0 && !loading && (
-              <Card className="col-span-full">
-                <CardContent className="py-12 text-center">
-                  <Camera className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">لا توجد كاميرات مضافة</p>
-                  <Button onClick={() => setShowAddCamera(true)} className="mt-4">
-                    <Plus className="h-4 w-4 ml-2" />
-                    إضافة كاميرا جديدة
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+                      
+                      {camera ? (
+                        <>
+                          <div className="space-y-1 text-xs mb-3">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">الموقع:</span>
+                              <span className="truncate max-w-[100px]">{camera.location || 'غير محدد'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">النوع:</span>
+                              <span className="capitalize">{camera.camera_type}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" className="flex-1 text-xs" disabled={!camera.is_online}>
+                              <Play className="h-3 w-3 ml-1" />
+                              مشاهدة
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setSelectedCamera(camera)}>
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDeleteCamera(camera.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-xs"
+                          onClick={() => setShowAddCamera(true)}
+                        >
+                          <Plus className="h-3 w-3 ml-1" />
+                          إضافة كاميرا
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Additional Cameras (beyond slot 5) */}
+          {cameras.length > 5 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">كاميرات إضافية</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cameras.slice(5).map((camera) => (
+                  <Card key={camera.id} className={`relative ${!camera.is_online ? 'border-red-300' : 'border-green-300'}`}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{camera.name}</CardTitle>
+                          <p className="text-sm text-gray-500">{camera.ip_address}:{camera.port}</p>
+                        </div>
+                        <Badge variant={camera.is_online ? "success" : "destructive"}>
+                          {camera.is_online ? 'متصل' : 'غير متصل'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-gray-900 h-40 rounded-lg flex items-center justify-center mb-4">
+                        {camera.is_online ? (
+                          <div className="text-center">
+                            <Video className="h-12 w-12 text-gray-500 mx-auto mb-2" />
+                            <p className="text-gray-400 text-sm">البث المباشر</p>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
+                            <p className="text-red-400 text-sm">غير متصل</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">الموقع:</span>
+                          <span>{camera.location || 'غير محدد'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">القناة:</span>
+                          <span>{camera.channel}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">النوع:</span>
+                          <span className="capitalize">{camera.camera_type}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 mt-4">
+                        <Button size="sm" variant="outline" className="flex-1" disabled={!camera.is_online}>
+                          <Play className="h-4 w-4 ml-1" />
+                          مشاهدة
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setSelectedCamera(camera)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteCamera(camera.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Empty state when no cameras */}
+          {cameras.length === 0 && !loading && (
+            <Card className="mt-4">
+              <CardContent className="py-12 text-center">
+                <Camera className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-2">لا توجد كاميرات مضافة حتى الآن</p>
+                <p className="text-gray-400 text-sm mb-4">أضف كاميرا جديدة في إحدى الخانات أعلاه</p>
+                <Button onClick={() => setShowAddCamera(true)}>
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة كاميرا جديدة
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Events Tab */}
