@@ -25,7 +25,11 @@ import {
   Activity,
   Wifi,
   WifiOff,
-  Clock
+  Clock,
+  Monitor,
+  Eye,
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
