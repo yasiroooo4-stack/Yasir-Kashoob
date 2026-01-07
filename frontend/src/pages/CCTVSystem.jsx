@@ -767,187 +767,195 @@ const CCTVSystem = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Cameras Tab */}
+        {/* Cameras Tab - Hik-Connect Style */}
         <TabsContent value="cameras">
-          {/* Camera Slots Grid - 5 Fixed Slots */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4">{t('camera_slots') || 'خانات الكاميرات'}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {[1, 2, 3, 4, 5].map((slotNum) => {
-                const camera = cameras[slotNum - 1];
-                return (
-                  <Card 
-                    key={slotNum} 
-                    className={`relative ${camera ? (camera.is_online ? 'border-green-300' : 'border-red-300') : 'border-dashed border-gray-300'}`}
-                    data-testid={`camera-slot-${slotNum}`}
-                  >
-                    <CardHeader className="pb-2 p-3">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${camera ? (camera.is_online ? 'bg-green-500' : 'bg-red-500') : 'bg-gray-400'}`}>
-                            {slotNum}
-                          </div>
-                          <div>
-                            <CardTitle className="text-sm">
-                              {camera ? camera.name : `خانة ${slotNum}`}
-                            </CardTitle>
-                            {camera && (
-                              <p className="text-xs text-gray-500">{camera.ip_address}:{camera.port}</p>
-                            )}
-                          </div>
-                        </div>
-                        {camera && (
-                          <Badge variant={camera.is_online ? "success" : "destructive"} className="text-xs">
-                            {camera.is_online ? 'متصل' : 'غير متصل'}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-3">
-                      {/* Camera Preview Area */}
-                      <div className="bg-gray-900 h-32 rounded-lg flex items-center justify-center mb-3">
-                        {camera ? (
-                          camera.is_online ? (
-                            <div className="text-center">
-                              <Video className="h-8 w-8 text-gray-500 mx-auto mb-1" />
-                              <p className="text-gray-400 text-xs">البث المباشر</p>
-                            </div>
+          {/* Devices with Cameras - Hik-Connect Style */}
+          {hikvisionConfig.is_connected ? (
+            <div className="space-y-4">
+              {/* Device Cards */}
+              {hikvisionDevices.map((device, deviceIndex) => (
+                <Card key={deviceIndex} className="overflow-hidden">
+                  {/* Device Header */}
+                  <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
+                          {device.device_type === 'NVR' ? (
+                            <Activity className="h-6 w-6" />
                           ) : (
-                            <div className="text-center">
-                              <XCircle className="h-8 w-8 text-red-500 mx-auto mb-1" />
-                              <p className="text-red-400 text-xs">غير متصل</p>
-                            </div>
-                          )
-                        ) : (
-                          <div className="text-center">
-                            <Plus className="h-8 w-8 text-gray-500 mx-auto mb-1" />
-                            <p className="text-gray-400 text-xs">خانة فارغة</p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {camera ? (
-                        <>
-                          <div className="space-y-1 text-xs mb-3">
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">الموقع:</span>
-                              <span className="truncate max-w-[100px]">{camera.location || 'غير محدد'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">النوع:</span>
-                              <span className="capitalize">{camera.camera_type}</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="flex-1 text-xs" disabled={!camera.is_online}>
-                              <Play className="h-3 w-3 ml-1" />
-                              مشاهدة
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setSelectedCamera(camera)}>
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleDeleteCamera(camera.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          className="w-full text-xs"
-                          onClick={() => setShowAddCamera(true)}
-                        >
-                          <Plus className="h-3 w-3 ml-1" />
-                          إضافة كاميرا
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Additional Cameras (beyond slot 5) */}
-          {cameras.length > 5 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-4">كاميرات إضافية</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {cameras.slice(5).map((camera) => (
-                  <Card key={camera.id} className={`relative ${!camera.is_online ? 'border-red-300' : 'border-green-300'}`}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
+                            <Camera className="h-6 w-6" />
+                          )}
+                        </div>
                         <div>
-                          <CardTitle className="text-lg">{camera.name}</CardTitle>
-                          <p className="text-sm text-gray-500">{camera.ip_address}:{camera.port}</p>
+                          <h3 className="font-bold text-lg">{device.name || `جهاز ${deviceIndex + 1}`}</h3>
+                          <p className="text-gray-300 text-sm">{device.model || 'Hikvision'} • {device.device_type || 'NVR'}</p>
                         </div>
-                        <Badge variant={camera.is_online ? "success" : "destructive"}>
-                          {camera.is_online ? 'متصل' : 'غير متصل'}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={device.is_online ? 'bg-green-500' : 'bg-red-500'}>
+                          {device.is_online ? '● متصل' : '○ غير متصل'}
                         </Badge>
+                        <Button size="sm" variant="ghost" className="text-white hover:bg-white/10">
+                          <Settings className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-gray-900 h-40 rounded-lg flex items-center justify-center mb-4">
-                        {camera.is_online ? (
-                          <div className="text-center">
-                            <Video className="h-12 w-12 text-gray-500 mx-auto mb-2" />
-                            <p className="text-gray-400 text-sm">البث المباشر</p>
+                    </div>
+                  </div>
+                  
+                  {/* Camera Grid - Like Hik-Connect */}
+                  <CardContent className="p-4 bg-gray-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                      {/* Generate camera tiles based on device channels */}
+                      {Array.from({ length: device.channels || 8 }, (_, i) => i + 1).map((channelNum) => (
+                        <div 
+                          key={channelNum}
+                          className="relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer group aspect-video"
+                          onClick={() => handleOpenLiveStream({...device, channel: channelNum, name: `Camera ${String(channelNum).padStart(2, '0')}`})}
+                          data-testid={`camera-tile-${deviceIndex}-${channelNum}`}
+                        >
+                          {/* Camera Preview */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Camera className="h-8 w-8 text-gray-600" />
                           </div>
-                        ) : (
-                          <div className="text-center">
-                            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
-                            <p className="text-red-400 text-sm">غير متصل</p>
+                          
+                          {/* Live Indicator */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                           </div>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">الموقع:</span>
-                          <span>{camera.location || 'غير محدد'}</span>
+                          
+                          {/* Channel Label */}
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                            <p className="text-white text-xs font-medium">Camera {String(channelNum).padStart(2, '0')}</p>
+                          </div>
+                          
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <Play className="h-10 w-10 text-white drop-shadow-lg" />
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">القناة:</span>
-                          <span>{camera.channel}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">النوع:</span>
-                          <span className="capitalize">{camera.camera_type}</span>
-                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Device Actions */}
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="text-sm text-gray-500">
+                        إجمالي الكاميرات: {device.channels || 8}
                       </div>
-                      
-                      <div className="flex gap-2 mt-4">
-                        <Button size="sm" variant="outline" className="flex-1" disabled={!camera.is_online}>
-                          <Play className="h-4 w-4 ml-1" />
-                          مشاهدة
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleViewRecordings(device)}>
+                          <Clock className="h-4 w-4 ml-1" />
+                          التسجيلات
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setSelectedCamera(camera)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteCamera(camera.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button size="sm" variant="outline" onClick={() => handleViewEvents(device)}>
+                          <Bell className="h-4 w-4 ml-1" />
+                          الأحداث
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {/* No devices message */}
+              {hikvisionDevices.length === 0 && (
+                <Card className="border-dashed border-2">
+                  <CardContent className="py-12 text-center">
+                    <Activity className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-2">لم يتم العثور على أجهزة</p>
+                    <p className="text-gray-400 text-sm">تأكد من اتصالك بـ Hikvision</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            /* Not Connected State */
+            <Card className="border-dashed border-2">
+              <CardContent className="py-16 text-center">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Wifi className="h-10 w-10 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">اتصل بـ Hikvision</h3>
+                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  قم بتسجيل الدخول إلى حساب Hikvision الخاص بك لعرض جميع الأجهزة والكاميرات المرتبطة
+                </p>
+                <Button size="lg" onClick={() => setShowHikvisionLogin(true)}>
+                  <Wifi className="h-5 w-5 ml-2" />
+                  تسجيل دخول Hikvision
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Manual Cameras Section */}
+          {cameras.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">كاميرات مضافة يدوياً</h3>
+                <Button size="sm" variant="outline" onClick={() => setShowAddCamera(true)}>
+                  <Plus className="h-4 w-4 ml-1" />
+                  إضافة كاميرا
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                {cameras.map((camera) => (
+                  <div 
+                    key={camera.id}
+                    className="relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer group aspect-video"
+                    onClick={() => handleOpenLiveStream(camera)}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Camera className="h-8 w-8 text-gray-600" />
+                    </div>
+                    
+                    {camera.is_online && (
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                      </div>
+                    )}
+                    
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-white text-xs font-medium truncate">{camera.name}</p>
+                      <p className="text-gray-400 text-[10px]">{camera.ip_address}</p>
+                    </div>
+                    
+                    <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Play className="h-10 w-10 text-white drop-shadow-lg" />
+                    </div>
+                    
+                    {/* Edit/Delete buttons on hover */}
+                    <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="h-6 w-6 bg-white/80"
+                        onClick={(e) => { e.stopPropagation(); setSelectedCamera(camera); }}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="destructive" 
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteCamera(camera.id); }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
           
-          {/* Empty state when no cameras */}
-          {cameras.length === 0 && !loading && (
-            <Card className="mt-4">
-              <CardContent className="py-12 text-center">
-                <Camera className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-2">لا توجد كاميرات مضافة حتى الآن</p>
-                <p className="text-gray-400 text-sm mb-4">أضف كاميرا جديدة في إحدى الخانات أعلاه</p>
-                <Button onClick={() => setShowAddCamera(true)}>
-                  <Plus className="h-4 w-4 ml-2" />
-                  إضافة كاميرا جديدة
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Add Camera Button when connected but no manual cameras */}
+          {hikvisionConfig.is_connected && cameras.length === 0 && (
+            <div className="mt-6 text-center">
+              <Button variant="outline" onClick={() => setShowAddCamera(true)}>
+                <Plus className="h-4 w-4 ml-2" />
+                إضافة كاميرا يدوياً
+              </Button>
+            </div>
+          )}
           )}
         </TabsContent>
 
