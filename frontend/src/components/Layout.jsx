@@ -132,7 +132,6 @@ const Layout = () => {
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
     { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
-    { path: "/employees", icon: UserCog, label: "employees", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/advanced-reports", icon: PieChart, label: "advanced_reports", roles: ["admin", "hr_manager", "accountant"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/notification-settings", icon: Bell, label: "notification_settings", roles: ["admin"], departments: ["admin", "it"] },
@@ -149,7 +148,7 @@ const Layout = () => {
     
     // HR Manager has access to HR related pages
     if (user?.role === 'hr_manager') {
-      return item.path === '/hr' || item.path === '/payroll' || item.path === '/employees' || item.path === '/dashboard' || item.path === '/settings' || item.path === '/reports' || item.path === '/analysis';
+      return item.path === '/hr' || item.path === '/payroll' || item.path === '/dashboard' || item.path === '/settings' || item.path === '/reports' || item.path === '/analysis';
     }
     
     // Check user permissions for specific pages
@@ -157,7 +156,6 @@ const Layout = () => {
     const pathToPermission = {
       '/hr': 'hr',
       '/payroll': 'hr',
-      '/employees': 'employees',
       '/reports': 'reports',
       '/finance': 'finance',
       '/treasury': 'finance',
