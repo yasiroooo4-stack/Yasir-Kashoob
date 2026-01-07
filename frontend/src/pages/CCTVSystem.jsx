@@ -956,7 +956,6 @@ const CCTVSystem = () => {
               </Button>
             </div>
           )}
-          )}
         </TabsContent>
 
         {/* Events Tab */}
