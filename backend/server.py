@@ -4052,6 +4052,17 @@ async def get_attendance(
             query["date"] = {"$lte": end_date}
     
     attendance = await db.hr_attendance.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    
+    # Add fingerprint_id from employee data if not in record
+    employee_cache = {}
+    for record in attendance:
+        if not record.get("fingerprint_id") and record.get("employee_id"):
+            emp_id = record["employee_id"]
+            if emp_id not in employee_cache:
+                emp = await db.hr_employees.find_one({"id": emp_id}, {"fingerprint_id": 1})
+                employee_cache[emp_id] = emp.get("fingerprint_id") if emp else None
+            record["fingerprint_id"] = employee_cache[emp_id]
+    
     return attendance
 
 @api_router.get("/hr/attendance/report")
