@@ -232,6 +232,20 @@ GET  /api/settings/milk-prices
 POST /api/settings/milk-prices
 ```
 
+### إدارة الحضور والبصمات:
+```
+DELETE /api/hr/attendance/employee/{id}/all  # حذف جميع سجلات حضور موظف
+PUT    /api/hr/employees/{id}/clear-fingerprint  # مسح بصمة موظف
+```
+
+### Hikvision CCTV (جديد):
+```
+GET  /api/cctv/hikvision/config
+POST /api/cctv/hikvision/connect
+POST /api/cctv/hikvision/disconnect
+GET  /api/cctv/hikvision/devices
+```
+
 ---
 
 ## الصفحات الرئيسية
