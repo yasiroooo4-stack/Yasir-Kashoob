@@ -1042,6 +1042,199 @@ const CCTVSystem = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Event Detection Settings Tab */}
+        <TabsContent value="detection">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Detection Types */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-purple-500" />
+                  أنواع الكشف
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                      <Activity className="h-5 w-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">كشف الحركة</p>
+                      <p className="text-sm text-gray-500">اكتشاف أي حركة في منطقة المراقبة</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={eventSettings.motion_detection}
+                    onChange={(e) => setEventSettings({...eventSettings, motion_detection: e.target.checked})}
+                    className="h-5 w-5"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">كشف التسلل</p>
+                      <p className="text-sm text-gray-500">تنبيه عند دخول شخص لمنطقة محظورة</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={eventSettings.intrusion_detection}
+                    onChange={(e) => setEventSettings({...eventSettings, intrusion_detection: e.target.checked})}
+                    className="h-5 w-5"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                      <XCircle className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">عبور الخط</p>
+                      <p className="text-sm text-gray-500">تنبيه عند عبور خط افتراضي محدد</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={eventSettings.line_crossing}
+                    onChange={(e) => setEventSettings({...eventSettings, line_crossing: e.target.checked})}
+                    className="h-5 w-5"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Camera className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">كشف الوجوه</p>
+                      <p className="text-sm text-gray-500">تسجيل وتحليل الوجوه المكتشفة</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={eventSettings.face_detection}
+                    onChange={(e) => setEventSettings({...eventSettings, face_detection: e.target.checked})}
+                    className="h-5 w-5"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notification Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-blue-500" />
+                  إعدادات الإشعارات
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <Bell className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">إشعارات فورية</p>
+                      <p className="text-sm text-gray-500">إشعارات داخل النظام</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={eventSettings.notification_push}
+                    onChange={(e) => setEventSettings({...eventSettings, notification_push: e.target.checked})}
+                    className="h-5 w-5"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Activity className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">رسائل SMS</p>
+                      <p className="text-sm text-gray-500">إرسال رسالة نصية للمسؤولين</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={eventSettings.notification_sms}
+                    onChange={(e) => setEventSettings({...eventSettings, notification_sms: e.target.checked})}
+                    className="h-5 w-5"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>البريد الإلكتروني للتنبيهات</Label>
+                  <Input
+                    type="email"
+                    value={eventSettings.notification_email}
+                    onChange={(e) => setEventSettings({...eventSettings, notification_email: e.target.value})}
+                    placeholder="admin@company.com"
+                  />
+                  <p className="text-xs text-gray-500">سيتم إرسال التنبيهات الحرجة لهذا البريد</p>
+                </div>
+                
+                <Button className="w-full" onClick={saveEventSettings}>
+                  <CheckCircle className="h-4 w-4 ml-2" />
+                  حفظ إعدادات الإشعارات
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Detections */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                آخر الاكتشافات
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {events.slice(0, 5).map((event) => (
+                  <div key={event.id} className="flex items-center gap-4 p-3 border rounded-lg hover:bg-gray-50">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      event.event_type === 'motion' ? 'bg-yellow-100' :
+                      event.event_type === 'intrusion' ? 'bg-red-100' :
+                      'bg-blue-100'
+                    }`}>
+                      {event.event_type === 'motion' ? <Activity className="h-6 w-6 text-yellow-600" /> :
+                       event.event_type === 'intrusion' ? <AlertTriangle className="h-6 w-6 text-red-600" /> :
+                       <Camera className="h-6 w-6 text-blue-600" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{getEventTypeLabel(event.event_type)}</p>
+                      <p className="text-sm text-gray-500">{event.camera_name}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm text-gray-500">{new Date(event.created_at).toLocaleTimeString('ar-OM')}</p>
+                      <p className="text-xs text-gray-400">{new Date(event.created_at).toLocaleDateString('ar-OM')}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {events.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Activity className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <p>لا توجد اكتشافات حديثة</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Add Camera Dialog */}
