@@ -981,6 +981,69 @@ const CCTVSystem = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Hikvision Login Dialog */}
+      <Dialog open={showHikvisionLogin} onOpenChange={setShowHikvisionLogin}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5" />
+              تسجيل دخول Hikvision
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>عنوان الخادم (Server URL)</Label>
+              <Input
+                value={hikvisionConfig.server_url}
+                onChange={(e) => setHikvisionConfig({...hikvisionConfig, server_url: e.target.value})}
+                placeholder="https://192.168.1.100 أو https://cloud.hikvision.com"
+                data-testid="hikvision-server-url"
+              />
+              <p className="text-xs text-gray-500 mt-1">أدخل عنوان NVR/DVR أو Hik-Connect Cloud</p>
+            </div>
+            <div>
+              <Label>اسم المستخدم</Label>
+              <Input
+                value={hikvisionConfig.username}
+                onChange={(e) => setHikvisionConfig({...hikvisionConfig, username: e.target.value})}
+                placeholder="Almoroojcctv"
+                data-testid="hikvision-username"
+              />
+            </div>
+            <div>
+              <Label>كلمة المرور</Label>
+              <Input
+                type="password"
+                value={hikvisionConfig.password}
+                onChange={(e) => setHikvisionConfig({...hikvisionConfig, password: e.target.value})}
+                placeholder="••••••••"
+                data-testid="hikvision-password"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowHikvisionLogin(false)}>إلغاء</Button>
+              <Button 
+                onClick={handleHikvisionLogin} 
+                disabled={isConnecting || !hikvisionConfig.server_url || !hikvisionConfig.username}
+                data-testid="hikvision-login-submit"
+              >
+                {isConnecting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 ml-2 animate-spin" />
+                    جاري الاتصال...
+                  </>
+                ) : (
+                  <>
+                    <Wifi className="h-4 w-4 ml-2" />
+                    تسجيل الدخول
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </div>
   );
