@@ -89,18 +89,22 @@ const Legal = () => {
 
   const fetchAllData = async () => {
     try {
-      const [contractsRes, casesRes, consultationsRes, documentsRes, dashboardRes] = await Promise.all([
+      const [contractsRes, casesRes, consultationsRes, documentsRes, dashboardRes, reviewsRes, waiversRes] = await Promise.all([
         axios.get(`${API}/legal/contracts`),
         axios.get(`${API}/legal/cases`),
         axios.get(`${API}/legal/consultations`),
         axios.get(`${API}/legal/documents`),
-        axios.get(`${API}/legal/dashboard`)
+        axios.get(`${API}/legal/dashboard`),
+        axios.get(`${API}/legal/reviews`).catch(() => ({ data: [] })),
+        axios.get(`${API}/legal/waivers`).catch(() => ({ data: [] }))
       ]);
       setContracts(contractsRes.data);
       setCases(casesRes.data);
       setConsultations(consultationsRes.data);
       setDocuments(documentsRes.data);
       setDashboard(dashboardRes.data);
+      setReviews(reviewsRes.data || []);
+      setWaivers(waiversRes.data || []);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
