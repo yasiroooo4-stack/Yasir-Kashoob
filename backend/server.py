@@ -11114,10 +11114,12 @@ async def get_sms_settings(current_user: dict = Depends(require_role(["admin"]))
     return settings or {
         "type": "sms",
         "provider": "tamimah",
+        "api_type": "tamimah",  # tamimah, yamamah, generic_get
         "api_url": "",
         "username": "",
         "sender_id": "MAROOJ",
-        "is_configured": False
+        "is_configured": False,
+        "notes": "تواصل مع مزود خدمة SMS للحصول على رابط API الصحيح"
     }
 
 @api_router.post("/sms/settings")
@@ -11128,6 +11130,7 @@ async def update_sms_settings(
     """Update SMS provider settings"""
     update_data = {
         "provider": data.get("provider", "tamimah"),
+        "api_type": data.get("api_type", "tamimah"),
         "api_url": data.get("api_url", ""),
         "username": data.get("username", ""),
         "sender_id": data.get("sender_id", "MAROOJ"),
