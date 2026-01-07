@@ -35,6 +35,7 @@ const Legal = () => {
   const [dashboard, setDashboard] = useState({});
   const [reviews, setReviews] = useState([]);
   const [waivers, setWaivers] = useState([]);
+  const [legalOpinions, setLegalOpinions] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   
   // Dialog states
@@ -44,6 +45,7 @@ const Legal = () => {
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [waiverDialogOpen, setWaiverDialogOpen] = useState(false);
+  const [legalOpinionDialogOpen, setLegalOpinionDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   
   // Form states
@@ -66,6 +68,12 @@ const Legal = () => {
   const [reviewForm, setReviewForm] = useState({
     review_type: "", title: "", description: "", reviewer_name: "",
     review_date: "", status: "pending", findings: "", recommendations: ""
+  });
+  const [legalOpinionForm, setLegalOpinionForm] = useState({
+    opinion_number: "", subject: "", requester_name: "", requester_department: "",
+    request_date: "", opinion_type: "", summary: "", detailed_opinion: "",
+    legal_basis: "", recommendations: "", risks: "", attachments: [],
+    lawyer_name: "", lawyer_signature: "", status: "draft", priority: "normal"
   });
   const [waiverForm, setWaiverForm] = useState({
     from_supplier_id: "", from_supplier_name: "", to_supplier_id: "", to_supplier_name: "",
