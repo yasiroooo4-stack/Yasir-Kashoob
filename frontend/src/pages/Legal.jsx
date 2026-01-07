@@ -988,6 +988,172 @@ const Legal = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedItem ? (language === "ar" ? "تعديل المراجعة" : "Edit Review") : (language === "ar" ? "مراجعة جديدة" : "New Review")}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleReviewSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "نوع المراجعة" : "Review Type"} *</Label>
+                <Select value={reviewForm.review_type} onValueChange={(v) => setReviewForm({...reviewForm, review_type: v})}>
+                  <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر النوع" : "Select type"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contract_review">{language === "ar" ? "مراجعة عقد" : "Contract Review"}</SelectItem>
+                    <SelectItem value="compliance_audit">{language === "ar" ? "تدقيق الامتثال" : "Compliance Audit"}</SelectItem>
+                    <SelectItem value="risk_assessment">{language === "ar" ? "تقييم المخاطر" : "Risk Assessment"}</SelectItem>
+                    <SelectItem value="legal_opinion">{language === "ar" ? "رأي قانوني" : "Legal Opinion"}</SelectItem>
+                    <SelectItem value="policy_review">{language === "ar" ? "مراجعة سياسة" : "Policy Review"}</SelectItem>
+                    <SelectItem value="other">{language === "ar" ? "أخرى" : "Other"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "العنوان" : "Title"} *</Label>
+                <Input value={reviewForm.title} onChange={(e) => setReviewForm({...reviewForm, title: e.target.value})} required />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "اسم المراجع" : "Reviewer Name"} *</Label>
+                <Input value={reviewForm.reviewer_name} onChange={(e) => setReviewForm({...reviewForm, reviewer_name: e.target.value})} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "تاريخ المراجعة" : "Review Date"} *</Label>
+                <Input type="date" value={reviewForm.review_date} onChange={(e) => setReviewForm({...reviewForm, review_date: e.target.value})} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الوصف" : "Description"}</Label>
+              <Textarea value={reviewForm.description} onChange={(e) => setReviewForm({...reviewForm, description: e.target.value})} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "النتائج" : "Findings"}</Label>
+              <Textarea value={reviewForm.findings} onChange={(e) => setReviewForm({...reviewForm, findings: e.target.value})} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "التوصيات" : "Recommendations"}</Label>
+              <Textarea value={reviewForm.recommendations} onChange={(e) => setReviewForm({...reviewForm, recommendations: e.target.value})} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الحالة" : "Status"}</Label>
+              <Select value={reviewForm.status} onValueChange={(v) => setReviewForm({...reviewForm, status: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">{language === "ar" ? "معلق" : "Pending"}</SelectItem>
+                  <SelectItem value="in_progress">{language === "ar" ? "قيد التنفيذ" : "In Progress"}</SelectItem>
+                  <SelectItem value="completed">{language === "ar" ? "مكتمل" : "Completed"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setReviewDialogOpen(false)}>
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white">
+                {language === "ar" ? "حفظ" : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Waiver Dialog (التنازل) */}
+      <Dialog open={waiverDialogOpen} onOpenChange={setWaiverDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedItem ? (language === "ar" ? "تعديل التنازل" : "Edit Waiver") : (language === "ar" ? "تنازل جديد" : "New Waiver")}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {language === "ar" ? "تنازل المورد عن حصته (الكوادر) لمورد آخر" : "Transfer supplier quota to another supplier"}
+            </p>
+          </DialogHeader>
+          <form onSubmit={handleWaiverSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "المورد المتنازل" : "From Supplier"} *</Label>
+                <Select value={waiverForm.from_supplier_id} onValueChange={(v) => handleSupplierSelect('from', v)}>
+                  <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر المورد" : "Select supplier"} /></SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "المورد المستلم" : "To Supplier"} *</Label>
+                <Select value={waiverForm.to_supplier_id} onValueChange={(v) => handleSupplierSelect('to', v)}>
+                  <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر المورد" : "Select supplier"} /></SelectTrigger>
+                  <SelectContent>
+                    {suppliers.filter(s => s.id !== waiverForm.from_supplier_id).map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "الكمية (لتر)" : "Quota Amount (L)"} *</Label>
+                <Input type="number" step="0.01" value={waiverForm.quota_amount} onChange={(e) => setWaiverForm({...waiverForm, quota_amount: parseFloat(e.target.value)})} required />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "تاريخ التنازل" : "Waiver Date"} *</Label>
+                <Input type="date" value={waiverForm.waiver_date} onChange={(e) => setWaiverForm({...waiverForm, waiver_date: e.target.value})} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "سبب التنازل" : "Reason"} *</Label>
+              <Select value={waiverForm.reason} onValueChange={(v) => setWaiverForm({...waiverForm, reason: v})}>
+                <SelectTrigger><SelectValue placeholder={language === "ar" ? "اختر السبب" : "Select reason"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="financial">{language === "ar" ? "أسباب مالية" : "Financial reasons"}</SelectItem>
+                  <SelectItem value="relocation">{language === "ar" ? "انتقال" : "Relocation"}</SelectItem>
+                  <SelectItem value="retirement">{language === "ar" ? "تقاعد" : "Retirement"}</SelectItem>
+                  <SelectItem value="illness">{language === "ar" ? "مرض" : "Illness"}</SelectItem>
+                  <SelectItem value="family_transfer">{language === "ar" ? "انتقال للعائلة" : "Family Transfer"}</SelectItem>
+                  <SelectItem value="business_closure">{language === "ar" ? "إغلاق النشاط" : "Business Closure"}</SelectItem>
+                  <SelectItem value="other">{language === "ar" ? "أخرى" : "Other"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الملاحظات" : "Notes"}</Label>
+              <Textarea value={waiverForm.notes} onChange={(e) => setWaiverForm({...waiverForm, notes: e.target.value})} rows={3} placeholder={language === "ar" ? "أي ملاحظات إضافية..." : "Any additional notes..."} />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "المستندات المرفقة" : "Attached Documents"}</Label>
+              <Input type="file" multiple className="cursor-pointer" />
+              <p className="text-xs text-muted-foreground">
+                {language === "ar" ? "يمكنك رفع صور الهوية، وثائق الموافقة، أو أي مستندات داعمة" : "Upload ID copies, approval documents, or supporting documents"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الحالة" : "Status"}</Label>
+              <Select value={waiverForm.status} onValueChange={(v) => setWaiverForm({...waiverForm, status: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">{language === "ar" ? "معلق" : "Pending"}</SelectItem>
+                  <SelectItem value="approved">{language === "ar" ? "موافق" : "Approved"}</SelectItem>
+                  <SelectItem value="rejected">{language === "ar" ? "مرفوض" : "Rejected"}</SelectItem>
+                  <SelectItem value="completed">{language === "ar" ? "مكتمل" : "Completed"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setWaiverDialogOpen(false)}>
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white">
+                {language === "ar" ? "حفظ" : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
