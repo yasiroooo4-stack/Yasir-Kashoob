@@ -851,6 +851,9 @@ const CCTVSystem = () => {
                           <Clock className="h-4 w-4 ml-1" />
                           التسجيلات
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleOpenExport(device)}>
+                          📤
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => handleViewEvents(device)}>
                           <Bell className="h-4 w-4 ml-1" />
                           الأحداث
