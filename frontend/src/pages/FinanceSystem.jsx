@@ -221,6 +221,300 @@ const FinanceSystem = () => {
   // Format currency
   const formatCurrency = (amount) => `${(amount || 0).toLocaleString()} ريال`;
 
+  // ========== Export Functions ==========
+  
+  // Export Trial Balance to Excel
+  const exportTrialBalanceToExcel = () => {
+    if (!trialBalance) {
+      toast.error("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    const data = [
+      ["ميزان المراجعة", "", ""],
+      ["التاريخ:", new Date().toLocaleDateString('ar-SA'), ""],
+      ["", "", ""],
+      ["الحساب", "المدين", "الدائن"],
+      ...(trialBalance.accounts || []).map(acc => [
+        acc.name || acc.account_name,
+        acc.debit || 0,
+        acc.credit || 0
+      ]),
+      ["", "", ""],
+      ["الإجمالي", trialBalance.total_debit || 0, trialBalance.total_credit || 0],
+      ["الحالة:", trialBalance.is_balanced ? "متوازن ✓" : "غير متوازن ✗", ""]
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ميزان المراجعة");
+    XLSX.writeFile(wb, `ميزان_المراجعة_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("تم تصدير ميزان المراجعة بنجاح");
+  };
+
+  // Export Income Statement to Excel
+  const exportIncomeStatementToExcel = () => {
+    if (!incomeStatement) {
+      toast.error("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    const data = [
+      ["قائمة الدخل", ""],
+      ["التاريخ:", new Date().toLocaleDateString('ar-SA')],
+      ["", ""],
+      ["البند", "المبلغ"],
+      ["", ""],
+      ["الإيرادات:", ""],
+      ...(incomeStatement.revenue_items || []).map(item => [item.name, item.amount || 0]),
+      ["إجمالي الإيرادات", incomeStatement.total_revenue || 0],
+      ["", ""],
+      ["المصروفات:", ""],
+      ...(incomeStatement.expense_items || []).map(item => [item.name, item.amount || 0]),
+      ["إجمالي المصروفات", incomeStatement.total_expenses || 0],
+      ["", ""],
+      ["صافي الدخل", incomeStatement.net_income || 0]
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "قائمة الدخل");
+    XLSX.writeFile(wb, `قائمة_الدخل_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("تم تصدير قائمة الدخل بنجاح");
+  };
+
+  // Export Balance Sheet to Excel
+  const exportBalanceSheetToExcel = () => {
+    if (!balanceSheet) {
+      toast.error("لا توجد بيانات للتصدير");
+      return;
+    }
+    
+    const data = [
+      ["الميزانية العمومية", ""],
+      ["كما في:", balanceSheet.as_of_date || new Date().toLocaleDateString('ar-SA')],
+      ["", ""],
+      ["البند", "المبلغ"],
+      ["", ""],
+      ["الأصول:", ""],
+      ...(balanceSheet.assets || []).map(item => [item.name, item.balance || 0]),
+      ["إجمالي الأصول", balanceSheet.total_assets || 0],
+      ["", ""],
+      ["الخصوم:", ""],
+      ...(balanceSheet.liabilities || []).map(item => [item.name, item.balance || 0]),
+      ["إجمالي الخصوم", balanceSheet.total_liabilities || 0],
+      ["", ""],
+      ["حقوق الملكية:", ""],
+      ...(balanceSheet.equity || []).map(item => [item.name, item.balance || 0]),
+      ["إجمالي حقوق الملكية", balanceSheet.total_equity || 0]
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "الميزانية العمومية");
+    XLSX.writeFile(wb, `الميزانية_العمومية_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("تم تصدير الميزانية العمومية بنجاح");
+  };
+
+  // Export All Reports to Excel (combined workbook)
+  const exportAllReportsToExcel = () => {
+    const wb = XLSX.utils.book_new();
+    
+    // Trial Balance Sheet
+    if (trialBalance) {
+      const tbData = [
+        ["ميزان المراجعة"],
+        ["الحساب", "المدين", "الدائن"],
+        ...(trialBalance.accounts || []).map(acc => [acc.name || acc.account_name, acc.debit || 0, acc.credit || 0]),
+        ["الإجمالي", trialBalance.total_debit || 0, trialBalance.total_credit || 0]
+      ];
+      const tbWs = XLSX.utils.aoa_to_sheet(tbData);
+      XLSX.utils.book_append_sheet(wb, tbWs, "ميزان المراجعة");
+    }
+    
+    // Income Statement Sheet
+    if (incomeStatement) {
+      const isData = [
+        ["قائمة الدخل"],
+        ["البند", "المبلغ"],
+        ["إجمالي الإيرادات", incomeStatement.total_revenue || 0],
+        ["إجمالي المصروفات", incomeStatement.total_expenses || 0],
+        ["صافي الدخل", incomeStatement.net_income || 0]
+      ];
+      const isWs = XLSX.utils.aoa_to_sheet(isData);
+      XLSX.utils.book_append_sheet(wb, isWs, "قائمة الدخل");
+    }
+    
+    // Balance Sheet
+    if (balanceSheet) {
+      const bsData = [
+        ["الميزانية العمومية"],
+        ["البند", "المبلغ"],
+        ["إجمالي الأصول", balanceSheet.total_assets || 0],
+        ["إجمالي الخصوم", balanceSheet.total_liabilities || 0],
+        ["حقوق الملكية", balanceSheet.total_equity || 0]
+      ];
+      const bsWs = XLSX.utils.aoa_to_sheet(bsData);
+      XLSX.utils.book_append_sheet(wb, bsWs, "الميزانية العمومية");
+    }
+    
+    XLSX.writeFile(wb, `التقارير_المالية_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("تم تصدير جميع التقارير بنجاح");
+  };
+
+  // Export to PDF
+  const exportReportsToPDF = () => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Add Arabic font support - use built-in font
+    doc.setFont('helvetica');
+    
+    // Title
+    doc.setFontSize(20);
+    doc.text('Financial Reports - التقارير المالية', 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+    
+    let yPos = 45;
+    
+    // Trial Balance
+    if (trialBalance) {
+      doc.setFontSize(16);
+      doc.text('Trial Balance - ميزان المراجعة', 14, yPos);
+      yPos += 10;
+      
+      doc.autoTable({
+        startY: yPos,
+        head: [['Account', 'Debit', 'Credit']],
+        body: [
+          ...(trialBalance.accounts || []).slice(0, 10).map(acc => [
+            acc.name || acc.account_name || '-',
+            (acc.debit || 0).toLocaleString(),
+            (acc.credit || 0).toLocaleString()
+          ]),
+          ['Total', (trialBalance.total_debit || 0).toLocaleString(), (trialBalance.total_credit || 0).toLocaleString()]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246] },
+        margin: { left: 14, right: 14 }
+      });
+      
+      yPos = doc.lastAutoTable.finalY + 15;
+    }
+    
+    // Income Statement
+    if (incomeStatement && yPos < 200) {
+      doc.setFontSize(16);
+      doc.text('Income Statement - قائمة الدخل', 14, yPos);
+      yPos += 10;
+      
+      doc.autoTable({
+        startY: yPos,
+        head: [['Item', 'Amount (OMR)']],
+        body: [
+          ['Total Revenue', (incomeStatement.total_revenue || 0).toLocaleString()],
+          ['Total Expenses', (incomeStatement.total_expenses || 0).toLocaleString()],
+          ['Net Income', (incomeStatement.net_income || 0).toLocaleString()]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [34, 197, 94] },
+        margin: { left: 14, right: 14 }
+      });
+      
+      yPos = doc.lastAutoTable.finalY + 15;
+    }
+    
+    // Balance Sheet
+    if (balanceSheet && yPos < 230) {
+      doc.setFontSize(16);
+      doc.text('Balance Sheet - الميزانية العمومية', 14, yPos);
+      yPos += 10;
+      
+      doc.autoTable({
+        startY: yPos,
+        head: [['Item', 'Amount (OMR)']],
+        body: [
+          ['Total Assets', (balanceSheet.total_assets || 0).toLocaleString()],
+          ['Total Liabilities', (balanceSheet.total_liabilities || 0).toLocaleString()],
+          ['Total Equity', (balanceSheet.total_equity || 0).toLocaleString()]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [168, 85, 247] },
+        margin: { left: 14, right: 14 }
+      });
+    }
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(`Al Marooj Dairy - المروج للألبان | Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+    }
+    
+    doc.save(`Financial_Reports_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success("تم تصدير التقارير بصيغة PDF بنجاح");
+  };
+
+  // Export Journal Entries to Excel
+  const exportJournalEntriesToExcel = () => {
+    if (!journalEntries || journalEntries.length === 0) {
+      toast.error("لا توجد قيود للتصدير");
+      return;
+    }
+    
+    const data = [
+      ["سجل القيود المحاسبية"],
+      ["التاريخ:", new Date().toLocaleDateString('ar-SA')],
+      [""],
+      ["رقم القيد", "التاريخ", "الوصف", "المدين", "الدائن", "الحالة"],
+      ...journalEntries.map(entry => [
+        entry.entry_number || entry.id,
+        entry.date?.split('T')[0] || '-',
+        entry.description || '-',
+        entry.total_debit || 0,
+        entry.total_credit || 0,
+        entry.status || 'draft'
+      ])
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "القيود المحاسبية");
+    XLSX.writeFile(wb, `القيود_المحاسبية_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("تم تصدير القيود المحاسبية بنجاح");
+  };
+
+  // Export Chart of Accounts to Excel
+  const exportAccountsToExcel = () => {
+    if (!accounts || accounts.length === 0) {
+      toast.error("لا توجد حسابات للتصدير");
+      return;
+    }
+    
+    const data = [
+      ["دليل الحسابات"],
+      ["التاريخ:", new Date().toLocaleDateString('ar-SA')],
+      [""],
+      ["رقم الحساب", "اسم الحساب", "النوع", "الرصيد", "الوصف"],
+      ...accounts.map(acc => [
+        acc.account_number || '-',
+        acc.name || '-',
+        getAccountTypeLabel(acc.account_type),
+        acc.balance || 0,
+        acc.description || '-'
+      ])
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "دليل الحسابات");
+    XLSX.writeFile(wb, `دليل_الحسابات_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("تم تصدير دليل الحسابات بنجاح");
+  };
+
+  // ========== End Export Functions ==========
+
   // Account type labels
   const getAccountTypeLabel = (type) => {
     const types = {
