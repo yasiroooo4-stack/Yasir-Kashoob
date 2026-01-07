@@ -43,6 +43,17 @@ const CCTVSystem = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  
+  // Hikvision Login State
+  const [hikvisionConfig, setHikvisionConfig] = useState({
+    server_url: '',
+    username: '',
+    password: '',
+    is_connected: false
+  });
+  const [hikvisionDevices, setHikvisionDevices] = useState([]);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showHikvisionLogin, setShowHikvisionLogin] = useState(false);
 
   const [newCamera, setNewCamera] = useState({
     name: '',
