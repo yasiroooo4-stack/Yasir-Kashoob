@@ -367,6 +367,23 @@ const CCTVSystem = () => {
             <p className="text-slate-600">Hikvision Integration</p>
           </div>
         <div className="flex gap-2">
+          <Button 
+            variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
+            onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
+            data-testid="hikvision-connect-btn"
+          >
+            {hikvisionConfig.is_connected ? (
+              <>
+                <WifiOff className="h-4 w-4 ml-2" />
+                قطع الاتصال
+              </>
+            ) : (
+              <>
+                <Wifi className="h-4 w-4 ml-2" />
+                تسجيل دخول Hikvision
+              </>
+            )}
+          </Button>
           <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
             <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
             فحص الكاميرات
@@ -381,6 +398,78 @@ const CCTVSystem = () => {
           </Button>
         </div>
       </div>
+
+      {/* Hikvision Connection Status */}
+      {hikvisionConfig.is_connected && (
+        <Card className="border-green-300 bg-green-50">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                <div>
+                  <p className="font-semibold text-green-800">متصل بـ Hikvision</p>
+                  <p className="text-sm text-green-600">المستخدم: {hikvisionConfig.username}</p>
+                </div>
+              </div>
+              <div className="text-left">
+                <p className="text-sm text-green-700">الأجهزة المتاحة: {hikvisionDevices.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hikvision Devices List */}
+      {hikvisionConfig.is_connected && hikvisionDevices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5" />
+              الأجهزة والكاميرات المكتشفة
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {hikvisionDevices.map((device, index) => (
+                <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-blue-500" />
+                      <span className="font-semibold">{device.name || `جهاز ${index + 1}`}</span>
+                    </div>
+                    <Badge variant={device.is_online ? "success" : "destructive"}>
+                      {device.is_online ? 'متصل' : 'غير متصل'}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p>IP: {device.ip_address || 'غير متاح'}</p>
+                    <p>النوع: {device.device_type || 'كاميرا'}</p>
+                    <p>الموديل: {device.model || 'غير محدد'}</p>
+                    {device.channels && <p>القنوات: {device.channels}</p>}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full mt-3"
+                    onClick={() => {
+                      setNewCamera({
+                        ...newCamera,
+                        name: device.name || `كاميرا ${index + 1}`,
+                        ip_address: device.ip_address || '',
+                        camera_type: 'hikvision'
+                      });
+                      setShowAddCamera(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 ml-1" />
+                    إضافة للنظام
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Dashboard Stats */}
       {dashboard && (
