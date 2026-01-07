@@ -40,31 +40,36 @@
 - **زر "اختبار الاتصال"** مع أيقونة WiFi
 - **خيارات محسّنة:** المزامنة التلقائية، كشف الحركة، بريد التنبيهات، مدة الاحتفاظ
 
-### 15. نظام كاميرات متكامل مع Hikvision ✅ 🆕 (P0)
-- **البث المباشر (Live Stream):**
-  - دعم RTSP للبث المباشر
-  - جلب لقطات (Snapshots) من الكاميرات
-  - عرض معلومات الجهاز والحالة
-- **مشاهدة التسجيلات (Playback):**
-  - البحث في التسجيلات حسب التاريخ والوقت
-  - عرض قائمة التسجيلات المتاحة
-  - تشغيل التسجيلات
-- **تصدير الفيديو (Export):**
-  - إنشاء طلبات تصدير بصيغة MP4/AVI
-  - متابعة حالة طلبات التصدير
-  - عرض سجل الطلبات السابقة
-- **تنبيهات كشف الحركة:**
-  - استقبال أحداث الحركة
-  - إرسال إشعارات للمستخدمين
-  - عرض سجل الأحداث لكل كاميرا
-- **APIs جديدة:**
-  - `POST /api/cctv/stream/start` - بدء البث
-  - `GET /api/cctv/stream/snapshot/{camera_id}` - جلب لقطة
-  - `POST /api/cctv/playback/search` - البحث في التسجيلات
-  - `POST /api/cctv/playback/start` - تشغيل تسجيل
-  - `POST /api/cctv/export/request` - طلب تصدير
-  - `GET /api/cctv/export/list` - قائمة طلبات التصدير
-  - `POST /api/cctv/motion/event` - استقبال أحداث الحركة
+### 15. نظام Hik-Connect الكامل ✅ 🆕 (P0)
+- **Backend APIs الجديدة (`/app/backend/routes/hikconnect_routes.py`):**
+  - `POST /api/hikconnect/devices/connect` - إضافة جهاز NVR/DVR جديد
+  - `GET /api/hikconnect/devices` - عرض جميع الأجهزة
+  - `DELETE /api/hikconnect/devices/{id}` - حذف جهاز
+  - `POST /api/hikconnect/devices/{id}/refresh` - تحديث حالة الجهاز
+  - `GET /api/hikconnect/devices/{id}/channels` - عرض القنوات
+  - `POST /api/hikconnect/stream/info` - معلومات البث (RTSP URLs)
+  - `GET /api/hikconnect/stream/snapshot/{device_id}/{channel}` - لقطة مباشرة
+  - `POST /api/hikconnect/playback/search` - البحث في التسجيلات
+  - `POST /api/hikconnect/playback/url` - رابط تشغيل التسجيل
+  - `GET /api/hikconnect/events` - أحداث كشف الحركة
+  - `POST /api/hikconnect/ptz/{device_id}/{channel}` - التحكم في PTZ
+  - `GET /api/hikconnect/dashboard` - إحصائيات لوحة التحكم
+
+- **واجهة المستخدم الجديدة:**
+  - تبويب "Hik-Connect" بتصميم احترافي (أحمر/برتقالي)
+  - Header مع إحصائيات سريعة (الأجهزة، المتصلة، الكاميرات)
+  - شبكة عرض الكاميرات على نمط تطبيق Hik-Connect
+  - نافذة إضافة جهاز جديد مع جميع الإعدادات
+  - أزرار التسجيلات والتصدير لكل جهاز
+  - عرض لقطات مباشرة من الكاميرات
+
+- **الميزات المدعومة:**
+  - ✅ البث المباشر (RTSP)
+  - ✅ مشاهدة التسجيلات (Playback)
+  - ✅ تنبيهات كشف الحركة
+  - ✅ تصدير مقاطع الفيديو
+  - ✅ التحكم في PTZ
+  - ✅ إدارة متعددة الأجهزة
 
 ---
 
