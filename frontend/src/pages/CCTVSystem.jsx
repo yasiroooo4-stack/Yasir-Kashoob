@@ -87,6 +87,22 @@ const CCTVSystem = () => {
   const [snapshot, setSnapshot] = useState(null);
   const [loadingSnapshot, setLoadingSnapshot] = useState(false);
   
+  // Hik-Connect State
+  const [hikConnectDevices, setHikConnectDevices] = useState([]);
+  const [hikConnectDashboard, setHikConnectDashboard] = useState(null);
+  const [showAddDevice, setShowAddDevice] = useState(false);
+  const [newDeviceForm, setNewDeviceForm] = useState({
+    host: '',
+    port: 80,
+    username: 'admin',
+    password: '',
+    rtsp_port: 554,
+    device_name: ''
+  });
+  const [connectingDevice, setConnectingDevice] = useState(false);
+  const [selectedDeviceChannels, setSelectedDeviceChannels] = useState([]);
+  const [showDeviceChannels, setShowDeviceChannels] = useState(false);
+  
   // Event Detection Settings
   const [eventSettings, setEventSettings] = useState({
     motion_detection: true,
