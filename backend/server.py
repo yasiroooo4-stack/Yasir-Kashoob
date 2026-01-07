@@ -3567,6 +3567,30 @@ async def get_employee_work_location(employee_id: str) -> str:
     employee = await db.hr_employees.find_one({"id": employee_id}, {"work_location": 1})
     return employee.get("work_location") if employee else None
 
+
+@api_router.put("/hr/employees/bulk-set-weekly-off")
+async def bulk_set_weekly_off_days(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تحديث أيام الإجازة الأسبوعية لجميع الموظفين الذين لا يملكونها"""
+    weekly_off_days = data.get("weekly_off_days", [4, 5])  # Default: Friday & Saturday
+    
+    # Update all employees who don't have weekly_off_days set
+    result = await db.hr_employees.update_many(
+        {"$or": [
+            {"weekly_off_days": None},
+            {"weekly_off_days": {"$exists": False}}
+        ]},
+        {"$set": {"weekly_off_days": weekly_off_days}}
+    )
+    
+    return {
+        "message": f"تم تحديث {result.modified_count} موظف",
+        "modified_count": result.modified_count
+    }
+
+
 @api_router.post("/hr/attendance", response_model=Attendance)
 async def create_attendance(attendance_data: AttendanceCreate, current_user: dict = Depends(get_current_user)):
     # Check if attendance already exists for this employee and date
