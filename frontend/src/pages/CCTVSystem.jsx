@@ -171,6 +171,86 @@ const CCTVSystem = () => {
     }
   };
 
+  // Live Stream Functions
+  const handleOpenLiveStream = async (device) => {
+    if (!device.is_online) {
+      toast.error('الجهاز غير متصل');
+      return;
+    }
+    
+    setStreamingDevice(device);
+    
+    try {
+      // Get stream URL from backend
+      const res = await fetch(`${API_URL}/api/cctv/hikvision/stream/${device.id || device.name}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setStreamUrl(data.stream_url || '');
+      }
+    } catch (error) {
+      console.error('Error getting stream URL:', error);
+    }
+    
+    setShowLiveStream(true);
+  };
+
+  const handleViewRecordings = async (device) => {
+    if (!device.is_online) {
+      toast.error('الجهاز غير متصل');
+      return;
+    }
+    toast.info('جاري تحميل التسجيلات...');
+    // Navigate to recordings or open dialog
+    setSelectedCamera(device);
+    setActiveTab('events');
+  };
+
+  const handleViewEvents = async (device) => {
+    setSelectedDeviceForEvents(device);
+    
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/events?device_id=${device.id || device.name}&limit=100`, { headers });
+      if (res.ok) {
+        const events = await res.json();
+        setDeviceEvents(events);
+      }
+    } catch (error) {
+      console.error('Error fetching device events:', error);
+    }
+    
+    setShowDeviceEvents(true);
+  };
+
+  // Event Settings Functions
+  const fetchEventSettings = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/event-settings`, { headers });
+      if (res.ok) {
+        setEventSettings(await res.json());
+      }
+    } catch (error) {
+      console.error('Error fetching event settings:', error);
+    }
+  };
+
+  const saveEventSettings = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/cctv/event-settings`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(eventSettings)
+      });
+      
+      if (res.ok) {
+        toast.success('تم حفظ إعدادات الأحداث');
+      } else {
+        toast.error('فشل في حفظ الإعدادات');
+      }
+    } catch (error) {
+      toast.error('حدث خطأ');
+    }
+  };
+
   const fetchDashboard = async () => {
     try {
       const res = await fetch(`${API_URL}/api/cctv/dashboard`, { headers });
