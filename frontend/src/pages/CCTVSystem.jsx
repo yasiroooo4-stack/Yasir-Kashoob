@@ -1684,6 +1684,207 @@ const CCTVSystem = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Playback / Recordings Dialog */}
+      <Dialog open={showPlayback} onOpenChange={setShowPlayback}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-500" />
+              مشاهدة التسجيلات - {playbackDevice?.name || 'كاميرا'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Search Controls */}
+            <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+              <h3 className="font-semibold text-blue-700">🔍 البحث في التسجيلات</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>من تاريخ/وقت</Label>
+                  <Input
+                    type="datetime-local"
+                    value={playbackStartTime}
+                    onChange={(e) => setPlaybackStartTime(e.target.value)}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label>إلى تاريخ/وقت</Label>
+                  <Input
+                    type="datetime-local"
+                    value={playbackEndTime}
+                    onChange={(e) => setPlaybackEndTime(e.target.value)}
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={handleSearchRecordings} 
+                disabled={searchingRecordings}
+                className="w-full"
+              >
+                {searchingRecordings ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 ml-2 animate-spin" />
+                    جاري البحث...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="h-4 w-4 ml-2" />
+                    بحث عن التسجيلات
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {/* Recordings List */}
+            <div className="space-y-2">
+              <h3 className="font-semibold">📹 التسجيلات المتاحة ({recordings.length})</h3>
+              {recordings.length > 0 ? (
+                <div className="max-h-[300px] overflow-y-auto space-y-2">
+                  {recordings.map((rec, index) => (
+                    <div key={index} className="border rounded-lg p-3 hover:bg-gray-50 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Video className="h-8 w-8 text-blue-500" />
+                        <div>
+                          <p className="font-semibold text-sm">
+                            {new Date(rec.start_time).toLocaleString('ar-SA')}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            حتى {new Date(rec.end_time).toLocaleString('ar-SA')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleStartPlayback(rec)}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Play className="h-4 w-4 ml-1" />
+                          تشغيل
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setExportRequest({
+                              camera_id: playbackDevice?.id || playbackDevice?.name,
+                              start_time: rec.start_time,
+                              end_time: rec.end_time,
+                              format: 'mp4'
+                            });
+                            setShowExport(true);
+                          }}
+                        >
+                          تصدير
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>حدد الفترة الزمنية وابحث عن التسجيلات</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2 justify-end pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowPlayback(false)}>إغلاق</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={showExport} onOpenChange={setShowExport}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              📤 تصدير مقطع فيديو
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Export Form */}
+            <div className="bg-green-50 p-4 rounded-lg space-y-3">
+              <h3 className="font-semibold text-green-700">إنشاء طلب تصدير جديد</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>من تاريخ/وقت</Label>
+                  <Input
+                    type="datetime-local"
+                    value={exportRequest.start_time}
+                    onChange={(e) => setExportRequest({...exportRequest, start_time: e.target.value})}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label>إلى تاريخ/وقت</Label>
+                  <Input
+                    type="datetime-local"
+                    value={exportRequest.end_time}
+                    onChange={(e) => setExportRequest({...exportRequest, end_time: e.target.value})}
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>صيغة الملف</Label>
+                <Select value={exportRequest.format} onValueChange={(v) => setExportRequest({...exportRequest, format: v})}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mp4">MP4</SelectItem>
+                    <SelectItem value="avi">AVI</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleRequestExport} className="w-full bg-green-600 hover:bg-green-700">
+                إنشاء طلب التصدير
+              </Button>
+            </div>
+            
+            {/* Export Jobs List */}
+            <div className="space-y-2">
+              <h3 className="font-semibold">📋 طلبات التصدير السابقة ({exportJobs.length})</h3>
+              {exportJobs.length > 0 ? (
+                <div className="max-h-[200px] overflow-y-auto space-y-2">
+                  {exportJobs.map((job, index) => (
+                    <div key={index} className="border rounded-lg p-3 flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {new Date(job.start_time).toLocaleString('ar-SA')} - {new Date(job.end_time).toLocaleString('ar-SA')}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          طلب بواسطة: {job.requested_by} | {job.format?.toUpperCase()}
+                        </p>
+                      </div>
+                      <Badge variant={
+                        job.status === 'completed' ? 'default' :
+                        job.status === 'processing' ? 'secondary' :
+                        job.status === 'failed' ? 'destructive' : 'outline'
+                      }>
+                        {job.status === 'completed' ? '✅ مكتمل' :
+                         job.status === 'processing' ? '⏳ جاري...' :
+                         job.status === 'failed' ? '❌ فشل' : '⏸ معلق'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-4 text-gray-500">لا توجد طلبات سابقة</p>
+              )}
+            </div>
+            
+            <div className="flex gap-2 justify-end pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowExport(false)}>إغلاق</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Event Detection Settings in Main Settings Tab */}
       </div>
     </div>
