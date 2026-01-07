@@ -927,11 +927,195 @@ const CCTVSystem = () => {
               <Badge variant="destructive" className="mr-1">{alerts.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="hikconnect" className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 text-white data-[state=active]:from-red-600 data-[state=active]:to-orange-600">
+            <Wifi className="h-4 w-4" />
+            Hik-Connect
+            {hikConnectDevices.length > 0 && (
+              <Badge variant="secondary" className="mr-1 bg-white text-red-600">{hikConnectDevices.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="detection" className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             كشف الأحداث
           </TabsTrigger>
         </TabsList>
+
+        {/* Hik-Connect Tab - Complete System */}
+        <TabsContent value="hikconnect">
+          <div className="space-y-6">
+            {/* Hik-Connect Header */}
+            <div className="bg-gradient-to-r from-red-600 to-orange-500 rounded-xl p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                    <img src="https://www.hikvision.com/content/dam/hikvision/products/Software/Software/Hik-Connect/Hik-Connect-thumb.png" alt="Hik-Connect" className="h-12 w-12 object-contain" onError={(e) => e.target.style.display='none'} />
+                    <Wifi className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Hik-Connect</h2>
+                    <p className="text-white/80">إدارة كاميرات Hikvision المتكاملة</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button 
+                    className="bg-white text-red-600 hover:bg-gray-100"
+                    onClick={() => setShowAddDevice(true)}
+                    data-testid="add-hikconnect-device-btn"
+                  >
+                    <Plus className="h-4 w-4 ml-2" />
+                    إضافة جهاز جديد
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="text-white border-white hover:bg-white/20"
+                    onClick={() => { fetchHikConnectDevices(); fetchHikConnectDashboard(); }}
+                  >
+                    <RefreshCw className="h-4 w-4 ml-2" />
+                    تحديث
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Quick Stats */}
+              {hikConnectDashboard && (
+                <div className="grid grid-cols-3 gap-4 mt-6">
+                  <div className="bg-white/10 rounded-lg p-4 text-center">
+                    <p className="text-3xl font-bold">{hikConnectDashboard.devices?.total || 0}</p>
+                    <p className="text-sm text-white/80">إجمالي الأجهزة</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-4 text-center">
+                    <p className="text-3xl font-bold text-green-300">{hikConnectDashboard.devices?.online || 0}</p>
+                    <p className="text-sm text-white/80">متصل</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-4 text-center">
+                    <p className="text-3xl font-bold">{hikConnectDashboard.channels?.total || 0}</p>
+                    <p className="text-sm text-white/80">إجمالي الكاميرات</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Hik-Connect Devices List */}
+            {hikConnectDevices.length > 0 ? (
+              <div className="space-y-4">
+                {hikConnectDevices.map((device, index) => (
+                  <Card key={index} className="overflow-hidden border-2 hover:border-red-300 transition-colors">
+                    {/* Device Header */}
+                    <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center">
+                            <Monitor className="h-7 w-7" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-xl">{device.name || 'جهاز Hikvision'}</h3>
+                            <div className="flex items-center gap-3 text-gray-300 text-sm mt-1">
+                              <span>{device.model || 'NVR'}</span>
+                              <span>•</span>
+                              <span>{device.host}:{device.port}</span>
+                              <span>•</span>
+                              <span>{device.channels_count} كاميرا</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className={device.is_online ? 'bg-green-500 text-white px-3 py-1' : 'bg-red-500 text-white px-3 py-1'}>
+                            <span className={`w-2 h-2 rounded-full ${device.is_online ? 'bg-green-200' : 'bg-red-200'} inline-block mr-2`}></span>
+                            {device.is_online ? 'متصل' : 'غير متصل'}
+                          </Badge>
+                          <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => handleRefreshDeviceStatus(device.id)}>
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-red-300 hover:bg-red-500/20" onClick={() => handleDeleteDevice(device.id)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Cameras Grid - Hik-Connect Style */}
+                    <CardContent className="p-4 bg-gray-100">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {Array.from({ length: device.channels_count || 8 }, (_, i) => i + 1).map((ch) => (
+                          <div 
+                            key={ch}
+                            className="relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer group aspect-video shadow-lg hover:ring-2 hover:ring-red-500 transition-all"
+                            onClick={() => handleGetHikConnectSnapshot(device.id, ch)}
+                            data-testid={`hikconnect-camera-${device.id}-${ch}`}
+                          >
+                            {/* Camera Placeholder */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                              <Camera className="h-8 w-8 text-gray-600" />
+                            </div>
+                            
+                            {/* Live Indicator */}
+                            <div className="absolute top-2 left-2 flex items-center gap-1 bg-red-600 px-2 py-0.5 rounded text-xs text-white">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                              LIVE
+                            </div>
+                            
+                            {/* Channel Number */}
+                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                              <p className="text-white text-xs font-semibold">كاميرا {String(ch).padStart(2, '0')}</p>
+                            </div>
+                            
+                            {/* Hover Actions */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <Button size="sm" className="bg-red-600 hover:bg-red-700 h-8 w-8 p-0">
+                                <Play className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); handleGetStreamInfo(device.id, ch); }}>
+                                <ImageIcon className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Device Actions */}
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-500">
+                          آخر فحص: {device.last_check ? new Date(device.last_check).toLocaleString('ar-SA') : '-'}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleViewDeviceChannels(device)}>
+                            <Eye className="h-4 w-4 ml-1" />
+                            عرض القنوات
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => { setPlaybackDevice(device); setShowPlayback(true); }}>
+                            <Clock className="h-4 w-4 ml-1" />
+                            التسجيلات
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleOpenExport(device)}>
+                            📤 تصدير
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              /* Empty State */
+              <Card className="border-dashed border-2 border-gray-300">
+                <CardContent className="py-16 text-center">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <Monitor className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">لا توجد أجهزة مُسجّلة</h3>
+                  <p className="text-gray-500 mb-6">أضف جهاز NVR أو DVR جديد للبدء</p>
+                  <Button 
+                    className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600"
+                    onClick={() => setShowAddDevice(true)}
+                  >
+                    <Plus className="h-4 w-4 ml-2" />
+                    إضافة جهاز جديد
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
 
         {/* Cameras Tab - Hik-Connect Style */}
         <TabsContent value="cameras">
