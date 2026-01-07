@@ -3756,14 +3756,54 @@ async def bulk_sync_attendance(
             }
             
             if existing:
-                # تحديث السجل الموجود
-                await db.hr_attendance.update_one(
-                    {"id": existing["id"]},
-                    {"$set": attendance_data}
-                )
+                # تحديث السجل الموجود - دمج البصمات من أماكن مختلفة
+                update_data = {}
+                
+                # إذا كانت البصمة الجديدة أبكر من check_in الموجود، نحدث check_in
+                new_check_in = record.get("check_in")
+                new_check_out = record.get("check_out")
+                
+                if new_check_in:
+                    if not existing.get("check_in") or new_check_in < existing.get("check_in"):
+                        update_data["check_in"] = new_check_in
+                        update_data["check_in_location"] = record.get("device_ip") or record.get("location", "")
+                
+                # إذا كانت البصمة الجديدة أحدث من check_out الموجود، نحدث check_out
+                if new_check_out:
+                    if not existing.get("check_out") or new_check_out > existing.get("check_out"):
+                        update_data["check_out"] = new_check_out
+                        update_data["check_out_location"] = record.get("device_ip") or record.get("location", "")
+                
+                # إذا كان لدينا check_in جديد بدون check_out موجود
+                if new_check_in and not existing.get("check_in"):
+                    update_data["check_in"] = new_check_in
+                    update_data["check_in_location"] = record.get("device_ip") or record.get("location", "")
+                
+                # إذا كان لدينا وقت واحد فقط وليس لدينا check_out
+                if new_check_in and not existing.get("check_out") and existing.get("check_in"):
+                    # إذا كان الوقت الجديد أحدث من check_in، نعتبره check_out
+                    if new_check_in > existing.get("check_in"):
+                        update_data["check_out"] = new_check_in
+                        update_data["check_out_location"] = record.get("device_ip") or record.get("location", "")
+                
+                # تتبع جميع الأماكن التي بصم منها الموظف
+                locations = existing.get("locations", [])
+                new_location = record.get("device_ip") or record.get("location", "unknown")
+                if new_location and new_location not in locations:
+                    locations.append(new_location)
+                update_data["locations"] = locations
+                update_data["multi_location"] = len(locations) > 1
+                
+                if update_data:
+                    await db.hr_attendance.update_one(
+                        {"id": existing["id"]},
+                        {"$set": update_data}
+                    )
                 updated += 1
             else:
                 # إنشاء سجل جديد
+                attendance_data["locations"] = [record.get("device_ip") or record.get("location", "unknown")]
+                attendance_data["check_in_location"] = record.get("device_ip") or record.get("location", "")
                 await db.hr_attendance.insert_one(attendance_data)
                 imported += 1
                 
