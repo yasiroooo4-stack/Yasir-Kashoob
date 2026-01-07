@@ -190,6 +190,68 @@ const Legal = () => {
     }
   };
 
+  // Review handlers
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedItem) {
+        await axios.put(`${API}/legal/reviews/${selectedItem.id}`, reviewForm);
+      } else {
+        await axios.post(`${API}/legal/reviews`, reviewForm);
+      }
+      toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
+      setReviewDialogOpen(false);
+      resetReviewForm();
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error");
+    }
+  };
+
+  const resetReviewForm = () => {
+    setReviewForm({
+      review_type: "", title: "", description: "", reviewer_name: "",
+      review_date: "", status: "pending", findings: "", recommendations: ""
+    });
+    setSelectedItem(null);
+  };
+
+  // Waiver handlers
+  const handleWaiverSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (selectedItem) {
+        await axios.put(`${API}/legal/waivers/${selectedItem.id}`, waiverForm);
+      } else {
+        await axios.post(`${API}/legal/waivers`, waiverForm);
+      }
+      toast.success(language === "ar" ? "تم الحفظ بنجاح" : "Saved successfully");
+      setWaiverDialogOpen(false);
+      resetWaiverForm();
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error");
+    }
+  };
+
+  const resetWaiverForm = () => {
+    setWaiverForm({
+      from_supplier_id: "", from_supplier_name: "", to_supplier_id: "", to_supplier_name: "",
+      quota_amount: 0, waiver_date: "", reason: "", notes: "", 
+      documents: [], status: "pending"
+    });
+    setSelectedItem(null);
+  };
+
+  const handleSupplierSelect = (type, supplierId) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    if (type === 'from') {
+      setWaiverForm({...waiverForm, from_supplier_id: supplierId, from_supplier_name: supplier?.name || ''});
+    } else {
+      setWaiverForm({...waiverForm, to_supplier_id: supplierId, to_supplier_name: supplier?.name || ''});
+    }
+  };
+
   const getStatusBadge = (status) => {
     const colors = {
       active: "bg-green-100 text-green-800",
@@ -203,7 +265,9 @@ const Legal = () => {
       lost: "bg-red-100 text-red-800",
       pending: "bg-yellow-100 text-yellow-800",
       completed: "bg-green-100 text-green-800",
-      valid: "bg-green-100 text-green-800"
+      valid: "bg-green-100 text-green-800",
+      approved: "bg-green-100 text-green-800",
+      rejected: "bg-red-100 text-red-800"
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
