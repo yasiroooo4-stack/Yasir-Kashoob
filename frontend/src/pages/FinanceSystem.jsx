@@ -699,6 +699,16 @@ const FinanceSystem = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-bold">شجرة الحسابات</h2>
             <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={exportAccountsToExcel}
+                className="gap-2 bg-green-50 hover:bg-green-100 border-green-300"
+                disabled={accounts.length === 0}
+                data-testid="export-accounts-excel-btn"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                تصدير Excel
+              </Button>
               {accounts.length === 0 && (
                 <Button onClick={initializeAccounts} disabled={loading}>
                   <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
