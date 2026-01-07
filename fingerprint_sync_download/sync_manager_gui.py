@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://dairymanage-erp.preview.emergentagent.com',
+            'api_url': 'https://dairyerp.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,
