@@ -1845,8 +1845,11 @@ const HR = () => {
                     <TableRow>
                       <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
                       <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                      <TableHead>{language === "ar" ? "رقم البصمة" : "Fingerprint ID"}</TableHead>
                       <TableHead>{language === "ar" ? "وقت الحضور" : "Check In"}</TableHead>
+                      <TableHead>{language === "ar" ? "موقع الحضور" : "In Location"}</TableHead>
                       <TableHead>{language === "ar" ? "وقت الانصراف" : "Check Out"}</TableHead>
+                      <TableHead>{language === "ar" ? "موقع الانصراف" : "Out Location"}</TableHead>
                       <TableHead>{language === "ar" ? "المصدر" : "Source"}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1855,14 +1858,15 @@ const HR = () => {
                       .filter(record => {
                         const matchesSearch = !attendanceSearch || 
                           record.employee_name?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-                          record.employee_id?.toLowerCase().includes(attendanceSearch.toLowerCase());
+                          record.employee_id?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
+                          record.fingerprint_id?.toLowerCase().includes(attendanceSearch.toLowerCase());
                         const matchesEmployee = !selectedAttendanceEmployee || selectedAttendanceEmployee === "all" || 
                           record.employee_id === selectedAttendanceEmployee;
                         return matchesSearch && matchesEmployee;
                       })
                       .length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           {language === "ar" ? "لا توجد سجلات حضور. أضف حضور يدوياً أو قم بمزامنة جهاز البصمة." : "No attendance records. Add manually or sync fingerprint device."}
                         </TableCell>
                       </TableRow>
@@ -1871,24 +1875,51 @@ const HR = () => {
                         .filter(record => {
                           const matchesSearch = !attendanceSearch || 
                             record.employee_name?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-                            record.employee_id?.toLowerCase().includes(attendanceSearch.toLowerCase());
+                            record.employee_id?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
+                            record.fingerprint_id?.toLowerCase().includes(attendanceSearch.toLowerCase());
                           const matchesEmployee = !selectedAttendanceEmployee || selectedAttendanceEmployee === "all" || 
                             record.employee_id === selectedAttendanceEmployee;
                           return matchesSearch && matchesEmployee;
                         })
                         .map((record, idx) => (
-                        <TableRow key={idx}>
+                        <TableRow key={idx} className={record.multi_location ? "bg-blue-50" : ""}>
                           <TableCell>{record.date}</TableCell>
                           <TableCell className="font-medium">{record.employee_name}</TableCell>
+                          <TableCell>
+                            <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                              {record.fingerprint_id || "-"}
+                            </span>
+                          </TableCell>
                           <TableCell>{record.check_in || "-"}</TableCell>
+                          <TableCell>
+                            {record.check_in_location ? (
+                              <Badge variant="outline" className="text-xs">
+                                {record.check_in_location}
+                              </Badge>
+                            ) : "-"}
+                          </TableCell>
                           <TableCell>{record.check_out || "-"}</TableCell>
                           <TableCell>
-                            <Badge variant={record.source === "fingerprint" ? "success" : "secondary"}>
-                              {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : 
-                               record.source === "zkteco_import" ? "ZKTeco" :
-                               record.source === "excel_import" ? "Excel" :
-                               (language === "ar" ? "يدوي" : "Manual")}
-                            </Badge>
+                            {record.check_out_location ? (
+                              <Badge variant="outline" className="text-xs">
+                                {record.check_out_location}
+                              </Badge>
+                            ) : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Badge variant={record.source === "fingerprint" ? "success" : "secondary"}>
+                                {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : 
+                                 record.source === "zkteco_import" ? "ZKTeco" :
+                                 record.source === "excel_import" ? "Excel" :
+                                 (language === "ar" ? "يدوي" : "Manual")}
+                              </Badge>
+                              {record.multi_location && (
+                                <Badge variant="outline" className="text-xs bg-blue-100">
+                                  {language === "ar" ? "متعدد" : "Multi"}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
