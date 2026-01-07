@@ -54,6 +54,27 @@ const CCTVSystem = () => {
   const [hikvisionDevices, setHikvisionDevices] = useState([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showHikvisionLogin, setShowHikvisionLogin] = useState(false);
+  
+  // Live Stream State
+  const [showLiveStream, setShowLiveStream] = useState(false);
+  const [streamingDevice, setStreamingDevice] = useState(null);
+  const [streamUrl, setStreamUrl] = useState('');
+  
+  // Events & Notifications State
+  const [showDeviceEvents, setShowDeviceEvents] = useState(false);
+  const [deviceEvents, setDeviceEvents] = useState([]);
+  const [selectedDeviceForEvents, setSelectedDeviceForEvents] = useState(null);
+  
+  // Event Detection Settings
+  const [eventSettings, setEventSettings] = useState({
+    motion_detection: true,
+    intrusion_detection: true,
+    line_crossing: true,
+    face_detection: false,
+    notification_email: '',
+    notification_sms: false,
+    notification_push: true
+  });
 
   const [newCamera, setNewCamera] = useState({
     name: '',
@@ -77,6 +98,7 @@ const CCTVSystem = () => {
     fetchAlerts();
     fetchSettings();
     fetchHikvisionConfig();
+    fetchEventSettings();
   }, []);
 
   const fetchHikvisionConfig = async () => {
