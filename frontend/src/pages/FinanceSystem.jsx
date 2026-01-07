@@ -51,8 +51,13 @@ import {
   BarChart3,
   AlertCircle,
   CheckCircle,
-  X
+  X,
+  Download,
+  FileSpreadsheet
 } from "lucide-react";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const FinanceSystem = () => {
   const { t } = useTranslation();
