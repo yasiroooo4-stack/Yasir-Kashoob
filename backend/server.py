@@ -11233,6 +11233,51 @@ async def get_report_logs(
     logs = await db.report_logs.find({}, {"_id": 0}).sort("sent_at", -1).limit(limit).to_list(limit)
     return logs
 
+# ===================== MILK PRICES SETTINGS =====================
+
+@api_router.get("/settings/milk-prices")
+async def get_milk_prices(current_user: dict = Depends(get_current_user)):
+    """Get milk prices settings"""
+    prices = await db.milk_prices.find({}, {"_id": 0}).to_list(100)
+    if not prices:
+        # Return default prices
+        default_prices = [
+            {"id": "camel", "name": "حليب الإبل", "price": 0.350, "is_active": True},
+            {"id": "cow", "name": "حليب الأبقار", "price": 0.250, "is_active": True},
+        ]
+        return default_prices
+    return prices
+
+@api_router.post("/settings/milk-prices")
+async def save_milk_price(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Save or update milk price"""
+    milk_type = data.get("milk_type")
+    if not milk_type:
+        raise HTTPException(status_code=400, detail="نوع الحليب مطلوب")
+    
+    price_data = {
+        "id": milk_type,
+        "name": data.get("name", ""),
+        "price": float(data.get("price", 0)),
+        "is_active": data.get("is_active", True),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": current_user["full_name"]
+    }
+    
+    await db.milk_prices.update_one(
+        {"id": milk_type},
+        {"$set": price_data},
+        upsert=True
+    )
+    
+    # Log the activity
+    await log_activity(current_user, "update_milk_price", f"تحديث سعر {data.get('name')}")
+    
+    return {"message": "تم حفظ السعر بنجاح", "data": price_data}
+
 @api_router.get("/")
 async def root():
     return {"message": "Milk Collection Center ERP API", "version": "1.0.0"}
