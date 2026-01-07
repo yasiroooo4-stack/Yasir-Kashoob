@@ -11274,7 +11274,12 @@ async def save_milk_price(
     )
     
     # Log the activity
-    await log_activity(current_user, "update_milk_price", f"تحديث سعر {data.get('name')}")
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_milk_price",
+        details=f"تحديث سعر {data.get('name')}"
+    )
     
     return {"message": "تم حفظ السعر بنجاح", "data": price_data}
 
