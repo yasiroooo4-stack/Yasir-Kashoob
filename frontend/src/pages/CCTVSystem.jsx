@@ -745,7 +745,7 @@ const CCTVSystem = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="cameras" className="flex items-center gap-2">
             <Video className="h-4 w-4" />
             الكاميرات
@@ -760,6 +760,10 @@ const CCTVSystem = () => {
             {alerts.length > 0 && (
               <Badge variant="destructive" className="mr-1">{alerts.length}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="detection" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            كشف الأحداث
           </TabsTrigger>
         </TabsList>
 
