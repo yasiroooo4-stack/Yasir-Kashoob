@@ -609,11 +609,18 @@ async def create_supplier(supplier_data: SupplierCreate, current_user: dict = De
     return supplier
 
 @api_router.get("/suppliers", response_model=List[Supplier])
-async def get_suppliers(center_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def get_suppliers(center_id: Optional[str] = None, search: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     query = {"is_active": True}
     if center_id:
         query["center_id"] = center_id
-    suppliers = await db.suppliers.find(query, {"_id": 0}).to_list(1000)
+    if search:
+        # Search by name, supplier_code, or phone
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"supplier_code": {"$regex": search, "$options": "i"}},
+            {"phone": {"$regex": search, "$options": "i"}}
+        ]
+    suppliers = await db.suppliers.find(query, {"_id": 0}).to_list(5000)
     return suppliers
 
 @api_router.get("/suppliers/{supplier_id}", response_model=Supplier)
