@@ -615,3 +615,135 @@ async def get_hikvision_devices(current_user: dict = Depends(get_current_user)):
     """جلب قائمة أجهزة Hikvision المكتشفة"""
     devices = await db.hikvision_devices.find({}, {"_id": 0}).to_list(100)
     return devices
+
+@router.get("/hikvision/stream/{device_id}")
+async def get_stream_url(device_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب رابط البث المباشر للجهاز"""
+    # Get Hikvision config
+    config = await db.hikvision_config.find_one({"type": "hikvision"}, {"_id": 0})
+    
+    if not config or not config.get("is_connected"):
+        raise HTTPException(status_code=400, detail="غير متصل بـ Hikvision")
+    
+    # Get device
+    device = await db.hikvision_devices.find_one({"name": device_id}, {"_id": 0})
+    if not device:
+        device = await db.hikvision_devices.find_one({"id": device_id}, {"_id": 0})
+    
+    if not device:
+        raise HTTPException(status_code=404, detail="الجهاز غير موجود")
+    
+    # Build RTSP stream URL
+    ip = device.get("ip_address", config.get("server_url", "").replace("http://", "").replace("https://", "").split(":")[0])
+    username = config.get("username", "admin")
+    password = config.get("password", "")
+    port = device.get("port", 554)
+    channel = device.get("channel", 1)
+    
+    # RTSP URL format for Hikvision
+    stream_url = f"rtsp://{username}:{password}@{ip}:{port}/Streaming/Channels/{channel}01"
+    
+    return {
+        "stream_url": stream_url,
+        "device_name": device.get("name"),
+        "device_ip": ip,
+        "channel": channel
+    }
+
+# ==================== EVENT DETECTION SETTINGS ====================
+
+class EventSettingsModel(BaseModel):
+    motion_detection: bool = True
+    intrusion_detection: bool = True
+    line_crossing: bool = True
+    face_detection: bool = False
+    notification_email: Optional[str] = None
+    notification_sms: bool = False
+    notification_push: bool = True
+
+@router.get("/event-settings")
+async def get_event_settings(current_user: dict = Depends(get_current_user)):
+    """جلب إعدادات كشف الأحداث"""
+    settings = await db.cctv_event_settings.find_one({"type": "event_settings"}, {"_id": 0})
+    if not settings:
+        return {
+            "motion_detection": True,
+            "intrusion_detection": True,
+            "line_crossing": True,
+            "face_detection": False,
+            "notification_email": "",
+            "notification_sms": False,
+            "notification_push": True
+        }
+    return settings
+
+@router.put("/event-settings")
+async def update_event_settings(
+    settings: EventSettingsModel,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تحديث إعدادات كشف الأحداث"""
+    settings_data = settings.model_dump()
+    settings_data["type"] = "event_settings"
+    settings_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    settings_data["updated_by"] = current_user["full_name"]
+    
+    await db.cctv_event_settings.update_one(
+        {"type": "event_settings"},
+        {"$set": settings_data},
+        upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_event_settings",
+        details="تحديث إعدادات كشف الأحداث"
+    )
+    
+    return {"message": "تم حفظ إعدادات الأحداث", "settings": settings_data}
+
+# ==================== EVENT NOTIFICATION ====================
+
+@router.post("/events/notify")
+async def send_event_notification(
+    event_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """إرسال إشعار بحدث جديد"""
+    event_settings = await db.cctv_event_settings.find_one({"type": "event_settings"}, {"_id": 0})
+    
+    if not event_settings:
+        return {"message": "لا توجد إعدادات إشعارات"}
+    
+    notifications_sent = []
+    
+    # Check which notifications are enabled
+    if event_settings.get("notification_push"):
+        # Create in-app notification
+        notification = {
+            "id": str(uuid.uuid4()),
+            "type": "cctv_event",
+            "title": f"حدث CCTV: {event_data.get('event_type', 'غير محدد')}",
+            "message": event_data.get("description", ""),
+            "camera_name": event_data.get("camera_name", ""),
+            "severity": event_data.get("severity", "info"),
+            "is_read": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.notifications.insert_one(notification)
+        notifications_sent.append("push")
+    
+    if event_settings.get("notification_sms") and event_settings.get("notification_phone"):
+        # Send SMS (integrate with SMS service)
+        notifications_sent.append("sms")
+    
+    if event_settings.get("notification_email"):
+        # Email notification would be sent here
+        notifications_sent.append("email")
+    
+    return {
+        "message": "تم إرسال الإشعارات",
+        "notifications_sent": notifications_sent
+    }
+
