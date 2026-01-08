@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
-import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle, Search } from "lucide-react";
 
 const MilkReception = () => {
   const { t } = useTranslation();
@@ -42,6 +42,8 @@ const MilkReception = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [supplierCode, setSupplierCode] = useState("");
   const [supplierFound, setSupplierFound] = useState(null);
+  const [matchingSuppliers, setMatchingSuppliers] = useState([]);
+  const [defaultPrices, setDefaultPrices] = useState({ cow: "", camel: "" });
   const [formData, setFormData] = useState({
     supplier_id: "",
     supplier_name: "",
@@ -61,7 +63,22 @@ const MilkReception = () => {
 
   useEffect(() => {
     fetchData();
+    fetchPriceSettings();
   }, []);
+
+  const fetchPriceSettings = async () => {
+    try {
+      const res = await axios.get(`${API}/settings/milk-prices`);
+      if (res.data) {
+        setDefaultPrices({
+          cow: res.data.cow_price || "",
+          camel: res.data.camel_price || ""
+        });
+      }
+    } catch (error) {
+      console.log("Price settings not found");
+    }
+  };
 
   const fetchData = async () => {
     try {
