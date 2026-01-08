@@ -5703,25 +5703,44 @@ async def export_attendance_excel(
 # Export attendance to PDF
 @api_router.get("/hr/attendance/export/pdf")
 async def export_attendance_pdf(
-    year: int,
-    month: int,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     employee_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Export attendance report to PDF"""
+    """Export attendance report to PDF with date range support"""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER
     
-    month_start = f"{year}-{month:02d}-01"
-    if month == 12:
-        month_end = f"{year + 1}-01-01"
+    # Handle date range - prefer start_date/end_date over year/month
+    if start_date and end_date:
+        date_from = start_date
+        date_to = end_date
+        filename_suffix = f"{start_date}_to_{end_date}"
+        period_text = f"الفترة: {start_date} إلى {end_date}"
+    elif year and month:
+        date_from = f"{year}-{month:02d}-01"
+        if month == 12:
+            date_to = f"{year + 1}-01-01"
+        else:
+            date_to = f"{year}-{month + 1:02d}-01"
+        filename_suffix = f"{year}_{month}"
+        period_text = f"الشهر: {month}/{year}"
     else:
-        month_end = f"{year}-{month + 1:02d}-01"
+        # Default to current month
+        from datetime import datetime
+        now = datetime.now()
+        date_from = f"{now.year}-{now.month:02d}-01"
+        date_to = now.strftime("%Y-%m-%d")
+        filename_suffix = f"{now.year}_{now.month}"
+        period_text = f"الشهر: {now.month}/{now.year}"
     
-    query = {"date": {"$gte": month_start, "$lt": month_end}}
+    query = {"date": {"$gte": date_from, "$lte": date_to}}
     if employee_id:
         query["employee_id"] = employee_id
     
@@ -5737,7 +5756,7 @@ async def export_attendance_pdf(
     title_style = ParagraphStyle('Title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=16)
     elements.append(Paragraph(f"تقرير الحضور والانصراف - Attendance Report", title_style))
     elements.append(Spacer(1, 10))
-    elements.append(Paragraph(f"الشهر: {month}/{year}", ParagraphStyle('Date', alignment=TA_CENTER)))
+    elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
     elements.append(Spacer(1, 20))
     
     # Table
