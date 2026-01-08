@@ -14,3 +14,4 @@ from .projects import *
 from .operations import *
 from .marketing import *
 from .feed import *
+from .procurement import *
