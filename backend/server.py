@@ -1423,7 +1423,7 @@ async def create_milk_reception(reception_data: MilkReceptionCreate, current_use
     
     return reception
 
-@api_router.get("/milk-receptions", response_model=List[MilkReception])
+@api_router.get("/milk-receptions")
 async def get_milk_receptions(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -1441,7 +1441,7 @@ async def get_milk_receptions(
         else:
             query["reception_date"] = {"$lte": end_date}
     
-    receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("reception_date", -1).to_list(1000)
+    receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("reception_date", -1).to_list(2500)
     return receptions
 
 @api_router.get("/milk-receptions/{reception_id}", response_model=MilkReception)
