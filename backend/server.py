@@ -5795,7 +5795,7 @@ async def export_attendance_pdf(
     return StreamingResponse(
         output,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=attendance_{year}_{month}.pdf"}
+        headers={"Content-Disposition": f"attachment; filename=attendance_{filename_suffix}.pdf"}
     )
 
 # ==================== HR - SHIFTS (الورديات) ====================
