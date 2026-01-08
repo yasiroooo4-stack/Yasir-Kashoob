@@ -11791,6 +11791,10 @@ app.include_router(hikconnect_router)
 from routes.sms_routes import router as sms_router
 app.include_router(sms_router)
 
+# Include Procurement router
+from routes.procurement_routes import router as procurement_router
+app.include_router(procurement_router)
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
