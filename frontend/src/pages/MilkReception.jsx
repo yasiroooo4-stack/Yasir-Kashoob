@@ -346,7 +346,15 @@ const MilkReception = () => {
                         {reception.total_amount?.toLocaleString()} {t("currency")}
                       </TableCell>
                       <TableCell>{reception.quality_test?.fat_percentage}%</TableCell>
-                      <TableCell>{reception.quality_test?.protein_percentage}%</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          reception.milk_type === 'camel' || reception.milk_type === 'إبل' 
+                            ? 'bg-amber-100 text-amber-700' 
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {reception.milk_type === 'camel' || reception.milk_type === 'إبل' ? 'إبل' : 'بقر'}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         {reception.quality_test?.is_accepted ? (
                           <span className="badge-success flex items-center gap-1 w-fit">
