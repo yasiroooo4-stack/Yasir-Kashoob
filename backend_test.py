@@ -32,6 +32,8 @@ class BackendTester:
         self.token = None
         self.user_data = None
         self.test_results = []
+        self.test_vendor_id = None
+        self.test_requisition_id = None
         
     def log_test(self, test_name, success, message, details=None):
         """Log test results"""
