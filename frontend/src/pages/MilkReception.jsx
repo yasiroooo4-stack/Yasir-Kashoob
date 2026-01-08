@@ -377,13 +377,16 @@ const MilkReception = () => {
                 {language === "ar" ? "البحث بكود المورد" : "Search by Supplier Code"}
               </Label>
               <div className="flex gap-3">
-                <Input
-                  placeholder={language === "ar" ? "أدخل كود المورد..." : "Enter supplier code..."}
-                  value={supplierCode}
-                  onChange={(e) => handleSupplierCodeChange(e.target.value)}
-                  className="flex-1"
-                  data-testid="supplier-code-input"
-                />
+                <div className="relative flex-1">
+                  <Input
+                    placeholder={language === "ar" ? "أدخل كود المورد أو الاسم..." : "Enter supplier code or name..."}
+                    value={supplierCode}
+                    onChange={(e) => handleSupplierCodeChange(e.target.value)}
+                    className="pr-10"
+                    data-testid="supplier-code-input"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
                 {supplierFound && (
                   <div className="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-2 rounded-lg">
                     <CheckCircle className="w-4 h-4" />
@@ -391,7 +394,30 @@ const MilkReception = () => {
                   </div>
                 )}
               </div>
-              {supplierCode && !supplierFound && (
+              
+              {/* Show matching suppliers list */}
+              {matchingSuppliers.length > 1 && (
+                <div className="bg-white border rounded-lg p-2 max-h-48 overflow-y-auto">
+                  <p className="text-sm text-gray-600 mb-2 px-2">
+                    {language === "ar" ? `تم العثور على ${matchingSuppliers.length} مورد - اختر واحداً:` : `Found ${matchingSuppliers.length} suppliers - select one:`}
+                  </p>
+                  {matchingSuppliers.map((supplier) => (
+                    <button
+                      key={supplier.id}
+                      type="button"
+                      onClick={() => selectSupplier(supplier)}
+                      className="w-full text-right px-3 py-2 hover:bg-blue-50 rounded flex justify-between items-center border-b last:border-0"
+                    >
+                      <span className="font-medium">{supplier.name}</span>
+                      <span className="text-sm text-gray-500">
+                        {supplier.supplier_code} | {supplier.milk_type === "camel" ? "إبل" : "بقر"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {supplierCode && matchingSuppliers.length === 0 && !supplierFound && (
                 <p className="text-sm text-orange-600">
                   {language === "ar" ? "لم يتم العثور على مورد بهذا الكود" : "Supplier not found with this code"}
                 </p>
