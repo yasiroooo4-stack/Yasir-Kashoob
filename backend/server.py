@@ -5619,26 +5619,45 @@ async def import_attendance_from_zkteco(
 # Export attendance to Excel
 @api_router.get("/hr/attendance/export/excel")
 async def export_attendance_excel(
-    year: int,
-    month: int,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     employee_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Export attendance report to Excel"""
+    """Export attendance report to Excel with date range support"""
     import pandas as pd
     from openpyxl.styles import PatternFill, Font, Alignment
     
-    month_start = f"{year}-{month:02d}-01"
-    if month == 12:
-        month_end = f"{year + 1}-01-01"
+    # Handle date range - prefer start_date/end_date over year/month
+    if start_date and end_date:
+        date_from = start_date
+        date_to = end_date
+        filename_suffix = f"{start_date}_to_{end_date}"
+        sheet_name = f"الحضور {start_date} - {end_date}"
+    elif year and month:
+        date_from = f"{year}-{month:02d}-01"
+        if month == 12:
+            date_to = f"{year + 1}-01-01"
+        else:
+            date_to = f"{year}-{month + 1:02d}-01"
+        filename_suffix = f"{year}_{month}"
+        sheet_name = f"الحضور {month}-{year}"
     else:
-        month_end = f"{year}-{month + 1:02d}-01"
+        # Default to current month
+        from datetime import datetime
+        now = datetime.now()
+        date_from = f"{now.year}-{now.month:02d}-01"
+        date_to = now.strftime("%Y-%m-%d")
+        filename_suffix = f"{now.year}_{now.month}"
+        sheet_name = f"الحضور {now.month}-{now.year}"
     
-    query = {"date": {"$gte": month_start, "$lt": month_end}}
+    query = {"date": {"$gte": date_from, "$lte": date_to}}
     if employee_id:
         query["employee_id"] = employee_id
     
-    attendance = await db.hr_attendance.find(query, {"_id": 0}).to_list(10000)
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort("date", 1).to_list(10000)
     
     if not attendance:
         # Return empty template
