@@ -5677,9 +5677,9 @@ async def export_attendance_excel(
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name=f'الحضور {month}-{year}', index=False)
+        df.to_excel(writer, sheet_name=sheet_name[:31], index=False)  # Excel sheet name max 31 chars
         
-        worksheet = writer.sheets[f'الحضور {month}-{year}']
+        worksheet = writer.sheets[sheet_name[:31]]
         header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
         header_font = Font(bold=True, color='FFFFFF')
         
@@ -5697,7 +5697,7 @@ async def export_attendance_excel(
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename=attendance_{year}_{month}.xlsx"}
+        headers={"Content-Disposition": f"attachment; filename=attendance_{filename_suffix}.xlsx"}
     )
 
 # Export attendance to PDF
