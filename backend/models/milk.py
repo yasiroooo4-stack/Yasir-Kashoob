@@ -22,6 +22,9 @@ class MilkReceptionBase(BaseModel):
     quantity_liters: float
     price_per_liter: float
     quality_test: QualityTest
+    supplier_code: Optional[str] = None
+    center_name: Optional[str] = None
+    milk_type: Optional[str] = None
 
 class MilkReceptionCreate(MilkReceptionBase):
     pass
@@ -33,8 +36,6 @@ class MilkReception(MilkReceptionBase):
     total_amount: float = 0.0
     is_paid: bool = False
     created_by: Optional[str] = None
-    supplier_code: Optional[str] = None
-    milk_type: Optional[str] = None
     period: Optional[str] = None
     month: Optional[int] = None
     year: Optional[int] = None
