@@ -310,18 +310,20 @@ const MilkReception = () => {
                 <TableRow>
                   <TableHead>{t("reception_date")}</TableHead>
                   <TableHead>{t("supplier")}</TableHead>
+                  <TableHead>{language === "ar" ? "كود المورد" : "Supplier Code"}</TableHead>
+                  <TableHead>{language === "ar" ? "المركز" : "Center"}</TableHead>
                   <TableHead>{t("quantity_liters")}</TableHead>
                   <TableHead>{t("price_per_liter")}</TableHead>
                   <TableHead>{t("total")}</TableHead>
                   <TableHead>{t("fat_percentage")}</TableHead>
-                  <TableHead>{t("protein_percentage")}</TableHead>
+                  <TableHead>{language === "ar" ? "نوع الحليب" : "Milk Type"}</TableHead>
                   <TableHead>{t("status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {receptions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -334,6 +336,10 @@ const MilkReception = () => {
                         )}
                       </TableCell>
                       <TableCell className="font-medium">{reception.supplier_name}</TableCell>
+                      <TableCell className="text-center font-mono bg-blue-50 dark:bg-blue-900/20">
+                        {reception.supplier_code || "-"}
+                      </TableCell>
+                      <TableCell>{reception.center_name || "-"}</TableCell>
                       <TableCell>{reception.quantity_liters?.toLocaleString()} {t("liters")}</TableCell>
                       <TableCell>{reception.price_per_liter} {t("currency")}</TableCell>
                       <TableCell className="font-medium">
