@@ -5850,10 +5850,6 @@ async def export_attendance_pdf(
         elements.append(Paragraph("لا توجد سجلات حضور", ParagraphStyle('NoData', alignment=TA_CENTER)))
     
     doc.build(elements)
-    ]))
-    
-    elements.append(table)
-    doc.build(elements)
     
     output.seek(0)
     
