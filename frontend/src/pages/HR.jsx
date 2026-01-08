@@ -309,6 +309,12 @@ const HR = () => {
   // Filter states
   const [attendanceMonth, setAttendanceMonth] = useState(new Date().getMonth() + 1);
   const [attendanceYear, setAttendanceYear] = useState(new Date().getFullYear());
+  
+  // Date range for export
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const [exportDateFrom, setExportDateFrom] = useState(firstDayOfMonth.toISOString().split('T')[0]);
+  const [exportDateTo, setExportDateTo] = useState(today.toISOString().split('T')[0]);
 
   const DEPARTMENTS = [
     { id: "admin", name: "الإدارة", name_en: "Administration" },
