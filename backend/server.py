@@ -5657,23 +5657,55 @@ async def export_attendance_excel(
     if employee_id:
         query["employee_id"] = employee_id
     
-    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort("date", 1).to_list(10000)
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort([("employee_name", 1), ("date", 1)]).to_list(10000)
     
     if not attendance:
         # Return empty template
-        df = pd.DataFrame(columns=['التاريخ', 'اسم الموظف', 'وقت الحضور', 'وقت الانصراف', 'المصدر'])
+        df = pd.DataFrame(columns=['اسم الموظف', 'التاريخ', 'وقت الحضور', 'وقت الانصراف', 'المصدر'])
     else:
-        df = pd.DataFrame(attendance)
-        columns_map = {
-            'date': 'التاريخ',
-            'employee_name': 'اسم الموظف',
-            'check_in': 'وقت الحضور',
-            'check_out': 'وقت الانصراف',
-            'source': 'المصدر'
-        }
-        available_cols = [col for col in columns_map.keys() if col in df.columns]
-        df = df[available_cols]
-        df = df.rename(columns={k: v for k, v in columns_map.items() if k in available_cols})
+        # Group attendance by employee and add summary
+        from collections import defaultdict
+        employee_data = defaultdict(list)
+        
+        for record in attendance:
+            emp_name = record.get('employee_name', 'غير معروف')
+            employee_data[emp_name].append(record)
+        
+        # Create structured data with employee headers and summaries
+        rows = []
+        for emp_name in sorted(employee_data.keys()):
+            records = employee_data[emp_name]
+            days_count = len(set(r.get('date') for r in records))
+            
+            # Add employee header row
+            rows.append({
+                'اسم الموظف': f"📋 {emp_name} - عدد أيام الحضور: {days_count} يوم",
+                'التاريخ': '',
+                'وقت الحضور': '',
+                'وقت الانصراف': '',
+                'المصدر': ''
+            })
+            
+            # Add attendance records
+            for record in records:
+                rows.append({
+                    'اسم الموظف': emp_name,
+                    'التاريخ': record.get('date', ''),
+                    'وقت الحضور': record.get('check_in', '-'),
+                    'وقت الانصراف': record.get('check_out', '-'),
+                    'المصدر': record.get('source', 'manual')
+                })
+            
+            # Add empty row after each employee
+            rows.append({
+                'اسم الموظف': '',
+                'التاريخ': '',
+                'وقت الحضور': '',
+                'وقت الانصراف': '',
+                'المصدر': ''
+            })
+        
+        df = pd.DataFrame(rows)
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -5682,15 +5714,26 @@ async def export_attendance_excel(
         worksheet = writer.sheets[sheet_name[:31]]
         header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
         header_font = Font(bold=True, color='FFFFFF')
+        employee_header_fill = PatternFill(start_color='70AD47', end_color='70AD47', fill_type='solid')
+        employee_header_font = Font(bold=True, color='FFFFFF')
         
+        # Style header row
         for cell in worksheet[1]:
             cell.fill = header_fill
             cell.font = header_font
             cell.alignment = Alignment(horizontal='center')
         
+        # Style employee header rows (rows starting with 📋)
+        for row_idx, row in enumerate(worksheet.iter_rows(min_row=2), start=2):
+            if row[0].value and str(row[0].value).startswith('📋'):
+                for cell in row:
+                    cell.fill = employee_header_fill
+                    cell.font = employee_header_font
+        
+        # Auto-adjust column widths
         for column in worksheet.columns:
             max_length = max(len(str(cell.value or '')) for cell in column)
-            worksheet.column_dimensions[column[0].column_letter].width = max_length + 5
+            worksheet.column_dimensions[column[0].column_letter].width = min(max_length + 5, 50)
     
     output.seek(0)
     
