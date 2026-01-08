@@ -106,27 +106,47 @@ const MilkReception = () => {
     setSupplierFound(supplier);
   };
 
-  // Search supplier by code
+  // Search supplier by code - show all matching suppliers
   const handleSupplierCodeChange = (code) => {
     setSupplierCode(code);
     if (code.length >= 2) {
-      const supplier = suppliers.find(
+      // Find all matching suppliers
+      const matches = suppliers.filter(
         (s) => s.supplier_code?.toLowerCase() === code.toLowerCase() ||
-               s.supplier_code?.toLowerCase().includes(code.toLowerCase())
+               s.supplier_code?.toLowerCase().includes(code.toLowerCase()) ||
+               s.name?.toLowerCase().includes(code.toLowerCase())
       );
-      if (supplier) {
-        setSupplierFound(supplier);
-        setFormData({
-          ...formData,
-          supplier_id: supplier.id,
-          supplier_name: supplier.name,
-        });
+      
+      setMatchingSuppliers(matches);
+      
+      if (matches.length === 1) {
+        // Auto-select if only one match
+        selectSupplier(matches[0]);
+      } else if (matches.length > 1) {
+        setSupplierFound(null);
       } else {
         setSupplierFound(null);
       }
     } else {
+      setMatchingSuppliers([]);
       setSupplierFound(null);
     }
+  };
+
+  // Select a specific supplier from matches
+  const selectSupplier = (supplier) => {
+    setSupplierFound(supplier);
+    // Determine milk type and set price
+    const milkType = supplier.milk_type || supplier.animal_type || "cow";
+    const price = milkType === "camel" ? defaultPrices.camel : defaultPrices.cow;
+    
+    setFormData({
+      ...formData,
+      supplier_id: supplier.id,
+      supplier_name: supplier.name,
+      price_per_liter: price || formData.price_per_liter,
+    });
+    setMatchingSuppliers([]);
   };
 
   const handleSubmit = async (e) => {
