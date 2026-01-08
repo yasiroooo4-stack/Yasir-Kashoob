@@ -501,6 +501,9 @@ const resources = {
       // Legal
       "legal": "Legal",
       
+      // Procurement
+      "procurement": "Procurement",
+      
       // Projects
       "projects": "Projects",
       
