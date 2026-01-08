@@ -104,41 +104,45 @@ class BackendTester:
             self.log_test("Login and Authentication Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_get_devices_and_settings(self):
-        """Test 2: GET /api/hr/zkteco/devices - Get all devices and sync settings"""
+    def test_procurement_analytics_summary(self):
+        """Test 2: GET /api/procurement/analytics/summary - ملخص المشتريات"""
         try:
             if not self.token:
-                self.log_test("ZKTeco Get Devices Test", False, "No authentication token available")
+                self.log_test("Procurement Analytics Summary Test", False, "No authentication token available")
                 return False
             
-            response = self.session.get(f"{BACKEND_URL}/hr/zkteco/devices")
+            response = self.session.get(f"{BACKEND_URL}/procurement/analytics/summary")
             
             if response.status_code == 200:
                 data = response.json()
                 
                 # Verify response structure
-                if "devices" in data and "auto_sync_enabled" in data and "sync_interval" in data:
-                    devices_count = len(data["devices"])
-                    auto_sync = data["auto_sync_enabled"]
-                    sync_interval = data["sync_interval"]
+                required_fields = ["vendors", "requisitions", "purchase_orders", "spending", "inventory_alerts"]
+                if all(field in data for field in required_fields):
+                    vendors_total = data["vendors"].get("total", 0)
+                    requisitions_total = data["requisitions"].get("total", 0)
+                    pos_total = data["purchase_orders"].get("total", 0)
+                    spending_total = data["spending"].get("total", 0)
+                    alerts_count = data.get("inventory_alerts", 0)
                     
                     self.log_test(
-                        "ZKTeco Get Devices Test", 
+                        "Procurement Analytics Summary Test", 
                         True, 
-                        f"Successfully retrieved {devices_count} devices, auto_sync: {auto_sync}, interval: {sync_interval}min"
+                        f"Successfully retrieved analytics: {vendors_total} vendors, {requisitions_total} requisitions, {pos_total} POs, {spending_total} total spending, {alerts_count} alerts"
                     )
                     return True
                 else:
+                    missing_fields = [field for field in required_fields if field not in data]
                     self.log_test(
-                        "ZKTeco Get Devices Test", 
+                        "Procurement Analytics Summary Test", 
                         False, 
-                        "Response missing required fields (devices, auto_sync_enabled, sync_interval)",
+                        f"Response missing required fields: {missing_fields}",
                         data
                     )
                     return False
             else:
                 self.log_test(
-                    "ZKTeco Get Devices Test", 
+                    "Procurement Analytics Summary Test", 
                     False, 
                     f"Failed with status {response.status_code}",
                     response.text
@@ -146,59 +150,129 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("ZKTeco Get Devices Test", False, f"Error: {str(e)}")
+            self.log_test("Procurement Analytics Summary Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_add_device(self):
-        """Test 3: POST /api/hr/zkteco/devices - Add new device"""
+    def test_procurement_get_vendors(self):
+        """Test 3: GET /api/procurement/vendors - قائمة الموردين"""
         try:
             if not self.token:
-                self.log_test("ZKTeco Add Device Test", False, "No authentication token available")
+                self.log_test("Procurement Get Vendors Test", False, "No authentication token available")
                 return False
             
-            # Test device data
-            device_data = {
-                "name": "جهاز اختبار API",
-                "ip_address": "192.168.1.100",
-                "port": 4370,
-                "location": "مكتب الاختبار"
+            response = self.session.get(f"{BACKEND_URL}/procurement/vendors")
+            
+            if response.status_code == 200:
+                vendors = response.json()
+                
+                # Should return a list (even if empty)
+                if isinstance(vendors, list):
+                    vendors_count = len(vendors)
+                    
+                    # Check structure of first vendor if any exist
+                    if vendors_count > 0:
+                        first_vendor = vendors[0]
+                        required_fields = ["id", "name", "category", "status"]
+                        if all(field in first_vendor for field in required_fields):
+                            self.log_test(
+                                "Procurement Get Vendors Test", 
+                                True, 
+                                f"Successfully retrieved {vendors_count} vendors with correct structure"
+                            )
+                        else:
+                            missing_fields = [field for field in required_fields if field not in first_vendor]
+                            self.log_test(
+                                "Procurement Get Vendors Test", 
+                                False, 
+                                f"Vendor structure missing required fields: {missing_fields}",
+                                first_vendor
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "Procurement Get Vendors Test", 
+                            True, 
+                            "Successfully retrieved empty vendors list"
+                        )
+                    return True
+                else:
+                    self.log_test(
+                        "Procurement Get Vendors Test", 
+                        False, 
+                        "Response is not a list",
+                        vendors
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Procurement Get Vendors Test", 
+                    False, 
+                    f"Failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Procurement Get Vendors Test", False, f"Error: {str(e)}")
+            return False
+
+    def test_procurement_create_vendor(self):
+        """Test 4: POST /api/procurement/vendors - إضافة مورد جديد"""
+        try:
+            if not self.token:
+                self.log_test("Procurement Create Vendor Test", False, "No authentication token available")
+                return False
+            
+            # Test vendor data
+            vendor_data = {
+                "name": "مورد اختبار API",
+                "name_ar": "مورد اختبار API",
+                "category": "equipment",
+                "contact_person": "أحمد محمد",
+                "phone": "+968 9123 4567",
+                "email": "test@vendor.com",
+                "address": "مسقط، سلطنة عمان",
+                "tax_number": "TAX123456",
+                "payment_terms": "net_30",
+                "rating": 4,
+                "notes": "مورد اختبار للنظام"
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/hr/zkteco/devices",
-                json=device_data
+                f"{BACKEND_URL}/procurement/vendors",
+                json=vendor_data
             )
             
             if response.status_code == 200:
-                created_device = response.json()
+                created_vendor = response.json()
                 
-                # Verify device was created with correct data
-                if (created_device.get("name") == device_data["name"] and 
-                    created_device.get("ip_address") == device_data["ip_address"] and
-                    created_device.get("port") == device_data["port"] and
-                    created_device.get("location") == device_data["location"] and
-                    "id" in created_device):
+                # Verify vendor was created with correct data
+                if (created_vendor.get("name") == vendor_data["name"] and 
+                    created_vendor.get("category") == vendor_data["category"] and
+                    created_vendor.get("contact_person") == vendor_data["contact_person"] and
+                    "id" in created_vendor and
+                    "status" in created_vendor):
                     
-                    # Store device ID for later tests
-                    self.test_device_id = created_device["id"]
+                    # Store vendor ID for later tests
+                    self.test_vendor_id = created_vendor["id"]
                     
                     self.log_test(
-                        "ZKTeco Add Device Test", 
+                        "Procurement Create Vendor Test", 
                         True, 
-                        f"Successfully created device '{device_data['name']}' with ID {created_device['id']}"
+                        f"Successfully created vendor '{vendor_data['name']}' with ID {created_vendor['id']}"
                     )
                     return True
                 else:
                     self.log_test(
-                        "ZKTeco Add Device Test", 
+                        "Procurement Create Vendor Test", 
                         False, 
-                        "Created device data doesn't match input data",
-                        created_device
+                        "Created vendor data doesn't match input data",
+                        created_vendor
                     )
                     return False
             else:
                 self.log_test(
-                    "ZKTeco Add Device Test", 
+                    "Procurement Create Vendor Test", 
                     False, 
                     f"Failed with status {response.status_code}",
                     response.text
@@ -206,48 +280,62 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("ZKTeco Add Device Test", False, f"Error: {str(e)}")
+            self.log_test("Procurement Create Vendor Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_test_device_connection(self):
-        """Test 4: POST /api/hr/zkteco/devices/{device_id}/test - Test device connection"""
+    def test_procurement_get_requisitions(self):
+        """Test 5: GET /api/procurement/requisitions - قائمة طلبات الشراء"""
         try:
             if not self.token:
-                self.log_test("ZKTeco Test Connection Test", False, "No authentication token available")
+                self.log_test("Procurement Get Requisitions Test", False, "No authentication token available")
                 return False
             
-            if not hasattr(self, 'test_device_id'):
-                self.log_test("ZKTeco Test Connection Test", False, "No test device ID available from previous test")
-                return False
-            
-            response = self.session.post(f"{BACKEND_URL}/hr/zkteco/devices/{self.test_device_id}/test")
+            response = self.session.get(f"{BACKEND_URL}/procurement/requisitions")
             
             if response.status_code == 200:
-                result = response.json()
+                requisitions = response.json()
                 
-                # The API should work even if device is not reachable
-                # Check for either success/message format or success/error format
-                if "success" in result and ("message" in result or "error" in result):
-                    success = result["success"]
-                    message = result.get("message") or result.get("error", "No message")
+                # Should return a list (even if empty)
+                if isinstance(requisitions, list):
+                    req_count = len(requisitions)
                     
-                    self.log_test(
-                        "ZKTeco Test Connection Test", 
-                        True, 
-                        f"Connection test completed - Success: {success}, Message: {message}"
-                    )
+                    # Check structure of first requisition if any exist
+                    if req_count > 0:
+                        first_req = requisitions[0]
+                        required_fields = ["id", "requisition_number", "title", "department", "status"]
+                        if all(field in first_req for field in required_fields):
+                            self.log_test(
+                                "Procurement Get Requisitions Test", 
+                                True, 
+                                f"Successfully retrieved {req_count} requisitions with correct structure"
+                            )
+                        else:
+                            missing_fields = [field for field in required_fields if field not in first_req]
+                            self.log_test(
+                                "Procurement Get Requisitions Test", 
+                                False, 
+                                f"Requisition structure missing required fields: {missing_fields}",
+                                first_req
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "Procurement Get Requisitions Test", 
+                            True, 
+                            "Successfully retrieved empty requisitions list"
+                        )
                     return True
                 else:
                     self.log_test(
-                        "ZKTeco Test Connection Test", 
+                        "Procurement Get Requisitions Test", 
                         False, 
-                        "Response missing required fields (success and message/error)",
-                        result
+                        "Response is not a list",
+                        requisitions
                     )
                     return False
             else:
                 self.log_test(
-                    "ZKTeco Test Connection Test", 
+                    "Procurement Get Requisitions Test", 
                     False, 
                     f"Failed with status {response.status_code}",
                     response.text
@@ -255,65 +343,221 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("ZKTeco Test Connection Test", False, f"Error: {str(e)}")
+            self.log_test("Procurement Get Requisitions Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_update_sync_settings(self):
-        """Test 5: PUT /api/hr/zkteco/settings - Update sync settings"""
+    def test_procurement_create_requisition(self):
+        """Test 6: POST /api/procurement/requisitions - إنشاء طلب شراء"""
         try:
             if not self.token:
-                self.log_test("ZKTeco Update Settings Test", False, "No authentication token available")
+                self.log_test("Procurement Create Requisition Test", False, "No authentication token available")
                 return False
             
-            # Test settings data
-            settings_data = {
-                "auto_sync_enabled": True,
-                "sync_interval": 30
+            # Test requisition data
+            requisition_data = {
+                "title": "طلب شراء معدات مكتبية",
+                "department": "الإدارة",
+                "priority": "medium",
+                "required_date": "2025-02-15",
+                "justification": "نحتاج لمعدات مكتبية جديدة لتحسين الإنتاجية",
+                "items": [
+                    {
+                        "item_name": "طابعة ليزر",
+                        "description": "طابعة ليزر ملونة عالية الجودة",
+                        "quantity": 2,
+                        "unit": "piece",
+                        "estimated_price": 500.0
+                    },
+                    {
+                        "item_name": "ورق A4",
+                        "description": "ورق طباعة أبيض A4",
+                        "quantity": 10,
+                        "unit": "pack",
+                        "estimated_price": 15.0
+                    }
+                ]
             }
             
-            response = self.session.put(
-                f"{BACKEND_URL}/hr/zkteco/settings",
-                json=settings_data
+            response = self.session.post(
+                f"{BACKEND_URL}/procurement/requisitions",
+                json=requisition_data
+            )
+            
+            if response.status_code == 200:
+                created_req = response.json()
+                
+                # Verify requisition was created with correct data
+                if (created_req.get("title") == requisition_data["title"] and 
+                    created_req.get("department") == requisition_data["department"] and
+                    created_req.get("priority") == requisition_data["priority"] and
+                    "id" in created_req and
+                    "requisition_number" in created_req and
+                    "status" in created_req and
+                    len(created_req.get("items", [])) == len(requisition_data["items"])):
+                    
+                    # Store requisition ID for later tests
+                    self.test_requisition_id = created_req["id"]
+                    
+                    self.log_test(
+                        "Procurement Create Requisition Test", 
+                        True, 
+                        f"Successfully created requisition '{created_req['requisition_number']}' with {len(created_req['items'])} items"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Procurement Create Requisition Test", 
+                        False, 
+                        "Created requisition data doesn't match input data",
+                        created_req
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Procurement Create Requisition Test", 
+                    False, 
+                    f"Failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Procurement Create Requisition Test", False, f"Error: {str(e)}")
+            return False
+
+    def test_procurement_submit_requisition(self):
+        """Test 7: POST /api/procurement/requisitions/{id}/submit - تقديم الطلب للموافقة"""
+        try:
+            if not self.token:
+                self.log_test("Procurement Submit Requisition Test", False, "No authentication token available")
+                return False
+            
+            if not self.test_requisition_id:
+                self.log_test("Procurement Submit Requisition Test", False, "No test requisition ID available from previous test")
+                return False
+            
+            response = self.session.post(f"{BACKEND_URL}/procurement/requisitions/{self.test_requisition_id}/submit")
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if "message" in result:
+                    # Verify requisition status was updated by getting it again
+                    get_response = self.session.get(f"{BACKEND_URL}/procurement/requisitions")
+                    
+                    if get_response.status_code == 200:
+                        requisitions = get_response.json()
+                        
+                        # Find our test requisition
+                        test_req = next((req for req in requisitions if req.get("id") == self.test_requisition_id), None)
+                        
+                        if test_req and test_req.get("status") == "pending_dept_approval":
+                            self.log_test(
+                                "Procurement Submit Requisition Test", 
+                                True, 
+                                f"Successfully submitted requisition {self.test_requisition_id} for approval"
+                            )
+                            return True
+                        else:
+                            self.log_test(
+                                "Procurement Submit Requisition Test", 
+                                False, 
+                                "Requisition status was not updated correctly after submission",
+                                test_req
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "Procurement Submit Requisition Test", 
+                            False, 
+                            "Failed to verify requisition status after submission",
+                            get_response.text
+                        )
+                        return False
+                else:
+                    self.log_test(
+                        "Procurement Submit Requisition Test", 
+                        False, 
+                        "Response missing message field",
+                        result
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Procurement Submit Requisition Test", 
+                    False, 
+                    f"Failed with status {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Procurement Submit Requisition Test", False, f"Error: {str(e)}")
+            return False
+
+    def test_procurement_approve_requisition(self):
+        """Test 8: POST /api/procurement/requisitions/{id}/approve - الموافقة على الطلب"""
+        try:
+            if not self.token:
+                self.log_test("Procurement Approve Requisition Test", False, "No authentication token available")
+                return False
+            
+            if not self.test_requisition_id:
+                self.log_test("Procurement Approve Requisition Test", False, "No test requisition ID available from previous test")
+                return False
+            
+            # Approve with comments
+            approval_data = {
+                "comments": "موافقة على الطلب - المعدات ضرورية للعمل"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/procurement/requisitions/{self.test_requisition_id}/approve",
+                params=approval_data
             )
             
             if response.status_code == 200:
                 result = response.json()
                 
                 if "message" in result:
-                    # Verify settings were updated by getting them again
-                    get_response = self.session.get(f"{BACKEND_URL}/hr/zkteco/devices")
+                    # Verify requisition status was updated
+                    get_response = self.session.get(f"{BACKEND_URL}/procurement/requisitions")
                     
                     if get_response.status_code == 200:
-                        data = get_response.json()
+                        requisitions = get_response.json()
                         
-                        if (data.get("auto_sync_enabled") == settings_data["auto_sync_enabled"] and
-                            data.get("sync_interval") == settings_data["sync_interval"]):
+                        # Find our test requisition
+                        test_req = next((req for req in requisitions if req.get("id") == self.test_requisition_id), None)
+                        
+                        if test_req and test_req.get("status") in ["pending_finance_approval", "approved"]:
+                            approval_history = test_req.get("approval_history", [])
+                            has_approval = any(entry.get("action") == "approved" for entry in approval_history)
                             
                             self.log_test(
-                                "ZKTeco Update Settings Test", 
+                                "Procurement Approve Requisition Test", 
                                 True, 
-                                f"Successfully updated settings - auto_sync: {settings_data['auto_sync_enabled']}, interval: {settings_data['sync_interval']}min"
+                                f"Successfully approved requisition {self.test_requisition_id}, new status: {test_req.get('status')}, approval history: {len(approval_history)} entries"
                             )
                             return True
                         else:
                             self.log_test(
-                                "ZKTeco Update Settings Test", 
+                                "Procurement Approve Requisition Test", 
                                 False, 
-                                "Settings were not updated correctly",
-                                data
+                                "Requisition status was not updated correctly after approval",
+                                test_req
                             )
                             return False
                     else:
                         self.log_test(
-                            "ZKTeco Update Settings Test", 
+                            "Procurement Approve Requisition Test", 
                             False, 
-                            "Failed to verify updated settings",
+                            "Failed to verify requisition status after approval",
                             get_response.text
                         )
                         return False
                 else:
                     self.log_test(
-                        "ZKTeco Update Settings Test", 
+                        "Procurement Approve Requisition Test", 
                         False, 
                         "Response missing message field",
                         result
@@ -321,7 +565,7 @@ class BackendTester:
                     return False
             else:
                 self.log_test(
-                    "ZKTeco Update Settings Test", 
+                    "Procurement Approve Requisition Test", 
                     False, 
                     f"Failed with status {response.status_code}",
                     response.text
@@ -329,45 +573,62 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("ZKTeco Update Settings Test", False, f"Error: {str(e)}")
+            self.log_test("Procurement Approve Requisition Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_sync_attendance(self):
-        """Test 6: POST /api/hr/zkteco/sync - Sync attendance"""
+    def test_procurement_get_purchase_orders(self):
+        """Test 9: GET /api/procurement/purchase-orders - أوامر الشراء"""
         try:
             if not self.token:
-                self.log_test("ZKTeco Sync Attendance Test", False, "No authentication token available")
+                self.log_test("Procurement Get Purchase Orders Test", False, "No authentication token available")
                 return False
             
-            response = self.session.post(f"{BACKEND_URL}/hr/zkteco/sync")
+            response = self.session.get(f"{BACKEND_URL}/procurement/purchase-orders")
             
             if response.status_code == 200:
-                result = response.json()
+                purchase_orders = response.json()
                 
-                # Check for the actual response format from the API
-                if "message" in result and "success" in result:
-                    success = result["success"]
-                    message = result["message"]
-                    imported = result.get("imported", 0)
-                    updated = result.get("updated", 0)
+                # Should return a list (even if empty)
+                if isinstance(purchase_orders, list):
+                    po_count = len(purchase_orders)
                     
-                    self.log_test(
-                        "ZKTeco Sync Attendance Test", 
-                        True, 
-                        f"Sync completed - Success: {success}, Imported: {imported}, Updated: {updated}. {message}"
-                    )
+                    # Check structure of first PO if any exist
+                    if po_count > 0:
+                        first_po = purchase_orders[0]
+                        required_fields = ["id", "po_number", "vendor_id", "vendor_name", "status", "total_amount"]
+                        if all(field in first_po for field in required_fields):
+                            self.log_test(
+                                "Procurement Get Purchase Orders Test", 
+                                True, 
+                                f"Successfully retrieved {po_count} purchase orders with correct structure"
+                            )
+                        else:
+                            missing_fields = [field for field in required_fields if field not in first_po]
+                            self.log_test(
+                                "Procurement Get Purchase Orders Test", 
+                                False, 
+                                f"Purchase order structure missing required fields: {missing_fields}",
+                                first_po
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "Procurement Get Purchase Orders Test", 
+                            True, 
+                            "Successfully retrieved empty purchase orders list"
+                        )
                     return True
                 else:
                     self.log_test(
-                        "ZKTeco Sync Attendance Test", 
+                        "Procurement Get Purchase Orders Test", 
                         False, 
-                        "Response missing required fields (success, message)",
-                        result
+                        "Response is not a list",
+                        purchase_orders
                     )
                     return False
             else:
                 self.log_test(
-                    "ZKTeco Sync Attendance Test", 
+                    "Procurement Get Purchase Orders Test", 
                     False, 
                     f"Failed with status {response.status_code}",
                     response.text
@@ -375,69 +636,62 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("ZKTeco Sync Attendance Test", False, f"Error: {str(e)}")
+            self.log_test("Procurement Get Purchase Orders Test", False, f"Error: {str(e)}")
             return False
 
-    def test_zkteco_delete_device(self):
-        """Test 7: DELETE /api/hr/zkteco/devices/{device_id} - Delete device"""
+    def test_procurement_get_inventory(self):
+        """Test 10: GET /api/procurement/inventory - المخزون"""
         try:
             if not self.token:
-                self.log_test("ZKTeco Delete Device Test", False, "No authentication token available")
+                self.log_test("Procurement Get Inventory Test", False, "No authentication token available")
                 return False
             
-            if not hasattr(self, 'test_device_id'):
-                self.log_test("ZKTeco Delete Device Test", False, "No test device ID available from previous test")
-                return False
-            
-            response = self.session.delete(f"{BACKEND_URL}/hr/zkteco/devices/{self.test_device_id}")
+            response = self.session.get(f"{BACKEND_URL}/procurement/inventory")
             
             if response.status_code == 200:
-                result = response.json()
+                inventory_items = response.json()
                 
-                if "message" in result:
-                    # Verify device was deleted by trying to get it
-                    get_response = self.session.get(f"{BACKEND_URL}/hr/zkteco/devices")
+                # Should return a list (even if empty)
+                if isinstance(inventory_items, list):
+                    items_count = len(inventory_items)
                     
-                    if get_response.status_code == 200:
-                        data = get_response.json()
-                        devices = data.get("devices", [])
-                        
-                        # Check if our test device is no longer in the active devices list
-                        device_found = any(device.get("id") == self.test_device_id for device in devices)
-                        
-                        if not device_found:
+                    # Check structure of first item if any exist
+                    if items_count > 0:
+                        first_item = inventory_items[0]
+                        required_fields = ["id", "name", "category", "current_quantity", "unit"]
+                        if all(field in first_item for field in required_fields):
                             self.log_test(
-                                "ZKTeco Delete Device Test", 
+                                "Procurement Get Inventory Test", 
                                 True, 
-                                f"Successfully deleted device {self.test_device_id}"
+                                f"Successfully retrieved {items_count} inventory items with correct structure"
                             )
-                            return True
                         else:
+                            missing_fields = [field for field in required_fields if field not in first_item]
                             self.log_test(
-                                "ZKTeco Delete Device Test", 
+                                "Procurement Get Inventory Test", 
                                 False, 
-                                "Device still appears in active devices list after deletion"
+                                f"Inventory item structure missing required fields: {missing_fields}",
+                                first_item
                             )
                             return False
                     else:
                         self.log_test(
-                            "ZKTeco Delete Device Test", 
-                            False, 
-                            "Failed to verify device deletion",
-                            get_response.text
+                            "Procurement Get Inventory Test", 
+                            True, 
+                            "Successfully retrieved empty inventory list"
                         )
-                        return False
+                    return True
                 else:
                     self.log_test(
-                        "ZKTeco Delete Device Test", 
+                        "Procurement Get Inventory Test", 
                         False, 
-                        "Response missing message field",
-                        result
+                        "Response is not a list",
+                        inventory_items
                     )
                     return False
             else:
                 self.log_test(
-                    "ZKTeco Delete Device Test", 
+                    "Procurement Get Inventory Test", 
                     False, 
                     f"Failed with status {response.status_code}",
                     response.text
@@ -445,7 +699,7 @@ class BackendTester:
                 return False
                 
         except Exception as e:
-            self.log_test("ZKTeco Delete Device Test", False, f"Error: {str(e)}")
+            self.log_test("Procurement Get Inventory Test", False, f"Error: {str(e)}")
             return False
 
     def run_all_tests(self):
