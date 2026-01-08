@@ -5838,9 +5838,6 @@ async def export_attendance_pdf(
     elements.append(Spacer(1, 10))
     elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
     elements.append(Spacer(1, 20))
-    elements.append(Spacer(1, 10))
-    elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
-    elements.append(Spacer(1, 20))
     
     # Group by employee
     from collections import defaultdict
@@ -5854,13 +5851,13 @@ async def export_attendance_pdf(
         records = employee_data[emp_name]
         days_count = len(set(r.get('date') for r in records))
         
-        # Employee header
-        emp_style = ParagraphStyle('EmpHeader', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#2E7D32'))
-        elements.append(Paragraph(f"{emp_name} - عدد أيام الحضور: {days_count} يوم", emp_style))
+        # Employee header with attendance count
+        emp_style = ParagraphStyle('EmpHeader', fontName=arabic_font, fontSize=11, textColor=colors.HexColor('#2E7D32'))
+        elements.append(Paragraph(f"{emp_name} - Attendance Days: {days_count}", emp_style))
         elements.append(Spacer(1, 5))
         
-        # Table for this employee
-        headers = ['التاريخ', 'وقت الحضور', 'وقت الانصراف', 'المصدر']
+        # Table for this employee - using English headers for compatibility
+        headers = ['Date', 'Check In', 'Check Out', 'Source']
         data = [headers]
         
         for record in records:
@@ -5887,7 +5884,7 @@ async def export_attendance_pdf(
         elements.append(Spacer(1, 15))
     
     if not employee_data:
-        elements.append(Paragraph("لا توجد سجلات حضور", ParagraphStyle('NoData', alignment=TA_CENTER)))
+        elements.append(Paragraph("No attendance records", ParagraphStyle('NoData', alignment=TA_CENTER)))
     
     doc.build(elements)
     
