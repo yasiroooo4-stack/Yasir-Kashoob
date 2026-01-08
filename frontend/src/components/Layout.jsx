@@ -130,6 +130,7 @@ const Layout = () => {
     { path: "/payroll", icon: Calculator, label: "payroll", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/salary-structures", icon: DollarSign, label: "salary_structures", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
+    { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "finance", "admin", "it"] },
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
     { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
