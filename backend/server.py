@@ -11791,6 +11791,11 @@ app.include_router(hikconnect_router)
 from routes.sms_routes import router as sms_router
 app.include_router(sms_router)
 
+# Mount static files for exports
+static_exports_path = Path(__file__).parent / "static" / "exports"
+if static_exports_path.exists():
+    app.mount("/api/exports", StaticFiles(directory=str(static_exports_path)), name="exports")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
