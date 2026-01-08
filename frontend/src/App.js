@@ -382,6 +382,11 @@ function App() {
                     <Legal />
                   </ProtectedRoute>
                 } />
+                <Route path="procurement" element={
+                  <ProtectedRoute allowedDepartments={["procurement", "admin", "it", "finance"]}>
+                    <Procurement />
+                  </ProtectedRoute>
+                } />
                 <Route path="projects" element={
                   <ProtectedRoute allowedDepartments={["projects", "admin", "it"]}>
                     <Projects />
