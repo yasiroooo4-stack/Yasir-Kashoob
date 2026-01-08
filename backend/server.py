@@ -5659,50 +5659,83 @@ async def export_attendance_excel(
     
     attendance = await db.hr_attendance.find(query, {"_id": 0}).sort([("employee_name", 1), ("date", 1)]).to_list(10000)
     
+    # Get all employees for name/code lookup
+    employees_list = await db.hr_employees.find({}, {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "fingerprint_id": 1}).to_list(1000)
+    emp_lookup = {}
+    for emp in employees_list:
+        emp_lookup[emp.get('id')] = emp
+        emp_lookup[emp.get('fingerprint_id')] = emp
+        emp_lookup[emp.get('employee_code')] = emp
+        emp_lookup[emp.get('name')] = emp
+    
     if not attendance:
         # Return empty template
-        df = pd.DataFrame(columns=['اسم الموظف', 'التاريخ', 'وقت الحضور', 'وقت الانصراف', 'المصدر'])
+        df = pd.DataFrame(columns=['Employee Name', 'Employee Code', 'Fingerprint ID', 'Date', 'Check In', 'Check Out', 'Source'])
     else:
         # Group attendance by employee and add summary
         from collections import defaultdict
-        employee_data = defaultdict(list)
+        employee_data = defaultdict(lambda: {"records": [], "name": "", "code": "", "fingerprint": ""})
         
         for record in attendance:
-            emp_name = record.get('employee_name', 'غير معروف')
-            employee_data[emp_name].append(record)
+            emp_id = record.get('employee_id', '')
+            emp_name = record.get('employee_name', 'Unknown')
+            
+            # Try to find employee info
+            emp_info = emp_lookup.get(emp_id) or emp_lookup.get(emp_name)
+            if emp_info:
+                key = emp_info.get('id', emp_id)
+                employee_data[key]["name"] = emp_info.get('name', emp_name)
+                employee_data[key]["code"] = emp_info.get('employee_code', '')
+                employee_data[key]["fingerprint"] = emp_info.get('fingerprint_id', '')
+            else:
+                key = emp_id or emp_name
+                employee_data[key]["name"] = emp_name
+            
+            employee_data[key]["records"].append(record)
         
         # Create structured data with employee headers and summaries
         rows = []
-        for emp_name in sorted(employee_data.keys()):
-            records = employee_data[emp_name]
+        for emp_key in sorted(employee_data.keys(), key=lambda x: employee_data[x]["name"]):
+            emp_info = employee_data[emp_key]
+            records = emp_info["records"]
             days_count = len(set(r.get('date') for r in records))
+            
+            emp_name = emp_info["name"] or "Unknown"
+            emp_code = emp_info["code"] or "-"
+            emp_fp = emp_info["fingerprint"] or "-"
             
             # Add employee header row
             rows.append({
-                'اسم الموظف': f"📋 {emp_name} - عدد أيام الحضور: {days_count} يوم",
-                'التاريخ': '',
-                'وقت الحضور': '',
-                'وقت الانصراف': '',
-                'المصدر': ''
+                'Employee Name': f"📋 {emp_name}",
+                'Employee Code': emp_code,
+                'Fingerprint ID': emp_fp,
+                'Date': f"Attendance Days: {days_count}",
+                'Check In': '',
+                'Check Out': '',
+                'Source': ''
             })
             
             # Add attendance records
-            for record in records:
+            for record in sorted(records, key=lambda x: x.get('date', '')):
                 rows.append({
-                    'اسم الموظف': emp_name,
-                    'التاريخ': record.get('date', ''),
-                    'وقت الحضور': record.get('check_in', '-'),
-                    'وقت الانصراف': record.get('check_out', '-'),
-                    'المصدر': record.get('source', 'manual')
+                    'Employee Name': emp_name,
+                    'Employee Code': emp_code,
+                    'Fingerprint ID': emp_fp,
+                    'Date': record.get('date', ''),
+                    'Check In': record.get('check_in', '-'),
+                    'Check Out': record.get('check_out', '-'),
+                    'Source': record.get('source', 'manual')
                 })
             
             # Add empty row after each employee
             rows.append({
-                'اسم الموظف': '',
-                'التاريخ': '',
-                'وقت الحضور': '',
-                'وقت الانصراف': '',
-                'المصدر': ''
+                'Employee Name': '',
+                'Employee Code': '',
+                'Fingerprint ID': '',
+                'Date': '',
+                'Check In': '',
+                'Check Out': '',
+                'Source': ''
             })
         
         df = pd.DataFrame(rows)
@@ -5714,7 +5747,7 @@ async def export_attendance_excel(
         worksheet = writer.sheets[sheet_name[:31]]
         header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
         header_font = Font(bold=True, color='FFFFFF')
-        employee_header_fill = PatternFill(start_color='70AD47', end_color='70AD47', fill_type='solid')
+        employee_header_fill = PatternFill(start_color='2E7D32', end_color='2E7D32', fill_type='solid')
         employee_header_font = Font(bold=True, color='FFFFFF')
         
         # Style header row
