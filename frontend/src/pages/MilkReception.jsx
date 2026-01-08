@@ -97,10 +97,15 @@ const MilkReception = () => {
 
   const handleSupplierChange = (supplierId) => {
     const supplier = suppliers.find((s) => s.id === supplierId);
+    // Determine milk type and set price
+    const milkType = supplier?.milk_type || supplier?.animal_type || "cow";
+    const price = milkType === "camel" ? defaultPrices.camel : defaultPrices.cow;
+    
     setFormData({
       ...formData,
       supplier_id: supplierId,
       supplier_name: supplier?.name || "",
+      price_per_liter: price || formData.price_per_liter,
     });
     setSupplierCode(supplier?.supplier_code || "");
     setSupplierFound(supplier);
