@@ -5787,7 +5787,7 @@ async def export_attendance_pdf(
     if employee_id:
         query["employee_id"] = employee_id
     
-    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort("date", 1).to_list(10000)
+    attendance = await db.hr_attendance.find(query, {"_id": 0}).sort([("employee_name", 1), ("date", 1)]).to_list(10000)
     
     output = io.BytesIO()
     doc = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
@@ -5802,32 +5802,54 @@ async def export_attendance_pdf(
     elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
     elements.append(Spacer(1, 20))
     
-    # Table
-    headers = ['Date', 'Employee', 'Check In', 'Check Out', 'Source']
-    data = [headers]
-    
+    # Group by employee
+    from collections import defaultdict
+    employee_data = defaultdict(list)
     for record in attendance:
-        data.append([
-            record.get('date', ''),
-            record.get('employee_name', ''),
-            record.get('check_in', '-'),
-            record.get('check_out', '-'),
-            record.get('source', 'manual')
-        ])
+        emp_name = record.get('employee_name', 'Unknown')
+        employee_data[emp_name].append(record)
     
-    if len(data) == 1:
-        data.append(['', 'No attendance records', '', '', ''])
+    # Create tables for each employee
+    for emp_name in sorted(employee_data.keys()):
+        records = employee_data[emp_name]
+        days_count = len(set(r.get('date') for r in records))
+        
+        # Employee header
+        emp_style = ParagraphStyle('EmpHeader', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#2E7D32'))
+        elements.append(Paragraph(f"{emp_name} - عدد أيام الحضور: {days_count} يوم", emp_style))
+        elements.append(Spacer(1, 5))
+        
+        # Table for this employee
+        headers = ['التاريخ', 'وقت الحضور', 'وقت الانصراف', 'المصدر']
+        data = [headers]
+        
+        for record in records:
+            data.append([
+                record.get('date', ''),
+                record.get('check_in', '-'),
+                record.get('check_out', '-'),
+                record.get('source', 'manual')
+            ])
+        
+        table = Table(data, repeatRows=1, colWidths=[100, 100, 100, 80])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
+        ]))
+        
+        elements.append(table)
+        elements.append(Spacer(1, 15))
     
-    table = Table(data, repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('FONTSIZE', (0, 1), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
+    if not employee_data:
+        elements.append(Paragraph("لا توجد سجلات حضور", ParagraphStyle('NoData', alignment=TA_CENTER)))
+    
+    doc.build(elements)
     ]))
     
     elements.append(table)
