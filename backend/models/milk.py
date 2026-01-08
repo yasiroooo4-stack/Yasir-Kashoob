@@ -4,9 +4,11 @@ import uuid
 from datetime import datetime, timezone
 
 class QualityTest(BaseModel):
-    fat_percentage: float
-    protein_percentage: float
-    temperature: float
+    model_config = ConfigDict(extra="ignore")
+    fat_percentage: Optional[float] = 0
+    protein_percentage: Optional[float] = 0
+    temperature: Optional[float] = 0
+    snf_percentage: Optional[float] = None
     density: Optional[float] = None
     acidity: Optional[float] = None
     water_content: Optional[float] = None
@@ -25,8 +27,16 @@ class MilkReceptionCreate(MilkReceptionBase):
     pass
 
 class MilkReception(MilkReceptionBase):
+    model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     reception_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     total_amount: float = 0.0
     is_paid: bool = False
     created_by: Optional[str] = None
+    supplier_code: Optional[str] = None
+    milk_type: Optional[str] = None
+    period: Optional[str] = None
+    month: Optional[int] = None
+    year: Optional[int] = None
+    source: Optional[str] = None
+    created_at: Optional[str] = None
