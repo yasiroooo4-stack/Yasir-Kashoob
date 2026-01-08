@@ -1818,13 +1818,49 @@ const HR = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" onClick={handleExportAttendanceExcel} className="gap-1">
+              </div>
+              {/* Date Range Export Section */}
+              <div className="flex flex-wrap gap-2 items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border mt-3">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  {language === "ar" ? "تصدير التقرير:" : "Export Report:"}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">{language === "ar" ? "من" : "From"}</Label>
+                  <Input
+                    type="date"
+                    value={exportDateFrom}
+                    onChange={(e) => setExportDateFrom(e.target.value)}
+                    className="w-40"
+                    data-testid="export-date-from"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">{language === "ar" ? "إلى" : "To"}</Label>
+                  <Input
+                    type="date"
+                    value={exportDateTo}
+                    onChange={(e) => setExportDateTo(e.target.value)}
+                    className="w-40"
+                    data-testid="export-date-to"
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleExportAttendanceExcel} 
+                  className="gap-1 bg-green-50 hover:bg-green-100 border-green-300"
+                  data-testid="export-attendance-excel"
+                >
                   <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                  Excel
+                  {language === "ar" ? "تصدير Excel" : "Export Excel"}
                 </Button>
-                <Button variant="outline" onClick={handleExportAttendancePDF} className="gap-1">
+                <Button 
+                  variant="outline" 
+                  onClick={handleExportAttendancePDF} 
+                  className="gap-1 bg-red-50 hover:bg-red-100 border-red-300"
+                  data-testid="export-attendance-pdf"
+                >
                   <FileText className="w-4 h-4 text-red-600" />
-                  PDF
+                  {language === "ar" ? "تصدير PDF" : "Export PDF"}
                 </Button>
               </div>
             </CardHeader>
