@@ -5839,49 +5839,102 @@ async def export_attendance_pdf(
     elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
     elements.append(Spacer(1, 20))
     
+    # Get all employees for name/code lookup
+    employees_list = await db.hr_employees.find({}, {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "fingerprint_id": 1}).to_list(1000)
+    emp_lookup = {}
+    for emp in employees_list:
+        emp_lookup[emp.get('id')] = emp
+        emp_lookup[emp.get('fingerprint_id')] = emp
+        emp_lookup[emp.get('employee_code')] = emp
+    
     # Group by employee
     from collections import defaultdict
-    employee_data = defaultdict(list)
+    employee_data = defaultdict(lambda: {"records": [], "name": "", "code": "", "fingerprint": ""})
+    
     for record in attendance:
+        emp_id = record.get('employee_id', '')
         emp_name = record.get('employee_name', 'Unknown')
-        employee_data[emp_name].append(record)
+        
+        # Try to find employee info
+        emp_info = emp_lookup.get(emp_id) or emp_lookup.get(emp_name)
+        if emp_info:
+            key = emp_info.get('id', emp_id)
+            employee_data[key]["name"] = emp_info.get('name', emp_name)
+            employee_data[key]["code"] = emp_info.get('employee_code', '')
+            employee_data[key]["fingerprint"] = emp_info.get('fingerprint_id', '')
+        else:
+            key = emp_id or emp_name
+            employee_data[key]["name"] = emp_name
+        
+        employee_data[key]["records"].append(record)
     
     # Create tables for each employee
-    for emp_name in sorted(employee_data.keys()):
-        records = employee_data[emp_name]
+    emp_count = 0
+    for emp_key in sorted(employee_data.keys(), key=lambda x: employee_data[x]["name"]):
+        emp_count += 1
+        emp_info = employee_data[emp_key]
+        records = emp_info["records"]
         days_count = len(set(r.get('date') for r in records))
         
-        # Employee header with attendance count
-        emp_style = ParagraphStyle('EmpHeader', fontName=arabic_font, fontSize=11, textColor=colors.HexColor('#2E7D32'))
-        elements.append(Paragraph(f"{emp_name} - Attendance Days: {days_count}", emp_style))
+        # Employee header box with full details
+        emp_name = emp_info["name"] or "Unknown"
+        emp_code = emp_info["code"] or "-"
+        emp_fp = emp_info["fingerprint"] or "-"
+        
+        # Create employee info table
+        emp_header_data = [
+            ['Employee Name', 'Employee Code', 'Fingerprint ID', 'Attendance Days'],
+            [emp_name, emp_code, emp_fp, f'{days_count} days']
+        ]
+        
+        emp_table = Table(emp_header_data, colWidths=[200, 100, 100, 100])
+        emp_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E7D32')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#E8F5E9')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, 1), 10),
+            ('FONTNAME', (0, 1), (0, 1), arabic_font),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 1), (-1, 1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, 1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#2E7D32')),
+        ]))
+        elements.append(emp_table)
         elements.append(Spacer(1, 5))
         
-        # Table for this employee - using English headers for compatibility
-        headers = ['Date', 'Check In', 'Check Out', 'Source']
+        # Attendance records table
+        headers = ['#', 'Date', 'Check In', 'Check Out', 'Source']
         data = [headers]
         
-        for record in records:
+        for idx, record in enumerate(sorted(records, key=lambda x: x.get('date', '')), 1):
             data.append([
+                str(idx),
                 record.get('date', ''),
                 record.get('check_in', '-'),
                 record.get('check_out', '-'),
                 record.get('source', 'manual')
             ])
         
-        table = Table(data, repeatRows=1, colWidths=[100, 100, 100, 80])
+        table = Table(data, repeatRows=1, colWidths=[30, 80, 80, 80, 80])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
             ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
         ]))
         
         elements.append(table)
-        elements.append(Spacer(1, 15))
+        elements.append(Spacer(1, 20))
+    
+    # Summary footer
+    summary_style = ParagraphStyle('Summary', fontSize=10, alignment=TA_CENTER)
+    elements.append(Paragraph(f"Total Employees: {emp_count} | Total Records: {len(attendance)}", summary_style))
     
     if not employee_data:
         elements.append(Paragraph("No attendance records", ParagraphStyle('NoData', alignment=TA_CENTER)))
