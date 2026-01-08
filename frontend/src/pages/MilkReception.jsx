@@ -69,10 +69,12 @@ const MilkReception = () => {
   const fetchPriceSettings = async () => {
     try {
       const res = await axios.get(`${API}/settings/milk-prices`);
-      if (res.data) {
+      if (res.data && Array.isArray(res.data)) {
+        const cowPrice = res.data.find(p => p.id === 'cow')?.price || "";
+        const camelPrice = res.data.find(p => p.id === 'camel')?.price || "";
         setDefaultPrices({
-          cow: res.data.cow_price || "",
-          camel: res.data.camel_price || ""
+          cow: cowPrice,
+          camel: camelPrice
         });
       }
     } catch (error) {
