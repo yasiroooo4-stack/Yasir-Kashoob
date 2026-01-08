@@ -245,6 +245,9 @@ const resources = {
       // Legal
       "legal": "القسم القانوني",
       
+      // Procurement
+      "procurement": "المشتريات",
+      
       // Projects
       "projects": "المشاريع",
       
