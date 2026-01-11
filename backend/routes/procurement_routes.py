@@ -54,6 +54,8 @@ async def create_vendor(vendor: VendorCreate, current_user: dict = Depends(get_c
     vendor_dict["created_by"] = current_user.get("id")
     
     await db.procurement_vendors.insert_one(vendor_dict)
+    # Remove MongoDB _id before returning
+    vendor_dict.pop("_id", None)
     return vendor_dict
 
 @router.put("/vendors/{vendor_id}")
