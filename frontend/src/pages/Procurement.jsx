@@ -107,13 +107,16 @@ const Procurement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
       const [summaryRes, vendorsRes, reqRes, poRes, invRes, alertsRes] = await Promise.all([
-        axios.get(`${API}/procurement/analytics/summary`),
-        axios.get(`${API}/procurement/vendors`),
-        axios.get(`${API}/procurement/requisitions`),
-        axios.get(`${API}/procurement/purchase-orders`),
-        axios.get(`${API}/procurement/inventory`),
-        axios.get(`${API}/procurement/inventory/alerts`),
+        axios.get(`${API}/procurement/analytics/summary`, { headers }),
+        axios.get(`${API}/procurement/vendors`, { headers }),
+        axios.get(`${API}/procurement/requisitions`, { headers }),
+        axios.get(`${API}/procurement/purchase-orders`, { headers }),
+        axios.get(`${API}/procurement/inventory`, { headers }),
+        axios.get(`${API}/procurement/inventory/alerts`, { headers }),
       ]);
       
       setSummary(summaryRes.data);
@@ -123,7 +126,8 @@ const Procurement = () => {
       setInventory(invRes.data);
       setInventoryAlerts(alertsRes.data);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching procurement data:", error);
+      toast.error(language === "ar" ? "حدث خطأ في جلب البيانات" : "Error fetching data");
     } finally {
       setLoading(false);
     }
