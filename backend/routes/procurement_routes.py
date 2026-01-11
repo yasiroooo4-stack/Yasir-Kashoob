@@ -118,6 +118,7 @@ async def create_requisition(req: RequisitionCreate, current_user: dict = Depend
         item["total_estimated"] = item["quantity"] * item["estimated_price"]
     
     await db.purchase_requisitions.insert_one(req_dict)
+    req_dict.pop("_id", None)
     return req_dict
 
 @router.put("/requisitions/{req_id}")
