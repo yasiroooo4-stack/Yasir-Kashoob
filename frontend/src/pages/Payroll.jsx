@@ -396,6 +396,8 @@ const Payroll = () => {
             working_days: records.reduce((sum, r) => sum + (r.working_days || 0), 0),
             overtime_hours: records.reduce((sum, r) => sum + (r.total_overtime_hours || 0), 0),
             basic_salary: records.reduce((sum, r) => sum + (r.basic_salary || 0), 0),
+            total_allowances: records.reduce((sum, r) => sum + (r.total_allowances || 0), 0),
+            total_salary: records.reduce((sum, r) => sum + ((r.basic_salary || 0) + (r.total_allowances || 0)), 0),
             overtime_pay: records.reduce((sum, r) => sum + (r.overtime_pay || 0), 0),
             deductions: records.reduce((sum, r) => sum + (r.deductions || 0), 0),
             net_salary: records.reduce((sum, r) => sum + (r.net_salary || 0), 0),
