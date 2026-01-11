@@ -1509,6 +1509,7 @@ class OfficialHolidayBase(BaseModel):
     date: str
     applies_to: str = "all"
     is_recurring: bool = False
+    is_paid: bool = True  # عطلة مدفوعة
     notes: Optional[str] = None
 
 class OfficialHolidayCreate(OfficialHolidayBase):
