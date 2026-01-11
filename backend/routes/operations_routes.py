@@ -242,6 +242,8 @@ async def create_incident_report(incident_data: IncidentReportCreate, current_us
         details=f"تقرير حادث: {incident_data.title} - {incident_data.severity}"
     )
     
+    # Remove _id before returning
+    incident_dict.pop("_id", None)
     return IncidentReport(**incident_dict)
 
 
