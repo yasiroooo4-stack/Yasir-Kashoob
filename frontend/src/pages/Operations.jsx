@@ -339,13 +339,32 @@ const Operations = () => {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-purple-100">
+                <Users className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{driverTasksSummary.total_tasks || 0}</p>
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "مهام السائقين" : "Driver Tasks"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        <TabsList className="grid w-full max-w-4xl grid-cols-6">
           <TabsTrigger value="daily" className="gap-2">
             <Activity className="w-4 h-4" />
             {language === "ar" ? "يومي" : "Daily"}
+          </TabsTrigger>
+          <TabsTrigger value="drivers" className="gap-2">
+            <Users className="w-4 h-4" />
+            {language === "ar" ? "السائقين" : "Drivers"}
           </TabsTrigger>
           <TabsTrigger value="equipment" className="gap-2">
             <Settings2 className="w-4 h-4" />
