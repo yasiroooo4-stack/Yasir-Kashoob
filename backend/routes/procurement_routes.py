@@ -15,7 +15,7 @@ from models.procurement import (
 router = APIRouter(prefix="/api/procurement", tags=["Procurement"])
 
 # Import database and auth from main server
-from server import db, get_current_user, require_role
+from server import db, get_current_user, require_role, create_auto_journal_entry
 
 # ==================== VENDORS ====================
 
