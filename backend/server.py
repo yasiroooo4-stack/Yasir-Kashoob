@@ -5855,25 +5855,48 @@ async def export_attendance_pdf(
     elements = []
     styles = getSampleStyleSheet()
     
-    # Add company logo
+    # Create header table with logo on RIGHT side and company name on LEFT
     logo_path = os.path.join(os.path.dirname(__file__), 'static', 'logo.png')
+    
+    # Company name styles
+    company_name_ar = reshape_arabic("المروج للألبان")
+    company_name_en = "Almorooj Dairy"
+    
+    # Header with logo on right, text on left
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
-        elements.append(logo)
+        logo = Image(logo_path, width=1.2*inch, height=1.2*inch)
+        
+        # Create header table: [Company Text | Logo]
+        header_data = [[
+            Paragraph(f'''<para align="left">
+                <font name="{arabic_font}" size="16" color="#1a5f2a">{company_name_ar}</font><br/>
+                <font size="12" color="#1a5f2a">{company_name_en}</font><br/><br/>
+                <font name="{arabic_font}" size="14">{reshape_arabic("تقرير الحضور والانصراف")}</font><br/>
+                <font size="10">Attendance Report</font><br/>
+                <font size="9">{period_text}</font>
+            </para>''', styles['Normal']),
+            logo
+        ]]
+        
+        header_table = Table(header_data, colWidths=[500, 100])
+        header_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        elements.append(header_table)
+    else:
+        # No logo - just text
+        company_style = ParagraphStyle('Company', fontName=arabic_font, fontSize=18, alignment=TA_CENTER, textColor=colors.HexColor('#1a5f2a'))
+        elements.append(Paragraph(company_name_ar, company_style))
+        elements.append(Paragraph(company_name_en, ParagraphStyle('CompanyEn', fontSize=14, alignment=TA_CENTER, textColor=colors.HexColor('#1a5f2a'))))
+        elements.append(Spacer(1, 15))
+        title_style = ParagraphStyle('Title', fontName=arabic_font, fontSize=16, alignment=TA_CENTER)
+        elements.append(Paragraph(reshape_arabic("تقرير الحضور والانصراف"), title_style))
+        elements.append(Paragraph("Attendance Report", ParagraphStyle('TitleEn', fontSize=12, alignment=TA_CENTER)))
         elements.append(Spacer(1, 10))
+        elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
     
-    # Company name header
-    company_style = ParagraphStyle('Company', fontName=arabic_font, fontSize=18, alignment=TA_CENTER, textColor=colors.HexColor('#1a5f2a'))
-    elements.append(Paragraph(reshape_arabic("المروج للألبان"), company_style))
-    elements.append(Paragraph("Almorooj Dairy", ParagraphStyle('CompanyEn', fontSize=14, alignment=TA_CENTER, textColor=colors.HexColor('#1a5f2a'))))
-    elements.append(Spacer(1, 15))
-    
-    # Title
-    title_style = ParagraphStyle('Title', fontName=arabic_font, fontSize=16, alignment=TA_CENTER)
-    elements.append(Paragraph(reshape_arabic("تقرير الحضور والانصراف"), title_style))
-    elements.append(Paragraph("Attendance Report", ParagraphStyle('TitleEn', fontSize=12, alignment=TA_CENTER)))
-    elements.append(Spacer(1, 10))
-    elements.append(Paragraph(period_text, ParagraphStyle('Date', alignment=TA_CENTER)))
     elements.append(Spacer(1, 20))
     
     # Get all employees for name/code lookup
