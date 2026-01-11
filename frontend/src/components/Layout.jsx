@@ -205,6 +205,18 @@ const Layout = () => {
     return roles[role] || role;
   };
 
+  // Scroll to top when route changes
+  const location = useLocation();
+  const mainRef = useRef(null);
+  
+  useEffect(() => {
+    // Reset scroll position when route changes
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
       {/* Mobile Menu Overlay */}
