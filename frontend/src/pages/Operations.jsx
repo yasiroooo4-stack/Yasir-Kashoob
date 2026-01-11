@@ -105,7 +105,11 @@ const Operations = () => {
       setVehicles(vehRes.data);
       setDashboard(dashRes.data);
       setDriverTasks(driverTasksRes.data);
-      setDrivers(driversRes.data.filter(emp => emp.department === "operations" || emp.position?.includes("سائق") || emp.position?.toLowerCase().includes("driver")));
+      // Filter only employees with position containing "سائق" or "driver"
+      setDrivers(driversRes.data.filter(emp => 
+        emp.position?.includes("سائق") || 
+        emp.position?.toLowerCase().includes("driver")
+      ));
       setDriverTasksSummary(summaryRes.data);
     } catch (error) {
       console.error("Error fetching data:", error);
