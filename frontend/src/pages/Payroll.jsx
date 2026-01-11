@@ -261,6 +261,8 @@ const Payroll = () => {
       working_days: filteredRecords.reduce((sum, r) => sum + (r.working_days || 0), 0),
       overtime_hours: filteredRecords.reduce((sum, r) => sum + (r.total_overtime_hours || 0), 0),
       basic_salary: filteredRecords.reduce((sum, r) => sum + (r.basic_salary || 0), 0),
+      total_allowances: filteredRecords.reduce((sum, r) => sum + (r.total_allowances || 0), 0),
+      total_salary: filteredRecords.reduce((sum, r) => sum + ((r.basic_salary || 0) + (r.total_allowances || 0)), 0),
       overtime_pay: filteredRecords.reduce((sum, r) => sum + (r.overtime_pay || 0), 0),
       deductions: filteredRecords.reduce((sum, r) => sum + (r.deductions || 0), 0),
       net_salary: filteredRecords.reduce((sum, r) => sum + (r.net_salary || 0), 0),
