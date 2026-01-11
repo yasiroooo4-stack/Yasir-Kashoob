@@ -62,6 +62,7 @@ const Suppliers = () => {
     address: "",
     supplier_code: "",
     bank_account: "",
+    bank_name: "",
     center_id: "",
     center_name: "",
     national_id: "",
