@@ -1,5 +1,5 @@
 {
-  "api_url": "https://milktrack-9.preview.emergentagent.com",
+  "api_url": "https://milkops.preview.emergentagent.com",
   "username": "yasir",
   "password": "YOUR_PASSWORD_HERE",
   "sync_interval": 3600,
