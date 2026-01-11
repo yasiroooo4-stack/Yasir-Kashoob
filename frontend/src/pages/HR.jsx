@@ -1087,6 +1087,7 @@ const HR = () => {
         date: new Date().toISOString().split('T')[0],
         applies_to: "all",
         is_recurring: false,
+        is_paid: true,
         notes: ""
       });
       fetchData();
