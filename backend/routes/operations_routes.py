@@ -321,6 +321,8 @@ async def create_vehicle(vehicle_data: VehicleCreate, current_user: dict = Depen
         details=f"مركبة جديدة: {vehicle_data.brand} {vehicle_data.model} - {vehicle_data.plate_number}"
     )
     
+    # Remove _id before returning
+    vehicle_dict.pop("_id", None)
     return Vehicle(**vehicle_dict)
 
 
