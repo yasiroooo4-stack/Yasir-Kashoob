@@ -256,6 +256,19 @@ const Procurement = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]" data-testid="procurement-loading">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">
+            {language === "ar" ? "جاري تحميل البيانات..." : "Loading data..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6" data-testid="procurement-page">
       <div className="flex justify-between items-center">
