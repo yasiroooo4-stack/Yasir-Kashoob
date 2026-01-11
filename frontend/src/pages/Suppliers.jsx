@@ -536,7 +536,7 @@ const Suppliers = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="bank_account">{t("bank_account")}</Label>
                 <Input
@@ -544,6 +544,15 @@ const Suppliers = () => {
                   value={formData.bank_account}
                   onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
                   data-testid="supplier-bank-account-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_name">{language === "ar" ? "اسم البنك" : "Bank Name"}</Label>
+                <Input
+                  id="bank_name"
+                  value={formData.bank_name}
+                  onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                  data-testid="supplier-bank-name-input"
                 />
               </div>
               <div className="space-y-2">
