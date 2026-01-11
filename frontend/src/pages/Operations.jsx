@@ -1136,14 +1136,17 @@ const Operations = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>{language === "ar" ? "نوع النقل" : "Transport Type"} *</Label>
+                <Label>{language === "ar" ? "نوع الحليب" : "Milk Type"} *</Label>
                 <Select value={driverTaskForm.transport_type} onValueChange={(v) => setDriverTaskForm({...driverTaskForm, transport_type: v})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="milk">{language === "ar" ? "حليب" : "Milk"}</SelectItem>
-                    <SelectItem value="petroleum">{language === "ar" ? "بترول" : "Petroleum"}</SelectItem>
+                    {transportTypeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {language === "ar" ? opt.label : opt.labelEn}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1174,16 +1177,14 @@ const Operations = () => {
               </div>
             </div>
 
-            {driverTaskForm.transport_type === "milk" && (
-              <div className="space-y-2">
-                <Label>{language === "ar" ? "كمية الحليب (لتر)" : "Milk Quantity (Liters)"}</Label>
-                <Input 
-                  type="number" 
-                  value={driverTaskForm.quantity} 
-                  onChange={(e) => setDriverTaskForm({...driverTaskForm, quantity: parseFloat(e.target.value) || 0})}
-                />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "كمية الحليب (لتر)" : "Milk Quantity (Liters)"}</Label>
+              <Input 
+                type="number" 
+                value={driverTaskForm.quantity} 
+                onChange={(e) => setDriverTaskForm({...driverTaskForm, quantity: parseFloat(e.target.value) || 0})}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
