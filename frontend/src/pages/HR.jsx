@@ -1494,8 +1494,9 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "الكود" : "Code"}</TableHead>
                       <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
                       <TableHead>{language === "ar" ? "القسم" : "Department"}</TableHead>
-                      <TableHead>{language === "ar" ? "موقع العمل" : "Location"}</TableHead>
                       <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
+                      <TableHead>{language === "ar" ? "رصيد الإجازات" : "Leave Balance"}</TableHead>
+                      <TableHead>{language === "ar" ? "موقع العمل" : "Location"}</TableHead>
                       <TableHead>{language === "ar" ? "المسؤول" : "Manager"}</TableHead>
                       <TableHead>{language === "ar" ? "الراتب" : "Salary"}</TableHead>
                       <TableHead>{language === "ar" ? "اسم المستخدم" : "Username"}</TableHead>
@@ -1506,7 +1507,7 @@ const HR = () => {
                   <TableBody>
                     {employees.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                           {t("no_data")}
                         </TableCell>
                       </TableRow>
@@ -1518,6 +1519,13 @@ const HR = () => {
                           </TableCell>
                           <TableCell className="font-medium">{emp.name}</TableCell>
                           <TableCell>{getDepartmentName(emp.department)}</TableCell>
+                          <TableCell>{emp.position}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-green-600">{(emp.leave_balance || 0).toFixed(1)} {language === "ar" ? "يوم" : "days"}</span>
+                              <span className="text-xs text-muted-foreground">+{emp.monthly_leave_rate || 2.6}/{language === "ar" ? "شهر" : "mo"}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {emp.work_location ? (
                               <Badge variant="secondary">{emp.work_location}</Badge>
@@ -1525,7 +1533,6 @@ const HR = () => {
                               <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
-                          <TableCell>{emp.position}</TableCell>
                           <TableCell>
                             {emp.manager_name ? (
                               <span className="text-sm text-muted-foreground">{emp.manager_name}</span>
