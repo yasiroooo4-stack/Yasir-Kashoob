@@ -95,7 +95,7 @@ const Operations = () => {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      const [dailyRes, equipRes, maintRes, incRes, vehRes, dashRes, driverTasksRes, driversRes, summaryRes] = await Promise.all([
+      const [dailyRes, equipRes, maintRes, incRes, vehRes, dashRes, driverTasksRes, driversRes, summaryRes, companiesRes] = await Promise.all([
         axios.get(`${API}/operations/daily`, { headers }),
         axios.get(`${API}/operations/equipment`, { headers }),
         axios.get(`${API}/operations/maintenance`, { headers }),
@@ -104,7 +104,8 @@ const Operations = () => {
         axios.get(`${API}/operations/dashboard`, { headers }),
         axios.get(`${API}/operations/driver-tasks`, { headers }),
         axios.get(`${API}/hr/employees`, { headers }),
-        axios.get(`${API}/operations/driver-tasks/summary`, { headers })
+        axios.get(`${API}/operations/driver-tasks/summary`, { headers }),
+        axios.get(`${API}/operations/destination-companies`, { headers }).catch(() => ({ data: [] }))
       ]);
       setDailyOps(dailyRes.data);
       setEquipment(equipRes.data);
@@ -119,6 +120,9 @@ const Operations = () => {
         emp.position?.toLowerCase().includes("driver")
       ));
       setDriverTasksSummary(summaryRes.data);
+      // Set destination companies
+      const companies = companiesRes.data.map(c => c.name);
+      setDestinationCompanies(companies.length > 0 ? companies : ["شركة الصفوة"]);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
