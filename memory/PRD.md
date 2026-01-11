@@ -118,7 +118,7 @@
 ### 14. تحسين إعدادات نظام الكاميرات CCTV ✅ 🆕 (P1)
 - **زر "تحديث تلقائي"** - يملأ رابط النظام و API Key تلقائياً
 - **قسم "ربط نظام الألبان"** بتصميم محسّن:
-  - رابط نظام الألبان: `https://milkops.preview.emergentagent.com`
+  - رابط نظام الألبان: `https://farm-logistics.preview.emergentagent.com`
   - API Key: `sk-emergent-57a636238E2E8C04f1`
   - زر إظهار/إخفاء كلمة المرور
 - **زر "اختبار الاتصال"** مع أيقونة WiFi

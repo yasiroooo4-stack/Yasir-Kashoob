@@ -1,70 +1,82 @@
 <analysis>**original_problem_statement:**
-The user is building a comprehensive ERP system for a milk collection center. The initial task was to verify supplier codes from six Excel files. The user then reported and the agent fixed a series of issues and implemented several new features:
-
-*   **Bug Fix:** The main supplier list was only showing 1000 out of 1143 suppliers due to a hardcoded API limit. This was fixed.
-*   **Data Import/Reconciliation:** The user provided various data files (PDFs, then Excel sheets) for milk deliveries from December 2025. The agent imported this data, reconciled it, and updated supplier balances. This involved multiple steps of data cleaning, scripting, and bug fixing.
-*   **HR Module Enhancement:** The user requested enhancements to the HR attendance report. The agent implemented:
-    *   Date range filtering (from/to) for exports.
-    *   PDF export with support for Arabic text and the company logo.
-    *   Report data grouped by employee, including employee name and code.
-*   **Milk Reception Module Enhancement:**
-    *   The UI was updated to handle suppliers with duplicate codes across different collection centers by showing all matches.
-    *   The Price per Liter field is now automatically populated from system settings.
-    *   The data table now includes Supplier Code and Center columns for clarity.
-*   **Fingerprint ID:** An employee's record was updated with their fingerprint ID.
-*   **New Module Request (Procurement):** The user requested a new, comprehensive Procurement module with features for purchase requisitions, supplier management, purchase orders, inventory integration, and approval workflows. The agent has created the initial scaffolding for this module.
+The user continued to build out their ERP system for a milk collection center with several new feature requests and bug fixes:
+1.  **Driver & Operations Log:** The user requested a new feature in the Operations section to document driver tasks. This needed to include driver selection, transport type (initially milk/petrol, later refined), vehicle details, quantity, timing, and location. Locations include Hajeef, Ghadu, Zik, Thumrait, Taqah, and Mirbat, with destinations like Al Safwa Company or other custom-added companies.
+2.  **Automatic Leave Balance Accrual:** A system was requested to automatically add leave days to each employee's balance at the end of every month. The accrual rate varies by position (Director/Deputy: 3.5 days, Supervisors: 3 days, Staff: 2.6 days). The user also wanted to see this new  in the employee list UI.
+3.  **Data Cleanup & Refinements:**
+    *   The user provided a list of six specific drivers who were not appearing in the Add Task dropdown and asked for them to be included.
+    *   Requested to zero out (clear all data from) the vehicle fleet, incidents, and equipment sections in the Operations module.
+    *   Refined the driver selection filter to *only* show employees whose position is explicitly سائق (Driver).
+4.  **Bug Fixes & UI/UX Improvements:**
+    *   A bug where adding a Paid holiday was incorrectly saving it as Unpaid.
+    *   A request to change the Transport Type options from (Milk/Petrol) to (Camel Milk/Cow Milk/Sheep Milk).
+    *   A request to add a feature allowing users to add new destination companies directly from the Add Driver Task form, instead of having a static list.
+5.  **Technical Debt:** The user explicitly requested to refactor the monolithic  file.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
-The application is a full-stack ERP with a FastAPI backend and a React frontend. The supplier search and data display are now fully functional, correctly showing all 1,143 suppliers and their updated balances based on the imported December 2025 data. The HR module features a robust attendance report export with date range selection and properly formatted PDFs in Arabic. The Milk Reception module is significantly improved, handling complex data scenarios and automating pricing. The foundational files and routes for a new Procurement module have been created but contain no logic yet.
+The application is a full-stack ERP with a FastAPI backend and a React frontend.
+- **Procurement Module:** The previously inaccessible  page is now fixed and fully functional. A Pay Vendor button and payment dialog have been added to the Purchase Orders tab, which correctly triggers a backend API to create a journal entry.
+- **Payroll Module:** The UI now features a Disburse Payroll button that appears after a period is approved. The backend logic for disbursing payroll and creating the corresponding automated journal entry has been implemented and fixed.
+- **Settings Unification:** Holiday and weekly off day settings have been consolidated in the backend. A new API endpoint () provides a single source of truth.
+- **Operations Module:** A new Driver Tasks tab has been added. It includes a dashboard for driver analytics and a table to list tasks. A form allows for creating new driver tasks, including selecting from a filtered list of drivers and dynamically adding new destination companies. The backend includes new models and APIs to support this.
+- **HR Module:** The employee model now includes  and . A new API endpoint () calculates and adds monthly leave balances. The UI in the HR employee list now displays the current leave balance for each employee.
+- **Bug Fixes:** The bug preventing paid holidays from being saved correctly is resolved. The UI for driver tasks has been updated as per user requests.
 
 **Last working item**:
-- **Last item agent was working:** Scaffolding a new, comprehensive Procurement module. The agent created the necessary files for the backend (models in , routes in ) and the frontend (page component ) and integrated them into the main application navigation and routing.
+- **Last item agent was working:** The agent started the significant task of refactoring the monolithic  file, which has over 12,000 lines of code. The plan is to break down the file by functionality into separate route files (e.g., , , etc.). The agent had just begun by creating the new file  and was planning the strategy for moving the code.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** Manual testing with  for APIs and screenshots for the frontend as the module is built. A full run with  will be required once the core features of the procurement module are complete.
+- **Which testing method agent to use?** both. After each module is refactored, the backend agent must run extensive regression tests on all related APIs. The frontend agent must then verify that all pages dependent on those APIs still function correctly.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** Refactor Monolithic Codebase (P2)
-- **Issue 2:** Zero balance for some suppliers (P2)
+- **Issue 1:** Refactor Monolithic Codebase (P0)
+- **Issue 2:** HR Page is Inaccessible for Admin User (P1)
 
 **Issues Detail:**
 - **Issue 1:**
-    - **Description:**  remains a monolith with over 11,500 lines. This is a recurring technical debt issue that complicates development and increases risk.
-    - **Attempted fixes:** New logic for procurement was correctly placed in a new route file, but the main file was not refactored.
-    - **Next debug checklist:** After completing the procurement module's first phase, prioritize moving existing route handlers (e.g., for HR, finance) out of  into their own dedicated files in .
-    - **Why fix this issue and what will be achieved with the fix?** Refactoring will improve code maintainability, reduce bugs, and make the application easier to scale.
-    - **Status:** NOT STARTED
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Both (Requires extensive regression testing).
-    - **Blocked on other issue:** Blocked by the higher-priority P0 task of building the procurement module.
+  - **Description:**  is a monolith with over 12,000 lines, making development slow, error-prone, and difficult to maintain. This is a recurring technical debt issue that the user has now explicitly asked to be addressed.
+  - **Attempted fixes:** The agent created a new file  and was analyzing the structure of  to begin moving code.
+  - **Next debug checklist:**
+    1.  Copy the entire OPERATIONS MODULE ROUTES section from  into .
+    2.  Add all necessary imports (, , Pydantic models,  object, etc.) to the top of .
+    3.  In , remove the copied operations routes.
+    4.  Import the  from the new file and include it in the main  object using .
+    5.  Restart the backend and test all functionality in the Operations page to ensure no regressions were introduced.
+    6.  Repeat this process for other modules (HR, Finance, Suppliers, etc.).
+  - **Why fix this issue and what will be achieved with the fix?** Refactoring will dramatically improve code maintainability, reduce the risk of introducing bugs, and make the application scalable for future development.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on other issue:** None.
 - **Issue 2:**
-    - **Description:** User noted that two suppliers ( and  in the  center) have a zero balance. The agent investigated and found no delivery records for them in the provided Excel files.
-    - **Attempted fixes:** Agent explained the cause to the user.
-    - **Next debug checklist:** No action needed from the agent unless the user provides new data files that include these suppliers.
-    - **Why fix this issue and what will be achieved with the fix?** This is a data issue, not a bug. Resolving it would require new data from the user.
-    - **Status:** USER VERIFICATION PENDING
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** N/A
-    - **Blocked on other issue:** None
+  - **Description:** Navigating to the  page redirects the  user to the dashboard, even though they have  role. The agent found that the user object in the frontend state was missing the  property, causing the  logic to fail.
+  - **Attempted fixes:** The agent performed a one-time database update to set the department for  to admin. This fixed it for that specific session but may not be a permanent solution. The root cause is likely in how the user data is fetched/stored in the frontend's auth context after login.
+  - **Next debug checklist:**
+    1.  Log in as a user without a department set.
+    2.  Inspect the  and React DevTools to see the structure of the user object stored by the .
+    3.  Review the  endpoint in  to ensure the  field is always included in the user data payload within the JWT or login response.
+    4.  Review the  hook in  to ensure the user state is correctly populated from the login response.
+  - **Why fix this issue and what will be achieved with the fix?** This will ensure that role-based access control works reliably for all users, regardless of whether their department is explicitly set.
+  - **Status:** NOT STARTED
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Frontend.
+  - **Blocked on other issue:** None.
 
 **In progress Task List**:
-- **Task 1:** Build the Procurement Module (P0)
-    - **Where to resume:** Start implementing the backend logic in  and the frontend UI in . The first feature to build is Purchase Requisitions with a multi-level approval workflow.
-    - **What will be achieved with this?** This will deliver a major new module requested by the user, adding significant value to the ERP.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Both
-    - **Blocked on something:** None
+- **Task 1:** Refactor  (P0)
+  - **Where to resume:** Continue with the plan outlined in Issue 1. Start by moving the Operations module routes into .
+  - **What will be achieved with this?** A more modular, maintainable, and scalable backend architecture.
+  - **Status:** IN PROGRESS
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **(P0) Complete Phase 1 of Procurement Module:** Implement the ability to create, view, and approve/reject Purchase Requisitions.
-  - **(P1) Implement Hikvision Live Stream & Playback:** The UI and backend routes for the Hik-Connect system are built, but the core functionality for video streaming is pending.
-  - **(P1) Configure and Test SMS Provider:** The backend is ready, but it requires the user to select an SMS provider and provide API credentials.
+  - **(P1)** Implement Hikvision Live Stream & Playback.
+  - **(P1)** Configure and Test SMS Provider.
 - **Future Tasks:**
-  - **(P2)** Complete all 8 features of the Procurement module.
   - **(P2)** Adjust Absence Calculation Logic.
   - **(P1)** Ekomilk Scale Integration (RS232).
   - **(P2)** AI Camera for QR Scanning.
@@ -72,86 +84,110 @@ The application is a full-stack ERP with a FastAPI backend and a React frontend.
   - **(P2)** Refine Reporting UI (, ).
 
 **Completed work in this session**
-- **Data Verification:** Verified supplier codes from 6 Excel files and reported discrepancies to the user.
-- **Bug Fixes:**
-  - Fixed an API bug that limited the supplier list to 1000 records.
-  - Fixed a Pydantic validation error that crashed the Milk Reception page after data import.
-- **HR Module:**
-  - Implemented date range filtering (from/to) for the attendance report export.
-  - Fixed PDF export to correctly render Arabic text and include the company logo.
-  - Restructured the exported report to group data by employee and include their name and code.
-- **Milk Reception Module:**
-  - Imported and reconciled milk supply data for December 2025 from user-provided Excel files (2,400+ records).
-  - Fixed an issue where supplier balances were not being updated after data import.
-  - Enhanced the UI to correctly handle and display suppliers with duplicate codes in different centers.
-  - Added Supplier Code and Center columns to the milk reception table for clarity.
-  - Automated the Price per Liter to be fetched from system settings.
-- **Employee Management:** Linked a fingerprint ID () to an employee record.
-- **Procurement Module:** Created the initial file structure and scaffolding for the new module.
+- **Procurement Module Fix:**
+  - Resolved the critical bug preventing the  page from rendering. The issue was a CSS/layout problem where the page content was hidden below the viewport.
+- **Financial Integration UI:**
+  - Added a Disburse Payroll button to  which appears when a payroll period is approved.
+  - Added a Pay button and payment dialog to the Purchase Orders list in .
+- **Backend Journal Entry Fixes:**
+  - Corrected the account numbers ( for Bank) used for automated journal entries in both payroll and procurement.
+  - Fixed unbalanced payroll journal entries by correctly calculating debits and credits and ensuring  was used consistently.
+  - Resolved an issue where journal entries were created without any line items by correctly querying the  collection for verification.
+- **Driver Task Management Feature:**
+  - Created a new Drivers tab in .
+  - Implemented backend models (, ) and APIs for creating/getting driver tasks and managing destination companies.
+  - Built the frontend UI with analytics cards, a task table, and a dialog for adding new tasks.
+  - Updated the Add Task form to allow dynamic adding of new destination companies.
+  - Refined transport types to Camel Milk, Cow Milk, Sheep Milk.
+- **Leave Balance Accrual Feature:**
+  - Added  and  to the employee model in .
+  - Created a backend API () to automatically add leave days monthly based on employee position.
+  - Added a Leave Balance column to the employee table in  to display the accrued balance.
+- **Holiday Management Bug Fix:**
+  - Fixed a bug where creating a Paid holiday would save it as unpaid. This involved adding the  field to the frontend form state, the backend model (), and the display table.
+- **Data Management:**
+  - Zeroed-out all data for Vehicles, Equipment, and Incidents in the Operations module as requested by the user.
+  - Corrected the frontend filter to ensure the driver selection dropdown only shows employees with the position سائق.
+
+**Earlier issues found/mentioned but not fixed**
+- **Issue 1:** The routing to the  page is unreliable for users without an explicitly set . The agent applied a workaround for one user but did not fix the root cause in the frontend's authentication logic.
+
+**Known issue recurrence from previous fork**
+- **Issue recurrence in previous fork:**  remains a large monolithic file.
+- **Recurrence count:** 3
+- **Status:** IN PROGRESS
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Data Migration & Reconciliation:** Performed multiple data import tasks from different file formats (PDF, XLS) and wrote scripts to clean the data and update aggregated values in related database collections (e.g., updating  from  data).
-- **PDF Generation with Arabic Support:** Successfully troubleshooted and fixed issues with PDF exports by embedding a custom Arabic-compatible font () and using it with the  library.
-- **Pragmatic API Fix:** Temporarily removed the  from the  FastAPI endpoint as a quick workaround to prevent Pydantic from stripping newly added fields from the response. This unblocked the frontend development but should be addressed properly later.
-- **Complex UI Logic:** The frontend for  was updated to handle more complex user interactions, such as displaying a list of selectable suppliers from a single search term.
+- **Monolith Refactoring:** The agent has begun the critical process of breaking down the 12,000+ line  into smaller, domain-specific router files (e.g., ).
+- **Journal Entry Debugging:** The agent debugged and fixed complex accounting logic, tracing issues from incorrect account numbers, to unbalanced debit/credit totals, to data inconsistencies in salary calculations ().
+- **Dynamic Frontend Forms:** The Add Driver Task form was enhanced to allow users to add new Destination Companies on the fly, which are then saved to the DB and made available in the dropdown for future use.
+- **CSS Rendering Bug:** The inaccessible procurement page was traced to a CSS / issue combined with the page's viewport being scrolled down, effectively hiding the main content behind an overlay.
 
 **key DB schema**
-- **procurement_requisitions:** (New, Scaffolded) To store purchase requisitions. Includes fields for items, quantity, status, requester, and an approval history array.
-- **procurement_purchase_orders:** (New, Scaffolded) To store purchase orders generated from approved requisitions.
-- **procurement_suppliers:** (New, Scaffolded) To manage procurement-specific supplier information and contracts.
-- **milk_receptions:**  and  fields were added to documents to disambiguate records.
-- **hr_employees:**  field was added and populated for one employee.
+- **hr_employees:** Added  (Float) and  (Float).
+- **hr_official_holidays:** Added  (Boolean).
+- **driver_tasks:** (New Collection) 
+- **destination_companies:** (New Collection) 
+- **vehicles, equipment, incident_reports:** These collections were cleared of all documents.
+
+**changes in tech stack**
+- None.
 
 **All files of reference**
 - 
 - 
 - 
+-  (new)
 - 
--  (New)
--  (New)
--  (New)
+- 
+- 
+- 
+- 
 - 
 - 
 
 **Areas that need refactoring**:
-- ** (CRITICAL):** This remains a massive monolithic file. Its size is a significant liability.
-- ** Endpoint (HIGH):** The removal of the  was a temporary fix. The  Pydantic model in  should be properly updated to include all required fields (, , etc.), and the  should be reinstated on the endpoint in  to ensure data integrity and leverage FastAPI's automatic validation and documentation.
+- ** (CRITICAL):** This is the highest priority task. The file is a major liability and the refactoring is currently in progress.
 
 **key api endpoints**
-- : (Modified) Now accepts  and .
-- : (Modified) Now accepts  and , supports Arabic.
-- : (Modified) Limit of 1000 removed.
-- : (Modified)  was removed to allow additional fields.
-- : (New, Scaffolded) A new set of endpoints for the procurement module.
+- ** (POST, GET):** Create and retrieve driver tasks.
+- ** (POST, GET):** Create and retrieve destination companies for transport.
+- ** (POST):** Triggers the monthly calculation and update of employee leave balances.
+- ** (GET):** New unified endpoint for holiday settings.
+- ** (GET, POST, DELETE):** Routes now internally point to  logic.
+- ** (POST):** Logic fixed to create correct journal entries.
+- ** (POST):** New endpoint for paying vendors against a PO.
 
 **Critical Info for New Agent**
-- **Language:** The user communicates exclusively in Arabic. All responses **must** be in Arabic.
-- **Immediate Task:** The top priority is to start building the **Procurement Module**. Begin with the Purchase Requisition feature, including the UI for creating a requisition and the backend APIs for saving it and managing its state (, , ).
-- ** Workaround:** Be aware that the  endpoint in  has its  commented out. This was a temporary fix. While not critical to fix immediately, it should be addressed eventually by updating the Pydantic model.
-- **User Data Flow:** The user frequently provides data in external files (Excel, PDF) and asks for it to be imported and reconciled. Proficiency with  and scripting database updates is essential.
+- **Language:** The user's preferred language is **Arabic**. All communication must be in Arabic.
+- **PRIORITY 1: Refactor :** Your primary task is to continue the refactoring of  that was just started. Follow the plan of moving logic module-by-module into the  directory. Start with the  module. This is a user-requested, high-priority task.
+- **HR Page Routing Bug:** Be aware of the bug where the  page is inaccessible for some admin users. The previous agent's fix was a temporary workaround. If the user reports this again, the root cause in  or the auth context needs to be addressed properly.
+- **PRD.md:** The PRD was updated. Refer to it for a list of completed features.
+
+**documents and test reports created in this job**
+-  (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **User:** Requests a huge new Procurement module with 8 specific features and reports that two suppliers have a zero balance. (PENDING)
-9. **User:** Provides clarification for the procurement workflow, confirming the need for multi-level approvals. (DONE)
-8. **User:** Specifies that the issue with duplicate supplier codes needs to be fixed and requests a Supplier Code column in the milk reception list. (DONE)
-7. **User:** Reports that the data linkage between milk reception and suppliers is broken (balances are zero). Uploads new Excel files with more detailed data. (DONE)
-6. **User:** Asks for the dates of the imported milk reception data to be changed to December 2025. (DONE)
-5. **User:** Reports the milk reception page is showing an error after the PDF data import. (DONE)
-4. **User:** In response to the extracted PDF data, requests to Import + Update + Export. (DONE)
-3. **User:** Reports that the generated attendance PDF is missing employee names and codes and is poorly formatted. Asks to prioritize importing data from old milk system PDFs next. (DONE)
-2. **User:** Reports that the exported PDF has garbled Arabic text and is missing the company logo. (DONE)
-1. **User:** Interrupts the HR report implementation to request that the Milk Reception page allows selection from duplicate suppliers and auto-fills the price from settings. (DONE)
+10. **User:** Requested to refactor the monolithic  file. (IN PROGRESS)
+9.  **User:** Requested to add a way to create new destination companies from the UI and change the transport types to different kinds of milk. (DONE)
+8.  **User:** Reported a bug where adding a Paid holiday saves it as Unpaid. (DONE)
+7.  **User:** Requested to filter the driver list to only those with the سائق position and to clear data from the incidents and equipment sections. (DONE)
+6.  **User:** Provided a list of 6 drivers who should appear in the driver selection dropdown and asked to clear the vehicle fleet data. (DONE)
+5.  **User:** Confirmed requirements for driver task logging and automatic monthly leave accrual. (DONE)
+4.  **User:** Provided new requirements for a driver tasks logging feature and automatic monthly leave accrual. (DONE)
+3.  **User:** (Testing Agent) Added a request for a driver task logging feature.
+2.  **User:** Confirmed the plan to unify holiday settings, fix the procurement page, and then build the UI for payroll/vendor payments. (DONE)
+1.  **User:** The user provided an uploaded artifact with a list of drivers.
 
 **Project Health Check:**
 - **Broken:**
-    - The core architecture with the  monolith is a significant risk to project stability and scalability.
+  - The monolithic  architecture is a high risk for future development and is actively being refactored.
+  - Role-based routing to the  page is faulty for users without an explicit .
 - **Mocked:**
-    - The new Procurement module is entirely scaffolded, with no functional logic.
-    - SMS functionality is scaffolded but not configured or tested.
-    - Hik-Connect live stream/playback is designed but not implemented.
+  - None.
 
 **3rd Party Integrations**
 - **:** (Exists) For CCTV integration.
@@ -161,10 +197,14 @@ The application is a full-stack ERP with a FastAPI backend and a React frontend.
 - **:** (Used) For generating PDF reports.
 
 **Testing status**
-- **Testing agent used after significant changes:** NO
+- **Testing agent used after significant changes:** YES, but it was used to inject a new feature request, not for testing.
 - **Troubleshoot agent used after agent stuck in loop:** NO
 - **Test files created:** None
-- **Known regressions:** None identified, but the risk is high due to the monolithic .
+- **Known regressions:** None identified.
+
+**Credentials to test flow:**
+Use the default credentials provided during login (/ or similar). The default user has  privileges. Note that this user may need its  field set to admin in the database to access all pages.
 
 **What agent forgot to execute**
-- The agent used a workaround for the  Pydantic model issue instead of implementing the complete fix. While pragmatic, this leaves behind technical debt. The proper fix would be to update the  model in  and re-enable the  on the endpoint.</analysis>
+- The agent started the  refactoring but has only completed the initial setup (creating one new route file). The main body of work for this critical task remains to be done.
+- The root cause of the HR page routing issue was identified (frontend auth state) but not fixed; a database workaround was used instead.</analysis>
