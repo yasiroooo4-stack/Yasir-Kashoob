@@ -705,8 +705,7 @@ const Payroll = () => {
                     <TableHead className="text-center">{language === "ar" ? "الحضور" : "Present"}</TableHead>
                     <TableHead className="text-center">{language === "ar" ? "الغياب" : "Absent"}</TableHead>
                     <TableHead className="text-center">{language === "ar" ? "ساعات إضافية" : "Overtime"}</TableHead>
-                    <TableHead>{language === "ar" ? "الراتب الأساسي" : "Basic"}</TableHead>
-                    <TableHead>{language === "ar" ? "بدل إضافي" : "OT Pay"}</TableHead>
+                    <TableHead>{language === "ar" ? "الراتب الإجمالي" : "Total Salary"}</TableHead>
                     <TableHead>{language === "ar" ? "الخصومات" : "Deductions"}</TableHead>
                     <TableHead>{language === "ar" ? "الصافي" : "Net"}</TableHead>
                   </TableRow>
@@ -744,10 +743,7 @@ const Payroll = () => {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell>{record.basic_salary?.toFixed(3)}</TableCell>
-                      <TableCell className="text-amber-600">
-                        {record.overtime_pay > 0 ? `+${record.overtime_pay?.toFixed(3)}` : "-"}
-                      </TableCell>
+                      <TableCell>{((record.basic_salary || 0) + (record.total_allowances || 0)).toFixed(3)}</TableCell>
                       <TableCell className="text-red-600">
                         -{record.deductions?.toFixed(3)}
                       </TableCell>
