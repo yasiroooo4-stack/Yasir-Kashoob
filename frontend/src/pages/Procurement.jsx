@@ -211,6 +211,45 @@ const Procurement = () => {
     }
   };
 
+  // Handle payment for purchase order
+  const handleOpenPayment = (po) => {
+    setSelectedPO(po);
+    const remaining = (po.total_amount || 0) - (po.amount_paid || 0);
+    setPaymentForm({
+      amount: remaining,
+      payment_method: "bank_transfer",
+      reference: ""
+    });
+    setPaymentDialog(true);
+  };
+
+  const handlePayPO = async () => {
+    if (!selectedPO || !paymentForm.amount) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${API}/procurement/purchase-orders/${selectedPO.id}/pay`,
+        null,
+        { 
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            amount: paymentForm.amount,
+            payment_method: paymentForm.payment_method,
+            reference: paymentForm.reference || undefined
+          }
+        }
+      );
+      
+      toast.success(response.data.message || (language === "ar" ? "تم تسجيل الدفعة بنجاح" : "Payment recorded successfully"));
+      setPaymentDialog(false);
+      setSelectedPO(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ في تسجيل الدفعة" : "Payment error"));
+    }
+  };
+
   // Inventory handlers
   const handleCreateInventoryItem = async () => {
     try {
