@@ -4357,6 +4357,52 @@ async def check_if_holiday(date: str, current_user: dict = Depends(get_current_u
 # Models imported from models/all_models.py:
 # EmployeeWeeklyOffBase, EmployeeWeeklyOffCreate
 
+@api_router.get("/hr/settings/holidays-config")
+async def get_holidays_config(current_user: dict = Depends(get_current_user)):
+    """
+    الحصول على إعدادات الإجازات الموحدة
+    يُرجع:
+    - العطل الرسمية (من hr_official_holidays)
+    - الإعدادات الافتراضية لأيام الراحة الأسبوعية
+    """
+    # Get all official holidays
+    official_holidays = await db.hr_official_holidays.find({}, {"_id": 0}).sort("date", 1).to_list(200)
+    
+    # Get default weekly off days (from system settings or default)
+    settings = await db.system_settings.find_one({"key": "default_weekly_off_days"}, {"_id": 0})
+    default_weekly_off_days = settings.get("value", [4, 5]) if settings else [4, 5]  # Friday & Saturday
+    
+    return {
+        "official_holidays": official_holidays,
+        "default_weekly_off_days": default_weekly_off_days,
+        "day_names": {
+            0: "الأحد",
+            1: "الإثنين", 
+            2: "الثلاثاء",
+            3: "الأربعاء",
+            4: "الخميس",
+            5: "الجمعة",
+            6: "السبت"
+        },
+        "note": "أيام الراحة الأسبوعية يمكن تخصيصها لكل موظف من خلال hr_employees.weekly_off_days"
+    }
+
+@api_router.put("/hr/settings/default-weekly-off-days")
+async def set_default_weekly_off_days(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تعيين أيام الراحة الأسبوعية الافتراضية للموظفين الجدد"""
+    weekly_off_days = data.get("weekly_off_days", [4, 5])
+    
+    await db.system_settings.update_one(
+        {"key": "default_weekly_off_days"},
+        {"$set": {"key": "default_weekly_off_days", "value": weekly_off_days}},
+        upsert=True
+    )
+    
+    return {"message": "تم تحديث أيام الراحة الأسبوعية الافتراضية", "weekly_off_days": weekly_off_days}
+
 @api_router.put("/hr/employees/{employee_id}/weekly-off")
 async def set_employee_weekly_off(
     employee_id: str,
