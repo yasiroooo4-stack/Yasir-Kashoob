@@ -5946,10 +5946,11 @@ async def export_attendance_pdf(
         emp_code = emp_info["code"] or "-"
         emp_fp = emp_info["fingerprint"] or "-"
         
-        # Create employee info table with name displayed properly - use English headers for compatibility
+        # Create employee info table with name displayed properly
+        name_para = Paragraph(f'<b>{emp_name}</b>', ParagraphStyle('EmpName', fontSize=10, alignment=TA_CENTER))
         emp_header_data = [
             ['Employee Name', 'Code', 'Fingerprint ID', 'Days'],
-            [emp_name, emp_code, emp_fp, str(days_count)]
+            [name_para, emp_code, emp_fp, str(days_count)]
         ]
         
         emp_table = Table(emp_header_data, colWidths=[250, 80, 100, 70])
