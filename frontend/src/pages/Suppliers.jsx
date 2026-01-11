@@ -265,7 +265,7 @@ const Suppliers = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="stat-card">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
@@ -284,9 +284,9 @@ const Suppliers = () => {
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {suppliers.reduce((sum, s) => sum + (s.total_supplied || 0), 0).toLocaleString()}
+                {suppliers.filter(s => s.national_id).length}
               </p>
-              <p className="text-sm text-muted-foreground">{t("total_supplied")} ({t("liters")})</p>
+              <p className="text-sm text-muted-foreground">{language === "ar" ? "برقم مدني" : "With ID"}</p>
             </div>
           </CardContent>
         </Card>
@@ -300,6 +300,19 @@ const Suppliers = () => {
                 {suppliers.reduce((sum, s) => sum + (s.balance || 0), 0).toLocaleString()}
               </p>
               <p className="text-sm text-muted-foreground">{t("supplier_dues")} ({t("currency")})</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="stat-card">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-orange-600">
+                {suppliers.reduce((sum, s) => sum + (s.pending_balance || 0), 0).toLocaleString(undefined, {maximumFractionDigits: 2})}
+              </p>
+              <p className="text-sm text-muted-foreground">{language === "ar" ? "الرصيد المتبقي" : "Pending Balance"} ({t("currency")})</p>
             </div>
           </CardContent>
         </Card>
