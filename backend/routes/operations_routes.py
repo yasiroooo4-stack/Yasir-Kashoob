@@ -483,7 +483,7 @@ async def get_driver_tasks_summary(
 
 
 @router.delete("/driver-tasks/{task_id}")
-async def delete_driver_task(task_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_driver_task(task_id: str, current_user: dict = Depends(require_role(["admin", "operations_manager"]))):
     """حذف مهمة سائق"""
     result = await db.driver_tasks.delete_one({"id": task_id})
     if result.deleted_count == 0:
@@ -528,7 +528,7 @@ async def create_destination_company(data: dict, current_user: dict = Depends(ge
 
 
 @router.delete("/destination-companies/{company_id}")
-async def delete_destination_company(company_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_destination_company(company_id: str, current_user: dict = Depends(require_role(["admin", "operations_manager"]))):
     """حذف شركة وجهة"""
     result = await db.destination_companies.delete_one({"id": company_id})
     if result.deleted_count == 0:
