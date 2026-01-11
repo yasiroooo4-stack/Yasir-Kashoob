@@ -15,16 +15,13 @@ from models.all_models import (
     MaintenanceRecord, MaintenanceRecordCreate,
     IncidentReport, IncidentReportCreate,
     Vehicle, VehicleCreate,
-    DriverTask, DriverTaskCreate,
-    LeaveBalanceLog
+    DriverTask, DriverTaskCreate
 )
 
-router = APIRouter(prefix="/api/operations", tags=["Operations"])
+# Import from base utilities to avoid circular imports
+from routes.base import get_current_user, require_role, log_activity
 
-# Import dependencies from main server
-import sys
-sys.path.insert(0, '/app/backend')
-from server import get_current_user, require_role, log_activity
+router = APIRouter(prefix="/api/operations", tags=["Operations"])
 
 
 # ==================== DAILY OPERATIONS (العمليات اليومية) ====================
