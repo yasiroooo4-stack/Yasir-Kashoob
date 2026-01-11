@@ -9941,16 +9941,16 @@ async def disburse_payroll(period_id: str, current_user: dict = Depends(require_
     # Get all payroll records for this period
     records = await db.payroll_records.find({"period_id": period_id}, {"_id": 0}).to_list(1000)
     
+    total_gross_salary = sum(r.get("gross_salary", 0) for r in records)
     total_net_salary = sum(r.get("net_salary", 0) for r in records)
-    total_basic_salary = sum(r.get("basic_salary", 0) for r in records)
-    total_allowances = sum(r.get("total_allowances", 0) for r in records)
-    total_overtime = sum(r.get("overtime_pay", 0) for r in records)
     total_deductions = sum(r.get("total_deductions", 0) for r in records)
     
     # Create automatic journal entry for payroll disbursement
-    # Dr: مصروفات الرواتب (5200) / Cr: الرواتب المستحقة أو خصومات (2120) / Cr: البنك (1112)
+    # Dr: مصروفات الرواتب (5200) = إجمالي الراتب
+    # Cr: الرواتب المستحقة (2120) = الخصومات (إن وجدت)
+    # Cr: البنك (1112) = صافي الراتب
     journal_lines = [
-        {"account_number": "5200", "debit": round(total_basic_salary + total_allowances + total_overtime, 3), "credit": 0, "description": "مصروفات الرواتب والبدلات"},
+        {"account_number": "5200", "debit": round(total_gross_salary, 3), "credit": 0, "description": "مصروفات الرواتب والبدلات"},
     ]
     
     if total_deductions > 0:
