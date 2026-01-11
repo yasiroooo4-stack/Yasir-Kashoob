@@ -5673,9 +5673,9 @@ async def export_attendance_excel(
         # Return empty template
         df = pd.DataFrame(columns=['Employee Name', 'Employee Code', 'Fingerprint ID', 'Date', 'Check In', 'Check Out', 'Source'])
     else:
-        # Group attendance by employee and add summary
+        # Group attendance by employee and add summary - REMOVE DUPLICATE DATES
         from collections import defaultdict
-        employee_data = defaultdict(lambda: {"records": [], "name": "", "code": "", "fingerprint": ""})
+        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": ""})
         
         for record in attendance:
             emp_id = record.get('employee_id', '')
@@ -5692,7 +5692,10 @@ async def export_attendance_excel(
                 key = emp_id or emp_name
                 employee_data[key]["name"] = emp_name
             
-            employee_data[key]["records"].append(record)
+            # Use date as key to avoid duplicates - keep the first record for each date
+            record_date = record.get('date', '')
+            if record_date and record_date not in employee_data[key]["records"]:
+                employee_data[key]["records"][record_date] = record
         
         # Create structured data with employee headers and summaries
         rows = []
