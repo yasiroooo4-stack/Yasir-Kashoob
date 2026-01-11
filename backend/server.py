@@ -6000,7 +6000,7 @@ async def export_attendance_pdf(
     
     # Summary footer
     summary_style = ParagraphStyle('Summary', fontSize=10, alignment=TA_CENTER)
-    elements.append(Paragraph(f"Total Employees: {emp_count} | Total Records: {len(attendance)}", summary_style))
+    elements.append(Paragraph(f"Total Employees: {emp_count} | Total Records: {total_records}", summary_style))
     
     if not employee_data:
         elements.append(Paragraph("No attendance records", ParagraphStyle('NoData', alignment=TA_CENTER)))
