@@ -452,7 +452,7 @@ async def create_goods_receipt(receipt: GoodsReceiptCreate, current_user: dict =
             await create_auto_journal_entry(
                 description=f"استلام بضائع - {receipt_number} - أمر شراء {po.get('po_number', '')}",
                 lines=[
-                    {"account_number": "1140", "debit": round(total_receipt_value, 3), "credit": 0, "description": f"استلام مخزون - {receipt_number}"},
+                    {"account_number": "1130", "debit": round(total_receipt_value, 3), "credit": 0, "description": f"استلام مخزون - {receipt_number}"},
                     {"account_number": "2110", "debit": 0, "credit": round(total_receipt_value, 3), "description": f"مستحقات المورد - {po.get('vendor_name', '')}"}
                 ],
                 reference_type="goods_receipt",
