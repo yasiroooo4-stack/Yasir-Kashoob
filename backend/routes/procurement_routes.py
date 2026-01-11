@@ -572,6 +572,7 @@ async def create_vendor_evaluation(evaluation: VendorEvaluation, current_user: d
         {"$set": {"rating": round(eval_dict["overall_score"])}}
     )
     
+    eval_dict.pop("_id", None)
     return eval_dict
 
 # ==================== ANALYTICS ====================
