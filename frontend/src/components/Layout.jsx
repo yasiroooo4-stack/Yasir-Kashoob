@@ -380,6 +380,7 @@ const Layout = () => {
 
         {/* Page Content with Background */}
         <main 
+          ref={mainRef}
           className="flex-1 p-4 lg:p-6 overflow-auto relative"
           style={{
             backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : 'none',
