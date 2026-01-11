@@ -369,7 +369,7 @@ const Suppliers = () => {
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
@@ -381,9 +381,12 @@ const Suppliers = () => {
                         <span className="badge-info">{supplier.supplier_code || "-"}</span>
                       </TableCell>
                       <TableCell>
+                        <span className="text-xs font-mono">{supplier.national_id || "-"}</span>
+                      </TableCell>
+                      <TableCell>
                         <span className={`text-xs px-2 py-1 rounded-full ${
-                          supplier.milk_type === 'camel' ? 'bg-amber-100 text-amber-700' :
-                          supplier.milk_type === 'goat' ? 'bg-green-100 text-green-700' :
+                          supplier.milk_type === 'camel' || supplier.milk_type === 'إبل' ? 'bg-amber-100 text-amber-700' :
+                          supplier.milk_type === 'goat' || supplier.milk_type === 'ماعز' ? 'bg-green-100 text-green-700' :
                           supplier.milk_type === 'mixed' ? 'bg-purple-100 text-purple-700' :
                           'bg-blue-100 text-blue-700'
                         }`}>
@@ -396,21 +399,20 @@ const Suppliers = () => {
                           {supplier.center_name || "-"}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-muted-foreground" />
-                          {supplier.phone}
-                        </span>
+                      <TableCell className="hidden lg:table-cell">
+                        <span className="text-xs font-mono">{supplier.bank_account || "-"}</span>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {supplier.bank_account || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {(supplier.total_supplied || 0).toLocaleString()} {t("liters")}
+                      <TableCell className="hidden lg:table-cell">
+                        <span className="text-xs">{supplier.bank_name || "-"}</span>
                       </TableCell>
                       <TableCell>
                         <span className={supplier.balance > 0 ? "text-red-600 font-medium" : ""}>
                           {(supplier.balance || 0).toLocaleString()} {t("currency")}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={supplier.pending_balance > 0 ? "text-orange-600 font-medium" : "text-muted-foreground"}>
+                          {(supplier.pending_balance || 0).toFixed(2)} {t("currency")}
                         </span>
                       </TableCell>
                       <TableCell>
