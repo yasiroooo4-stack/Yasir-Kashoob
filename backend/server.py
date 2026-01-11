@@ -10193,12 +10193,13 @@ async def get_public_holidays(
     year: Optional[int] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get public holidays"""
+    """Get public holidays - redirects to official holidays (unified source)"""
+    # Redirect to hr_official_holidays as the single source of truth
     query = {}
     if year:
         query["date"] = {"$regex": f"^{year}"}
     
-    holidays = await db.public_holidays.find(query, {"_id": 0}).sort("date", 1).to_list(100)
+    holidays = await db.hr_official_holidays.find(query, {"_id": 0}).sort("date", 1).to_list(100)
     return holidays
 
 @api_router.post("/hr/public-holidays")
@@ -10206,30 +10207,28 @@ async def create_public_holiday(
     data: dict,
     current_user: dict = Depends(require_role(["admin", "hr_manager"]))
 ):
-    """Create a public holiday"""
-    holiday = {
-        "id": str(uuid.uuid4()),
-        "name": data["name"],
-        "name_en": data.get("name_en", ""),
-        "date": data["date"],
-        "days": data.get("days", 1),
-        "is_paid": data.get("is_paid", True),
-        "notes": data.get("notes"),
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
+    """Create a public holiday - adds to official holidays (unified source)"""
+    from models.all_models import OfficialHoliday
     
-    await db.public_holidays.insert_one(dict(holiday))
+    holiday = OfficialHoliday(
+        name=data["name"],
+        date=data["date"],
+        applies_to="all",
+        is_recurring=data.get("is_recurring", False),
+        notes=data.get("notes"),
+        created_by=current_user.get("full_name")
+    )
     
-    # Return without _id
-    return {"message": "تم إضافة العطلة الرسمية بنجاح", "holiday": holiday}
+    await db.hr_official_holidays.insert_one(holiday.model_dump())
+    return {"message": "تم إضافة العطلة الرسمية بنجاح", "holiday": holiday.model_dump()}
 
 @api_router.delete("/hr/public-holidays/{holiday_id}")
 async def delete_public_holiday(
     holiday_id: str,
     current_user: dict = Depends(require_role(["admin", "hr_manager"]))
 ):
-    """Delete a public holiday"""
-    await db.public_holidays.delete_one({"id": holiday_id})
+    """Delete a public holiday - removes from official holidays (unified source)"""
+    await db.hr_official_holidays.delete_one({"id": holiday_id})
     return {"message": "تم حذف العطلة الرسمية بنجاح"}
 
 # ==================== AI ANALYSIS (التحليل الذكي) ====================
