@@ -5907,9 +5907,9 @@ async def export_attendance_pdf(
         emp_lookup[emp.get('fingerprint_id')] = emp
         emp_lookup[emp.get('employee_code')] = emp
     
-    # Group by employee
+    # Group by employee - REMOVE DUPLICATE DATES
     from collections import defaultdict
-    employee_data = defaultdict(lambda: {"records": [], "name": "", "code": "", "fingerprint": ""})
+    employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": ""})
     
     for record in attendance:
         emp_id = record.get('employee_id', '')
@@ -5926,25 +5926,31 @@ async def export_attendance_pdf(
             key = emp_id or emp_name
             employee_data[key]["name"] = emp_name
         
-        employee_data[key]["records"].append(record)
+        # Use date as key to avoid duplicates
+        record_date = record.get('date', '')
+        if record_date and record_date not in employee_data[key]["records"]:
+            employee_data[key]["records"][record_date] = record
     
     # Create tables for each employee
     emp_count = 0
+    total_records = 0
     for emp_key in sorted(employee_data.keys(), key=lambda x: employee_data[x]["name"]):
         emp_count += 1
         emp_info = employee_data[emp_key]
-        records = emp_info["records"]
-        days_count = len(set(r.get('date') for r in records))
+        records = list(emp_info["records"].values())  # Convert dict to list
+        total_records += len(records)
+        days_count = len(records)
         
         # Employee header box with full details
         emp_name = emp_info["name"] or "Unknown"
         emp_code = emp_info["code"] or "-"
         emp_fp = emp_info["fingerprint"] or "-"
         
-        # Create employee info table
+        # Create employee info table with name displayed properly
+        emp_header_style = ParagraphStyle('EmpHeader', fontName=arabic_font, fontSize=10, alignment=TA_CENTER)
         emp_header_data = [
-            ['Employee Name', 'Employee Code', 'Fingerprint ID', 'Attendance Days'],
-            [emp_name, emp_code, emp_fp, f'{days_count} days']
+            [reshape_arabic('اسم الموظف'), reshape_arabic('رمز الموظف'), reshape_arabic('رقم البصمة'), reshape_arabic('أيام الحضور')],
+            [emp_name, emp_code, emp_fp, f'{days_count}']
         ]
         
         emp_table = Table(emp_header_data, colWidths=[200, 100, 100, 100])
