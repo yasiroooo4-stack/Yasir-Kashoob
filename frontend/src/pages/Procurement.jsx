@@ -52,6 +52,8 @@ import {
   Building,
   ArrowRight,
   RefreshCw,
+  Banknote,
+  CreditCard,
 } from "lucide-react";
 
 const Procurement = () => {
