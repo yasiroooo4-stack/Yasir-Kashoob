@@ -356,12 +356,13 @@ const Suppliers = () => {
                 <TableRow>
                   <TableHead>{t("supplier_name")}</TableHead>
                   <TableHead>{t("supplier_code")}</TableHead>
+                  <TableHead>{language === "ar" ? "الرقم المدني" : "National ID"}</TableHead>
                   <TableHead>{language === "ar" ? "نوع الحليب" : "Milk Type"}</TableHead>
                   <TableHead>{t("center")}</TableHead>
-                  <TableHead>{t("phone")}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t("bank_account")}</TableHead>
-                  <TableHead>{t("total_supplied")}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t("bank_account")}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{language === "ar" ? "البنك" : "Bank"}</TableHead>
                   <TableHead>{t("balance")}</TableHead>
+                  <TableHead>{language === "ar" ? "الرصيد المتبقي" : "Pending"}</TableHead>
                   <TableHead>{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
