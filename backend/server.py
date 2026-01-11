@@ -9606,9 +9606,9 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
             medical_allowance + special_allowance + other_allowance
         )
         
-        # Calculate rates
+        # Calculate rates - use 31 days as per company policy (16th to 15th = ~31 days)
         total_monthly_salary = basic_salary + total_allowances
-        daily_rate = total_monthly_salary / 30 if total_monthly_salary > 0 else 0
+        daily_rate = total_monthly_salary / 31 if total_monthly_salary > 0 else 0
         hourly_rate = daily_rate / STANDARD_HOURS_PER_DAY if daily_rate > 0 else 0
         
         # Total pay days = working + all paid leaves
