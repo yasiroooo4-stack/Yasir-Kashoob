@@ -690,6 +690,17 @@ const Payroll = () => {
                   </Button>
                 </>
               )}
+              
+              {currentPeriod && currentPeriod.status === "approved" && (
+                <Button 
+                  onClick={handleDisbursePayroll} 
+                  className="bg-amber-600 hover:bg-amber-700"
+                  data-testid="disburse-payroll-btn"
+                >
+                  <Banknote className="w-4 h-4 me-2" />
+                  {language === "ar" ? "صرف الرواتب" : "Disburse Payroll"}
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
