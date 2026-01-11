@@ -10068,6 +10068,53 @@ async def update_salary_structure(
     
     return {"message": "تم تحديث هيكل الراتب بنجاح"}
 
+@api_router.post("/hr/salary-structures/sync-all")
+async def sync_all_salary_structures(
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """Create salary structures for all employees who don't have one, using their current salary"""
+    employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    
+    created = 0
+    skipped = 0
+    
+    for emp in employees:
+        emp_id = emp.get("id")
+        emp_salary = emp.get("salary", 0)
+        
+        # Check if employee already has an active structure
+        existing = await db.employee_salary_structures.find_one(
+            {"employee_id": emp_id, "is_active": True}
+        )
+        
+        if existing:
+            skipped += 1
+            continue
+        
+        if emp_salary <= 0:
+            skipped += 1
+            continue
+        
+        # Create new structure with basic salary = employee salary
+        structure = EmployeeSalaryStructure(
+            employee_id=emp_id,
+            employee_name=emp.get("name", ""),
+            basic_salary=emp_salary,
+            allowances=EmployeeAllowances(),  # Default all allowances to 0
+            total_salary=emp_salary
+        )
+        
+        await db.employee_salary_structures.insert_one(structure.model_dump())
+        created += 1
+    
+    return {
+        "message": f"تم إنشاء {created} هيكل راتب جديد، تم تخطي {skipped} موظف",
+        "created": created,
+        "skipped": skipped
+    }
+
+
+
 # ==================== PUBLIC HOLIDAYS (العطل الرسمية) ====================
 
 @api_router.get("/hr/public-holidays")
