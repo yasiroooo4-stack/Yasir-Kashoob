@@ -437,6 +437,120 @@ const Operations = () => {
           </Card>
         </TabsContent>
 
+        {/* Driver Tasks Tab - مهام السائقين */}
+        <TabsContent value="drivers">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{language === "ar" ? "مهام السائقين" : "Driver Tasks"}</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "توثيق مهام نقل الحليب والبترول" : "Document milk and petroleum transport tasks"}
+                </p>
+              </div>
+              <Button onClick={() => { setSelectedItem(null); setDriverTaskDialogOpen(true); }} className="gradient-primary text-white">
+                <Plus className="w-4 h-4 me-2" />
+                {language === "ar" ? "تسجيل مهمة" : "Log Task"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Fuel className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <p className="text-2xl font-bold text-blue-700">{driverTasksSummary.milk_tasks || 0}</p>
+                        <p className="text-sm text-blue-600">{language === "ar" ? "نقل حليب" : "Milk Transport"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Fuel className="w-8 h-8 text-amber-600" />
+                      <div>
+                        <p className="text-2xl font-bold text-amber-700">{driverTasksSummary.petroleum_tasks || 0}</p>
+                        <p className="text-sm text-amber-600">{language === "ar" ? "نقل بترول" : "Petroleum"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Truck className="w-8 h-8 text-green-600" />
+                      <div>
+                        <p className="text-2xl font-bold text-green-700">{(driverTasksSummary.total_milk_quantity || 0).toLocaleString()}</p>
+                        <p className="text-sm text-green-600">{language === "ar" ? "لتر حليب منقول" : "Liters Transported"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-8 h-8 text-purple-600" />
+                      <div>
+                        <p className="text-2xl font-bold text-purple-700">{Object.keys(driverTasksSummary.by_location || {}).length}</p>
+                        <p className="text-sm text-purple-600">{language === "ar" ? "مواقع نشطة" : "Active Locations"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                    <TableHead>{language === "ar" ? "الوقت" : "Time"}</TableHead>
+                    <TableHead>{language === "ar" ? "السائق" : "Driver"}</TableHead>
+                    <TableHead>{language === "ar" ? "النوع" : "Type"}</TableHead>
+                    <TableHead>{language === "ar" ? "رقم السيارة" : "Plate"}</TableHead>
+                    <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
+                    <TableHead>{language === "ar" ? "من" : "From"}</TableHead>
+                    <TableHead>{language === "ar" ? "إلى" : "To"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {driverTasks.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        {language === "ar" ? "لا توجد مهام مسجلة" : "No tasks recorded"}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    driverTasks.map((task) => (
+                      <TableRow key={task.id}>
+                        <TableCell>{task.transport_date}</TableCell>
+                        <TableCell>{task.transport_time}</TableCell>
+                        <TableCell className="font-medium">{task.driver_name}</TableCell>
+                        <TableCell>
+                          <Badge variant={task.transport_type === "milk" ? "default" : "secondary"}>
+                            {task.transport_type === "milk" ? (language === "ar" ? "حليب" : "Milk") : (language === "ar" ? "بترول" : "Petroleum")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono">{task.vehicle_plate}</TableCell>
+                        <TableCell>
+                          {task.transport_type === "milk" ? `${task.quantity?.toLocaleString() || 0} ${language === "ar" ? "لتر" : "L"}` : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{task.from_location}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {task.to_destination === "شركة أخرى" ? task.destination_company : task.to_destination}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Equipment Tab */}
         <TabsContent value="equipment">
           <Card>
