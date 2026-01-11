@@ -1227,7 +1227,7 @@ const Operations = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {destinationOptions.map((dest) => (
+                    {destinationCompanies.map((dest) => (
                       <SelectItem key={dest} value={dest}>{dest}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1235,16 +1235,27 @@ const Operations = () => {
               </div>
             </div>
 
-            {driverTaskForm.to_destination === "شركة أخرى" && (
-              <div className="space-y-2">
-                <Label>{language === "ar" ? "اسم الشركة" : "Company Name"}</Label>
+            {/* Add New Company Section */}
+            <div className="bg-muted/50 p-3 rounded-lg space-y-3">
+              <Label className="text-sm font-medium">{language === "ar" ? "إضافة شركة جديدة" : "Add New Company"}</Label>
+              <div className="flex gap-2">
                 <Input 
-                  value={driverTaskForm.destination_company} 
-                  onChange={(e) => setDriverTaskForm({...driverTaskForm, destination_company: e.target.value})}
-                  placeholder={language === "ar" ? "اسم الشركة" : "Company name"}
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  placeholder={language === "ar" ? "اسم الشركة الجديدة..." : "New company name..."}
+                  className="flex-1"
                 />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleAddCompany}
+                  disabled={!newCompanyName.trim()}
+                >
+                  <Plus className="w-4 h-4 me-1" />
+                  {language === "ar" ? "إضافة" : "Add"}
+                </Button>
               </div>
-            )}
+            </div>
 
             <div className="space-y-2">
               <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
