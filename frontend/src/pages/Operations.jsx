@@ -489,25 +489,36 @@ const Operations = () => {
             </CardHeader>
             <CardContent>
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Fuel className="w-8 h-8 text-blue-600" />
-                      <div>
-                        <p className="text-2xl font-bold text-blue-700">{driverTasksSummary.milk_tasks || 0}</p>
-                        <p className="text-sm text-blue-600">{language === "ar" ? "نقل حليب" : "Milk Transport"}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                 <Card className="bg-amber-50 border-amber-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <Fuel className="w-8 h-8 text-amber-600" />
                       <div>
-                        <p className="text-2xl font-bold text-amber-700">{driverTasksSummary.petroleum_tasks || 0}</p>
-                        <p className="text-sm text-amber-600">{language === "ar" ? "نقل بترول" : "Petroleum"}</p>
+                        <p className="text-2xl font-bold text-amber-700">{driverTasksSummary.camel_milk_tasks || 0}</p>
+                        <p className="text-sm text-amber-600">{language === "ar" ? "حليب إبل" : "Camel Milk"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Fuel className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <p className="text-2xl font-bold text-blue-700">{driverTasksSummary.cow_milk_tasks || 0}</p>
+                        <p className="text-sm text-blue-600">{language === "ar" ? "حليب أبقار" : "Cow Milk"}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-pink-50 border-pink-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Fuel className="w-8 h-8 text-pink-600" />
+                      <div>
+                        <p className="text-2xl font-bold text-pink-700">{driverTasksSummary.sheep_milk_tasks || 0}</p>
+                        <p className="text-sm text-pink-600">{language === "ar" ? "حليب أغنام" : "Sheep Milk"}</p>
                       </div>
                     </div>
                   </CardContent>
