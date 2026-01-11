@@ -174,6 +174,31 @@ const Payroll = () => {
     }
   };
 
+  const handleDisbursePayroll = async () => {
+    if (!selectedPeriod) return;
+    
+    if (!window.confirm(language === "ar" 
+      ? "هل تريد صرف الرواتب لهذه الفترة؟ سيتم إنشاء قيد محاسبي تلقائياً." 
+      : "Disburse payroll for this period? A journal entry will be created automatically."
+    )) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${API}/api/hr/payroll/periods/${selectedPeriod}/disburse`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(response.data.message || (language === "ar" ? "تم صرف الرواتب بنجاح" : "Payroll disbursed successfully"));
+      fetchPeriods();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error disbursing payroll");
+    }
+  };
+
   const handleDeletePeriod = async (periodId) => {
     if (!window.confirm(language === "ar" ? "هل تريد حذف هذه الفترة؟" : "Delete this period?")) {
       return;
