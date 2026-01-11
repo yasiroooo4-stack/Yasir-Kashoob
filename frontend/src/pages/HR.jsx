@@ -2274,6 +2274,7 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
                       <TableHead>{language === "ar" ? "تنطبق على" : "Applies To"}</TableHead>
                       <TableHead>{language === "ar" ? "متكررة" : "Recurring"}</TableHead>
+                      <TableHead>{language === "ar" ? "مدفوعة" : "Paid"}</TableHead>
                       <TableHead>{language === "ar" ? "ملاحظات" : "Notes"}</TableHead>
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
@@ -2281,7 +2282,7 @@ const HR = () => {
                   <TableBody>
                     {officialHolidays.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           {language === "ar" ? "لا توجد عطلات رسمية مسجلة" : "No official holidays recorded"}
                         </TableCell>
                       </TableRow>
@@ -2308,6 +2309,17 @@ const HR = () => {
                             ) : (
                               <Badge variant="outline" className="text-gray-500">
                                 {language === "ar" ? "مرة واحدة" : "One-time"}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {holiday.is_paid !== false ? (
+                              <Badge variant="default" className="bg-green-600">
+                                {language === "ar" ? "نعم" : "Yes"}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-red-500 border-red-300">
+                                {language === "ar" ? "لا" : "No"}
                               </Badge>
                             )}
                           </TableCell>
