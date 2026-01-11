@@ -65,6 +65,7 @@ class SupplierBase(BaseModel):
     address: str
     supplier_code: Optional[str] = None
     bank_account: Optional[str] = None
+    bank_name: Optional[str] = None
     center_id: Optional[str] = None
     center_name: Optional[str] = None
     national_id: Optional[str] = None
@@ -81,6 +82,7 @@ class Supplier(SupplierBase):
     is_active: bool = True
     total_supplied: float = 0.0
     balance: float = 0.0
+    pending_balance: float = 0.0
     password_hash: Optional[str] = None
 
 class SupplierLoginRequest(BaseModel):
