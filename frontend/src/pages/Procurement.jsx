@@ -601,6 +601,7 @@ const Procurement = () => {
                     <TableHead>{language === "ar" ? "المورد" : "Vendor"}</TableHead>
                     <TableHead>{language === "ar" ? "تاريخ التسليم" : "Delivery Date"}</TableHead>
                     <TableHead>{language === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                    <TableHead>{language === "ar" ? "المدفوع" : "Paid"}</TableHead>
                     <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
                     <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
                   </TableRow>
@@ -615,6 +616,14 @@ const Procurement = () => {
                       <TableCell>{po.vendor_name}</TableCell>
                       <TableCell>{po.delivery_date || "-"}</TableCell>
                       <TableCell>{po.total_amount?.toLocaleString()} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <span className="text-green-600">{(po.amount_paid || 0).toLocaleString()}</span>
+                          {(po.total_amount || 0) - (po.amount_paid || 0) > 0 && (
+                            <span className="text-muted-foreground"> / {((po.total_amount || 0) - (po.amount_paid || 0)).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell><StatusBadge status={po.status} /></TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -622,6 +631,18 @@ const Procurement = () => {
                             <Button size="sm" variant="outline" onClick={() => handleSendPO(po.id)}>
                               <Send className="w-3 h-3 mr-1" />
                               {language === "ar" ? "إرسال" : "Send"}
+                            </Button>
+                          )}
+                          {po.status !== "draft" && (po.total_amount || 0) > (po.amount_paid || 0) && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                              onClick={() => handleOpenPayment(po)}
+                              data-testid={`pay-po-${po.id}`}
+                            >
+                              <Banknote className="w-3 h-3 mr-1" />
+                              {language === "ar" ? "دفع" : "Pay"}
                             </Button>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => { setSelectedItem(po); setViewDialog(true); }}>
