@@ -322,6 +322,70 @@ async def confirm_purchase_order(po_id: str, current_user: dict = Depends(get_cu
     )
     return {"message": "Purchase order confirmed"}
 
+@router.post("/purchase-orders/{po_id}/pay")
+async def pay_purchase_order(
+    po_id: str, 
+    amount: float,
+    payment_method: str = "bank_transfer",
+    reference: str = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Record payment for a purchase order - Creates automatic journal entry"""
+    po = await db.purchase_orders.find_one({"id": po_id}, {"_id": 0})
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    
+    current_paid = po.get("amount_paid", 0)
+    total_amount = po.get("total_amount", 0)
+    
+    if current_paid + amount > total_amount:
+        raise HTTPException(status_code=400, detail="مبلغ الدفع أكبر من المبلغ المستحق")
+    
+    new_paid = round(current_paid + amount, 3)
+    status = POStatus.COMPLETED.value if new_paid >= total_amount else po.get("status")
+    
+    # Record payment
+    payment_record = {
+        "id": str(uuid.uuid4()),
+        "amount": amount,
+        "payment_method": payment_method,
+        "reference": reference,
+        "paid_at": datetime.now(timezone.utc).isoformat(),
+        "paid_by": current_user.get("full_name", current_user.get("username"))
+    }
+    
+    await db.purchase_orders.update_one(
+        {"id": po_id},
+        {
+            "$set": {"amount_paid": new_paid, "status": status},
+            "$push": {"payments": payment_record}
+        }
+    )
+    
+    # Create automatic journal entry
+    # Dr: الموردين (2110) / Cr: البنك (1120) أو الصندوق (1110)
+    credit_account = "1120" if payment_method == "bank_transfer" else "1110"
+    try:
+        await create_auto_journal_entry(
+            description=f"سداد فاتورة شراء - {po.get('po_number', '')} - {po.get('vendor_name', '')}",
+            lines=[
+                {"account_number": "2110", "debit": round(amount, 3), "credit": 0, "description": f"سداد للمورد - {po.get('vendor_name', '')}"},
+                {"account_number": credit_account, "debit": 0, "credit": round(amount, 3), "description": f"دفعة لأمر شراء {po.get('po_number', '')}"}
+            ],
+            reference_type="po_payment",
+            reference_id=po_id,
+            created_by_id=current_user.get("id"),
+            created_by_name=current_user.get("full_name", current_user.get("username"))
+        )
+    except Exception as e:
+        print(f"Error creating journal entry: {e}")
+    
+    return {
+        "message": f"تم تسجيل دفعة {amount:.3f} ر.ع",
+        "total_paid": new_paid,
+        "remaining": round(total_amount - new_paid, 3)
+    }
+
 # ==================== GOODS RECEIPT ====================
 
 @router.get("/goods-receipts")
