@@ -7,6 +7,38 @@
 
 ## ✅ ما تم إنجازه في هذه الجلسة (11 يناير 2026)
 
+### 31. إعادة هيكلة server.py - وحدة Operations ✅ 🆕 (P0)
+- نقل جميع routes الخاصة بـ Operations إلى `/app/backend/routes/operations_routes.py`
+- تقليل `server.py` من ~12,317 سطر إلى ~11,838 سطر
+- الـ routes المنقولة:
+  - Daily Operations (CRUD)
+  - Equipment Management
+  - Maintenance Records
+  - Incident Reports
+  - Vehicle Fleet
+  - Operations Dashboard
+  - Driver Tasks
+  - Destination Companies
+- إصلاح أخطاء ObjectId في responses
+- جميع APIs تعمل بشكل صحيح
+
+### 32. إصلاح مشكلة Scroll في التنقل ✅ 🆕 (P0)
+- إضافة auto scroll reset عند تغيير المسار (route)
+- استخدام `useLocation` و `useRef` في Layout component
+- إصلاح مشكلة عدم ظهور المحتوى عند التنقل بين الصفحات
+
+---
+
+## 🔄 قيد العمل
+
+### إعادة هيكلة server.py - الوحدات المتبقية (P0)
+- **HR Module** (~5000 سطر) - بحاجة لنقل
+- **Finance Module** - بحاجة لنقل
+- **Suppliers Module** - بحاجة لنقل
+- **Milk Reception Module** - بحاجة لنقل
+
+---
+
 ### 26. توحيد إعدادات الإجازات وأيام الراحة ✅ 🆕 (P0)
 - توحيد مصدر الإجازات الرسمية في `hr_official_holidays`
 - API جديد `/api/hr/settings/holidays-config` لإعدادات الإجازات الموحدة
