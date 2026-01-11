@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
-import { Activity, Wrench, AlertTriangle, Truck, Plus, Pencil, CheckCircle, Settings2 } from "lucide-react";
+import { Activity, Wrench, AlertTriangle, Truck, Plus, Pencil, CheckCircle, Settings2, Users, Fuel, MapPin, Clock } from "lucide-react";
 
 const Operations = () => {
   const { t } = useTranslation();
@@ -28,6 +28,9 @@ const Operations = () => {
   const [incidents, setIncidents] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [dashboard, setDashboard] = useState({});
+  const [driverTasks, setDriverTasks] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [driverTasksSummary, setDriverTasksSummary] = useState({});
   
   // Dialog states
   const [dailyOpDialogOpen, setDailyOpDialogOpen] = useState(false);
@@ -35,6 +38,7 @@ const Operations = () => {
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [incidentDialogOpen, setIncidentDialogOpen] = useState(false);
   const [vehicleDialogOpen, setVehicleDialogOpen] = useState(false);
+  const [driverTaskDialogOpen, setDriverTaskDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   
   // Form states
@@ -61,6 +65,18 @@ const Operations = () => {
     plate_number: "", color: "", fuel_type: "diesel", assigned_driver_name: "",
     insurance_expiry: "", registration_expiry: ""
   });
+  const [driverTaskForm, setDriverTaskForm] = useState({
+    driver_id: "", driver_name: "", transport_type: "milk",
+    vehicle_plate: "", vehicle_type: "truck", quantity: 0,
+    transport_date: new Date().toISOString().split('T')[0],
+    transport_time: new Date().toTimeString().slice(0, 5),
+    from_location: "حجيف", to_destination: "شركة الصفوة",
+    destination_company: "", notes: ""
+  });
+
+  // Location options
+  const locationOptions = ["حجيف", "غدو", "زيك", "ثمريت", "طاقة", "مرباط"];
+  const destinationOptions = ["شركة الصفوة", "شركة أخرى"];
 
   useEffect(() => {
     fetchAllData();
