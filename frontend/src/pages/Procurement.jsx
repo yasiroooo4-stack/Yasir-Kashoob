@@ -1095,6 +1095,110 @@ const Procurement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Banknote className="w-5 h-5 text-amber-600" />
+              {language === "ar" ? "تسجيل دفعة" : "Record Payment"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPO && (
+                <span>
+                  {language === "ar" ? "أمر الشراء:" : "PO:"} {selectedPO.po_number} - {selectedPO.vendor_name}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedPO && (
+              <div className="bg-muted p-3 rounded-lg space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{language === "ar" ? "إجمالي المبلغ:" : "Total Amount:"}</span>
+                  <span className="font-semibold">{(selectedPO.total_amount || 0).toLocaleString()} {language === "ar" ? "ر.ع" : "OMR"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{language === "ar" ? "المدفوع:" : "Paid:"}</span>
+                  <span className="text-green-600">{(selectedPO.amount_paid || 0).toLocaleString()} {language === "ar" ? "ر.ع" : "OMR"}</span>
+                </div>
+                <div className="flex justify-between border-t pt-1">
+                  <span className="text-muted-foreground">{language === "ar" ? "المتبقي:" : "Remaining:"}</span>
+                  <span className="font-bold text-amber-600">
+                    {((selectedPO.total_amount || 0) - (selectedPO.amount_paid || 0)).toLocaleString()} {language === "ar" ? "ر.ع" : "OMR"}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <Label>{language === "ar" ? "مبلغ الدفعة" : "Payment Amount"}</Label>
+              <Input 
+                type="number" 
+                step="0.001"
+                value={paymentForm.amount} 
+                onChange={(e) => setPaymentForm({...paymentForm, amount: parseFloat(e.target.value) || 0})}
+                data-testid="payment-amount-input"
+              />
+            </div>
+            
+            <div>
+              <Label>{language === "ar" ? "طريقة الدفع" : "Payment Method"}</Label>
+              <Select 
+                value={paymentForm.payment_method} 
+                onValueChange={(val) => setPaymentForm({...paymentForm, payment_method: val})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">
+                    <span className="flex items-center gap-2">
+                      <Building className="w-4 h-4" />
+                      {language === "ar" ? "تحويل بنكي" : "Bank Transfer"}
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="cash">
+                    <span className="flex items-center gap-2">
+                      <Banknote className="w-4 h-4" />
+                      {language === "ar" ? "نقدي" : "Cash"}
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="check">
+                    <span className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" />
+                      {language === "ar" ? "شيك" : "Check"}
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>{language === "ar" ? "رقم المرجع (اختياري)" : "Reference # (optional)"}</Label>
+              <Input 
+                value={paymentForm.reference} 
+                onChange={(e) => setPaymentForm({...paymentForm, reference: e.target.value})}
+                placeholder={language === "ar" ? "رقم الشيك أو الحوالة..." : "Check or transfer number..."}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentDialog(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button 
+              onClick={handlePayPO}
+              className="bg-amber-600 hover:bg-amber-700"
+              data-testid="confirm-payment-btn"
+            >
+              <Banknote className="w-4 h-4 me-2" />
+              {language === "ar" ? "تأكيد الدفع" : "Confirm Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
