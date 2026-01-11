@@ -107,6 +107,8 @@ async def create_equipment(equipment_data: EquipmentCreate, current_user: dict =
         details=f"معدة جديدة: {equipment_data.name}"
     )
     
+    # Remove _id before returning
+    equipment_dict.pop("_id", None)
     return Equipment(**equipment_dict)
 
 
