@@ -66,17 +66,25 @@ const Operations = () => {
     insurance_expiry: "", registration_expiry: ""
   });
   const [driverTaskForm, setDriverTaskForm] = useState({
-    driver_id: "", driver_name: "", transport_type: "milk",
+    driver_id: "", driver_name: "", transport_type: "camel_milk",
     vehicle_plate: "", vehicle_type: "truck", quantity: 0,
     transport_date: new Date().toISOString().split('T')[0],
     transport_time: new Date().toTimeString().slice(0, 5),
     from_location: "حجيف", to_destination: "شركة الصفوة",
     destination_company: "", notes: ""
   });
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [destinationCompanies, setDestinationCompanies] = useState(["شركة الصفوة"]);
 
   // Location options
   const locationOptions = ["حجيف", "غدو", "زيك", "ثمريت", "طاقة", "مرباط"];
-  const destinationOptions = ["شركة الصفوة", "شركة أخرى"];
+  
+  // Transport type options
+  const transportTypeOptions = [
+    { value: "camel_milk", label: "حليب إبل", labelEn: "Camel Milk" },
+    { value: "cow_milk", label: "حليب أبقار", labelEn: "Cow Milk" },
+    { value: "sheep_milk", label: "حليب أغنام", labelEn: "Sheep Milk" }
+  ];
 
   useEffect(() => {
     fetchAllData();
