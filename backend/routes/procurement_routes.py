@@ -467,6 +467,7 @@ async def create_goods_receipt(receipt: GoodsReceiptCreate, current_user: dict =
         except Exception as e:
             print(f"Error creating journal entry: {e}")
     
+    receipt_dict.pop("_id", None)
     return receipt_dict
 
 # ==================== INVENTORY ====================
