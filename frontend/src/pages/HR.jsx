@@ -4531,6 +4531,16 @@ const HR = () => {
                 {language === "ar" ? "عطلة سنوية متكررة" : "Recurring yearly holiday"}
               </Label>
             </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="is_paid"
+                checked={holidayForm.is_paid}
+                onCheckedChange={(checked) => setHolidayForm({ ...holidayForm, is_paid: checked })}
+              />
+              <Label htmlFor="is_paid" className="cursor-pointer">
+                {language === "ar" ? "عطلة مدفوعة" : "Paid holiday"}
+              </Label>
+            </div>
             <div className="space-y-2">
               <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
               <Textarea
