@@ -1602,3 +1602,46 @@ class PublicHoliday(PublicHolidayBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_by: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+
+# ==================== مهام السائقين (Driver Tasks) ====================
+
+class DriverTaskBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    driver_id: str
+    driver_name: str
+    transport_type: str  # milk, petroleum
+    vehicle_id: Optional[str] = None
+    vehicle_plate: str
+    vehicle_type: str  # truck, tanker, pickup
+    quantity: float = 0  # كمية الحليب بالليتر
+    transport_date: str
+    transport_time: str
+    from_location: str  # حجيف، غدو، زيك، ثمريت، طاقة، مرباط
+    to_destination: str  # شركة الصفوة أو شركة أخرى
+    destination_company: Optional[str] = None  # اسم الشركة إذا كان "أخرى"
+    notes: Optional[str] = None
+    status: str = "completed"  # completed, in_progress, cancelled
+
+class DriverTaskCreate(DriverTaskBase):
+    pass
+
+class DriverTask(DriverTaskBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ==================== سجل رصيد الإجازات (Leave Balance Log) ====================
+
+class LeaveBalanceLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: str
+    month: str  # YYYY-MM
+    amount_added: float
+    previous_balance: float
+    new_balance: float
+    reason: str = "monthly_accrual"  # monthly_accrual, manual_adjustment, used
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
