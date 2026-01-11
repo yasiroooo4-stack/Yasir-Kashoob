@@ -5701,8 +5701,8 @@ async def export_attendance_excel(
         rows = []
         for emp_key in sorted(employee_data.keys(), key=lambda x: employee_data[x]["name"]):
             emp_info = employee_data[emp_key]
-            records = emp_info["records"]
-            days_count = len(set(r.get('date') for r in records))
+            records = list(emp_info["records"].values())  # Convert dict to list
+            days_count = len(records)  # Each date appears only once now
             
             emp_name = emp_info["name"] or "Unknown"
             emp_code = emp_info["code"] or "-"
