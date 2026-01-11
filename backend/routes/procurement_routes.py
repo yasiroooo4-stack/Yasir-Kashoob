@@ -363,8 +363,8 @@ async def pay_purchase_order(
     )
     
     # Create automatic journal entry
-    # Dr: الموردين (2110) / Cr: البنك (1120) أو الصندوق (1110)
-    credit_account = "1120" if payment_method == "bank_transfer" else "1110"
+    # Dr: الموردين (2110) / Cr: البنك (1112) أو الصندوق (1111)
+    credit_account = "1112" if payment_method == "bank_transfer" else "1111"
     try:
         await create_auto_journal_entry(
             description=f"سداد فاتورة شراء - {po.get('po_number', '')} - {po.get('vendor_name', '')}",
