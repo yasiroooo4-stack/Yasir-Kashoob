@@ -9453,18 +9453,13 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         "date": {"$gte": start_date, "$lte": end_date}
     }, {"_id": 0}).to_list(10000)
     
-    # Get official holidays for the period (from both collections)
+    # Get official holidays for the period (unified source: hr_official_holidays)
     official_holidays = await db.hr_official_holidays.find({
         "date": {"$gte": start_date, "$lte": end_date}
     }, {"_id": 0}).to_list(100)
     
-    public_holidays_list = await db.public_holidays.find({
-        "date": {"$gte": start_date, "$lte": end_date}
-    }, {"_id": 0}).to_list(100)
-    
-    # Combine holiday dates
+    # Use hr_official_holidays as the single source of truth for holidays
     holiday_dates = {h["date"] for h in official_holidays}
-    holiday_dates.update({h["date"] for h in public_holidays_list})
     
     # Get all salary structures for efficient lookup
     salary_structures = await db.employee_salary_structures.find(
