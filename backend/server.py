@@ -8847,11 +8847,12 @@ async def get_driver_tasks_summary(
     
     tasks = await db.driver_tasks.find(query, {"_id": 0}).to_list(1000)
     
-    # Summary by transport type
-    milk_tasks = [t for t in tasks if t.get("transport_type") == "milk"]
-    petroleum_tasks = [t for t in tasks if t.get("transport_type") == "petroleum"]
+    # Summary by transport type (milk types)
+    camel_milk_tasks = [t for t in tasks if t.get("transport_type") == "camel_milk"]
+    cow_milk_tasks = [t for t in tasks if t.get("transport_type") == "cow_milk"]
+    sheep_milk_tasks = [t for t in tasks if t.get("transport_type") == "sheep_milk"]
     
-    total_milk = sum(t.get("quantity", 0) for t in milk_tasks)
+    total_milk = sum(t.get("quantity", 0) for t in tasks)
     
     # Summary by location
     locations = {}
@@ -8860,16 +8861,58 @@ async def get_driver_tasks_summary(
         if loc not in locations:
             locations[loc] = {"count": 0, "milk_quantity": 0}
         locations[loc]["count"] += 1
-        if t.get("transport_type") == "milk":
-            locations[loc]["milk_quantity"] += t.get("quantity", 0)
+        locations[loc]["milk_quantity"] += t.get("quantity", 0)
     
     return {
         "total_tasks": len(tasks),
-        "milk_tasks": len(milk_tasks),
-        "petroleum_tasks": len(petroleum_tasks),
+        "camel_milk_tasks": len(camel_milk_tasks),
+        "cow_milk_tasks": len(cow_milk_tasks),
+        "sheep_milk_tasks": len(sheep_milk_tasks),
         "total_milk_quantity": total_milk,
         "by_location": locations
     }
+
+# ==================== DESTINATION COMPANIES (الشركات الوجهة) ====================
+
+@api_router.get("/operations/destination-companies")
+async def get_destination_companies(current_user: dict = Depends(get_current_user)):
+    """جلب قائمة الشركات الوجهة"""
+    companies = await db.destination_companies.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    if not companies:
+        # Add default company if none exist
+        default = {"id": str(uuid.uuid4()), "name": "شركة الصفوة", "created_at": datetime.now(timezone.utc).isoformat()}
+        await db.destination_companies.insert_one(default)
+        companies = [default]
+    return companies
+
+@api_router.post("/operations/destination-companies")
+async def create_destination_company(data: dict, current_user: dict = Depends(get_current_user)):
+    """إضافة شركة وجهة جديدة"""
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="اسم الشركة مطلوب")
+    
+    # Check if exists
+    existing = await db.destination_companies.find_one({"name": name})
+    if existing:
+        raise HTTPException(status_code=400, detail="الشركة موجودة مسبقاً")
+    
+    company = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "created_by": current_user.get("full_name", current_user.get("username")),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.destination_companies.insert_one(company)
+    return {"message": "تم إضافة الشركة بنجاح", "company": {k: v for k, v in company.items() if k != "_id"}}
+
+@api_router.delete("/operations/destination-companies/{company_id}")
+async def delete_destination_company(company_id: str, current_user: dict = Depends(require_role(["admin", "operations_manager"]))):
+    """حذف شركة وجهة"""
+    result = await db.destination_companies.delete_one({"id": company_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الشركة غير موجودة")
+    return {"message": "تم حذف الشركة بنجاح"}
 
 @api_router.delete("/operations/driver-tasks/{task_id}")
 async def delete_driver_task(task_id: str, current_user: dict = Depends(require_role(["admin", "operations_manager"]))):
