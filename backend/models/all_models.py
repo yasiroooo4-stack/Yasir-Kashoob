@@ -455,6 +455,8 @@ class EmployeeBase(BaseModel):
     manager_id: Optional[str] = None
     manager_name: Optional[str] = None
     username: Optional[str] = None
+    leave_balance: float = 0.0  # رصيد الإجازات المتراكم
+    monthly_leave_rate: float = 2.6  # معدل الإجازة الشهرية (افتراضي للموظفين)
 
 class EmployeeCreate(EmployeeBase):
     pass
