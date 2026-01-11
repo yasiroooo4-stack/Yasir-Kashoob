@@ -149,11 +149,11 @@ const Operations = () => {
 
   const resetDriverTaskForm = () => {
     setDriverTaskForm({
-      driver_id: "", driver_name: "", transport_type: "milk",
+      driver_id: "", driver_name: "", transport_type: "camel_milk",
       vehicle_plate: "", vehicle_type: "truck", quantity: 0,
       transport_date: new Date().toISOString().split('T')[0],
       transport_time: new Date().toTimeString().slice(0, 5),
-      from_location: "حجيف", to_destination: "شركة الصفوة",
+      from_location: "حجيف", to_destination: destinationCompanies[0] || "شركة الصفوة",
       destination_company: "", notes: ""
     });
   };
@@ -166,6 +166,25 @@ const Operations = () => {
         driver_id: driverId,
         driver_name: driver.name
       });
+    }
+  };
+
+  // Add new destination company
+  const handleAddCompany = async () => {
+    if (!newCompanyName.trim()) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/operations/destination-companies`, 
+        { name: newCompanyName.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === "ar" ? "تم إضافة الشركة بنجاح" : "Company added successfully");
+      setDestinationCompanies([...destinationCompanies, newCompanyName.trim()]);
+      setDriverTaskForm({ ...driverTaskForm, to_destination: newCompanyName.trim() });
+      setNewCompanyName("");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل إضافة الشركة" : "Failed to add company"));
     }
   };
 
