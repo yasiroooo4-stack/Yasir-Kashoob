@@ -277,6 +277,7 @@ async def create_purchase_order(po: POCreate, current_user: dict = Depends(get_c
         {"$inc": {"total_orders": 1, "total_amount": po_dict["total_amount"]}}
     )
     
+    po_dict.pop("_id", None)
     return po_dict
 
 @router.put("/purchase-orders/{po_id}")
