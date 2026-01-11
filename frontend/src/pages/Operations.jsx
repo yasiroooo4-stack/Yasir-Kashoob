@@ -84,13 +84,19 @@ const Operations = () => {
 
   const fetchAllData = async () => {
     try {
-      const [dailyRes, equipRes, maintRes, incRes, vehRes, dashRes] = await Promise.all([
-        axios.get(`${API}/operations/daily`),
-        axios.get(`${API}/operations/equipment`),
-        axios.get(`${API}/operations/maintenance`),
-        axios.get(`${API}/operations/incidents`),
-        axios.get(`${API}/operations/vehicles`),
-        axios.get(`${API}/operations/dashboard`)
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const [dailyRes, equipRes, maintRes, incRes, vehRes, dashRes, driverTasksRes, driversRes, summaryRes] = await Promise.all([
+        axios.get(`${API}/operations/daily`, { headers }),
+        axios.get(`${API}/operations/equipment`, { headers }),
+        axios.get(`${API}/operations/maintenance`, { headers }),
+        axios.get(`${API}/operations/incidents`, { headers }),
+        axios.get(`${API}/operations/vehicles`, { headers }),
+        axios.get(`${API}/operations/dashboard`, { headers }),
+        axios.get(`${API}/operations/driver-tasks`, { headers }),
+        axios.get(`${API}/hr/employees`, { headers }),
+        axios.get(`${API}/operations/driver-tasks/summary`, { headers })
       ]);
       setDailyOps(dailyRes.data);
       setEquipment(equipRes.data);
@@ -98,10 +104,52 @@ const Operations = () => {
       setIncidents(incRes.data);
       setVehicles(vehRes.data);
       setDashboard(dashRes.data);
+      setDriverTasks(driverTasksRes.data);
+      setDrivers(driversRes.data.filter(emp => emp.department === "operations" || emp.position?.includes("سائق") || emp.position?.toLowerCase().includes("driver")));
+      setDriverTasksSummary(summaryRes.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Driver Task handlers
+  const handleDriverTaskSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/operations/driver-tasks`, driverTaskForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تم تسجيل المهمة بنجاح" : "Task recorded successfully");
+      setDriverTaskDialogOpen(false);
+      resetDriverTaskForm();
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "Error occurred"));
+    }
+  };
+
+  const resetDriverTaskForm = () => {
+    setDriverTaskForm({
+      driver_id: "", driver_name: "", transport_type: "milk",
+      vehicle_plate: "", vehicle_type: "truck", quantity: 0,
+      transport_date: new Date().toISOString().split('T')[0],
+      transport_time: new Date().toTimeString().slice(0, 5),
+      from_location: "حجيف", to_destination: "شركة الصفوة",
+      destination_company: "", notes: ""
+    });
+  };
+
+  const handleDriverSelect = (driverId) => {
+    const driver = drivers.find(d => d.id === driverId);
+    if (driver) {
+      setDriverTaskForm({
+        ...driverTaskForm,
+        driver_id: driverId,
+        driver_name: driver.name
+      });
     }
   };
 
