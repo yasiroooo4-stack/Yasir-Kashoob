@@ -44,6 +44,8 @@ async def create_daily_operation(operation_data: DailyOperationCreate, current_u
         details=f"عملية يومية: {operation_data.operation_date} - {operation_data.shift}"
     )
     
+    # Remove _id before returning
+    operation_dict.pop("_id", None)
     return DailyOperation(**operation_dict)
 
 
