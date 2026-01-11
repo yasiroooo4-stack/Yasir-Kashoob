@@ -372,11 +372,32 @@ async def create_goods_receipt(receipt: GoodsReceiptCreate, current_user: dict =
         )
     
     # Update inventory
+    total_receipt_value = 0
     for item in receipt_dict["items"]:
+        item_value = item.get("quantity_accepted", 0) * item.get("unit_price", 0)
+        total_receipt_value += item_value
         await db.inventory_items.update_one(
             {"name": item["item_name"]},
             {"$inc": {"current_quantity": item.get("quantity_accepted", 0)}}
         )
+    
+    # Create automatic journal entry for goods receipt
+    # Dr: المخزون (1140) / Cr: الموردين (2110)
+    if total_receipt_value > 0:
+        try:
+            await create_auto_journal_entry(
+                description=f"استلام بضائع - {receipt_number} - أمر شراء {po.get('po_number', '')}",
+                lines=[
+                    {"account_number": "1140", "debit": round(total_receipt_value, 3), "credit": 0, "description": f"استلام مخزون - {receipt_number}"},
+                    {"account_number": "2110", "debit": 0, "credit": round(total_receipt_value, 3), "description": f"مستحقات المورد - {po.get('vendor_name', '')}"}
+                ],
+                reference_type="goods_receipt",
+                reference_id=receipt_dict["id"],
+                created_by_id=current_user.get("id"),
+                created_by_name=current_user.get("full_name", current_user.get("username"))
+            )
+        except Exception as e:
+            print(f"Error creating journal entry: {e}")
     
     return receipt_dict
 
