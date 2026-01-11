@@ -9948,16 +9948,15 @@ async def disburse_payroll(period_id: str, current_user: dict = Depends(require_
     total_deductions = sum(r.get("total_deductions", 0) for r in records)
     
     # Create automatic journal entry for payroll disbursement
-    # Dr: مصروفات الرواتب (5200) / Dr: بدلات ومكافآت (5210) / Cr: خصومات مستحقة (2120) / Cr: البنك (1120)
+    # Dr: مصروفات الرواتب (5200) / Cr: الرواتب المستحقة أو خصومات (2120) / Cr: البنك (1112)
     journal_lines = [
-        {"account_number": "5200", "debit": round(total_basic_salary, 3), "credit": 0, "description": "مصروفات الرواتب الأساسية"},
-        {"account_number": "5210", "debit": round(total_allowances + total_overtime, 3), "credit": 0, "description": "البدلات والعمل الإضافي"},
+        {"account_number": "5200", "debit": round(total_basic_salary + total_allowances + total_overtime, 3), "credit": 0, "description": "مصروفات الرواتب والبدلات"},
     ]
     
     if total_deductions > 0:
         journal_lines.append({"account_number": "2120", "debit": 0, "credit": round(total_deductions, 3), "description": "خصومات الموظفين"})
     
-    journal_lines.append({"account_number": "1120", "debit": 0, "credit": round(total_net_salary, 3), "description": f"صرف رواتب {period['name']}"})
+    journal_lines.append({"account_number": "1112", "debit": 0, "credit": round(total_net_salary, 3), "description": f"صرف رواتب {period['name']}"})
     
     await create_auto_journal_entry(
         description=f"صرف رواتب - {period['name']} - {len(records)} موظف",
