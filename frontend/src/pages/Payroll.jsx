@@ -414,8 +414,7 @@ const Payroll = () => {
                     <th>الغياب</th>
                     <th>الإجازات</th>
                     <th>ساعات إضافية</th>
-                    <th>الراتب الأساسي</th>
-                    <th>بدل إضافي</th>
+                    <th>الراتب الإجمالي</th>
                     <th>الخصومات</th>
                     <th>الصافي</th>
                     <th>التوقيع</th>
@@ -432,8 +431,7 @@ const Payroll = () => {
                       <td>${r.absent_days || 0}</td>
                       <td>${(r.annual_leave || 0) + (r.sick_leave || 0) + (r.emergency_leave || 0)}</td>
                       <td>${(r.total_overtime_hours || 0).toFixed(1)}</td>
-                      <td>${(r.basic_salary || 0).toFixed(3)}</td>
-                      <td>${(r.overtime_pay || 0).toFixed(3)}</td>
+                      <td>${((r.basic_salary || 0) + (r.total_allowances || 0)).toFixed(3)}</td>
                       <td style="color: #c00;">${(r.deductions || 0).toFixed(3)}</td>
                       <td style="font-weight: bold; color: #060;">${(r.net_salary || 0).toFixed(3)}</td>
                       <td></td>
@@ -445,8 +443,7 @@ const Payroll = () => {
                     <td>-</td>
                     <td>-</td>
                     <td>${locTotals.overtime_hours.toFixed(1)}</td>
-                    <td>${locTotals.basic_salary.toFixed(3)}</td>
-                    <td>${locTotals.overtime_pay.toFixed(3)}</td>
+                    <td>${locTotals.total_salary.toFixed(3)}</td>
                     <td style="color: #c00;">${locTotals.deductions.toFixed(3)}</td>
                     <td style="font-weight: bold; color: #060;">${locTotals.net_salary.toFixed(3)}</td>
                     <td></td>
@@ -465,8 +462,8 @@ const Payroll = () => {
               <div class="value">${totals.employees}</div>
             </div>
             <div class="grand-total-item">
-              <div class="label">إجمالي الرواتب الأساسية</div>
-              <div class="value">${totals.basic_salary.toFixed(3)} ر.ع</div>
+              <div class="label">إجمالي الرواتب</div>
+              <div class="value">${totals.total_salary.toFixed(3)} ر.ع</div>
             </div>
             <div class="grand-total-item">
               <div class="label">إجمالي العمل الإضافي</div>
