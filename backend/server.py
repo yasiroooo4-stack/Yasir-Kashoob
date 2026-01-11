@@ -5946,14 +5946,13 @@ async def export_attendance_pdf(
         emp_code = emp_info["code"] or "-"
         emp_fp = emp_info["fingerprint"] or "-"
         
-        # Create employee info table with name displayed properly
-        emp_header_style = ParagraphStyle('EmpHeader', fontName=arabic_font, fontSize=10, alignment=TA_CENTER)
+        # Create employee info table with name displayed properly - use English headers for compatibility
         emp_header_data = [
-            [reshape_arabic('اسم الموظف'), reshape_arabic('رمز الموظف'), reshape_arabic('رقم البصمة'), reshape_arabic('أيام الحضور')],
-            [emp_name, emp_code, emp_fp, f'{days_count}']
+            ['Employee Name', 'Code', 'Fingerprint ID', 'Days'],
+            [emp_name, emp_code, emp_fp, str(days_count)]
         ]
         
-        emp_table = Table(emp_header_data, colWidths=[200, 100, 100, 100])
+        emp_table = Table(emp_header_data, colWidths=[250, 80, 100, 70])
         emp_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E7D32')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
