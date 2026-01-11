@@ -197,6 +197,8 @@ async def create_maintenance_record(maintenance_data: MaintenanceRecordCreate, c
         details=f"صيانة: {maintenance_data.equipment_name} - {maintenance_data.maintenance_type}"
     )
     
+    # Remove _id before returning
+    maintenance_dict.pop("_id", None)
     return MaintenanceRecord(**maintenance_dict)
 
 
