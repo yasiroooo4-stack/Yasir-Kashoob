@@ -9884,6 +9884,82 @@ async def approve_payroll(period_id: str, current_user: dict = Depends(get_curre
     
     return {"message": "تم اعتماد كشف الرواتب بنجاح"}
 
+@api_router.post("/hr/payroll/periods/{period_id}/disburse")
+async def disburse_payroll(period_id: str, current_user: dict = Depends(require_role(["admin", "hr_manager", "finance_manager"]))):
+    """Disburse/Pay approved payroll - Creates automatic journal entry"""
+    period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+    
+    if period.get("status") != "approved":
+        raise HTTPException(status_code=400, detail="يجب اعتماد كشف الرواتب أولاً قبل الصرف")
+    
+    if period.get("status") == "disbursed":
+        raise HTTPException(status_code=400, detail="تم صرف هذه الرواتب مسبقاً")
+    
+    # Get all payroll records for this period
+    records = await db.payroll_records.find({"period_id": period_id}, {"_id": 0}).to_list(1000)
+    
+    total_net_salary = sum(r.get("net_salary", 0) for r in records)
+    total_basic_salary = sum(r.get("basic_salary", 0) for r in records)
+    total_allowances = sum(r.get("total_allowances", 0) for r in records)
+    total_overtime = sum(r.get("overtime_pay", 0) for r in records)
+    total_deductions = sum(r.get("total_deductions", 0) for r in records)
+    
+    # Create automatic journal entry for payroll disbursement
+    # Dr: مصروفات الرواتب (5200) / Dr: بدلات ومكافآت (5210) / Cr: خصومات مستحقة (2120) / Cr: البنك (1120)
+    journal_lines = [
+        {"account_number": "5200", "debit": round(total_basic_salary, 3), "credit": 0, "description": "مصروفات الرواتب الأساسية"},
+        {"account_number": "5210", "debit": round(total_allowances + total_overtime, 3), "credit": 0, "description": "البدلات والعمل الإضافي"},
+    ]
+    
+    if total_deductions > 0:
+        journal_lines.append({"account_number": "2120", "debit": 0, "credit": round(total_deductions, 3), "description": "خصومات الموظفين"})
+    
+    journal_lines.append({"account_number": "1120", "debit": 0, "credit": round(total_net_salary, 3), "description": f"صرف رواتب {period['name']}"})
+    
+    await create_auto_journal_entry(
+        description=f"صرف رواتب - {period['name']} - {len(records)} موظف",
+        lines=journal_lines,
+        reference_type="payroll_disbursement",
+        reference_id=period_id,
+        created_by_id=current_user["id"],
+        created_by_name=current_user["full_name"]
+    )
+    
+    # Update period status
+    await db.payroll_periods.update_one(
+        {"id": period_id},
+        {"$set": {
+            "status": "disbursed",
+            "disbursed_at": datetime.now(timezone.utc).isoformat(),
+            "disbursed_by": current_user["full_name"],
+            "total_disbursed": round(total_net_salary, 3)
+        }}
+    )
+    
+    # Mark all records as paid
+    await db.payroll_records.update_many(
+        {"period_id": period_id},
+        {"$set": {"is_paid": True, "paid_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="disburse_payroll",
+        entity_type="payroll",
+        entity_id=period_id,
+        entity_name=period["name"],
+        details=f"صرف رواتب {len(records)} موظف بإجمالي {total_net_salary:.3f} ر.ع"
+    )
+    
+    return {
+        "message": f"تم صرف الرواتب بنجاح - {len(records)} موظف",
+        "total_disbursed": round(total_net_salary, 3),
+        "journal_entry_created": True
+    }
+
 @api_router.delete("/hr/payroll/periods/{period_id}")
 async def delete_payroll_period(period_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a payroll period and its records"""
