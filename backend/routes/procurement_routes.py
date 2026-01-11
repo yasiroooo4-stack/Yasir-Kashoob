@@ -503,6 +503,7 @@ async def create_inventory_item(item: InventoryItemCreate, current_user: dict = 
     item_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.inventory_items.insert_one(item_dict)
+    item_dict.pop("_id", None)
     return item_dict
 
 @router.put("/inventory/{item_id}")
