@@ -8782,6 +8782,266 @@ async def get_operations_dashboard(current_user: dict = Depends(get_current_user
         "today_operations": today_operations
     }
 
+# ==================== DRIVER TASKS (مهام السائقين) ====================
+
+@api_router.post("/operations/driver-tasks")
+async def create_driver_task(task_data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء مهمة سائق جديدة"""
+    from models.all_models import DriverTask
+    
+    task = DriverTask(**task_data)
+    task_dict = task.model_dump()
+    task_dict["created_by"] = current_user.get("full_name", current_user.get("username"))
+    
+    await db.driver_tasks.insert_one(task_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="create_driver_task",
+        entity_type="driver_task",
+        entity_id=task.id,
+        entity_name=f"{task_data.get('driver_name')} - {task_data.get('from_location')} → {task_data.get('to_destination')}",
+        details=f"مهمة سائق: {task_data.get('transport_type')} - {task_data.get('quantity')} لتر"
+    )
+    
+    return {"message": "تم إنشاء المهمة بنجاح", "task": task_dict}
+
+@api_router.get("/operations/driver-tasks")
+async def get_driver_tasks(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    driver_id: Optional[str] = None,
+    transport_type: Optional[str] = None,
+    from_location: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب مهام السائقين"""
+    query = {}
+    if start_date:
+        query["transport_date"] = {"$gte": start_date}
+    if end_date:
+        if "transport_date" in query:
+            query["transport_date"]["$lte"] = end_date
+        else:
+            query["transport_date"] = {"$lte": end_date}
+    if driver_id:
+        query["driver_id"] = driver_id
+    if transport_type:
+        query["transport_type"] = transport_type
+    if from_location:
+        query["from_location"] = from_location
+    
+    tasks = await db.driver_tasks.find(query, {"_id": 0}).sort("transport_date", -1).to_list(500)
+    return tasks
+
+@api_router.get("/operations/driver-tasks/summary")
+async def get_driver_tasks_summary(
+    month: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """ملخص مهام السائقين"""
+    query = {}
+    if month:
+        query["transport_date"] = {"$regex": f"^{month}"}
+    
+    tasks = await db.driver_tasks.find(query, {"_id": 0}).to_list(1000)
+    
+    # Summary by transport type
+    milk_tasks = [t for t in tasks if t.get("transport_type") == "milk"]
+    petroleum_tasks = [t for t in tasks if t.get("transport_type") == "petroleum"]
+    
+    total_milk = sum(t.get("quantity", 0) for t in milk_tasks)
+    
+    # Summary by location
+    locations = {}
+    for t in tasks:
+        loc = t.get("from_location", "غير محدد")
+        if loc not in locations:
+            locations[loc] = {"count": 0, "milk_quantity": 0}
+        locations[loc]["count"] += 1
+        if t.get("transport_type") == "milk":
+            locations[loc]["milk_quantity"] += t.get("quantity", 0)
+    
+    return {
+        "total_tasks": len(tasks),
+        "milk_tasks": len(milk_tasks),
+        "petroleum_tasks": len(petroleum_tasks),
+        "total_milk_quantity": total_milk,
+        "by_location": locations
+    }
+
+@api_router.delete("/operations/driver-tasks/{task_id}")
+async def delete_driver_task(task_id: str, current_user: dict = Depends(require_role(["admin", "operations_manager"]))):
+    """حذف مهمة سائق"""
+    result = await db.driver_tasks.delete_one({"id": task_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {"message": "تم حذف المهمة بنجاح"}
+
+# ==================== LEAVE BALANCE (رصيد الإجازات) ====================
+
+@api_router.post("/hr/leave-balance/accrue-monthly")
+async def accrue_monthly_leave(
+    month: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """
+    إضافة رصيد الإجازات الشهري لجميع الموظفين
+    المدير ونائب المدير: 3.5 يوم
+    المشرفين: 3 أيام
+    الموظفين: 2.6 يوم (أو حسب معدل الموظف)
+    """
+    from models.all_models import LeaveBalanceLog
+    
+    if not month:
+        month = datetime.now().strftime("%Y-%m")
+    
+    # Check if already accrued for this month
+    existing = await db.leave_balance_logs.find_one({"month": month, "reason": "monthly_accrual"})
+    if existing:
+        return {"message": f"تم إضافة رصيد الإجازات لشهر {month} مسبقاً", "already_processed": True}
+    
+    # Get all active employees
+    employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(500)
+    
+    updated_count = 0
+    logs = []
+    
+    for emp in employees:
+        # Determine monthly leave rate based on position
+        position = emp.get("position", "").lower()
+        
+        if "مدير" in position or "director" in position.lower():
+            if "نائب" in position or "deputy" in position.lower():
+                rate = 3.5  # نائب المدير
+            else:
+                rate = 3.5  # المدير
+        elif "مشرف" in position or "supervisor" in position.lower():
+            rate = 3.0  # المشرفين
+        else:
+            rate = emp.get("monthly_leave_rate", 2.6)  # الموظفين أو المعدل المخصص
+        
+        previous_balance = emp.get("leave_balance", 0)
+        new_balance = round(previous_balance + rate, 2)
+        
+        # Update employee
+        await db.hr_employees.update_one(
+            {"id": emp["id"]},
+            {"$set": {"leave_balance": new_balance, "monthly_leave_rate": rate}}
+        )
+        
+        # Create log
+        log = LeaveBalanceLog(
+            employee_id=emp["id"],
+            employee_name=emp["name"],
+            month=month,
+            amount_added=rate,
+            previous_balance=previous_balance,
+            new_balance=new_balance,
+            reason="monthly_accrual"
+        )
+        logs.append(log.model_dump())
+        updated_count += 1
+    
+    # Insert all logs
+    if logs:
+        await db.leave_balance_logs.insert_many(logs)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="accrue_monthly_leave",
+        entity_type="leave_balance",
+        entity_id=month,
+        entity_name=f"إضافة رصيد إجازات شهر {month}",
+        details=f"تم إضافة رصيد الإجازات لـ {updated_count} موظف"
+    )
+    
+    return {
+        "message": f"تم إضافة رصيد الإجازات لـ {updated_count} موظف",
+        "month": month,
+        "employees_updated": updated_count
+    }
+
+@api_router.put("/hr/employees/{employee_id}/leave-rate")
+async def update_employee_leave_rate(
+    employee_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تحديث معدل الإجازة الشهرية للموظف"""
+    rate = data.get("monthly_leave_rate", 2.6)
+    
+    result = await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"monthly_leave_rate": rate}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    return {"message": "تم تحديث معدل الإجازة بنجاح", "new_rate": rate}
+
+@api_router.put("/hr/employees/{employee_id}/leave-balance")
+async def adjust_employee_leave_balance(
+    employee_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager"]))
+):
+    """تعديل رصيد الإجازات للموظف"""
+    from models.all_models import LeaveBalanceLog
+    
+    adjustment = data.get("adjustment", 0)
+    reason = data.get("reason", "manual_adjustment")
+    
+    emp = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    previous_balance = emp.get("leave_balance", 0)
+    new_balance = round(previous_balance + adjustment, 2)
+    
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"leave_balance": new_balance}}
+    )
+    
+    # Create log
+    log = LeaveBalanceLog(
+        employee_id=employee_id,
+        employee_name=emp["name"],
+        month=datetime.now().strftime("%Y-%m"),
+        amount_added=adjustment,
+        previous_balance=previous_balance,
+        new_balance=new_balance,
+        reason=reason
+    )
+    await db.leave_balance_logs.insert_one(log.model_dump())
+    
+    return {
+        "message": "تم تعديل رصيد الإجازات بنجاح",
+        "previous_balance": previous_balance,
+        "adjustment": adjustment,
+        "new_balance": new_balance
+    }
+
+@api_router.get("/hr/leave-balance/logs")
+async def get_leave_balance_logs(
+    employee_id: Optional[str] = None,
+    month: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب سجل تغييرات رصيد الإجازات"""
+    query = {}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if month:
+        query["month"] = month
+    
+    logs = await db.leave_balance_logs.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return logs
+
 # ==================== MARKETING MODULE ROUTES (قسم التسويق) ====================
 
 # Marketing Campaigns
