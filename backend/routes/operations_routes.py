@@ -422,6 +422,8 @@ async def create_driver_task(task_data: dict, current_user: dict = Depends(get_c
         details=f"مهمة سائق: {task_data.get('transport_type')} - {task_data.get('quantity')} لتر"
     )
     
+    # Remove _id before returning
+    task_dict.pop("_id", None)
     return {"message": "تم إنشاء المهمة بنجاح", "task": task_dict}
 
 
