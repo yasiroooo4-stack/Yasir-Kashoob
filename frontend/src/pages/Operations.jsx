@@ -1069,6 +1069,167 @@ const Operations = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Driver Task Dialog - مهمة سائق */}
+      <Dialog open={driverTaskDialogOpen} onOpenChange={setDriverTaskDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "تسجيل مهمة سائق" : "Log Driver Task"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "ar" ? "توثيق مهمة نقل حليب أو بترول" : "Document a milk or petroleum transport task"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleDriverTaskSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "السائق" : "Driver"} *</Label>
+                <Select value={driverTaskForm.driver_id} onValueChange={handleDriverSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "ar" ? "اختر السائق" : "Select Driver"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {drivers.length === 0 ? (
+                      <SelectItem value="_none" disabled>{language === "ar" ? "لا يوجد سائقين" : "No drivers"}</SelectItem>
+                    ) : (
+                      drivers.map((driver) => (
+                        <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "نوع النقل" : "Transport Type"} *</Label>
+                <Select value={driverTaskForm.transport_type} onValueChange={(v) => setDriverTaskForm({...driverTaskForm, transport_type: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="milk">{language === "ar" ? "حليب" : "Milk"}</SelectItem>
+                    <SelectItem value="petroleum">{language === "ar" ? "بترول" : "Petroleum"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "رقم السيارة" : "Vehicle Plate"} *</Label>
+                <Input 
+                  value={driverTaskForm.vehicle_plate} 
+                  onChange={(e) => setDriverTaskForm({...driverTaskForm, vehicle_plate: e.target.value})}
+                  placeholder="ABC 1234"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "نوع السيارة" : "Vehicle Type"}</Label>
+                <Select value={driverTaskForm.vehicle_type} onValueChange={(v) => setDriverTaskForm({...driverTaskForm, vehicle_type: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="truck">{language === "ar" ? "شاحنة" : "Truck"}</SelectItem>
+                    <SelectItem value="tanker">{language === "ar" ? "صهريج" : "Tanker"}</SelectItem>
+                    <SelectItem value="pickup">{language === "ar" ? "بيك آب" : "Pickup"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {driverTaskForm.transport_type === "milk" && (
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "كمية الحليب (لتر)" : "Milk Quantity (Liters)"}</Label>
+                <Input 
+                  type="number" 
+                  value={driverTaskForm.quantity} 
+                  onChange={(e) => setDriverTaskForm({...driverTaskForm, quantity: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "تاريخ النقل" : "Transport Date"} *</Label>
+                <Input 
+                  type="date" 
+                  value={driverTaskForm.transport_date} 
+                  onChange={(e) => setDriverTaskForm({...driverTaskForm, transport_date: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "وقت النقل" : "Transport Time"}</Label>
+                <Input 
+                  type="time" 
+                  value={driverTaskForm.transport_time} 
+                  onChange={(e) => setDriverTaskForm({...driverTaskForm, transport_time: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "من موقع" : "From Location"} *</Label>
+                <Select value={driverTaskForm.from_location} onValueChange={(v) => setDriverTaskForm({...driverTaskForm, from_location: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locationOptions.map((loc) => (
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "إلى وجهة" : "To Destination"} *</Label>
+                <Select value={driverTaskForm.to_destination} onValueChange={(v) => setDriverTaskForm({...driverTaskForm, to_destination: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {destinationOptions.map((dest) => (
+                      <SelectItem key={dest} value={dest}>{dest}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {driverTaskForm.to_destination === "شركة أخرى" && (
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "اسم الشركة" : "Company Name"}</Label>
+                <Input 
+                  value={driverTaskForm.destination_company} 
+                  onChange={(e) => setDriverTaskForm({...driverTaskForm, destination_company: e.target.value})}
+                  placeholder={language === "ar" ? "اسم الشركة" : "Company name"}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
+              <Textarea 
+                value={driverTaskForm.notes} 
+                onChange={(e) => setDriverTaskForm({...driverTaskForm, notes: e.target.value})}
+                rows={2}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDriverTaskDialogOpen(false)}>
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white" disabled={!driverTaskForm.driver_id || !driverTaskForm.vehicle_plate}>
+                {language === "ar" ? "تسجيل المهمة" : "Log Task"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
