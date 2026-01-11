@@ -12292,6 +12292,10 @@ app.include_router(sms_router)
 from routes.procurement_routes import router as procurement_router
 app.include_router(procurement_router)
 
+# Include Operations router
+from routes.operations_routes import router as operations_router
+app.include_router(operations_router)
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
