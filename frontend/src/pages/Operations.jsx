@@ -563,20 +563,21 @@ const Operations = () => {
                         <TableCell>{task.transport_time}</TableCell>
                         <TableCell className="font-medium">{task.driver_name}</TableCell>
                         <TableCell>
-                          <Badge variant={task.transport_type === "milk" ? "default" : "secondary"}>
-                            {task.transport_type === "milk" ? (language === "ar" ? "حليب" : "Milk") : (language === "ar" ? "بترول" : "Petroleum")}
+                          <Badge variant="default">
+                            {task.transport_type === "camel_milk" ? (language === "ar" ? "حليب إبل" : "Camel") :
+                             task.transport_type === "cow_milk" ? (language === "ar" ? "حليب أبقار" : "Cow") :
+                             task.transport_type === "sheep_milk" ? (language === "ar" ? "حليب أغنام" : "Sheep") :
+                             (language === "ar" ? "حليب" : "Milk")}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono">{task.vehicle_plate}</TableCell>
                         <TableCell>
-                          {task.transport_type === "milk" ? `${task.quantity?.toLocaleString() || 0} ${language === "ar" ? "لتر" : "L"}` : "-"}
+                          {`${task.quantity?.toLocaleString() || 0} ${language === "ar" ? "لتر" : "L"}`}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">{task.from_location}</Badge>
                         </TableCell>
-                        <TableCell>
-                          {task.to_destination === "شركة أخرى" ? task.destination_company : task.to_destination}
-                        </TableCell>
+                        <TableCell>{task.to_destination}</TableCell>
                       </TableRow>
                     ))
                   )}
