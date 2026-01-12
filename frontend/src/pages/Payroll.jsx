@@ -763,7 +763,7 @@ const Payroll = () => {
               
               {currentPeriod && currentPeriod.status === "approved" && (
                 <Button 
-                  onClick={handleDisbursePayroll} 
+                  onClick={openDisburseDialog} 
                   className="bg-amber-600 hover:bg-amber-700"
                   data-testid="disburse-payroll-btn"
                 >
