@@ -787,14 +787,14 @@ const FinanceSystem = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Wallet className="w-5 h-5" />
-                  الحسابات المدينة
+                  {language === "ar" ? "الحسابات المدينة" : "Accounts Receivable"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-green-500">
                   {formatCurrency(dashboardData?.summary?.accounts_receivable)}
                 </p>
-                <p className="text-sm text-muted-foreground">مستحقات من العملاء</p>
+                <p className="text-sm text-muted-foreground">{language === "ar" ? "مستحقات من العملاء" : "Dues from Customers"}</p>
               </CardContent>
             </Card>
 
