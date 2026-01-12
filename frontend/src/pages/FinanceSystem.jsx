@@ -1104,14 +1104,14 @@ const FinanceSystem = () => {
                             </div>
                           )}
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">الرصيد:</span>
+                            <span className="text-muted-foreground">{language === "ar" ? "الرصيد:" : "Balance:"}</span>
                             <span className="font-bold text-green-600">
                               {(account.current_balance || 0).toLocaleString()} {account.currency}
                             </span>
                           </div>
                           {account.account_holder_name && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">صاحب الحساب:</span>
+                              <span className="text-muted-foreground">{language === "ar" ? "صاحب الحساب:" : "Account Holder:"}</span>
                               <span>{account.account_holder_name}</span>
                             </div>
                           )}
@@ -1125,7 +1125,7 @@ const FinanceSystem = () => {
                             onClick={() => handleOpenBankAccountDialog(account)}
                           >
                             <Pencil className="w-3 h-3 me-1" />
-                            تعديل
+                            {language === "ar" ? "تعديل" : "Edit"}
                           </Button>
                           <Button 
                             variant="outline" 
@@ -1156,7 +1156,7 @@ const FinanceSystem = () => {
               data-testid="export-all-excel-btn"
             >
               <FileSpreadsheet className="w-4 h-4 text-green-600" />
-              <span>تصدير الكل Excel</span>
+              <span>{language === "ar" ? "تصدير الكل Excel" : "Export All Excel"}</span>
             </Button>
             <Button 
               onClick={exportReportsToPDF} 
