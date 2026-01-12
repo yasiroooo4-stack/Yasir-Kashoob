@@ -830,17 +830,17 @@ const FinanceSystem = () => {
                 data-testid="export-accounts-excel-btn"
               >
                 <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                تصدير Excel
+                {language === "ar" ? "تصدير Excel" : "Export Excel"}
               </Button>
               {accounts.length === 0 && (
                 <Button onClick={initializeAccounts} disabled={loading}>
                   <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
-                  تهيئة شجرة الحسابات
+                  {language === "ar" ? "تهيئة شجرة الحسابات" : "Initialize Accounts"}
                 </Button>
               )}
               <Button onClick={() => setAccountDialogOpen(true)}>
                 <Plus className="w-4 h-4 me-2" />
-                إضافة حساب
+                {language === "ar" ? "إضافة حساب" : "Add Account"}
               </Button>
             </div>
           </div>
@@ -850,17 +850,17 @@ const FinanceSystem = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>رقم الحساب</TableHead>
-                    <TableHead>اسم الحساب</TableHead>
-                    <TableHead>النوع</TableHead>
-                    <TableHead>الرصيد</TableHead>
+                    <TableHead>{language === "ar" ? "رقم الحساب" : "Account No."}</TableHead>
+                    <TableHead>{language === "ar" ? "اسم الحساب" : "Account Name"}</TableHead>
+                    <TableHead>{language === "ar" ? "النوع" : "Type"}</TableHead>
+                    <TableHead>{language === "ar" ? "الرصيد" : "Balance"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {accounts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        لا توجد حسابات - اضغط &quot;تهيئة شجرة الحسابات&quot; للبدء
+                        {language === "ar" ? 'لا توجد حسابات - اضغط "تهيئة شجرة الحسابات" للبدء' : 'No accounts - Click "Initialize Accounts" to start'}
                       </TableCell>
                     </TableRow>
                   ) : (
