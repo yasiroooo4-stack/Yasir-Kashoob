@@ -200,12 +200,14 @@ const FinanceSystem = () => {
   useEffect(() => {
     fetchDashboard();
     fetchAccounts();
+    fetchBankAccounts();
   }, []);
 
   useEffect(() => {
     if (activeTab === "journal") fetchJournalEntries();
     if (activeTab === "assets") fetchFixedAssets();
     if (activeTab === "budgets") fetchBudgets();
+    if (activeTab === "bank-accounts") fetchBankAccounts();
     if (activeTab === "reports") {
       fetchTrialBalance();
       fetchIncomeStatement();
@@ -224,6 +226,90 @@ const FinanceSystem = () => {
       toast.error(error.response?.data?.detail || "فشل تهيئة شجرة الحسابات");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Bank Account CRUD functions
+  const resetBankAccountForm = () => {
+    setBankAccountForm({
+      account_number: "1112",
+      bank_name: "",
+      bank_account_number: "",
+      iban: "",
+      swift_code: "",
+      branch_name: "",
+      account_holder_name: "",
+      currency: "OMR",
+      opening_balance: 0,
+      is_default: false,
+      notes: ""
+    });
+    setEditingBankAccount(null);
+  };
+
+  const handleOpenBankAccountDialog = (account = null) => {
+    if (account) {
+      setEditingBankAccount(account);
+      setBankAccountForm({
+        account_number: account.account_number || "1112",
+        bank_name: account.bank_name || "",
+        bank_account_number: account.bank_account_number || "",
+        iban: account.iban || "",
+        swift_code: account.swift_code || "",
+        branch_name: account.branch_name || "",
+        account_holder_name: account.account_holder_name || "",
+        currency: account.currency || "OMR",
+        opening_balance: account.opening_balance || 0,
+        is_default: account.is_default || false,
+        notes: account.notes || ""
+      });
+    } else {
+      resetBankAccountForm();
+    }
+    setBankAccountDialogOpen(true);
+  };
+
+  const handleSaveBankAccount = async () => {
+    if (!bankAccountForm.bank_name || !bankAccountForm.bank_account_number) {
+      toast.error("يرجى ملء اسم البنك ورقم الحساب");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      if (editingBankAccount) {
+        await axios.put(`${API}/finance/bank-accounts/${editingBankAccount.id}`, bankAccountForm, { headers });
+        toast.success("تم تحديث الحساب البنكي بنجاح");
+      } else {
+        await axios.post(`${API}/finance/bank-accounts`, bankAccountForm, { headers });
+        toast.success("تم إنشاء الحساب البنكي بنجاح");
+      }
+      
+      setBankAccountDialogOpen(false);
+      resetBankAccountForm();
+      fetchBankAccounts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "حدث خطأ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteBankAccount = async (accountId) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذا الحساب البنكي؟")) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API}/finance/bank-accounts/${accountId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("تم حذف الحساب البنكي");
+      fetchBankAccounts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "فشل حذف الحساب");
     }
   };
 
