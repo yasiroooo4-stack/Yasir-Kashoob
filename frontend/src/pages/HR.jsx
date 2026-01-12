@@ -107,6 +107,7 @@ const HR = () => {
   const [warnings, setWarnings] = useState([]);
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   const [selectedWarning, setSelectedWarning] = useState(null);
+  const [leaveAdjustDialogOpen, setLeaveAdjustDialogOpen] = useState(false);
   const [warningForm, setWarningForm] = useState({
     employee_id: "",
     employee_name: "",
