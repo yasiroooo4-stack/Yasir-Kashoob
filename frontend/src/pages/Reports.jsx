@@ -75,6 +75,9 @@ const Reports = () => {
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
+  
+  // Translation helper
+  const t = (ar, en) => language === "ar" ? ar : en;
 
   useEffect(() => {
     fetchAllData();
