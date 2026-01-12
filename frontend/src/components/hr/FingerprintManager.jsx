@@ -245,6 +245,7 @@ const FingerprintManager = () => {
                   <TableHead>{language === "ar" ? "رقم الموظف" : "Employee #"}</TableHead>
                   <TableHead>{language === "ar" ? "القسم" : "Department"}</TableHead>
                   <TableHead>{language === "ar" ? "رقم البصمة" : "Fingerprint ID"}</TableHead>
+                  <TableHead>{language === "ar" ? "رقم البصمة 2" : "Fingerprint ID 2"}</TableHead>
                   <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
                   <TableHead>{language === "ar" ? "إجراء" : "Action"}</TableHead>
                 </TableRow>
@@ -252,7 +253,7 @@ const FingerprintManager = () => {
               <TableBody>
                 {filteredEmployees.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       {language === "ar" ? "لا توجد نتائج" : "No results found"}
                     </TableCell>
                   </TableRow>
@@ -267,6 +268,16 @@ const FingerprintManager = () => {
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                             <Fingerprint className="w-3 h-3 me-1" />
                             {employee.fingerprint_id}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {employee.fingerprint_id_2 ? (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Fingerprint className="w-3 h-3 me-1" />
+                            {employee.fingerprint_id_2}
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>
