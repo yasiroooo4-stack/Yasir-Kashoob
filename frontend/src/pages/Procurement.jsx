@@ -1155,6 +1155,43 @@ const Procurement = () => {
               />
             </div>
             
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{language === "ar" ? "من حساب (المصدر)" : "From Account (Source)"}</Label>
+                <Select 
+                  value={paymentForm.from_account} 
+                  onValueChange={(val) => setPaymentForm({...paymentForm, from_account: val})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "ar" ? "اختر الحساب..." : "Select account..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.length > 0 ? (
+                      bankAccounts.map(acc => (
+                        <SelectItem key={acc.id || acc.account_number} value={acc.account_number}>
+                          {acc.account_number} - {acc.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="1111">1111 - الصندوق (نقدي)</SelectItem>
+                        <SelectItem value="1112">1112 - البنك</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>{language === "ar" ? "إلى حساب (الوجهة)" : "To Account (Destination)"}</Label>
+                <Input 
+                  value={paymentForm.to_account || (selectedPO?.vendor_name ? `حساب المورد: ${selectedPO.vendor_name}` : "")}
+                  onChange={(e) => setPaymentForm({...paymentForm, to_account: e.target.value})}
+                  placeholder={language === "ar" ? "حساب المورد أو رقم الحساب" : "Vendor account or number"}
+                />
+              </div>
+            </div>
+            
             <div>
               <Label>{language === "ar" ? "طريقة الدفع" : "Payment Method"}</Label>
               <Select 
