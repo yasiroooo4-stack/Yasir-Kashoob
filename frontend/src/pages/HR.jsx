@@ -576,6 +576,31 @@ const HR = () => {
     }
   };
 
+  // Leave Balance handlers
+  const handleAccrueMonthlyLeave = async () => {
+    if (!window.confirm(language === "ar" 
+      ? "هل تريد إضافة رصيد الإجازات للشهر الحالي لجميع الموظفين؟" 
+      : "Add leave balance for current month to all employees?")) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(`${API}/hr/leave-balance/accrue-monthly`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.already_processed) {
+        toast.info(response.data.message);
+      } else {
+        toast.success(response.data.message);
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "حدث خطأ");
+    }
+  };
+
   // Leave request handlers
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
