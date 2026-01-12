@@ -1024,7 +1024,7 @@ const FinanceSystem = () => {
                   {budgets.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        لا توجد ميزانيات
+                        {language === "ar" ? "لا توجد ميزانيات" : "No budgets"}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1049,35 +1049,35 @@ const FinanceSystem = () => {
           </Card>
         </TabsContent>
 
-        {/* Bank Accounts Tab - الحسابات البنكية */}
+        {/* Bank Accounts Tab */}
         <TabsContent value="bank-accounts" className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Building className="w-5 h-5" />
-                  الحسابات البنكية
+                  {language === "ar" ? "الحسابات البنكية" : "Bank Accounts"}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">إدارة الحسابات البنكية الرئيسية للشركة</p>
+                <p className="text-sm text-muted-foreground">{language === "ar" ? "إدارة الحسابات البنكية الرئيسية للشركة" : "Manage company's main bank accounts"}</p>
               </div>
               <Button onClick={() => handleOpenBankAccountDialog()} className="gap-2">
                 <Plus className="w-4 h-4" />
-                إضافة حساب بنكي
+                {language === "ar" ? "إضافة حساب بنكي" : "Add Bank Account"}
               </Button>
             </CardHeader>
             <CardContent>
               {bankAccounts.length === 0 ? (
                 <div className="text-center py-12">
                   <Building className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-                  <p className="text-muted-foreground">لا توجد حسابات بنكية</p>
-                  <p className="text-sm text-muted-foreground">اضغط على "إضافة حساب بنكي" لإنشاء حساب جديد</p>
+                  <p className="text-muted-foreground">{language === "ar" ? "لا توجد حسابات بنكية" : "No bank accounts"}</p>
+                  <p className="text-sm text-muted-foreground">{language === "ar" ? 'اضغط على "إضافة حساب بنكي" لإنشاء حساب جديد' : 'Click "Add Bank Account" to create a new one'}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {bankAccounts.map((account) => (
                     <Card key={account.id} className={`relative ${account.is_default ? 'ring-2 ring-primary' : ''}`}>
                       {account.is_default && (
-                        <Badge className="absolute top-2 left-2 bg-primary">افتراضي</Badge>
+                        <Badge className="absolute top-2 left-2 bg-primary">{language === "ar" ? "افتراضي" : "Default"}</Badge>
                       )}
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
@@ -1087,14 +1087,14 @@ const FinanceSystem = () => {
                             </div>
                             <div>
                               <p className="font-semibold">{account.bank_name}</p>
-                              <p className="text-xs text-muted-foreground">{account.branch_name || 'الفرع الرئيسي'}</p>
+                              <p className="text-xs text-muted-foreground">{account.branch_name || (language === "ar" ? 'الفرع الرئيسي' : 'Main Branch')}</p>
                             </div>
                           </div>
                         </div>
                         
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">رقم الحساب:</span>
+                            <span className="text-muted-foreground">{language === "ar" ? "رقم الحساب:" : "Account No.:"}</span>
                             <span className="font-mono">{account.bank_account_number}</span>
                           </div>
                           {account.iban && (
