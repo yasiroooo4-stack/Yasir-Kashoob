@@ -888,7 +888,7 @@ const FinanceSystem = () => {
         {/* Journal Entries Tab */}
         <TabsContent value="journal" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">القيود اليومية</h2>
+            <h2 className="text-lg font-bold">{language === "ar" ? "القيود اليومية" : "Journal Entries"}</h2>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -898,11 +898,11 @@ const FinanceSystem = () => {
                 data-testid="export-journal-excel-btn"
               >
                 <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                تصدير Excel
+                {language === "ar" ? "تصدير Excel" : "Export Excel"}
               </Button>
               <Button onClick={() => setJournalDialogOpen(true)}>
                 <Plus className="w-4 h-4 me-2" />
-                قيد جديد
+                {language === "ar" ? "قيد جديد" : "New Entry"}
               </Button>
             </div>
           </div>
@@ -912,19 +912,19 @@ const FinanceSystem = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>رقم القيد</TableHead>
-                    <TableHead>التاريخ</TableHead>
-                    <TableHead>الوصف</TableHead>
-                    <TableHead>المدين</TableHead>
-                    <TableHead>الدائن</TableHead>
-                    <TableHead>الحالة</TableHead>
+                    <TableHead>{language === "ar" ? "رقم القيد" : "Entry No."}</TableHead>
+                    <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                    <TableHead>{language === "ar" ? "الوصف" : "Description"}</TableHead>
+                    <TableHead>{language === "ar" ? "المدين" : "Debit"}</TableHead>
+                    <TableHead>{language === "ar" ? "الدائن" : "Credit"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {journalEntries.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        لا توجد قيود يومية
+                        {language === "ar" ? "لا توجد قيود يومية" : "No journal entries"}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -937,7 +937,7 @@ const FinanceSystem = () => {
                         <TableCell>{formatCurrency(entry.total_credit)}</TableCell>
                         <TableCell>
                           <Badge variant={entry.status === "posted" ? "default" : "secondary"}>
-                            {entry.status === "posted" ? "مرحل" : "مسودة"}
+                            {entry.status === "posted" ? (language === "ar" ? "مرحل" : "Posted") : (language === "ar" ? "مسودة" : "Draft")}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -952,10 +952,10 @@ const FinanceSystem = () => {
         {/* Fixed Assets Tab */}
         <TabsContent value="assets" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">الأصول الثابتة</h2>
+            <h2 className="text-lg font-bold">{language === "ar" ? "الأصول الثابتة" : "Fixed Assets"}</h2>
             <Button onClick={() => setAssetDialogOpen(true)}>
               <Plus className="w-4 h-4 me-2" />
-              إضافة أصل
+              {language === "ar" ? "إضافة أصل" : "Add Asset"}
             </Button>
           </div>
 
@@ -964,10 +964,10 @@ const FinanceSystem = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>رقم الأصل</TableHead>
-                    <TableHead>الاسم</TableHead>
-                    <TableHead>التصنيف</TableHead>
-                    <TableHead>تكلفة الشراء</TableHead>
+                    <TableHead>{language === "ar" ? "رقم الأصل" : "Asset No."}</TableHead>
+                    <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
+                    <TableHead>{language === "ar" ? "التصنيف" : "Category"}</TableHead>
+                    <TableHead>{language === "ar" ? "تكلفة الشراء" : "Purchase Cost"}</TableHead>
                     <TableHead>الإهلاك المتراكم</TableHead>
                     <TableHead>القيمة الحالية</TableHead>
                   </TableRow>
