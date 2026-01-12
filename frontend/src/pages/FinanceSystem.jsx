@@ -338,7 +338,7 @@ const FinanceSystem = () => {
   };
 
   // Format currency
-  const formatCurrency = (amount) => `${(amount || 0).toLocaleString()} ريال`;
+  const formatCurrency = (amount) => `${(amount || 0).toLocaleString()} ${language === "ar" ? "ريال" : "OMR"}`;
 
   // ========== Export Functions ==========
   
