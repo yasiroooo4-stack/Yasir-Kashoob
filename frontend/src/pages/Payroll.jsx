@@ -253,6 +253,51 @@ const Payroll = () => {
     return "";
   };
 
+  // Calculate end date to ensure 31 days period (16th to 15th or 16th based on month)
+  const calculateEndDate = (startDate) => {
+    if (!startDate) return "";
+    
+    const start = new Date(startDate);
+    const startDay = start.getDate();
+    
+    // Default: Add 30 days to get to 15th of next month (31 days total including start)
+    let endDate = new Date(start);
+    endDate.setDate(endDate.getDate() + 30); // This gives us the 15th typically
+    
+    // Calculate actual days
+    const daysDiff = Math.floor((endDate - start) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // If less than 31 days, extend to 16th instead of 15th
+    if (daysDiff < 31) {
+      endDate.setDate(endDate.getDate() + (31 - daysDiff));
+    }
+    
+    // Format as YYYY-MM-DD
+    return endDate.toISOString().split('T')[0];
+  };
+
+  // Handle start date change - auto-calculate end date
+  const handleStartDateChange = (e) => {
+    const startDate = e.target.value;
+    const endDate = calculateEndDate(startDate);
+    setPeriodForm({ 
+      ...periodForm, 
+      start_date: startDate, 
+      end_date: endDate,
+      name: "" // Reset name to regenerate
+    });
+  };
+
+  // Calculate period days for display
+  const calculatePeriodDays = () => {
+    if (periodForm.start_date && periodForm.end_date) {
+      const start = new Date(periodForm.start_date);
+      const end = new Date(periodForm.end_date);
+      return Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return 0;
+  };
+
   // Print payroll report by location type
   const handlePrintPayroll = (type) => {
     if (!currentPeriod || payrollRecords.length === 0) {
