@@ -232,7 +232,9 @@ const Procurement = () => {
     setPaymentForm({
       amount: remaining,
       payment_method: "bank_transfer",
-      reference: ""
+      reference: "",
+      from_account: "1112", // Default: البنك
+      to_account: po.vendor_name ? `حساب المورد: ${po.vendor_name}` : ""
     });
     setPaymentDialog(true);
   };
@@ -250,7 +252,9 @@ const Procurement = () => {
           params: {
             amount: paymentForm.amount,
             payment_method: paymentForm.payment_method,
-            reference: paymentForm.reference || undefined
+            reference: paymentForm.reference || undefined,
+            from_account: paymentForm.from_account || undefined,
+            to_account: paymentForm.to_account || undefined
           }
         }
       );
