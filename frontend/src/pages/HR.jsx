@@ -51,6 +51,7 @@ import {
   Trash2,
   Clock,
   Calendar,
+  CalendarDays,
   FileText,
   Car,
   Wallet,
@@ -71,6 +72,7 @@ import {
   History,
   AlertTriangle,
   Link,
+  Gift,
 } from "lucide-react";
 import FingerprintManager from "../components/hr/FingerprintManager";
 import SalaryHistoryDialog from "../components/SalaryHistoryDialog";
