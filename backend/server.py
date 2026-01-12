@@ -6793,6 +6793,116 @@ async def update_account(
     )
     return {"message": "تم تحديث الحساب بنجاح"}
 
+# ==================== BANK ACCOUNTS (الحسابات البنكية) ====================
+
+@api_router.get("/finance/bank-accounts")
+async def get_bank_accounts(current_user: dict = Depends(get_current_user)):
+    """جلب جميع الحسابات البنكية"""
+    accounts = await db.bank_accounts.find({"is_active": True}, {"_id": 0}).sort("bank_name", 1).to_list(100)
+    return accounts
+
+@api_router.get("/finance/bank-accounts/{account_id}")
+async def get_bank_account(account_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب حساب بنكي محدد"""
+    account = await db.bank_accounts.find_one({"id": account_id}, {"_id": 0})
+    if not account:
+        raise HTTPException(status_code=404, detail="الحساب غير موجود")
+    return account
+
+@api_router.post("/finance/bank-accounts")
+async def create_bank_account(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant", "finance_manager"]))
+):
+    """إنشاء حساب بنكي جديد"""
+    from models.all_models import BankAccount
+    
+    # Check if bank account number exists
+    existing = await db.bank_accounts.find_one({"bank_account_number": data.get("bank_account_number")})
+    if existing:
+        raise HTTPException(status_code=400, detail="رقم الحساب البنكي موجود مسبقاً")
+    
+    # If marked as default, unset other defaults
+    if data.get("is_default"):
+        await db.bank_accounts.update_many({}, {"$set": {"is_default": False}})
+    
+    bank_account = BankAccount(**data)
+    bank_account_dict = bank_account.model_dump()
+    bank_account_dict["current_balance"] = data.get("opening_balance", 0.0)
+    
+    await db.bank_accounts.insert_one(bank_account_dict)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_bank_account",
+        entity_type="bank_account",
+        entity_id=bank_account.id,
+        entity_name=f"{data.get('bank_name')} - {data.get('bank_account_number')}",
+        details=f"إنشاء حساب بنكي: {data.get('bank_name')}"
+    )
+    
+    # Remove _id before returning
+    bank_account_dict.pop("_id", None)
+    return {"message": "تم إنشاء الحساب البنكي بنجاح", "account": bank_account_dict}
+
+@api_router.put("/finance/bank-accounts/{account_id}")
+async def update_bank_account(
+    account_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "accountant", "finance_manager"]))
+):
+    """تحديث حساب بنكي"""
+    existing = await db.bank_accounts.find_one({"id": account_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الحساب غير موجود")
+    
+    # If marking as default, unset other defaults
+    if data.get("is_default"):
+        await db.bank_accounts.update_many({"id": {"$ne": account_id}}, {"$set": {"is_default": False}})
+    
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.bank_accounts.update_one(
+        {"id": account_id},
+        {"$set": data}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_bank_account",
+        entity_type="bank_account",
+        entity_id=account_id,
+        entity_name=data.get("bank_name", existing.get("bank_name")),
+        details=f"تحديث حساب بنكي"
+    )
+    
+    return {"message": "تم تحديث الحساب البنكي بنجاح"}
+
+@api_router.delete("/finance/bank-accounts/{account_id}")
+async def delete_bank_account(
+    account_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """حذف (إلغاء تفعيل) حساب بنكي"""
+    result = await db.bank_accounts.update_one(
+        {"id": account_id},
+        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="الحساب غير موجود")
+    return {"message": "تم حذف الحساب البنكي بنجاح"}
+
+@api_router.get("/finance/bank-accounts/default")
+async def get_default_bank_account(current_user: dict = Depends(get_current_user)):
+    """جلب الحساب البنكي الافتراضي"""
+    account = await db.bank_accounts.find_one({"is_default": True, "is_active": True}, {"_id": 0})
+    if not account:
+        # Return first active account if no default
+        account = await db.bank_accounts.find_one({"is_active": True}, {"_id": 0})
+    return account
+
 # Initialize default accounts if none exist
 @api_router.post("/finance/accounts/initialize")
 async def initialize_chart_of_accounts(
