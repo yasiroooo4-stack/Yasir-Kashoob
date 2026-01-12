@@ -3245,10 +3245,19 @@ const HR = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{language === "ar" ? "معرف البصمة" : "Fingerprint ID"}</Label>
+                <Label>{language === "ar" ? "رقم البصمة" : "Fingerprint ID"}</Label>
                 <Input
                   value={employeeForm.fingerprint_id}
                   onChange={(e) => setEmployeeForm({ ...employeeForm, fingerprint_id: e.target.value })}
+                  placeholder={language === "ar" ? "رقم البصمة الأساسي" : "Primary Fingerprint ID"}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "رقم البصمة 2" : "Fingerprint ID 2"}</Label>
+                <Input
+                  value={employeeForm.fingerprint_id_2}
+                  onChange={(e) => setEmployeeForm({ ...employeeForm, fingerprint_id_2: e.target.value })}
+                  placeholder={language === "ar" ? "رقم البصمة في المركز" : "Center Fingerprint ID"}
                 />
               </div>
             </div>
