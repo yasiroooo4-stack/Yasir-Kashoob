@@ -940,6 +940,75 @@ const Payroll = () => {
           </form>
         </DialogContent>
       </Dialog>
+      
+      {/* Disburse Payroll Dialog */}
+      <Dialog open={disburseDialogOpen} onOpenChange={setDisburseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "صرف الرواتب" : "Disburse Payroll"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                {language === "ar" 
+                  ? "سيتم صرف الرواتب وإنشاء قيد محاسبي تلقائياً" 
+                  : "Payroll will be disbursed and a journal entry will be created automatically"}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{language === "ar" ? "من حساب (المصدر)" : "From Account (Source)"}</Label>
+                <Select 
+                  value={disburseForm.from_account} 
+                  onValueChange={(val) => setDisburseForm({...disburseForm, from_account: val})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "ar" ? "اختر الحساب..." : "Select account..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.length > 0 ? (
+                      bankAccounts.map(acc => (
+                        <SelectItem key={acc.id || acc.account_number} value={acc.account_number}>
+                          {acc.account_number} - {acc.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="1111">1111 - الصندوق (نقدي)</SelectItem>
+                        <SelectItem value="1112">1112 - البنك</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>{language === "ar" ? "إلى حساب (الوجهة)" : "To Account (Destination)"}</Label>
+                <Input 
+                  value={disburseForm.to_account}
+                  onChange={(e) => setDisburseForm({...disburseForm, to_account: e.target.value})}
+                  placeholder={language === "ar" ? "حساب الموظفين" : "Employees account"}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisburseDialogOpen(false)}>
+              {t("cancel")}
+            </Button>
+            <Button 
+              onClick={handleDisbursePayroll}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              <Banknote className="w-4 h-4 me-2" />
+              {language === "ar" ? "تأكيد الصرف" : "Confirm Disbursement"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
