@@ -7,20 +7,42 @@
 
 ## ✅ ما تم إنجازه في هذه الجلسة (12 يناير 2026)
 
-### 33. إصلاح تعديل رصيد الإجازات ✅ 🆕 (P0)
-- **المشكلة:** زر "تعديل" في تبويب "رصيد الإجازات" لم يكن يعمل
-- **السبب:** Dialog component لم يتم إنشاؤه رغم وجود الـ state
-- **الحل:**
-  - إضافة `leaveAdjustForm` state للنموذج
-  - إضافة function `handleLeaveAdjustSubmit` للتعامل مع API
-  - إنشاء Dialog component كامل مع:
-    - عرض اسم الموظف والرصيد الحالي
-    - حقل التعديل (موجب للإضافة، سالب للخصم)
-    - حقل السبب
-    - عرض الرصيد بعد التعديل بألوان مميزة
-    - زر التأكيد والإلغاء
-- **API المستخدم:** `PUT /api/hr/employees/{employee_id}/leave-balance`
+### 36. تحديث منطق البحث عن الحضور ليشمل fingerprint_id_2 ✅ 🆕 (P1)
+- **المشكلة:** النظام يبحث فقط عن `fingerprint_id` عند مطابقة سجلات الحضور
+- **الحل:** تحديث منطق البحث في `/app/backend/server.py` لاستخدام `$or` للبحث في كلا الحقلين:
+  ```python
+  employee = await db.hr_employees.find_one({
+      "$or": [
+          {"fingerprint_id": fp_id},
+          {"fingerprint_id_2": fp_id}
+      ]
+  })
+  ```
+- **الملفات المعدلة:** `/app/backend/server.py` (دالتين: sync_attendance_batch, sync_single_attendance)
+
+### 35. تحديث صفحة Reports للترجمة ✅ 🆕 (P1)
+- إضافة `useLanguage` hook
+- إنشاء helper function `t(ar, en)` للترجمة
+- تحديث جميع النصوص: العناوين، البطاقات، الجداول، الأزرار
+- دعم التبديل بين العربية والإنجليزية
+- **الملفات المعدلة:** `/app/frontend/src/pages/Reports.jsx`
+
+### 34. إضافة حقل "رقم البصمة 2" للموظفين ✅ 🆕 (P0)
+- إضافة `fingerprint_id_2` في model الموظف (Backend)
+- إضافة عمود "رقم البصمة 2" في جدول ربط البصمات
+- تحديث Dialog التعديل ليشمل الحقلين
+- **الملفات المعدلة:**
+  - `/app/backend/models/all_models.py`
+  - `/app/frontend/src/pages/HR.jsx`
+  - `/app/frontend/src/components/hr/FingerprintManager.jsx`
+
+### 33. إصلاح تعديل رصيد الإجازات ✅ (P0)
+- إضافة Dialog لتعديل رصيد الإجازات
 - **الملفات المعدلة:** `/app/frontend/src/pages/HR.jsx`
+
+### 32. إصلاح ترجمة صفحة Finance System ✅ (P1)
+- تحديث جميع النصوص العربية الثابتة لدعم التبديل للإنجليزية
+- **الملفات المعدلة:** `/app/frontend/src/pages/FinanceSystem.jsx`
 
 ---
 
