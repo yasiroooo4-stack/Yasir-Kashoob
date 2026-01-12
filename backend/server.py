@@ -9758,8 +9758,18 @@ async def approve_payroll(period_id: str, current_user: dict = Depends(get_curre
     return {"message": "تم اعتماد كشف الرواتب بنجاح"}
 
 @api_router.post("/hr/payroll/periods/{period_id}/disburse")
-async def disburse_payroll(period_id: str, current_user: dict = Depends(require_role(["admin", "hr_manager", "finance_manager"]))):
-    """Disburse/Pay approved payroll - Creates automatic journal entry"""
+async def disburse_payroll(
+    period_id: str, 
+    from_account: str = "1112",
+    to_account: str = "حساب الموظفين",
+    current_user: dict = Depends(require_role(["admin", "hr_manager", "finance_manager"]))
+):
+    """Disburse/Pay approved payroll - Creates automatic journal entry
+    
+    Args:
+        from_account: Source account number (default: 1112 البنك)
+        to_account: Description for destination (default: حساب الموظفين)
+    """
     period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
     if not period:
         raise HTTPException(status_code=404, detail="Payroll period not found")
@@ -9780,7 +9790,7 @@ async def disburse_payroll(period_id: str, current_user: dict = Depends(require_
     # Create automatic journal entry for payroll disbursement
     # Dr: مصروفات الرواتب (5200) = صافي الراتب + الخصومات
     # Cr: الرواتب المستحقة (2120) = الخصومات (إن وجدت)
-    # Cr: البنك (1112) = صافي الراتب
+    # Cr: الحساب المحدد (from_account) = صافي الراتب
     journal_lines = [
         {"account_number": "5200", "debit": total_gross_for_journal, "credit": 0, "description": "مصروفات الرواتب والبدلات"},
     ]
@@ -9788,10 +9798,10 @@ async def disburse_payroll(period_id: str, current_user: dict = Depends(require_
     if total_deductions > 0:
         journal_lines.append({"account_number": "2120", "debit": 0, "credit": round(total_deductions, 3), "description": "خصومات الموظفين"})
     
-    journal_lines.append({"account_number": "1112", "debit": 0, "credit": round(total_net_salary, 3), "description": f"صرف رواتب {period['name']}"})
+    journal_lines.append({"account_number": from_account, "debit": 0, "credit": round(total_net_salary, 3), "description": f"صرف رواتب {period['name']} - من حساب {from_account} إلى {to_account}"})
     
     await create_auto_journal_entry(
-        description=f"صرف رواتب - {period['name']} - {len(records)} موظف",
+        description=f"صرف رواتب - {period['name']} - {len(records)} موظف - من {from_account}",
         lines=journal_lines,
         reference_type="payroll_disbursement",
         reference_id=period_id,
@@ -9799,14 +9809,16 @@ async def disburse_payroll(period_id: str, current_user: dict = Depends(require_
         created_by_name=current_user["full_name"]
     )
     
-    # Update period status
+    # Update period status with account info
     await db.payroll_periods.update_one(
         {"id": period_id},
         {"$set": {
             "status": "disbursed",
             "disbursed_at": datetime.now(timezone.utc).isoformat(),
             "disbursed_by": current_user["full_name"],
-            "total_disbursed": round(total_net_salary, 3)
+            "total_disbursed": round(total_net_salary, 3),
+            "from_account": from_account,
+            "to_account": to_account
         }}
     )
     
@@ -9823,12 +9835,14 @@ async def disburse_payroll(period_id: str, current_user: dict = Depends(require_
         entity_type="payroll",
         entity_id=period_id,
         entity_name=period["name"],
-        details=f"صرف رواتب {len(records)} موظف بإجمالي {total_net_salary:.3f} ر.ع"
+        details=f"صرف رواتب {len(records)} موظف بإجمالي {total_net_salary:.3f} ر.ع من حساب {from_account}"
     )
     
     return {
         "message": f"تم صرف الرواتب بنجاح - {len(records)} موظف",
         "total_disbursed": round(total_net_salary, 3),
+        "from_account": from_account,
+        "to_account": to_account,
         "journal_entry_created": True
     }
 
