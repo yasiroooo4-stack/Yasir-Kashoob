@@ -1526,6 +1526,7 @@ const HR = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{language === "ar" ? "الكود" : "Code"}</TableHead>
+                      <TableHead>{language === "ar" ? "رقم الهوية" : "National ID"}</TableHead>
                       <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
                       <TableHead>{language === "ar" ? "القسم" : "Department"}</TableHead>
                       <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
@@ -1541,7 +1542,7 @@ const HR = () => {
                   <TableBody>
                     {employees.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                           {t("no_data")}
                         </TableCell>
                       </TableRow>
@@ -1550,6 +1551,9 @@ const HR = () => {
                         <TableRow key={emp.id}>
                           <TableCell>
                             <Badge variant="outline">{emp.employee_code || "-"}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-mono text-sm">{emp.national_id || "-"}</span>
                           </TableCell>
                           <TableCell className="font-medium">{emp.name}</TableCell>
                           <TableCell>{getDepartmentName(emp.department)}</TableCell>
