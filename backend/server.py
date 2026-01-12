@@ -9246,12 +9246,24 @@ async def create_payroll_period(
     end_date: str = Form(...),
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new payroll period (e.g., 16 Nov - 15 Dec)"""
-    # Calculate total days
+    """Create a new payroll period (e.g., 16 Nov - 16 Dec for 31 days)
+    
+    The period is automatically adjusted to ensure 31 working days:
+    - From 16th to 15th of next month = 30 days → adjusted to 16th
+    - From 16th to 16th of next month = 31 days → kept as is
+    """
     from datetime import datetime as dt
+    
     start = dt.strptime(start_date, "%Y-%m-%d")
     end = dt.strptime(end_date, "%Y-%m-%d")
     total_days = (end - start).days + 1
+    
+    # Auto-adjust if less than 31 days
+    if total_days < 31:
+        from datetime import timedelta
+        end = start + timedelta(days=30)  # 31 days including start
+        end_date = end.strftime("%Y-%m-%d")
+        total_days = 31
     
     period = PayrollPeriod(
         name=name,
@@ -9269,7 +9281,7 @@ async def create_payroll_period(
         entity_type="payroll",
         entity_id=period.id,
         entity_name=name,
-        details=f"إنشاء فترة رواتب: {name}"
+        details=f"إنشاء فترة رواتب: {name} ({total_days} يوم)"
     )
     
     return period.model_dump()
