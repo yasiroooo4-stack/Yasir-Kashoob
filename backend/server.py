@@ -3939,7 +3939,14 @@ async def sync_single_attendance(
         # البحث عن الموظف
         employee = None
         if record.get("fingerprint_id"):
-            employee = await db.hr_employees.find_one({"fingerprint_id": record["fingerprint_id"]}, {"_id": 0})
+            fp_id = str(record["fingerprint_id"])
+            # البحث في fingerprint_id أو fingerprint_id_2
+            employee = await db.hr_employees.find_one({
+                "$or": [
+                    {"fingerprint_id": fp_id},
+                    {"fingerprint_id_2": fp_id}
+                ]
+            }, {"_id": 0})
         if not employee and record.get("employee_id"):
             employee = await db.hr_employees.find_one({"id": record["employee_id"]}, {"_id": 0})
         
