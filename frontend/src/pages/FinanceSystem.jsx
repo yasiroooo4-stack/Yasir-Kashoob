@@ -745,7 +745,7 @@ const FinanceSystem = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{formatCurrency(dashboardData?.summary?.total_revenue)}</p>
-                    <p className="text-sm text-muted-foreground">إجمالي الإيرادات</p>
+                    <p className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي الإيرادات" : "Total Revenue"}</p>
                   </div>
                 </div>
               </CardContent>
