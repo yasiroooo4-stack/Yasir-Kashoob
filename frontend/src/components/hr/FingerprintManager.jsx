@@ -77,6 +77,7 @@ const FingerprintManager = () => {
   const openEditDialog = (employee) => {
     setSelectedEmployee(employee);
     setFingerprintId(employee.fingerprint_id || "");
+    setFingerprintId2(employee.fingerprint_id_2 || "");
     setEditDialogOpen(true);
   };
 
@@ -86,7 +87,8 @@ const FingerprintManager = () => {
     try {
       await axios.put(`${API}/hr/employees/${selectedEmployee.id}`, {
         ...selectedEmployee,
-        fingerprint_id: fingerprintId
+        fingerprint_id: fingerprintId,
+        fingerprint_id_2: fingerprintId2
       });
       toast.success(language === "ar" ? "تم حفظ رقم البصمة" : "Fingerprint ID saved");
       setEditDialogOpen(false);
