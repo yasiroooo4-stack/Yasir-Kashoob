@@ -802,7 +802,7 @@ const FinanceSystem = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Building2 className="w-5 h-5" />
-                  الأصول الثابتة
+                  {language === "ar" ? "الأصول الثابتة" : "Fixed Assets"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -810,7 +810,7 @@ const FinanceSystem = () => {
                   {formatCurrency(dashboardData?.summary?.fixed_assets_value)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {dashboardData?.summary?.fixed_assets_count || 0} أصل
+                  {dashboardData?.summary?.fixed_assets_count || 0} {language === "ar" ? "أصل" : "assets"}
                 </p>
               </CardContent>
             </Card>
@@ -820,7 +820,7 @@ const FinanceSystem = () => {
         {/* Chart of Accounts Tab */}
         <TabsContent value="accounts" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">شجرة الحسابات</h2>
+            <h2 className="text-lg font-bold">{language === "ar" ? "شجرة الحسابات" : "Chart of Accounts"}</h2>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
