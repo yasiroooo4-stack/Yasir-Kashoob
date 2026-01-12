@@ -80,12 +80,15 @@ const Procurement = () => {
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedPO, setSelectedPO] = useState(null);
+  const [bankAccounts, setBankAccounts] = useState([]);
   
   // Payment form state
   const [paymentForm, setPaymentForm] = useState({
     amount: 0,
     payment_method: "bank_transfer",
-    reference: ""
+    reference: "",
+    from_account: "",
+    to_account: ""
   });
   
   // Form states
