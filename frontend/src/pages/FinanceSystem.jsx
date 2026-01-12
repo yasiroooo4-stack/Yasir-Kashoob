@@ -677,31 +677,31 @@ const FinanceSystem = () => {
         <TabsList className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <PieChart className="w-4 h-4" />
-            <span className="hidden sm:inline">لوحة التحكم</span>
+            <span className="hidden sm:inline">{language === "ar" ? "لوحة التحكم" : "Dashboard"}</span>
           </TabsTrigger>
           <TabsTrigger value="accounts" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">شجرة الحسابات</span>
+            <span className="hidden sm:inline">{language === "ar" ? "شجرة الحسابات" : "Chart of Accounts"}</span>
           </TabsTrigger>
           <TabsTrigger value="journal" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">القيود</span>
+            <span className="hidden sm:inline">{language === "ar" ? "القيود" : "Journal"}</span>
           </TabsTrigger>
           <TabsTrigger value="assets" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">الأصول</span>
+            <span className="hidden sm:inline">{language === "ar" ? "الأصول" : "Assets"}</span>
           </TabsTrigger>
           <TabsTrigger value="budgets" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
-            <span className="hidden sm:inline">الميزانيات</span>
+            <span className="hidden sm:inline">{language === "ar" ? "الميزانيات" : "Budgets"}</span>
           </TabsTrigger>
           <TabsTrigger value="bank-accounts" className="flex items-center gap-2">
             <Building className="w-4 h-4" />
-            <span className="hidden sm:inline">الحسابات البنكية</span>
+            <span className="hidden sm:inline">{language === "ar" ? "الحسابات البنكية" : "Bank Accounts"}</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">التقارير</span>
+            <span className="hidden sm:inline">{language === "ar" ? "التقارير" : "Reports"}</span>
           </TabsTrigger>
         </TabsList>
 
