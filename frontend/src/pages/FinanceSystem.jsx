@@ -1046,6 +1046,102 @@ const FinanceSystem = () => {
           </Card>
         </TabsContent>
 
+        {/* Bank Accounts Tab - الحسابات البنكية */}
+        <TabsContent value="bank-accounts" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="w-5 h-5" />
+                  الحسابات البنكية
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">إدارة الحسابات البنكية الرئيسية للشركة</p>
+              </div>
+              <Button onClick={() => handleOpenBankAccountDialog()} className="gap-2">
+                <Plus className="w-4 h-4" />
+                إضافة حساب بنكي
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {bankAccounts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Building className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground">لا توجد حسابات بنكية</p>
+                  <p className="text-sm text-muted-foreground">اضغط على "إضافة حساب بنكي" لإنشاء حساب جديد</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {bankAccounts.map((account) => (
+                    <Card key={account.id} className={`relative ${account.is_default ? 'ring-2 ring-primary' : ''}`}>
+                      {account.is_default && (
+                        <Badge className="absolute top-2 left-2 bg-primary">افتراضي</Badge>
+                      )}
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                              <Building className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-semibold">{account.bank_name}</p>
+                              <p className="text-xs text-muted-foreground">{account.branch_name || 'الفرع الرئيسي'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">رقم الحساب:</span>
+                            <span className="font-mono">{account.bank_account_number}</span>
+                          </div>
+                          {account.iban && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">IBAN:</span>
+                              <span className="font-mono text-xs">{account.iban}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">الرصيد:</span>
+                            <span className="font-bold text-green-600">
+                              {(account.current_balance || 0).toLocaleString()} {account.currency}
+                            </span>
+                          </div>
+                          {account.account_holder_name && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">صاحب الحساب:</span>
+                              <span>{account.account_holder_name}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2 pt-2 border-t">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleOpenBankAccountDialog(account)}
+                          >
+                            <Pencil className="w-3 h-3 me-1" />
+                            تعديل
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-red-600 hover:bg-red-50"
+                            onClick={() => handleDeleteBankAccount(account.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
           {/* Export Buttons */}
