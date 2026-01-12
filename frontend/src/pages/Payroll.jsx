@@ -191,25 +191,33 @@ const Payroll = () => {
     }
   };
 
+  const openDisburseDialog = () => {
+    setDisburseForm({
+      from_account: "1112",
+      to_account: "حساب الموظفين"
+    });
+    setDisburseDialogOpen(true);
+  };
+
   const handleDisbursePayroll = async () => {
     if (!selectedPeriod) return;
-    
-    if (!window.confirm(language === "ar" 
-      ? "هل تريد صرف الرواتب لهذه الفترة؟ سيتم إنشاء قيد محاسبي تلقائياً." 
-      : "Disburse payroll for this period? A journal entry will be created automatically."
-    )) {
-      return;
-    }
     
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `${API}/api/hr/payroll/periods/${selectedPeriod}/disburse`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { 
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            from_account: disburseForm.from_account,
+            to_account: disburseForm.to_account
+          }
+        }
       );
       
       toast.success(response.data.message || (language === "ar" ? "تم صرف الرواتب بنجاح" : "Payroll disbursed successfully"));
+      setDisburseDialogOpen(false);
       fetchPeriods();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error disbursing payroll");
