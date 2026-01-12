@@ -1165,7 +1165,7 @@ const FinanceSystem = () => {
               data-testid="export-all-pdf-btn"
             >
               <Download className="w-4 h-4 text-red-600" />
-              <span>تصدير PDF</span>
+              <span>{language === "ar" ? "تصدير PDF" : "Export PDF"}</span>
             </Button>
           </div>
 
@@ -1176,7 +1176,7 @@ const FinanceSystem = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="w-5 h-5" />
-                    ميزان المراجعة
+                    {language === "ar" ? "ميزان المراجعة" : "Trial Balance"}
                   </CardTitle>
                   <Button 
                     size="sm" 
@@ -1192,12 +1192,12 @@ const FinanceSystem = () => {
                   {trialBalance?.is_balanced ? (
                     <span className="text-green-600 flex items-center gap-1">
                       <CheckCircle className="w-4 h-4" />
-                      متوازن
+                      {language === "ar" ? "متوازن" : "Balanced"}
                     </span>
                   ) : (
                     <span className="text-red-600 flex items-center gap-1">
                       <AlertCircle className="w-4 h-4" />
-                      غير متوازن
+                      {language === "ar" ? "غير متوازن" : "Unbalanced"}
                     </span>
                   )}
                 </CardDescription>
@@ -1205,13 +1205,13 @@ const FinanceSystem = () => {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">إجمالي المدين</p>
+                    <p className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي المدين" : "Total Debit"}</p>
                     <p className="text-2xl font-bold text-blue-600">
                       {formatCurrency(trialBalance?.total_debit)}
                     </p>
                   </div>
                   <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">إجمالي الدائن</p>
+                    <p className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي الدائن" : "Total Credit"}</p>
                     <p className="text-2xl font-bold text-red-600">
                       {formatCurrency(trialBalance?.total_credit)}
                     </p>
@@ -1226,7 +1226,7 @@ const FinanceSystem = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
-                    قائمة الدخل
+                    {language === "ar" ? "قائمة الدخل" : "Income Statement"}
                   </CardTitle>
                   <Button 
                     size="sm" 
