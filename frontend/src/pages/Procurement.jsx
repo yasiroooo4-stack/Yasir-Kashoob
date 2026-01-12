@@ -124,13 +124,14 @@ const Procurement = () => {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      const [summaryRes, vendorsRes, reqRes, poRes, invRes, alertsRes] = await Promise.all([
+      const [summaryRes, vendorsRes, reqRes, poRes, invRes, alertsRes, accountsRes] = await Promise.all([
         axios.get(`${API}/procurement/analytics/summary`, { headers }),
         axios.get(`${API}/procurement/vendors`, { headers }),
         axios.get(`${API}/procurement/requisitions`, { headers }),
         axios.get(`${API}/procurement/purchase-orders`, { headers }),
         axios.get(`${API}/procurement/inventory`, { headers }),
         axios.get(`${API}/procurement/inventory/alerts`, { headers }),
+        axios.get(`${API}/finance/accounts`, { headers }).catch(() => ({ data: [] })),
       ]);
       
       setSummary(summaryRes.data);
@@ -139,6 +140,14 @@ const Procurement = () => {
       setPurchaseOrders(poRes.data);
       setInventory(invRes.data);
       setInventoryAlerts(alertsRes.data);
+      
+      // Filter bank/cash accounts for payments
+      const paymentAccounts = accountsRes.data.filter(acc => 
+        acc.account_type === 'asset' && 
+        (acc.name.includes('البنك') || acc.name.includes('الصندوق') || acc.name.includes('النقد') || 
+         acc.name.toLowerCase().includes('bank') || acc.name.toLowerCase().includes('cash'))
+      );
+      setBankAccounts(paymentAccounts);
     } catch (error) {
       console.error("Error fetching procurement data:", error);
       toast.error(language === "ar" ? "حدث خطأ في جلب البيانات" : "Error fetching data");
