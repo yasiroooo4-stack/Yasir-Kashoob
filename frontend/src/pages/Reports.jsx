@@ -283,9 +283,9 @@ const Reports = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>تقرير الموردين</CardTitle>
-                <Button onClick={() => exportToCSV(filteredSuppliers.map(s => ({ الكود: s.supplier_code, الاسم: s.name, المركز: s.center_name, النوع: s.milk_type, الهاتف: s.phone, الرصيد: s.balance })), "suppliers_report")}>
-                  <Download className="w-4 h-4 me-2" />تصدير
+                <CardTitle>{t("تقرير الموردين", "Suppliers Report")}</CardTitle>
+                <Button onClick={() => exportToCSV(filteredSuppliers.map(s => ({ [t("الكود", "Code")]: s.supplier_code, [t("الاسم", "Name")]: s.name, [t("المركز", "Center")]: s.center_name, [t("النوع", "Type")]: s.milk_type, [t("الهاتف", "Phone")]: s.phone, [t("الرصيد", "Balance")]: s.balance })), "suppliers_report")}>
+                  <Download className="w-4 h-4 me-2" />{t("تصدير", "Export")}
                 </Button>
               </div>
             </CardHeader>
@@ -299,10 +299,10 @@ const Reports = () => {
                         <h4 className="font-bold">{center}</h4>
                       </div>
                       <div className="space-y-1 text-sm">
-                        <div className="flex justify-between"><span>الإجمالي:</span><Badge>{data.total}</Badge></div>
-                        <div className="flex justify-between"><span>🐪 إبل:</span><span>{data.camel}</span></div>
-                        <div className="flex justify-between"><span>🐄 أبقار:</span><span>{data.cow}</span></div>
-                        <div className="flex justify-between border-t pt-2"><span>الأرصدة:</span><span className="font-bold text-green-600">{formatCurrency(data.balance)}</span></div>
+                        <div className="flex justify-between"><span>{t("الإجمالي:", "Total:")}</span><Badge>{data.total}</Badge></div>
+                        <div className="flex justify-between"><span>🐪 {t("إبل:", "Camel:")}</span><span>{data.camel}</span></div>
+                        <div className="flex justify-between"><span>🐄 {t("أبقار:", "Cow:")}</span><span>{data.cow}</span></div>
+                        <div className="flex justify-between border-t pt-2"><span>{t("الأرصدة:", "Balances:")}</span><span className="font-bold text-green-600">{formatCurrency(data.balance)}</span></div>
                       </div>
                     </CardContent>
                   </Card>
@@ -312,11 +312,11 @@ const Reports = () => {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background">
                     <TableRow>
-                      <TableHead>الكود</TableHead>
-                      <TableHead>الاسم</TableHead>
-                      <TableHead>المركز</TableHead>
-                      <TableHead>النوع</TableHead>
-                      <TableHead>الرصيد</TableHead>
+                      <TableHead>{t("الكود", "Code")}</TableHead>
+                      <TableHead>{t("الاسم", "Name")}</TableHead>
+                      <TableHead>{t("المركز", "Center")}</TableHead>
+                      <TableHead>{t("النوع", "Type")}</TableHead>
+                      <TableHead>{t("الرصيد", "Balance")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -340,9 +340,9 @@ const Reports = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>تقرير التوريدات</CardTitle>
-                <Button onClick={() => exportToCSV(Object.entries(receptionsByDate).map(([date, data]) => ({ التاريخ: date, الكمية: data.quantity, المبلغ: data.amount, العدد: data.count })), "receptions_report")}>
-                  <Download className="w-4 h-4 me-2" />تصدير
+                <CardTitle>{t("تقرير التوريدات", "Deliveries Report")}</CardTitle>
+                <Button onClick={() => exportToCSV(Object.entries(receptionsByDate).map(([date, data]) => ({ [t("التاريخ", "Date")]: date, [t("الكمية", "Quantity")]: data.quantity, [t("المبلغ", "Amount")]: data.amount, [t("العدد", "Count")]: data.count })), "receptions_report")}>
+                  <Download className="w-4 h-4 me-2" />{t("تصدير", "Export")}
                 </Button>
               </div>
             </CardHeader>
@@ -351,8 +351,8 @@ const Reports = () => {
                 <Card className="bg-green-50 dark:bg-green-900/20">
                   <CardContent className="p-4 text-center">
                     <Milk className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                    <p className="text-sm text-muted-foreground">إجمالي الكمية</p>
-                    <p className="text-2xl font-bold text-green-600">{formatNumber(filteredReceptions.reduce((s, r) => s + (r.quantity || 0), 0))} لتر</p>
+                    <p className="text-sm text-muted-foreground">{t("إجمالي الكمية", "Total Quantity")}</p>
+                    <p className="text-2xl font-bold text-green-600">{formatNumber(filteredReceptions.reduce((s, r) => s + (r.quantity || 0), 0))} {t("لتر", "L")}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-amber-50 dark:bg-amber-900/20">
