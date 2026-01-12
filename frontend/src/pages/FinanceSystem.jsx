@@ -36,6 +36,7 @@ import { Badge } from "../components/ui/badge";
 import { 
   BookOpen, 
   Building2, 
+  Building,
   Calculator, 
   CreditCard, 
   DollarSign,
@@ -53,7 +54,9 @@ import {
   CheckCircle,
   X,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
