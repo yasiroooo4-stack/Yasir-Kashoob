@@ -49,6 +49,7 @@ import {
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const Reports = () => {
+  const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState("suppliers");
   const [loading, setLoading] = useState(false);
   
