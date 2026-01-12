@@ -858,7 +858,7 @@ const Payroll = () => {
                 <Input
                   type="date"
                   value={periodForm.start_date}
-                  onChange={(e) => setPeriodForm({ ...periodForm, start_date: e.target.value })}
+                  onChange={handleStartDateChange}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
@@ -874,10 +874,27 @@ const Payroll = () => {
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  {language === "ar" ? "عادة يوم 15 من الشهر التالي" : "Usually 15th of next month"}
+                  {language === "ar" ? "يُحسب تلقائياً ليكون 31 يوم" : "Auto-calculated for 31 days"}
                 </p>
               </div>
             </div>
+            {periodForm.start_date && periodForm.end_date && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">
+                    {language === "ar" ? "عدد أيام الفترة:" : "Period days:"}
+                  </span>{" "}
+                  <span className={`font-bold ${calculatePeriodDays() === 31 ? "text-green-600" : "text-orange-600"}`}>
+                    {calculatePeriodDays()} {language === "ar" ? "يوم" : "days"}
+                  </span>
+                  {calculatePeriodDays() !== 31 && (
+                    <span className="text-orange-600 text-xs mr-2">
+                      {language === "ar" ? "(يُفضل 31 يوم)" : "(31 days preferred)"}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>{language === "ar" ? "اسم الفترة" : "Period Name"} *</Label>
               <Input
