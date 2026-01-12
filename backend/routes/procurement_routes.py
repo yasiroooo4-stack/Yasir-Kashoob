@@ -332,9 +332,16 @@ async def pay_purchase_order(
     amount: float,
     payment_method: str = "bank_transfer",
     reference: str = None,
+    from_account: str = None,
+    to_account: str = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Record payment for a purchase order - Creates automatic journal entry"""
+    """Record payment for a purchase order - Creates automatic journal entry
+    
+    Args:
+        from_account: Source account number (e.g., 1112 for bank, 1111 for cash)
+        to_account: Destination account or vendor info
+    """
     po = await db.purchase_orders.find_one({"id": po_id}, {"_id": 0})
     if not po:
         raise HTTPException(status_code=404, detail="Purchase order not found")
@@ -348,12 +355,18 @@ async def pay_purchase_order(
     new_paid = round(current_paid + amount, 3)
     status = POStatus.COMPLETED.value if new_paid >= total_amount else po.get("status")
     
-    # Record payment
+    # Determine source account - default based on payment method if not specified
+    if not from_account:
+        from_account = "1112" if payment_method == "bank_transfer" else "1111"
+    
+    # Record payment with account info
     payment_record = {
         "id": str(uuid.uuid4()),
         "amount": amount,
         "payment_method": payment_method,
         "reference": reference,
+        "from_account": from_account,
+        "to_account": to_account or f"حساب المورد: {po.get('vendor_name', '')}",
         "paid_at": datetime.now(timezone.utc).isoformat(),
         "paid_by": current_user.get("full_name", current_user.get("username"))
     }
@@ -366,15 +379,14 @@ async def pay_purchase_order(
         }
     )
     
-    # Create automatic journal entry
-    # Dr: الموردين (2110) / Cr: البنك (1112) أو الصندوق (1111)
-    credit_account = "1112" if payment_method == "bank_transfer" else "1111"
+    # Create automatic journal entry using the specified source account
+    # Dr: الموردين (2110) / Cr: الحساب المحدد (البنك أو الصندوق)
     try:
         await create_auto_journal_entry(
             description=f"سداد فاتورة شراء - {po.get('po_number', '')} - {po.get('vendor_name', '')}",
             lines=[
                 {"account_number": "2110", "debit": round(amount, 3), "credit": 0, "description": f"سداد للمورد - {po.get('vendor_name', '')}"},
-                {"account_number": credit_account, "debit": 0, "credit": round(amount, 3), "description": f"دفعة لأمر شراء {po.get('po_number', '')}"}
+                {"account_number": from_account, "debit": 0, "credit": round(amount, 3), "description": f"دفعة لأمر شراء {po.get('po_number', '')} - من حساب {from_account}"}
             ],
             reference_type="po_payment",
             reference_id=po_id,
@@ -385,9 +397,11 @@ async def pay_purchase_order(
         print(f"Error creating journal entry: {e}")
     
     return {
-        "message": f"تم تسجيل دفعة {amount:.3f} ر.ع",
+        "message": f"تم تسجيل دفعة {amount:.3f} ر.ع من حساب {from_account}",
         "total_paid": new_paid,
-        "remaining": round(total_amount - new_paid, 3)
+        "remaining": round(total_amount - new_paid, 3),
+        "from_account": from_account,
+        "to_account": payment_record["to_account"]
     }
 
 # ==================== GOODS RECEIPT ====================
