@@ -200,7 +200,7 @@ const Reports = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">الحليب (لتر)</p>
+                <p className="text-sm opacity-80">{t("الحليب (لتر)", "Milk (L)")}</p>
                 <p className="text-3xl font-bold">{formatNumber(stats.totalMilk)}</p>
               </div>
               <Milk className="w-10 h-10 opacity-80" />
@@ -211,7 +211,7 @@ const Reports = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">المدفوعات</p>
+                <p className="text-sm opacity-80">{t("المدفوعات", "Payments")}</p>
                 <p className="text-3xl font-bold">{formatCurrency(stats.totalPayments)}</p>
               </div>
               <DollarSign className="w-10 h-10 opacity-80" />
@@ -222,7 +222,7 @@ const Reports = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">الموظفين</p>
+                <p className="text-sm opacity-80">{t("الموظفين", "Employees")}</p>
                 <p className="text-3xl font-bold">{formatNumber(stats.totalEmployees)}</p>
               </div>
               <Users className="w-10 h-10 opacity-80" />
@@ -235,36 +235,36 @@ const Reports = () => {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="space-y-2">
-              <Label>من تاريخ</Label>
+              <Label>{t("من تاريخ", "From Date")}</Label>
               <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
             </div>
             <div className="space-y-2">
-              <Label>إلى تاريخ</Label>
+              <Label>{t("إلى تاريخ", "To Date")}</Label>
               <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
             </div>
             <div className="space-y-2">
-              <Label>المركز</Label>
+              <Label>{t("المركز", "Center")}</Label>
               <Select value={centerFilter} onValueChange={setCenterFilter}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع المراكز</SelectItem>
+                  <SelectItem value="all">{t("جميع المراكز", "All Centers")}</SelectItem>
                   {centers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>نوع الحليب</Label>
+              <Label>{t("نوع الحليب", "Milk Type")}</Label>
               <Select value={milkTypeFilter} onValueChange={setMilkTypeFilter}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">الكل</SelectItem>
-                  <SelectItem value="إبل">إبل</SelectItem>
-                  <SelectItem value="أبقار">أبقار</SelectItem>
+                  <SelectItem value="all">{t("الكل", "All")}</SelectItem>
+                  <SelectItem value="إبل">{t("إبل", "Camel")}</SelectItem>
+                  <SelectItem value="أبقار">{t("أبقار", "Cow")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Button variant="outline" onClick={() => { setDateFrom(""); setDateTo(""); setCenterFilter("all"); setMilkTypeFilter("all"); }}>
-              <Filter className="w-4 h-4 me-2" />إعادة تعيين
+              <Filter className="w-4 h-4 me-2" />{t("إعادة تعيين", "Reset")}
             </Button>
           </div>
         </CardContent>
@@ -272,11 +272,11 @@ const Reports = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5 max-w-2xl">
-          <TabsTrigger value="suppliers"><Users className="w-4 h-4 me-1" />الموردين</TabsTrigger>
-          <TabsTrigger value="receptions"><Milk className="w-4 h-4 me-1" />التوريدات</TabsTrigger>
-          <TabsTrigger value="finance"><DollarSign className="w-4 h-4 me-1" />المالية</TabsTrigger>
-          <TabsTrigger value="payroll"><Wallet className="w-4 h-4 me-1" />الرواتب</TabsTrigger>
-          <TabsTrigger value="attendance"><Clock className="w-4 h-4 me-1" />الحضور</TabsTrigger>
+          <TabsTrigger value="suppliers"><Users className="w-4 h-4 me-1" />{t("الموردين", "Suppliers")}</TabsTrigger>
+          <TabsTrigger value="receptions"><Milk className="w-4 h-4 me-1" />{t("التوريدات", "Deliveries")}</TabsTrigger>
+          <TabsTrigger value="finance"><DollarSign className="w-4 h-4 me-1" />{t("المالية", "Finance")}</TabsTrigger>
+          <TabsTrigger value="payroll"><Wallet className="w-4 h-4 me-1" />{t("الرواتب", "Payroll")}</TabsTrigger>
+          <TabsTrigger value="attendance"><Clock className="w-4 h-4 me-1" />{t("الحضور", "Attendance")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="suppliers">
