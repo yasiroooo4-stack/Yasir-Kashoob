@@ -1245,13 +1245,13 @@ const FinanceSystem = () => {
                     <span className="text-2xl font-bold text-green-600">
                       {formatCurrency(incomeStatement?.total_revenue)}
                     </span>
-                    <span className="text-sm text-muted-foreground">إجمالي الإيرادات</span>
+                    <span className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي الإيرادات" : "Total Revenue"}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                     <span className="text-2xl font-bold text-orange-600">
                       {formatCurrency(incomeStatement?.total_expenses)}
                     </span>
-                    <span className="text-sm text-muted-foreground">إجمالي المصروفات</span>
+                    <span className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي المصروفات" : "Total Expenses"}</span>
                   </div>
                   <div className={`flex justify-between items-center p-3 rounded-lg ${
                     (incomeStatement?.net_income || 0) >= 0 ? "bg-green-100" : "bg-red-100"
@@ -1261,7 +1261,7 @@ const FinanceSystem = () => {
                     }`}>
                       {formatCurrency(incomeStatement?.net_income)}
                     </span>
-                    <span className="text-sm font-medium">صافي الدخل</span>
+                    <span className="text-sm font-medium">{language === "ar" ? "صافي الدخل" : "Net Income"}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1273,7 +1273,7 @@ const FinanceSystem = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <PieChart className="w-5 h-5" />
-                    الميزانية العمومية
+                    {language === "ar" ? "الميزانية العمومية" : "Balance Sheet"}
                   </CardTitle>
                   <Button 
                     size="sm" 
@@ -1286,25 +1286,25 @@ const FinanceSystem = () => {
                   </Button>
                 </div>
                 <CardDescription>
-                  كما في {balanceSheet?.as_of_date}
+                  {language === "ar" ? "كما في" : "As of"} {balanceSheet?.as_of_date}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">إجمالي الأصول</p>
+                    <p className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي الأصول" : "Total Assets"}</p>
                     <p className="text-2xl font-bold text-blue-600">
                       {formatCurrency(balanceSheet?.total_assets)}
                     </p>
                   </div>
                   <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">إجمالي الخصوم</p>
+                    <p className="text-sm text-muted-foreground">{language === "ar" ? "إجمالي الخصوم" : "Total Liabilities"}</p>
                     <p className="text-2xl font-bold text-red-600">
                       {formatCurrency(balanceSheet?.total_liabilities)}
                     </p>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">حقوق الملكية</p>
+                    <p className="text-sm text-muted-foreground">{language === "ar" ? "حقوق الملكية" : "Equity"}</p>
                     <p className="text-2xl font-bold text-purple-600">
                       {formatCurrency(balanceSheet?.total_equity)}
                     </p>
