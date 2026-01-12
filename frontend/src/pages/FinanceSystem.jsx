@@ -692,6 +692,10 @@ const FinanceSystem = () => {
             <Calculator className="w-4 h-4" />
             <span className="hidden sm:inline">الميزانيات</span>
           </TabsTrigger>
+          <TabsTrigger value="bank-accounts" className="flex items-center gap-2">
+            <Building className="w-4 h-4" />
+            <span className="hidden sm:inline">الحسابات البنكية</span>
+          </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">التقارير</span>
