@@ -358,14 +358,14 @@ const Reports = () => {
                 <Card className="bg-amber-50 dark:bg-amber-900/20">
                   <CardContent className="p-4 text-center">
                     <DollarSign className="w-8 h-8 mx-auto mb-2 text-amber-600" />
-                    <p className="text-sm text-muted-foreground">إجمالي المبلغ</p>
+                    <p className="text-sm text-muted-foreground">{t("إجمالي المبلغ", "Total Amount")}</p>
                     <p className="text-2xl font-bold text-amber-600">{formatCurrency(filteredReceptions.reduce((s, r) => s + (r.total_amount || 0), 0))}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-blue-50 dark:bg-blue-900/20">
                   <CardContent className="p-4 text-center">
                     <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <p className="text-sm text-muted-foreground">عدد التوريدات</p>
+                    <p className="text-sm text-muted-foreground">{t("عدد التوريدات", "Deliveries Count")}</p>
                     <p className="text-2xl font-bold text-blue-600">{formatNumber(filteredReceptions.length)}</p>
                   </CardContent>
                 </Card>
@@ -374,10 +374,10 @@ const Reports = () => {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background">
                     <TableRow>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>العدد</TableHead>
-                      <TableHead>الكمية (لتر)</TableHead>
-                      <TableHead>المبلغ (ر.ع)</TableHead>
+                      <TableHead>{t("التاريخ", "Date")}</TableHead>
+                      <TableHead>{t("العدد", "Count")}</TableHead>
+                      <TableHead>{t("الكمية (لتر)", "Quantity (L)")}</TableHead>
+                      <TableHead>{t("المبلغ (ر.ع)", "Amount (OMR)")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -400,9 +400,9 @@ const Reports = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>تقرير المالية</CardTitle>
-                <Button onClick={() => exportToCSV(suppliers.filter(s => s.balance !== 0).map(s => ({ الكود: s.supplier_code, الاسم: s.name, المركز: s.center_name, الرصيد: s.balance })), "finance_report")}>
-                  <Download className="w-4 h-4 me-2" />تصدير
+                <CardTitle>{t("تقرير المالية", "Finance Report")}</CardTitle>
+                <Button onClick={() => exportToCSV(suppliers.filter(s => s.balance !== 0).map(s => ({ [t("الكود", "Code")]: s.supplier_code, [t("الاسم", "Name")]: s.name, [t("المركز", "Center")]: s.center_name, [t("الرصيد", "Balance")]: s.balance })), "finance_report")}>
+                  <Download className="w-4 h-4 me-2" />{t("تصدير", "Export")}
                 </Button>
               </div>
             </CardHeader>
@@ -411,21 +411,21 @@ const Reports = () => {
                 <Card className="bg-green-50 dark:bg-green-900/20">
                   <CardContent className="p-4">
                     <TrendingUp className="w-10 h-10 text-green-600 mb-2" />
-                    <p className="text-sm text-muted-foreground">مستحق للموردين</p>
+                    <p className="text-sm text-muted-foreground">{t("مستحق للموردين", "Due to Suppliers")}</p>
                     <p className="text-2xl font-bold text-green-600">{formatCurrency(suppliers.filter(s => s.balance > 0).reduce((s, sup) => s + sup.balance, 0))}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-red-50 dark:bg-red-900/20">
                   <CardContent className="p-4">
                     <TrendingDown className="w-10 h-10 text-red-600 mb-2" />
-                    <p className="text-sm text-muted-foreground">أرصدة دائنة</p>
+                    <p className="text-sm text-muted-foreground">{t("أرصدة دائنة", "Credit Balances")}</p>
                     <p className="text-2xl font-bold text-red-600">{formatCurrency(Math.abs(suppliers.filter(s => s.balance < 0).reduce((s, sup) => s + sup.balance, 0)))}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-blue-50 dark:bg-blue-900/20">
                   <CardContent className="p-4">
                     <Wallet className="w-10 h-10 text-blue-600 mb-2" />
-                    <p className="text-sm text-muted-foreground">صافي الأرصدة</p>
+                    <p className="text-sm text-muted-foreground">{t("صافي الأرصدة", "Net Balance")}</p>
                     <p className="text-2xl font-bold text-blue-600">{formatCurrency(suppliers.reduce((s, sup) => s + (sup.balance || 0), 0))}</p>
                   </CardContent>
                 </Card>
@@ -434,10 +434,10 @@ const Reports = () => {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background">
                     <TableRow>
-                      <TableHead>الكود</TableHead>
-                      <TableHead>الاسم</TableHead>
-                      <TableHead>المركز</TableHead>
-                      <TableHead>الرصيد</TableHead>
+                      <TableHead>{t("الكود", "Code")}</TableHead>
+                      <TableHead>{t("الاسم", "Name")}</TableHead>
+                      <TableHead>{t("المركز", "Center")}</TableHead>
+                      <TableHead>{t("الرصيد", "Balance")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
