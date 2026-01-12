@@ -37,6 +37,7 @@ const FingerprintManager = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [fingerprintId, setFingerprintId] = useState("");
+  const [fingerprintId2, setFingerprintId2] = useState("");
   const [bulkLinkDialogOpen, setBulkLinkDialogOpen] = useState(false);
   const [bulkData, setBulkData] = useState("");
   
