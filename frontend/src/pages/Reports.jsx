@@ -46,8 +46,6 @@ import {
   BarChart3,
 } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL;
-
 const Reports = () => {
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState("suppliers");
