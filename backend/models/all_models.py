@@ -482,6 +482,7 @@ class EmployeeBase(BaseModel):
     center_id: Optional[str] = None
     center_name: Optional[str] = None
     fingerprint_id: Optional[str] = None
+    fingerprint_id_2: Optional[str] = None
     work_location: Optional[str] = None
     can_login: bool = False
     exclude_from_payroll: bool = False
