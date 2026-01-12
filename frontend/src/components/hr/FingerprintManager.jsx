@@ -54,6 +54,7 @@ const FingerprintManager = () => {
       const filtered = employees.filter(e => 
         e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.fingerprint_id?.includes(searchTerm) ||
+        e.fingerprint_id_2?.includes(searchTerm) ||
         e.employee_number?.includes(searchTerm)
       );
       setFilteredEmployees(filtered);
