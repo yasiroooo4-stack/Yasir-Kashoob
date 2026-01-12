@@ -338,7 +338,7 @@ const FingerprintManager = () => {
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>{language === "ar" ? "رقم البصمة (من جهاز ZKTeco)" : "Fingerprint ID (from ZKTeco device)"}</Label>
+              <Label>{language === "ar" ? "رقم البصمة (الأساسي)" : "Fingerprint ID (Primary)"}</Label>
               <Input
                 type="text"
                 value={fingerprintId}
@@ -348,8 +348,25 @@ const FingerprintManager = () => {
               />
               <p className="text-xs text-muted-foreground">
                 {language === "ar" 
-                  ? "أدخل الرقم الموجود في جهاز البصمة لهذا الموظف"
-                  : "Enter the ID number from the fingerprint device for this employee"
+                  ? "الرقم الأساسي من جهاز البصمة الرئيسي"
+                  : "Primary ID from the main fingerprint device"
+                }
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "رقم البصمة 2 (المركز)" : "Fingerprint ID 2 (Center)"}</Label>
+              <Input
+                type="text"
+                value={fingerprintId2}
+                onChange={(e) => setFingerprintId2(e.target.value)}
+                placeholder={language === "ar" ? "مثال: 5678" : "Example: 5678"}
+                data-testid="fingerprint-id-2-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                {language === "ar" 
+                  ? "رقم البصمة في جهاز المركز (إن وجد)"
+                  : "Fingerprint ID from the center device (if different)"
                 }
               </p>
             </div>
