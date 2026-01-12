@@ -152,7 +152,7 @@ const Reports = () => {
 
   const exportToCSV = (data, filename) => {
     if (!data || data.length === 0) {
-      toast.error("لا توجد بيانات للتصدير");
+      toast.error(t("لا توجد بيانات للتصدير", "No data to export"));
       return;
     }
     const headers = Object.keys(data[0]).join(",");
@@ -163,24 +163,24 @@ const Reports = () => {
     link.href = URL.createObjectURL(blob);
     link.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    toast.success("تم تصدير التقرير بنجاح");
+    toast.success(t("تم تصدير التقرير بنجاح", "Report exported successfully"));
   };
 
   const centers = [...new Set(suppliers.map(s => s.center_name).filter(Boolean))];
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <BarChart3 className="w-7 h-7" />
-            التقارير
+            {t("التقارير", "Reports")}
           </h1>
-          <p className="text-muted-foreground">تقارير شاملة للموردين والتوريدات والمالية</p>
+          <p className="text-muted-foreground">{t("تقارير شاملة للموردين والتوريدات والمالية", "Comprehensive reports for suppliers, deliveries, and finance")}</p>
         </div>
         <Button onClick={fetchAllData} variant="outline" disabled={loading}>
           <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
-          تحديث
+          {t("تحديث", "Refresh")}
         </Button>
       </div>
 
@@ -189,7 +189,7 @@ const Reports = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">الموردين</p>
+                <p className="text-sm opacity-80">{t("الموردين", "Suppliers")}</p>
                 <p className="text-3xl font-bold">{formatNumber(stats.totalSuppliers)}</p>
               </div>
               <Users className="w-10 h-10 opacity-80" />
