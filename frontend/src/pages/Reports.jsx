@@ -538,19 +538,19 @@ const Reports = () => {
                 </Card>
                 <Card className="bg-red-50 dark:bg-red-900/20">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground">غائب</p>
+                    <p className="text-sm text-muted-foreground">{t("غائب", "Absent")}</p>
                     <p className="text-2xl font-bold text-red-600">{attendance.filter(a => a.status === "absent").length}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-amber-50 dark:bg-amber-900/20">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground">متأخر</p>
+                    <p className="text-sm text-muted-foreground">{t("متأخر", "Late")}</p>
                     <p className="text-2xl font-bold text-amber-600">{attendance.filter(a => a.status === "late").length}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-blue-50 dark:bg-blue-900/20">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground">الإجمالي</p>
+                    <p className="text-sm text-muted-foreground">{t("الإجمالي", "Total")}</p>
                     <p className="text-2xl font-bold text-blue-600">{attendance.length}</p>
                   </CardContent>
                 </Card>
@@ -559,11 +559,11 @@ const Reports = () => {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background">
                     <TableRow>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>الموظف</TableHead>
-                      <TableHead>الحضور</TableHead>
-                      <TableHead>الانصراف</TableHead>
-                      <TableHead>الحالة</TableHead>
+                      <TableHead>{t("التاريخ", "Date")}</TableHead>
+                      <TableHead>{t("الموظف", "Employee")}</TableHead>
+                      <TableHead>{t("الحضور", "Check In")}</TableHead>
+                      <TableHead>{t("الانصراف", "Check Out")}</TableHead>
+                      <TableHead>{t("الحالة", "Status")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -575,7 +575,7 @@ const Reports = () => {
                         <TableCell>{a.check_out || "-"}</TableCell>
                         <TableCell>
                           <Badge variant={a.status === "present" ? "default" : a.status === "absent" ? "destructive" : "secondary"}>
-                            {a.status === "present" ? "حاضر" : a.status === "absent" ? "غائب" : a.status === "late" ? "متأخر" : a.status}
+                            {a.status === "present" ? t("حاضر", "Present") : a.status === "absent" ? t("غائب", "Absent") : a.status === "late" ? t("متأخر", "Late") : a.status}
                           </Badge>
                         </TableCell>
                       </TableRow>
