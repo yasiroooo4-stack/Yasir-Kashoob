@@ -968,15 +968,15 @@ const FinanceSystem = () => {
                     <TableHead>{language === "ar" ? "الاسم" : "Name"}</TableHead>
                     <TableHead>{language === "ar" ? "التصنيف" : "Category"}</TableHead>
                     <TableHead>{language === "ar" ? "تكلفة الشراء" : "Purchase Cost"}</TableHead>
-                    <TableHead>الإهلاك المتراكم</TableHead>
-                    <TableHead>القيمة الحالية</TableHead>
+                    <TableHead>{language === "ar" ? "الإهلاك المتراكم" : "Accumulated Depreciation"}</TableHead>
+                    <TableHead>{language === "ar" ? "القيمة الحالية" : "Current Value"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {fixedAssets.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        لا توجد أصول ثابتة
+                        {language === "ar" ? "لا توجد أصول ثابتة" : "No fixed assets"}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1000,10 +1000,10 @@ const FinanceSystem = () => {
         {/* Budgets Tab */}
         <TabsContent value="budgets" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">الميزانيات</h2>
+            <h2 className="text-lg font-bold">{language === "ar" ? "الميزانيات" : "Budgets"}</h2>
             <Button>
               <Plus className="w-4 h-4 me-2" />
-              ميزانية جديدة
+              {language === "ar" ? "ميزانية جديدة" : "New Budget"}
             </Button>
           </div>
 
@@ -1012,12 +1012,12 @@ const FinanceSystem = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>اسم الميزانية</TableHead>
-                    <TableHead>السنة المالية</TableHead>
-                    <TableHead>المبلغ المخطط</TableHead>
-                    <TableHead>المبلغ الفعلي</TableHead>
-                    <TableHead>الفرق</TableHead>
-                    <TableHead>الحالة</TableHead>
+                    <TableHead>{language === "ar" ? "اسم الميزانية" : "Budget Name"}</TableHead>
+                    <TableHead>{language === "ar" ? "السنة المالية" : "Fiscal Year"}</TableHead>
+                    <TableHead>{language === "ar" ? "المبلغ المخطط" : "Planned Amount"}</TableHead>
+                    <TableHead>{language === "ar" ? "المبلغ الفعلي" : "Actual Amount"}</TableHead>
+                    <TableHead>{language === "ar" ? "الفرق" : "Variance"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
