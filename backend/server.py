@@ -3788,7 +3788,14 @@ async def bulk_sync_attendance(
             
             # 1. البحث بـ fingerprint_id
             if record.get("fingerprint_id"):
-                employee = await db.hr_employees.find_one({"fingerprint_id": str(record["fingerprint_id"])}, {"_id": 0})
+                fp_id = str(record["fingerprint_id"])
+                # البحث في fingerprint_id أو fingerprint_id_2
+                employee = await db.hr_employees.find_one({
+                    "$or": [
+                        {"fingerprint_id": fp_id},
+                        {"fingerprint_id_2": fp_id}
+                    ]
+                }, {"_id": 0})
             
             # 2. البحث بـ employee_id
             if not employee and record.get("employee_id"):
