@@ -140,6 +140,18 @@ const FinanceSystem = () => {
     }
   };
 
+  const fetchBankAccounts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/finance/bank-accounts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBankAccounts(response.data);
+    } catch (error) {
+      console.log("Bank accounts error:", error);
+    }
+  };
+
   const fetchFixedAssets = async () => {
     try {
       const response = await axios.get(`${API}/finance/fixed-assets`);
