@@ -460,9 +460,9 @@ const Reports = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>تقرير الرواتب</CardTitle>
-                <Button onClick={() => exportToCSV(employees.map(e => ({ الكود: e.employee_id, الاسم: e.name, القسم: e.department, الراتب: e.salary })), "payroll_report")}>
-                  <Download className="w-4 h-4 me-2" />تصدير
+                <CardTitle>{t("تقرير الرواتب", "Payroll Report")}</CardTitle>
+                <Button onClick={() => exportToCSV(employees.map(e => ({ [t("الكود", "Code")]: e.employee_id, [t("الاسم", "Name")]: e.name, [t("القسم", "Dept")]: e.department, [t("الراتب", "Salary")]: e.salary })), "payroll_report")}>
+                  <Download className="w-4 h-4 me-2" />{t("تصدير", "Export")}
                 </Button>
               </div>
             </CardHeader>
@@ -471,21 +471,21 @@ const Reports = () => {
                 <Card className="bg-purple-50 dark:bg-purple-900/20">
                   <CardContent className="p-4 text-center">
                     <Users className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                    <p className="text-sm text-muted-foreground">عدد الموظفين</p>
+                    <p className="text-sm text-muted-foreground">{t("عدد الموظفين", "Employees Count")}</p>
                     <p className="text-2xl font-bold text-purple-600">{employees.length}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-green-50 dark:bg-green-900/20">
                   <CardContent className="p-4 text-center">
                     <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                    <p className="text-sm text-muted-foreground">إجمالي الرواتب</p>
+                    <p className="text-sm text-muted-foreground">{t("إجمالي الرواتب", "Total Salaries")}</p>
                     <p className="text-2xl font-bold text-green-600">{formatCurrency(employees.reduce((s, e) => s + (e.salary || 0), 0))}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-blue-50 dark:bg-blue-900/20">
                   <CardContent className="p-4 text-center">
                     <BarChart3 className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <p className="text-sm text-muted-foreground">متوسط الراتب</p>
+                    <p className="text-sm text-muted-foreground">{t("متوسط الراتب", "Average Salary")}</p>
                     <p className="text-2xl font-bold text-blue-600">{formatCurrency(employees.length > 0 ? employees.reduce((s, e) => s + (e.salary || 0), 0) / employees.length : 0)}</p>
                   </CardContent>
                 </Card>
@@ -494,11 +494,11 @@ const Reports = () => {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background">
                     <TableRow>
-                      <TableHead>الكود</TableHead>
-                      <TableHead>الاسم</TableHead>
-                      <TableHead>القسم</TableHead>
-                      <TableHead>الوظيفة</TableHead>
-                      <TableHead>الراتب</TableHead>
+                      <TableHead>{t("الكود", "Code")}</TableHead>
+                      <TableHead>{t("الاسم", "Name")}</TableHead>
+                      <TableHead>{t("القسم", "Dept")}</TableHead>
+                      <TableHead>{t("الوظيفة", "Position")}</TableHead>
+                      <TableHead>{t("الراتب", "Salary")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -522,9 +522,9 @@ const Reports = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>تقرير الحضور</CardTitle>
-                <Button onClick={() => exportToCSV(attendance.map(a => ({ التاريخ: a.date, الموظف: a.employee_name, الحضور: a.check_in, الانصراف: a.check_out, الحالة: a.status })), "attendance_report")}>
-                  <Download className="w-4 h-4 me-2" />تصدير
+                <CardTitle>{t("تقرير الحضور", "Attendance Report")}</CardTitle>
+                <Button onClick={() => exportToCSV(attendance.map(a => ({ [t("التاريخ", "Date")]: a.date, [t("الموظف", "Employee")]: a.employee_name, [t("الحضور", "Check In")]: a.check_in, [t("الانصراف", "Check Out")]: a.check_out, [t("الحالة", "Status")]: a.status })), "attendance_report")}>
+                  <Download className="w-4 h-4 me-2" />{t("تصدير", "Export")}
                 </Button>
               </div>
             </CardHeader>
@@ -532,7 +532,7 @@ const Reports = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <Card className="bg-green-50 dark:bg-green-900/20">
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground">حاضر</p>
+                    <p className="text-sm text-muted-foreground">{t("حاضر", "Present")}</p>
                     <p className="text-2xl font-bold text-green-600">{attendance.filter(a => a.status === "present").length}</p>
                   </CardContent>
                 </Card>
