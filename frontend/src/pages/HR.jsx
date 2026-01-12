@@ -3114,11 +3114,20 @@ const HR = () => {
                 <Input
                   value={employeeForm.employee_code}
                   onChange={(e) => setEmployeeForm({ ...employeeForm, employee_code: e.target.value })}
-                  placeholder="EMP0001"
+                  placeholder="EMP202501"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "رقم الهوية" : "National ID"}</Label>
+                <Input
+                  value={employeeForm.national_id}
+                  onChange={(e) => setEmployeeForm({ ...employeeForm, national_id: e.target.value })}
+                  placeholder="12345678"
+                  className="font-mono"
+                />
+              </div>
               <div className="space-y-2">
                 <Label>{language === "ar" ? "اسم المستخدم" : "Username"}</Label>
                 <Input
