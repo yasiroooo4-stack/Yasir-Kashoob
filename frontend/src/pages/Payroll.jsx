@@ -64,12 +64,19 @@ const Payroll = () => {
   const [payrollRecords, setPayrollRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [disburseDialogOpen, setDisburseDialogOpen] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState([]);
   
   const [periodForm, setPeriodForm] = useState({
     name: "",
     start_date: "",
     end_date: "",
+  });
+  
+  const [disburseForm, setDisburseForm] = useState({
+    from_account: "1112",
+    to_account: "حساب الموظفين"
   });
 
   useEffect(() => {
