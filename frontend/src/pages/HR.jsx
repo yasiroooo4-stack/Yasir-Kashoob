@@ -605,6 +605,32 @@ const HR = () => {
     }
   };
 
+  // Adjust individual employee leave balance
+  const handleLeaveAdjustSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedEmployee) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/hr/employees/${selectedEmployee.id}/leave-balance`,
+        {
+          adjustment: parseFloat(leaveAdjustForm.adjustment),
+          reason: leaveAdjustForm.reason || (language === "ar" ? "تعديل يدوي" : "Manual adjustment")
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === "ar" ? "تم تعديل الرصيد بنجاح" : "Balance adjusted successfully");
+      setLeaveAdjustDialogOpen(false);
+      setLeaveAdjustForm({ adjustment: 0, reason: "" });
+      setSelectedEmployee(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "Error occurred"));
+    }
+  };
+
   // Leave request handlers
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
