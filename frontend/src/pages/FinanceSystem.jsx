@@ -664,10 +664,10 @@ const FinanceSystem = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Landmark className="w-7 h-7 text-primary" />
-            النظام المالي
+            {language === "ar" ? "النظام المالي" : "Finance System"}
           </h1>
           <p className="text-muted-foreground">
-            إدارة الحسابات والقيود والتقارير المالية
+            {language === "ar" ? "إدارة الحسابات والقيود والتقارير المالية" : "Manage accounts, entries, and financial reports"}
           </p>
         </div>
       </div>
