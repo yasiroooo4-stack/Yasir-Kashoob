@@ -299,6 +299,40 @@ class AccountType(str, Enum):
     REVENUE = "revenue"
     EXPENSE = "expense"
 
+# Bank Account Model - نموذج الحساب البنكي
+class BankAccount(BaseModel):
+    """نموذج الحساب البنكي الرئيسي"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    account_number: str  # رقم الحساب في دليل الحسابات (مثل 1112)
+    bank_name: str  # اسم البنك
+    bank_account_number: str  # رقم الحساب البنكي الفعلي
+    iban: Optional[str] = None  # رقم IBAN
+    swift_code: Optional[str] = None  # رمز SWIFT
+    branch_name: Optional[str] = None  # اسم الفرع
+    account_holder_name: Optional[str] = None  # اسم صاحب الحساب
+    currency: str = "OMR"  # العملة
+    opening_balance: float = 0.0  # الرصيد الافتتاحي
+    current_balance: float = 0.0  # الرصيد الحالي
+    is_default: bool = False  # هل هو الحساب الافتراضي
+    is_active: bool = True
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+
+class BankAccountCreate(BaseModel):
+    account_number: str
+    bank_name: str
+    bank_account_number: str
+    iban: Optional[str] = None
+    swift_code: Optional[str] = None
+    branch_name: Optional[str] = None
+    account_holder_name: Optional[str] = None
+    currency: str = "OMR"
+    opening_balance: float = 0.0
+    is_default: bool = False
+    notes: Optional[str] = None
+
 class Account(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
