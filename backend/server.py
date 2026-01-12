@@ -8557,10 +8557,14 @@ async def accrue_monthly_leave(
     current_user: dict = Depends(require_role(["admin", "hr_manager"]))
 ):
     """
-    إضافة رصيد الإجازات الشهري لجميع الموظفين
-    المدير ونائب المدير: 3.5 يوم
-    المشرفين: 3 أيام
-    الموظفين: 2.6 يوم (أو حسب معدل الموظف)
+    إضافة رصيد الإجازات الشهري لجميع الموظفين (تراكمي)
+    المعدلات حسب المنصب:
+    - مدير عام: 3.5 يوم
+    - نائب المدير: 3.5 يوم
+    - مشرف: 3 أيام
+    - مدير الموارد البشرية: 3 أيام
+    - مسؤول أمن وسلامة: 3 أيام
+    - باقي الموظفين: 2.6 يوم
     """
     from models.all_models import LeaveBalanceLog
     
@@ -8578,22 +8582,48 @@ async def accrue_monthly_leave(
     updated_count = 0
     logs = []
     
-    for emp in employees:
-        # Determine monthly leave rate based on position
-        position = emp.get("position", "").lower()
+    def get_leave_rate_by_position(position):
+        """تحديد معدل الإجازات الشهري حسب المنصب"""
+        if not position:
+            return 2.6
         
-        if "مدير" in position or "director" in position.lower():
-            if "نائب" in position or "deputy" in position.lower():
-                rate = 3.5  # نائب المدير
-            else:
-                rate = 3.5  # المدير
-        elif "مشرف" in position or "supervisor" in position.lower():
-            rate = 3.0  # المشرفين
+        position_lower = position.lower()
+        
+        # مدير عام - 3.5 يوم
+        if "مدير عام" in position or "general manager" in position_lower or "director general" in position_lower:
+            return 3.5
+        
+        # نائب المدير - 3.5 يوم
+        if "نائب المدير" in position or "نائب مدير" in position or "deputy" in position_lower:
+            return 3.5
+        
+        # مدير الموارد البشرية - 3 أيام
+        if "مدير الموارد البشرية" in position or "hr manager" in position_lower or "موارد بشرية" in position:
+            return 3.0
+        
+        # مسؤول أمن وسلامة - 3 أيام
+        if "أمن وسلامة" in position or "أمن" in position or "سلامة" in position or "safety" in position_lower or "security" in position_lower:
+            return 3.0
+        
+        # مشرف - 3 أيام
+        if "مشرف" in position or "supervisor" in position_lower:
+            return 3.0
+        
+        # باقي الموظفين - 2.6 يوم
+        return 2.6
+    
+    for emp in employees:
+        position = emp.get("position", "")
+        
+        # Get rate based on position or use custom rate if set
+        custom_rate = emp.get("monthly_leave_rate")
+        if custom_rate and custom_rate != 2.6:
+            rate = custom_rate  # استخدم المعدل المخصص إذا تم تعيينه
         else:
-            rate = emp.get("monthly_leave_rate", 2.6)  # الموظفين أو المعدل المخصص
+            rate = get_leave_rate_by_position(position)
         
         previous_balance = emp.get("leave_balance", 0)
-        new_balance = round(previous_balance + rate, 2)
+        new_balance = round(previous_balance + rate, 2)  # تراكمي
         
         # Update employee
         await db.hr_employees.update_one(
@@ -8632,6 +8662,21 @@ async def accrue_monthly_leave(
         "message": f"تم إضافة رصيد الإجازات لـ {updated_count} موظف",
         "month": month,
         "employees_updated": updated_count
+    }
+
+@api_router.get("/hr/leave-balance/rates")
+async def get_leave_balance_rates(current_user: dict = Depends(get_current_user)):
+    """جلب معدلات الإجازات الشهرية حسب المنصب"""
+    return {
+        "rates": [
+            {"position": "مدير عام", "rate": 3.5, "position_en": "General Manager"},
+            {"position": "نائب المدير", "rate": 3.5, "position_en": "Deputy Director"},
+            {"position": "مشرف", "rate": 3.0, "position_en": "Supervisor"},
+            {"position": "مدير الموارد البشرية", "rate": 3.0, "position_en": "HR Manager"},
+            {"position": "مسؤول أمن وسلامة", "rate": 3.0, "position_en": "Safety Officer"},
+            {"position": "موظف (افتراضي)", "rate": 2.6, "position_en": "Employee (Default)"}
+        ],
+        "note": "يتم إضافة الرصيد تلقائياً في نهاية كل شهر بشكل تراكمي"
     }
 
 @api_router.put("/hr/employees/{employee_id}/leave-rate")
