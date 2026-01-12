@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://farm-logistics.preview.emergentagent.com',
+            'api_url': 'https://dairy-admin-system.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,
