@@ -3494,6 +3494,71 @@ const HR = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Leave Balance Adjustment Dialog */}
+      <Dialog open={leaveAdjustDialogOpen} onOpenChange={(open) => {
+        setLeaveAdjustDialogOpen(open);
+        if (!open) {
+          setLeaveAdjustForm({ adjustment: 0, reason: "" });
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5 text-green-500" />
+              {language === "ar" ? "تعديل رصيد الإجازات" : "Adjust Leave Balance"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedEmployee?.name} - {language === "ar" ? "الرصيد الحالي:" : "Current Balance:"} {(selectedEmployee?.leave_balance || 0).toFixed(1)} {language === "ar" ? "يوم" : "days"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleLeaveAdjustSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "التعديل (أيام)" : "Adjustment (days)"} *</Label>
+              <Input
+                type="number"
+                step="0.5"
+                value={leaveAdjustForm.adjustment}
+                onChange={(e) => setLeaveAdjustForm({ ...leaveAdjustForm, adjustment: e.target.value })}
+                placeholder={language === "ar" ? "موجب للإضافة، سالب للخصم" : "Positive to add, negative to deduct"}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                {language === "ar" 
+                  ? "مثال: 2 لإضافة يومين، -1 لخصم يوم واحد" 
+                  : "Example: 2 to add 2 days, -1 to deduct 1 day"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "السبب" : "Reason"}</Label>
+              <Textarea
+                value={leaveAdjustForm.reason}
+                onChange={(e) => setLeaveAdjustForm({ ...leaveAdjustForm, reason: e.target.value })}
+                placeholder={language === "ar" ? "سبب التعديل..." : "Reason for adjustment..."}
+                rows={2}
+              />
+            </div>
+            {leaveAdjustForm.adjustment && (
+              <div className={`p-3 rounded-lg ${parseFloat(leaveAdjustForm.adjustment) >= 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <p className="text-sm font-medium">
+                  {language === "ar" ? "الرصيد بعد التعديل:" : "Balance after adjustment:"}
+                  <span className={`ms-2 font-bold ${parseFloat(leaveAdjustForm.adjustment) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {((selectedEmployee?.leave_balance || 0) + parseFloat(leaveAdjustForm.adjustment || 0)).toFixed(1)} {language === "ar" ? "يوم" : "days"}
+                  </span>
+                </p>
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setLeaveAdjustDialogOpen(false)}>
+                {t("cancel")}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white">
+                {language === "ar" ? "تعديل الرصيد" : "Adjust Balance"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Expense Request Dialog */}
       <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
         <DialogContent className="sm:max-w-md">
