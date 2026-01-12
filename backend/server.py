@@ -160,8 +160,101 @@ async def startup_event():
                 logging.info(f"Created default center: {center_data['name']}")
             else:
                 logging.info(f"Center already exists: {center_data['name']}")
+        
+        # Check and auto-accrue leave balance if end of month
+        await check_and_accrue_monthly_leave()
     except Exception as e:
         logging.error(f"Error initializing default centers: {e}")
+
+async def check_and_accrue_monthly_leave():
+    """تحقق تلقائي وإضافة رصيد الإجازات في نهاية الشهر"""
+    try:
+        from calendar import monthrange
+        today = datetime.now()
+        last_day_of_month = monthrange(today.year, today.month)[1]
+        
+        # Check if today is the last day of month or first day of new month
+        if today.day == last_day_of_month or today.day == 1:
+            # Determine which month to accrue
+            if today.day == 1:
+                # First day of month - accrue for previous month
+                if today.month == 1:
+                    month = f"{today.year - 1}-12"
+                else:
+                    month = f"{today.year}-{today.month - 1:02d}"
+            else:
+                # Last day of month - accrue for current month
+                month = today.strftime("%Y-%m")
+            
+            # Check if already accrued
+            existing = await db.leave_balance_logs.find_one({"month": month, "reason": "monthly_accrual"})
+            if not existing:
+                logging.info(f"Auto-accruing leave balance for month: {month}")
+                
+                # Get all active employees
+                employees = await db.hr_employees.find({"is_active": True}, {"_id": 0}).to_list(500)
+                
+                from models.all_models import LeaveBalanceLog
+                logs = []
+                updated_count = 0
+                
+                for emp in employees:
+                    position = emp.get("position", "")
+                    rate = get_leave_rate_by_position_helper(position)
+                    
+                    # Use custom rate if set
+                    custom_rate = emp.get("monthly_leave_rate")
+                    if custom_rate and custom_rate != 2.6:
+                        rate = custom_rate
+                    
+                    previous_balance = emp.get("leave_balance", 0)
+                    new_balance = round(previous_balance + rate, 2)
+                    
+                    await db.hr_employees.update_one(
+                        {"id": emp["id"]},
+                        {"$set": {"leave_balance": new_balance, "monthly_leave_rate": rate}}
+                    )
+                    
+                    log = LeaveBalanceLog(
+                        employee_id=emp["id"],
+                        employee_name=emp["name"],
+                        month=month,
+                        amount_added=rate,
+                        previous_balance=previous_balance,
+                        new_balance=new_balance,
+                        reason="monthly_accrual"
+                    )
+                    logs.append(log.model_dump())
+                    updated_count += 1
+                
+                if logs:
+                    await db.leave_balance_logs.insert_many(logs)
+                
+                logging.info(f"Auto-accrued leave balance for {updated_count} employees for month {month}")
+            else:
+                logging.info(f"Leave balance already accrued for month: {month}")
+    except Exception as e:
+        logging.error(f"Error in auto leave accrual: {e}")
+
+def get_leave_rate_by_position_helper(position):
+    """Helper function to get leave rate by position"""
+    if not position:
+        return 2.6
+    
+    position_lower = position.lower() if position else ""
+    
+    if "مدير عام" in position or "general manager" in position_lower or "director general" in position_lower:
+        return 3.5
+    if "نائب المدير" in position or "نائب مدير" in position or "deputy" in position_lower:
+        return 3.5
+    if "مدير الموارد البشرية" in position or "hr manager" in position_lower or "موارد بشرية" in position:
+        return 3.0
+    if "أمن وسلامة" in position or "أمن" in position or "سلامة" in position or "safety" in position_lower or "security" in position_lower:
+        return 3.0
+    if "مشرف" in position or "supervisor" in position_lower:
+        return 3.0
+    
+    return 2.6
 
 # ==================== AUTHENTICATION ====================
 
