@@ -92,13 +92,23 @@ const Payroll = () => {
   const fetchPeriods = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/hr/payroll/periods`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPeriods(response.data);
-      if (response.data.length > 0 && !selectedPeriod) {
-        setSelectedPeriod(response.data[0].id);
+      const [periodsRes, accountsRes] = await Promise.all([
+        axios.get(`${API}/api/hr/payroll/periods`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/api/finance/accounts`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+      ]);
+      
+      setPeriods(periodsRes.data);
+      if (periodsRes.data.length > 0 && !selectedPeriod) {
+        setSelectedPeriod(periodsRes.data[0].id);
       }
+      
+      // Filter bank/cash accounts
+      const paymentAccounts = accountsRes.data.filter(acc => 
+        acc.account_type === 'asset' && 
+        (acc.name.includes('البنك') || acc.name.includes('الصندوق') || acc.name.includes('النقد') || 
+         acc.name.toLowerCase().includes('bank') || acc.name.toLowerCase().includes('cash'))
+      );
+      setBankAccounts(paymentAccounts);
     } catch (error) {
       console.error("Error fetching periods:", error);
     }
