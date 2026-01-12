@@ -1395,6 +1395,140 @@ const FinanceSystem = () => {
           setAssetDialogOpen(false);
         }}
       />
+
+      {/* Bank Account Dialog */}
+      <Dialog open={bankAccountDialogOpen} onOpenChange={setBankAccountDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="w-5 h-5" />
+              {editingBankAccount ? "تعديل حساب بنكي" : "إضافة حساب بنكي جديد"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>اسم البنك *</Label>
+              <Input
+                value={bankAccountForm.bank_name}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, bank_name: e.target.value })}
+                placeholder="مثال: بنك مسقط"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>رقم الحساب البنكي *</Label>
+              <Input
+                value={bankAccountForm.bank_account_number}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, bank_account_number: e.target.value })}
+                placeholder="مثال: 0123456789"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>IBAN</Label>
+              <Input
+                value={bankAccountForm.iban}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, iban: e.target.value })}
+                placeholder="مثال: OM12BANK0000001234567890"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>رمز SWIFT</Label>
+              <Input
+                value={bankAccountForm.swift_code}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, swift_code: e.target.value })}
+                placeholder="مثال: BMSCOMAN"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>اسم الفرع</Label>
+              <Input
+                value={bankAccountForm.branch_name}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, branch_name: e.target.value })}
+                placeholder="مثال: فرع صلالة"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>صاحب الحساب</Label>
+              <Input
+                value={bankAccountForm.account_holder_name}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, account_holder_name: e.target.value })}
+                placeholder="مثال: شركة المروج للألبان"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>رقم الحساب في النظام</Label>
+              <Select
+                value={bankAccountForm.account_number}
+                onValueChange={(v) => setBankAccountForm({ ...bankAccountForm, account_number: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1111">1111 - الصندوق</SelectItem>
+                  <SelectItem value="1112">1112 - البنك</SelectItem>
+                  <SelectItem value="1113">1113 - بنك 2</SelectItem>
+                  <SelectItem value="1114">1114 - بنك 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>العملة</Label>
+              <Select
+                value={bankAccountForm.currency}
+                onValueChange={(v) => setBankAccountForm({ ...bankAccountForm, currency: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="OMR">ريال عماني (OMR)</SelectItem>
+                  <SelectItem value="USD">دولار أمريكي (USD)</SelectItem>
+                  <SelectItem value="SAR">ريال سعودي (SAR)</SelectItem>
+                  <SelectItem value="AED">درهم إماراتي (AED)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>الرصيد الافتتاحي</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={bankAccountForm.opening_balance}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, opening_balance: parseFloat(e.target.value) || 0 })}
+                placeholder="0.000"
+              />
+            </div>
+            <div className="space-y-2 flex items-center gap-2 pt-6">
+              <input
+                type="checkbox"
+                id="is_default"
+                checked={bankAccountForm.is_default}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, is_default: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="is_default" className="cursor-pointer">الحساب الافتراضي للتحويلات</Label>
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>ملاحظات</Label>
+              <Textarea
+                value={bankAccountForm.notes}
+                onChange={(e) => setBankAccountForm({ ...bankAccountForm, notes: e.target.value })}
+                placeholder="ملاحظات إضافية..."
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBankAccountDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleSaveBankAccount} disabled={loading}>
+              {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : null}
+              {editingBankAccount ? "حفظ التغييرات" : "إنشاء الحساب"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
