@@ -78,6 +78,24 @@ const FinanceSystem = () => {
     description: ""
   });
 
+  // Bank Accounts - الحسابات البنكية
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [bankAccountDialogOpen, setBankAccountDialogOpen] = useState(false);
+  const [editingBankAccount, setEditingBankAccount] = useState(null);
+  const [bankAccountForm, setBankAccountForm] = useState({
+    account_number: "1112",
+    bank_name: "",
+    bank_account_number: "",
+    iban: "",
+    swift_code: "",
+    branch_name: "",
+    account_holder_name: "",
+    currency: "OMR",
+    opening_balance: 0,
+    is_default: false,
+    notes: ""
+  });
+
   // Journal Entries
   const [journalEntries, setJournalEntries] = useState([]);
   const [journalDialogOpen, setJournalDialogOpen] = useState(false);
