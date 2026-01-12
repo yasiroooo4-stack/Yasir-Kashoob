@@ -2077,6 +2077,125 @@ const HR = () => {
           </Card>
         </TabsContent>
 
+        {/* Leave Balance Tab - رصيد الإجازات */}
+        <TabsContent value="leave-balance">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5 text-green-500" />
+                  {language === "ar" ? "رصيد الإجازات" : "Leave Balance"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة رصيد الإجازات الشهري (تراكمي)" : "Manage monthly leave balance (cumulative)"}
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={handleAccrueMonthlyLeave}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Gift className="w-4 h-4" />
+                {language === "ar" ? "إضافة رصيد الشهر الحالي" : "Add Current Month Balance"}
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Leave Rates Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4" />
+                  {language === "ar" ? "معدلات الإجازات الشهرية حسب المنصب" : "Monthly Leave Rates by Position"}
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مدير عام" : "General Manager"}</p>
+                    <p className="font-bold text-lg text-blue-600">3.5</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "نائب المدير" : "Deputy Director"}</p>
+                    <p className="font-bold text-lg text-blue-600">3.5</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مشرف" : "Supervisor"}</p>
+                    <p className="font-bold text-lg text-green-600">3.0</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مدير HR" : "HR Manager"}</p>
+                    <p className="font-bold text-lg text-green-600">3.0</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "أمن وسلامة" : "Safety Officer"}</p>
+                    <p className="font-bold text-lg text-green-600">3.0</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "موظف (افتراضي)" : "Employee"}</p>
+                    <p className="font-bold text-lg text-amber-600">2.6</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 mt-3 text-center">
+                  {language === "ar" 
+                    ? "⏰ يتم إضافة الرصيد تلقائياً في نهاية كل شهر بشكل تراكمي" 
+                    : "⏰ Balance is automatically added at the end of each month cumulatively"}
+                </p>
+              </div>
+
+              {/* Employees Leave Balance Table */}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                      <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
+                      <TableHead>{language === "ar" ? "المعدل الشهري" : "Monthly Rate"}</TableHead>
+                      <TableHead>{language === "ar" ? "الرصيد الحالي" : "Current Balance"}</TableHead>
+                      <TableHead>{language === "ar" ? "إجراءات" : "Actions"}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {employees.filter(e => e.is_active).map((emp) => (
+                      <TableRow key={emp.id}>
+                        <TableCell className="font-medium">{emp.name}</TableCell>
+                        <TableCell>{emp.position || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-blue-50">
+                            {emp.monthly_leave_rate || 2.6} {language === "ar" ? "يوم" : "days"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-bold text-lg text-green-600">
+                            {(emp.leave_balance || 0).toFixed(1)}
+                          </span>
+                          <span className="text-sm text-muted-foreground ms-1">
+                            {language === "ar" ? "يوم" : "days"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedEmployee(emp);
+                              setLeaveAdjustDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-3 h-3 me-1" />
+                            {language === "ar" ? "تعديل" : "Adjust"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Excuses Tab */}
         <TabsContent value="excuses">
           <Card>
