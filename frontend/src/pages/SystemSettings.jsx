@@ -598,7 +598,7 @@ const SystemSettings = () => {
                 <span className="text-5xl">{editingPrice.id === "camel" ? "🐪" : "🐄"}</span>
               </div>
               <div className="space-y-2">
-                <Label>السعر (ر.ع / لتر)</Label>
+                <Label>{t("السعر (ر.ع / لتر)", "Price (OMR / Liter)")}</Label>
                 <Input
                   type="number"
                   step="0.001"
@@ -607,7 +607,7 @@ const SystemSettings = () => {
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label>نشط</Label>
+                <Label>{t("نشط", "Active")}</Label>
                 <Switch
                   checked={editingPrice.is_active}
                   onCheckedChange={(checked) => setEditingPrice({ ...editingPrice, is_active: checked })}
@@ -616,8 +616,8 @@ const SystemSettings = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPriceDialogOpen(false)}>إلغاء</Button>
-            <Button onClick={savePrice}><Save className="w-4 h-4 me-2" />حفظ</Button>
+            <Button variant="outline" onClick={() => setPriceDialogOpen(false)}>{t("إلغاء", "Cancel")}</Button>
+            <Button onClick={savePrice}><Save className="w-4 h-4 me-2" />{t("حفظ", "Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -626,42 +626,42 @@ const SystemSettings = () => {
       <Dialog open={feedDialogOpen} onOpenChange={setFeedDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingFeed ? "تعديل نوع العلف" : "إضافة نوع علف جديد"}</DialogTitle>
+            <DialogTitle>{editingFeed ? t("تعديل نوع العلف", "Edit Feed Type") : t("إضافة نوع علف جديد", "Add New Feed Type")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>اسم العلف *</Label>
+              <Label>{t("اسم العلف", "Feed Name")} *</Label>
               <Input value={feedForm.name} onChange={(e) => setFeedForm({ ...feedForm, name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>السعر (ر.ع) *</Label>
+              <Label>{t("السعر (ر.ع)", "Price (OMR)")} *</Label>
               <Input type="number" value={feedForm.price} onChange={(e) => setFeedForm({ ...feedForm, price: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>الوحدة</Label>
+              <Label>{t("الوحدة", "Unit")}</Label>
               <Select value={feedForm.unit} onValueChange={(v) => setFeedForm({ ...feedForm, unit: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="كجم">كجم</SelectItem>
-                  <SelectItem value="طن">طن</SelectItem>
-                  <SelectItem value="كيس">كيس</SelectItem>
+                  <SelectItem value="كجم">{t("كجم", "KG")}</SelectItem>
+                  <SelectItem value="طن">{t("طن", "Ton")}</SelectItem>
+                  <SelectItem value="كيس">{t("كيس", "Bag")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>المخزون الحالي</Label>
+                <Label>{t("المخزون الحالي", "Current Stock")}</Label>
                 <Input type="number" value={feedForm.stock} onChange={(e) => setFeedForm({ ...feedForm, stock: parseInt(e.target.value) })} />
               </div>
               <div className="space-y-2">
-                <Label>الحد الأدنى</Label>
+                <Label>{t("الحد الأدنى", "Min Stock")}</Label>
                 <Input type="number" value={feedForm.min_stock} onChange={(e) => setFeedForm({ ...feedForm, min_stock: parseInt(e.target.value) })} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFeedDialogOpen(false)}>إلغاء</Button>
-            <Button onClick={saveFeed}><Save className="w-4 h-4 me-2" />حفظ</Button>
+            <Button variant="outline" onClick={() => setFeedDialogOpen(false)}>{t("إلغاء", "Cancel")}</Button>
+            <Button onClick={saveFeed}><Save className="w-4 h-4 me-2" />{t("حفظ", "Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
