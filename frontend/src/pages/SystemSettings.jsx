@@ -353,8 +353,10 @@ const SystemSettings = () => {
                         <Button variant="outline" size="sm" className="text-red-600" onClick={() => deleteCenter(center.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
+                        <Button variant="outline" size="sm" className="text-red-600" onClick={() => deleteCenter(center.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -367,8 +369,8 @@ const SystemSettings = () => {
         <TabsContent value="prices">
           <Card>
             <CardHeader>
-              <CardTitle>أسعار الحليب</CardTitle>
-              <CardDescription>تحديد سعر الشراء لكل نوع حليب</CardDescription>
+              <CardTitle>{t("أسعار الحليب", "Milk Prices")}</CardTitle>
+              <CardDescription>{t("تحديد سعر الشراء لكل نوع حليب", "Set purchase price for each milk type")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -380,20 +382,20 @@ const SystemSettings = () => {
                           <span className="text-3xl">{price.id === "camel" ? "🐪" : "🐄"}</span>
                           <div>
                             <h4 className="font-bold">{price.name}</h4>
-                            <p className="text-sm text-muted-foreground">سعر اللتر</p>
+                            <p className="text-sm text-muted-foreground">{t("سعر اللتر", "Price per liter")}</p>
                           </div>
                         </div>
                         <Badge variant={price.is_active ? "default" : "secondary"}>
-                          {price.is_active ? "نشط" : "معطل"}
+                          {price.is_active ? t("نشط", "Active") : t("معطل", "Inactive")}
                         </Badge>
                       </div>
                       <div className="text-center mb-4">
                         <p className="text-4xl font-bold text-primary">{price.price.toFixed(3)}</p>
-                        <p className="text-sm text-muted-foreground">ريال عماني / لتر</p>
+                        <p className="text-sm text-muted-foreground">{t("ريال عماني / لتر", "OMR / Liter")}</p>
                       </div>
                       <Button variant="outline" className="w-full" onClick={() => openPriceDialog(price)}>
                         <Pencil className="w-4 h-4 me-2" />
-                        تعديل السعر
+                        {t("تعديل السعر", "Edit Price")}
                       </Button>
                     </CardContent>
                   </Card>
@@ -409,12 +411,12 @@ const SystemSettings = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>أنواع الأعلاف</CardTitle>
-                  <CardDescription>إدارة أنواع وأسعار الأعلاف</CardDescription>
+                  <CardTitle>{t("أنواع الأعلاف", "Feed Types")}</CardTitle>
+                  <CardDescription>{t("إدارة أنواع وأسعار الأعلاف", "Manage feed types and prices")}</CardDescription>
                 </div>
                 <Button onClick={() => openFeedDialog()}>
                   <Plus className="w-4 h-4 me-2" />
-                  إضافة نوع
+                  {t("إضافة نوع", "Add Type")}
                 </Button>
               </div>
             </CardHeader>
@@ -423,20 +425,20 @@ const SystemSettings = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>النوع</TableHead>
-                      <TableHead>السعر</TableHead>
-                      <TableHead>الوحدة</TableHead>
-                      <TableHead>المخزون</TableHead>
-                      <TableHead>الحد الأدنى</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead>{t("النوع", "Type")}</TableHead>
+                      <TableHead>{t("السعر", "Price")}</TableHead>
+                      <TableHead>{t("الوحدة", "Unit")}</TableHead>
+                      <TableHead>{t("المخزون", "Stock")}</TableHead>
+                      <TableHead>{t("الحد الأدنى", "Min Stock")}</TableHead>
+                      <TableHead>{t("الحالة", "Status")}</TableHead>
+                      <TableHead>{t("الإجراءات", "Actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {feedTypes.map((feed) => (
                       <TableRow key={feed.id}>
                         <TableCell className="font-medium">{feed.name}</TableCell>
-                        <TableCell className="text-green-600 font-bold">{feed.price} ر.ع</TableCell>
+                        <TableCell className="text-green-600 font-bold">{feed.price} {t("ر.ع", "OMR")}</TableCell>
                         <TableCell>{feed.unit}</TableCell>
                         <TableCell>
                           <span className={feed.stock < feed.min_stock ? "text-red-600 font-bold" : ""}>
