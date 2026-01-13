@@ -523,8 +523,8 @@ const SystemSettings = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>إشعارات البريد</Label>
-                      <p className="text-xs text-muted-foreground">إرسال بريد إلكتروني</p>
+                      <Label>{t("إشعارات البريد", "Email Notifications")}</Label>
+                      <p className="text-xs text-muted-foreground">{t("إرسال بريد إلكتروني", "Send emails")}</p>
                     </div>
                     <Switch
                       checked={alertSettings.enable_email}
@@ -532,7 +532,7 @@ const SystemSettings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>مستلمي التنبيهات</Label>
+                    <Label>{t("مستلمي التنبيهات", "Alert Recipients")}</Label>
                     <Input
                       placeholder="email@example.com, +968XXXXXXXX"
                       value={alertSettings.alert_recipients}
@@ -544,7 +544,7 @@ const SystemSettings = () => {
               
               <Button onClick={saveAlertSettings} className="w-full md:w-auto">
                 <Save className="w-4 h-4 me-2" />
-                حفظ الإعدادات
+                {t("حفظ الإعدادات", "Save Settings")}
               </Button>
             </CardContent>
           </Card>
@@ -555,33 +555,33 @@ const SystemSettings = () => {
       <Dialog open={centerDialogOpen} onOpenChange={setCenterDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingCenter ? "تعديل المركز" : "إضافة مركز جديد"}</DialogTitle>
+            <DialogTitle>{editingCenter ? t("تعديل المركز", "Edit Center") : t("إضافة مركز جديد", "Add New Center")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>اسم المركز *</Label>
+              <Label>{t("اسم المركز", "Center Name")} *</Label>
               <Input value={centerForm.name} onChange={(e) => setCenterForm({ ...centerForm, name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>الكود</Label>
+              <Label>{t("الكود", "Code")}</Label>
               <Input value={centerForm.code} onChange={(e) => setCenterForm({ ...centerForm, code: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>الموقع</Label>
+              <Label>{t("الموقع", "Location")}</Label>
               <Input value={centerForm.location} onChange={(e) => setCenterForm({ ...centerForm, location: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>رقم الهاتف</Label>
+              <Label>{t("رقم الهاتف", "Phone")}</Label>
               <Input value={centerForm.phone} onChange={(e) => setCenterForm({ ...centerForm, phone: e.target.value })} />
             </div>
             <div className="flex items-center justify-between">
-              <Label>نشط</Label>
+              <Label>{t("نشط", "Active")}</Label>
               <Switch checked={centerForm.is_active} onCheckedChange={(checked) => setCenterForm({ ...centerForm, is_active: checked })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCenterDialogOpen(false)}>إلغاء</Button>
-            <Button onClick={saveCenter}><Save className="w-4 h-4 me-2" />حفظ</Button>
+            <Button variant="outline" onClick={() => setCenterDialogOpen(false)}>{t("إلغاء", "Cancel")}</Button>
+            <Button onClick={saveCenter}><Save className="w-4 h-4 me-2" />{t("حفظ", "Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -590,7 +590,7 @@ const SystemSettings = () => {
       <Dialog open={priceDialogOpen} onOpenChange={setPriceDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>تعديل سعر {editingPrice?.name}</DialogTitle>
+            <DialogTitle>{t("تعديل سعر", "Edit Price")} {editingPrice?.name}</DialogTitle>
           </DialogHeader>
           {editingPrice && (
             <div className="space-y-4">
