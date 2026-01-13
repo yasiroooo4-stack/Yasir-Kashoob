@@ -261,10 +261,10 @@ const CCTVSystem = () => {
         setSnapshot(data.snapshot);
         toast.success(t('تم جلب الصورة', 'Snapshot captured'));
       } else {
-        toast.error('فشل في جلب الصورة - تأكد من اتصال الجهاز');
+        toast.error(t('فشل في جلب الصورة - تأكد من اتصال الجهاز', 'Failed to capture snapshot - check device connection'));
       }
     } catch (error) {
-      toast.error('خطأ في الاتصال');
+      toast.error(t('خطأ في الاتصال', 'Connection error'));
     }
     setLoadingSnapshot(false);
   };
@@ -284,7 +284,7 @@ const CCTVSystem = () => {
         return data;
       }
     } catch (error) {
-      toast.error('خطأ في جلب معلومات البث');
+      toast.error(t('خطأ في جلب معلومات البث', 'Error fetching stream info'));
     }
     return null;
   };
@@ -332,7 +332,7 @@ const CCTVSystem = () => {
         const data = await res.json();
         setHikvisionConfig(prev => ({ ...prev, is_connected: true }));
         setHikvisionDevices(data.devices || []);
-        toast.success('تم الاتصال بـ Hikvision بنجاح');
+        toast.success(t('تم الاتصال بـ Hikvision بنجاح', 'Connected to Hikvision successfully'));
         setShowHikvisionLogin(false);
       } else {
         const error = await res.json();
@@ -412,7 +412,7 @@ const CCTVSystem = () => {
         toast.error('فشل في جلب الصورة');
       }
     } catch (error) {
-      toast.error('خطأ في الاتصال');
+      toast.error(t('خطأ في الاتصال', 'Connection error'));
     }
     setLoadingSnapshot(false);
   };
@@ -537,7 +537,7 @@ const CCTVSystem = () => {
         toast.error('فشل في إنشاء الطلب');
       }
     } catch (error) {
-      toast.error('خطأ في الاتصال');
+      toast.error(t('خطأ في الاتصال', 'Connection error'));
     }
   };
 
