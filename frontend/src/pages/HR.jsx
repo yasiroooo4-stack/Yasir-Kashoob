@@ -2203,34 +2203,44 @@ const HR = () => {
                   <CalendarDays className="w-4 h-4" />
                   {language === "ar" ? "معدلات الإجازات الشهرية حسب المنصب" : "Monthly Leave Rates by Position"}
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                   <div className="bg-white rounded p-2 text-center shadow-sm">
-                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مدير عام" : "General Manager"}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "المدير العام" : "General Manager"}</p>
                     <p className="font-bold text-lg text-blue-600">3.5</p>
                     <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
                   </div>
                   <div className="bg-white rounded p-2 text-center shadow-sm">
-                    <p className="text-xs text-muted-foreground">{language === "ar" ? "نائب المدير" : "Deputy Director"}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "نائب المدير العام" : "Deputy GM"}</p>
                     <p className="font-bold text-lg text-blue-600">3.5</p>
                     <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
                   </div>
                   <div className="bg-white rounded p-2 text-center shadow-sm">
-                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مشرف" : "Supervisor"}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مدير الموارد البشرية" : "HR Manager"}</p>
                     <p className="font-bold text-lg text-green-600">3.0</p>
                     <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
                   </div>
                   <div className="bg-white rounded p-2 text-center shadow-sm">
-                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مدير HR" : "HR Manager"}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مدير العمليات" : "Operations Manager"}</p>
                     <p className="font-bold text-lg text-green-600">3.0</p>
                     <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
                   </div>
                   <div className="bg-white rounded p-2 text-center shadow-sm">
-                    <p className="text-xs text-muted-foreground">{language === "ar" ? "أمن وسلامة" : "Safety Officer"}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "نائب مدير العمليات" : "Deputy Operations"}</p>
                     <p className="font-bold text-lg text-green-600">3.0</p>
                     <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
                   </div>
                   <div className="bg-white rounded p-2 text-center shadow-sm">
-                    <p className="text-xs text-muted-foreground">{language === "ar" ? "موظف (افتراضي)" : "Employee"}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "المشرف" : "Supervisor"}</p>
+                    <p className="font-bold text-lg text-green-600">3.0</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "مسؤول الأمن والسلامة" : "Safety Officer"}</p>
+                    <p className="font-bold text-lg text-green-600">3.0</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center shadow-sm">
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? "الموظف (افتراضي)" : "Employee"}</p>
                     <p className="font-bold text-lg text-amber-600">2.6</p>
                     <p className="text-xs text-muted-foreground">{language === "ar" ? "يوم/شهر" : "days/month"}</p>
                   </div>
