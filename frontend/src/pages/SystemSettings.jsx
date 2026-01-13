@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { API, useLanguage } from "../App";
 import {
   Card,
   CardContent,
@@ -53,9 +54,10 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL;
-
 const SystemSettings = () => {
+  const { language } = useLanguage();
+  const t = (ar, en) => language === "ar" ? ar : en;
+  
   const [activeTab, setActiveTab] = useState("centers");
   const [loading, setLoading] = useState(false);
   
