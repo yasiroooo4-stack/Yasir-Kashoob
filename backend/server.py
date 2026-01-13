@@ -10229,7 +10229,14 @@ async def create_salary_structure(
         created_by=current_user["id"]
     )
     
-    await db.employee_salary_structures.insert_one(structure.model_dump())
+    # Add bank information to structure
+    structure_dict = structure.model_dump()
+    if data.get("bank_name"):
+        structure_dict["bank_name"] = data.get("bank_name")
+    if data.get("bank_account"):
+        structure_dict["bank_account"] = data.get("bank_account")
+    
+    await db.employee_salary_structures.insert_one(structure_dict)
     
     # Update employee salary field
     await db.hr_employees.update_one(
