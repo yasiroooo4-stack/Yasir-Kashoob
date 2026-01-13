@@ -39,11 +39,11 @@
 ### P0 - مكتمل ✅
 
 ### P1 - قيد التنفيذ
-- [ ] إكمال ترجمة الصفحات (i18n):
-  - [ ] AdvancedReports.jsx (~731 سطر)
-  - [ ] CCTVSystem.jsx (~2367 سطر)
-  - [ ] SupplierManagement.jsx (~898 سطر)
-- [ ] إعادة هيكلة server.py الضخم
+- [x] إكمال ترجمة الصفحات (i18n): ✅ **(تم - يناير 2026)**
+  - [x] AdvancedReports.jsx - ترجمة كاملة ثنائية اللغة
+  - [x] CCTVSystem.jsx - ترجمة رسائل toast والنصوص الأساسية
+  - [x] SupplierManagement.jsx - ترجمة كاملة ثنائية اللغة
+- [ ] إعادة هيكلة server.py الضخم (12,133 سطر) - **قيد التنفيذ**
 
 ### P2 - قادم
 - [x] إصلاح ProtectedRoute race condition ✅ **(تم الإصلاح)**
