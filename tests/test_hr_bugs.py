@@ -22,7 +22,7 @@ class TestLeaveRateEndpoint:
             "password": "admin123"
         })
         assert login_response.status_code == 200, f"Login failed: {login_response.text}"
-        self.token = login_response.json().get("token")
+        self.token = login_response.json().get("access_token")
         self.headers = {"Authorization": f"Bearer {self.token}"}
         
         # Get an employee ID for testing
@@ -98,7 +98,7 @@ class TestAttendanceRefresh:
             "password": "admin123"
         })
         assert login_response.status_code == 200, f"Login failed: {login_response.text}"
-        self.token = login_response.json().get("token")
+        self.token = login_response.json().get("access_token")
         self.headers = {"Authorization": f"Bearer {self.token}"}
     
     def test_get_attendance_records(self):
@@ -154,7 +154,7 @@ class TestSuppliersOptionalFields:
             "password": "admin123"
         })
         assert login_response.status_code == 200, f"Login failed: {login_response.text}"
-        self.token = login_response.json().get("token")
+        self.token = login_response.json().get("access_token")
         self.headers = {"Authorization": f"Bearer {self.token}"}
     
     def test_get_suppliers(self):
