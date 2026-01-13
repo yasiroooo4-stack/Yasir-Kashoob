@@ -518,7 +518,7 @@ const CCTVSystem = () => {
 
   const handleRequestExport = async () => {
     if (!exportRequest.start_time || !exportRequest.end_time) {
-      toast.error('يرجى تحديد وقت البداية والنهاية');
+      toast.error(t('يرجى تحديد وقت البداية والنهاية', 'Please specify start and end time'));
       return;
     }
     
@@ -531,10 +531,10 @@ const CCTVSystem = () => {
       
       if (res.ok) {
         const data = await res.json();
-        toast.success('تم إنشاء طلب التصدير');
+        toast.success(t('تم إنشاء طلب التصدير', 'Export request created'));
         fetchExportJobs();
       } else {
-        toast.error('فشل في إنشاء الطلب');
+        toast.error(t('فشل في إنشاء الطلب', 'Failed to create request'));
       }
     } catch (error) {
       toast.error(t('خطأ في الاتصال', 'Connection error'));
@@ -582,7 +582,7 @@ const CCTVSystem = () => {
       });
       
       if (res.ok) {
-        toast.success('تم حفظ إعدادات الأحداث');
+        toast.success(t('تم حفظ إعدادات الأحداث', 'Event settings saved'));
       } else {
         toast.error('فشل في حفظ الإعدادات');
       }
