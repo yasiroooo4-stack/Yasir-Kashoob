@@ -89,7 +89,7 @@ const WorkScheduleManager = () => {
       setEmployees(res.data || []);
     } catch (error) {
       console.error("Error:", error);
-      toast.error("فشل في تحميل بيانات الموظفين");
+      toast.error(t("فشل في تحميل بيانات الموظفين", "Failed to load employees"));
     } finally {
       setLoading(false);
     }
@@ -114,11 +114,11 @@ const WorkScheduleManager = () => {
         {},
         { headers }
       );
-      toast.success("تم تحديث جدول العمل بنجاح");
+      toast.success(t("تم تحديث جدول العمل بنجاح", "Work schedule updated successfully"));
       setEditDialogOpen(false);
       fetchEmployees();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "فشل في تحديث جدول العمل");
+      toast.error(error.response?.data?.detail || t("فشل في تحديث جدول العمل", "Failed to update work schedule"));
     } finally {
       setLoading(false);
     }
