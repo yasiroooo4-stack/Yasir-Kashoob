@@ -172,6 +172,7 @@ const WorkScheduleManager = () => {
         {SHIFT_TYPES.map(shift => {
           const ShiftIcon = shift.icon;
           const count = employees.filter(e => e.shift_type === shift.id).length;
+          const shiftName = language === "ar" ? shift.name_ar : shift.name_en;
           return (
             <Card key={shift.id}>
               <CardContent className="p-4">
@@ -180,7 +181,7 @@ const WorkScheduleManager = () => {
                     <ShiftIcon className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">وردية {shift.name}</p>
+                    <p className="text-sm text-muted-foreground">{t("وردية", "Shift")} {shiftName}</p>
                     <p className="text-2xl font-bold">{count}</p>
                     <p className="text-xs text-muted-foreground">{shift.time}</p>
                   </div>
@@ -195,12 +196,12 @@ const WorkScheduleManager = () => {
       <Card>
         <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className={`absolute ${language === "ar" ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
             <Input
-              placeholder="بحث بالاسم أو الكود أو القسم..."
+              placeholder={t("بحث بالاسم أو الكود أو القسم...", "Search by name, code, or department...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-9"
+              className={language === "ar" ? "pr-9" : "pl-9"}
             />
           </div>
         </CardContent>
