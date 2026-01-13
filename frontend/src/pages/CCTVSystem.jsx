@@ -584,7 +584,7 @@ const CCTVSystem = () => {
       if (res.ok) {
         toast.success(t('تم حفظ إعدادات الأحداث', 'Event settings saved'));
       } else {
-        toast.error('فشل في حفظ الإعدادات');
+        toast.error(t('فشل في حفظ الإعدادات', 'Failed to save settings'));
       }
     } catch (error) {
       toast.error(t('حدث خطأ', 'An error occurred'));
@@ -758,7 +758,7 @@ const CCTVSystem = () => {
         setShowSettings(false);
       }
     } catch (error) {
-      toast.error('فشل في حفظ الإعدادات');
+      toast.error(t('فشل في حفظ الإعدادات', 'Failed to save settings'));
     }
   };
 
