@@ -1,41 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="6" skipped="0" tests="10" time="4.150" timestamp="2026-01-13T08:39:20.559087+00:00" hostname="agent-env-81bdf402-b6f3-431c-b850-855f13841e68"><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_success" time="0.455"><error message="failed on setup with &quot;AssertionError: Failed to get employees: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code&quot;">tests/test_hr_bugs.py:30: in setup
-    assert emp_response.status_code == 200, f"Failed to get employees: {emp_response.text}"
-E   AssertionError: Failed to get employees: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</error></testcase><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_auto_rate" time="0.373"><error message="failed on setup with &quot;AssertionError: Failed to get employees: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code&quot;">tests/test_hr_bugs.py:30: in setup
-    assert emp_response.status_code == 200, f"Failed to get employees: {emp_response.text}"
-E   AssertionError: Failed to get employees: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</error></testcase><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_invalid_employee" time="0.371"><error message="failed on setup with &quot;AssertionError: Failed to get employees: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code&quot;">tests/test_hr_bugs.py:30: in setup
-    assert emp_response.status_code == 200, f"Failed to get employees: {emp_response.text}"
-E   AssertionError: Failed to get employees: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</error></testcase><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_unauthorized" time="0.406"><error message="failed on setup with &quot;AssertionError: Failed to get employees: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code&quot;">tests/test_hr_bugs.py:30: in setup
-    assert emp_response.status_code == 200, f"Failed to get employees: {emp_response.text}"
-E   AssertionError: Failed to get employees: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</error></testcase><testcase classname="tests.test_hr_bugs.TestAttendanceRefresh" name="test_get_attendance_records" time="0.371"><failure message="AssertionError: Expected 200, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_hr_bugs.py:111: in test_get_attendance_records
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-E   AssertionError: Expected 200, got 401: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_hr_bugs.TestAttendanceRefresh" name="test_get_attendance_with_date_filter" time="0.379"><failure message="AssertionError: Expected 200, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_hr_bugs.py:127: in test_get_attendance_with_date_filter
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-E   AssertionError: Expected 200, got 401: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_hr_bugs.TestAttendanceRefresh" name="test_get_attendance_report" time="0.377"><failure message="AssertionError: Expected 200, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_hr_bugs.py:140: in test_get_attendance_report
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-E   AssertionError: Expected 200, got 401: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_hr_bugs.TestSuppliersOptionalFields" name="test_get_suppliers" time="0.366"><failure message="AssertionError: Expected 200, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_hr_bugs.py:167: in test_get_suppliers
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-E   AssertionError: Expected 200, got 401: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_hr_bugs.TestSuppliersOptionalFields" name="test_create_supplier_without_phone_address" time="0.380"><failure message="AssertionError: Expected 200/201, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 in [200, 201]&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_hr_bugs.py:196: in test_create_supplier_without_phone_address
-    assert response.status_code in [200, 201], f"Expected 200/201, got {response.status_code}: {response.text}"
-E   AssertionError: Expected 200/201, got 401: {"detail":"Invalid token"}
-E   assert 401 in [200, 201]
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_hr_bugs.TestSuppliersOptionalFields" name="test_create_supplier_with_phone_address" time="0.365"><failure message="AssertionError: Expected 200/201, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 in [200, 201]&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_hr_bugs.py:226: in test_create_supplier_with_phone_address
-    assert response.status_code in [200, 201], f"Expected 200/201, got {response.status_code}: {response.text}"
-E   AssertionError: Expected 200/201, got 401: {"detail":"Invalid token"}
-E   assert 401 in [200, 201]
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="9.450" timestamp="2026-01-13T08:40:18.629781+00:00" hostname="agent-env-81bdf402-b6f3-431c-b850-855f13841e68"><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_success" time="0.611" /><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_auto_rate" time="0.604" /><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_invalid_employee" time="0.628" /><testcase classname="tests.test_hr_bugs.TestLeaveRateEndpoint" name="test_update_leave_rate_unauthorized" time="0.669"><failure message="AssertionError: Expected 401, got 403: {&quot;detail&quot;:&quot;Not authenticated&quot;}&#10;assert 403 == 401&#10; +  where 403 = &lt;Response [403]&gt;.status_code">tests/test_hr_bugs.py:86: in test_update_leave_rate_unauthorized
+    assert response.status_code == 401, f"Expected 401, got {response.status_code}: {response.text}"
+E   AssertionError: Expected 401, got 403: {"detail":"Not authenticated"}
+E   assert 403 == 401
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="tests.test_hr_bugs.TestAttendanceRefresh" name="test_get_attendance_records" time="1.918" /><testcase classname="tests.test_hr_bugs.TestAttendanceRefresh" name="test_get_attendance_with_date_filter" time="0.821" /><testcase classname="tests.test_hr_bugs.TestAttendanceRefresh" name="test_get_attendance_report" time="1.200" /><testcase classname="tests.test_hr_bugs.TestSuppliersOptionalFields" name="test_get_suppliers" time="0.787" /><testcase classname="tests.test_hr_bugs.TestSuppliersOptionalFields" name="test_create_supplier_without_phone_address" time="1.247" /><testcase classname="tests.test_hr_bugs.TestSuppliersOptionalFields" name="test_create_supplier_with_phone_address" time="0.646" /></testsuite></testsuites>
