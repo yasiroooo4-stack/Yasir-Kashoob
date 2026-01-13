@@ -164,31 +164,37 @@ const SystemSettings = () => {
 
   const saveCenter = async () => {
     if (!centerForm.name) {
-      toast.error("الرجاء إدخال اسم المركز");
+      toast.error(t("الرجاء إدخال اسم المركز", "Please enter center name"));
       return;
     }
     
     try {
       if (editingCenter) {
-        // Update existing center
-        const updatedCenters = centers.map(c => 
-          c.id === editingCenter.id ? { ...c, ...centerForm } : c
-        );
-        setCenters(updatedCenters);
-        toast.success("تم تحديث المركز بنجاح");
+        // Update existing center via API
+        await axios.put(`${API}/api/centers/${editingCenter.id}`, centerForm, { headers });
+        toast.success(t("تم تحديث المركز بنجاح", "Center updated successfully"));
       } else {
-        // Add new center
-        const newCenter = {
-          id: `center_${Date.now()}`,
-          ...centerForm,
-          suppliers_count: 0,
-        };
-        setCenters([...centers, newCenter]);
-        toast.success("تم إضافة المركز بنجاح");
+        // Add new center via API
+        await axios.post(`${API}/api/centers`, centerForm, { headers });
+        toast.success(t("تم إضافة المركز بنجاح", "Center added successfully"));
       }
       setCenterDialogOpen(false);
+      fetchAllData(); // Refresh data
     } catch (error) {
-      toast.error("فشل في حفظ المركز");
+      toast.error(t("فشل في حفظ المركز", "Failed to save center"));
+    }
+  };
+
+  const deleteCenter = async (centerId) => {
+    if (!window.confirm(t("هل أنت متأكد من حذف هذا المركز؟", "Are you sure you want to delete this center?"))) {
+      return;
+    }
+    try {
+      await axios.delete(`${API}/api/centers/${centerId}`, { headers });
+      toast.success(t("تم حذف المركز", "Center deleted"));
+      fetchAllData();
+    } catch (error) {
+      toast.error(t("فشل في حذف المركز", "Failed to delete center"));
     }
   };
 
