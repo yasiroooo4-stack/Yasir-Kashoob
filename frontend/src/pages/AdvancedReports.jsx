@@ -59,6 +59,8 @@ import {
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const AdvancedReports = () => {
+  const { language } = useLanguage();
+  const t = (ar, en) => language === "ar" ? ar : en;
   const [activeTab, setActiveTab] = useState("payroll-comparison");
   const [loading, setLoading] = useState(false);
   

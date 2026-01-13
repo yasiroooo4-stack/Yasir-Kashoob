@@ -68,6 +68,8 @@ const DAYS = [
 ];
 
 const WorkScheduleManager = () => {
+  const { language } = useLanguage();
+  const t = (ar, en) => language === "ar" ? ar : en;
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
