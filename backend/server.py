@@ -12088,6 +12088,17 @@ async def root():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Include new modular routers
+from routes.customers_routes import router as customers_router
+from routes.sales_routes import router as sales_router
+from routes.inventory_routes import router as inventory_router
+from routes.milk_routes import router as milk_router
+
+app.include_router(customers_router, prefix="/api")
+app.include_router(sales_router, prefix="/api")
+app.include_router(inventory_router, prefix="/api")
+app.include_router(milk_router, prefix="/api")
+
 # Include CCTV router
 from routes.cctv_routes import router as cctv_router
 app.include_router(cctv_router)
