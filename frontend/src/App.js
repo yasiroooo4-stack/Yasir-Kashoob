@@ -174,16 +174,24 @@ function App() {
       const token = localStorage.getItem("token");
       const savedUser = localStorage.getItem("user");
 
-      if (token && savedUser) {
+      if (token) {
         try {
           axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
           const response = await axios.get(`${API}/auth/me`);
           setUser(response.data);
+          // Update saved user with fresh data
+          localStorage.setItem("user", JSON.stringify(response.data));
         } catch (error) {
+          console.error("Auth check failed:", error);
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           delete axios.defaults.headers.common["Authorization"];
+          setUser(null);
         }
+      } else if (savedUser) {
+        // Clean up stale user data if no token exists
+        localStorage.removeItem("user");
+        setUser(null);
       }
       setLoading(false);
     };
