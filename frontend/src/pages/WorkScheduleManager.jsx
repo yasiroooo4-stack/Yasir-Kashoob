@@ -49,8 +49,6 @@ import {
   Search,
 } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL;
-
 const SHIFT_TYPES = [
   { id: "morning", name: "صباحي", icon: Sun, color: "text-amber-500", time: "6:00 - 14:00" },
   { id: "afternoon", name: "مسائي", icon: Sunset, color: "text-orange-500", time: "14:00 - 22:00" },
