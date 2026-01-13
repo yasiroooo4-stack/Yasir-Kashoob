@@ -399,6 +399,8 @@ const SalaryStructures = () => {
                     <TableHead>الراتب الأساسي</TableHead>
                     <TableHead>البدلات</TableHead>
                     <TableHead>إجمالي الراتب</TableHead>
+                    <TableHead>البنك</TableHead>
+                    <TableHead>رقم الحساب</TableHead>
                     <TableHead>الحالة</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -426,6 +428,14 @@ const SalaryStructures = () => {
                         </TableCell>
                         <TableCell className="font-bold">
                           {struct?.total_salary?.toLocaleString() || emp.salary?.toLocaleString() || 0} ر.ع
+                        </TableCell>
+                        <TableCell>
+                          {struct?.bank_name || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-sm">
+                            {struct?.bank_account || "-"}
+                          </span>
                         </TableCell>
                         <TableCell>
                           {struct ? (
