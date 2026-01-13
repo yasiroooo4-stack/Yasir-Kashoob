@@ -99,8 +99,8 @@ const SystemSettings = () => {
     try {
       // Fetch centers from API
       try {
-        const centersRes = await axios.get(`${API}/api/centers`, { headers });
-        const suppliersRes = await axios.get(`${API}/api/suppliers`, { headers });
+        const centersRes = await axios.get(`${API}/centers`, { headers });
+        const suppliersRes = await axios.get(`${API}/suppliers`, { headers });
         const centersWithCount = (centersRes.data || []).map(center => ({
           ...center,
           suppliers_count: (suppliersRes.data || []).filter(s => s.center_name === center.name).length,
