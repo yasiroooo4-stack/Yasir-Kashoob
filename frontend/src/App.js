@@ -102,6 +102,7 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPer
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  // Show loading while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -110,8 +111,20 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPer
     );
   }
 
-  if (!user) {
+  // Check for token in localStorage as backup (handles race conditions)
+  const hasToken = localStorage.getItem("token");
+  
+  if (!user && !hasToken) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If we have a token but no user yet, show loading (auth check in progress)
+  if (!user && hasToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
   }
 
   // Admin and IT have access to everything
