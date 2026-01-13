@@ -202,6 +202,8 @@ const SalaryStructures = () => {
           special_allowance: parseFloat(form.special_allowance) || 0,
           other_allowance: parseFloat(form.other_allowance) || 0,
         },
+        bank_name: form.bank_name || null,
+        bank_account: form.bank_account || null,
         notes: form.notes,
       }, {
         headers: { Authorization: `Bearer ${token}` },
