@@ -1,210 +1,187 @@
 <analysis>**original_problem_statement:**
-The user continued to build out their ERP system for a milk collection center with several new feature requests and bug fixes:
-1.  **Driver & Operations Log:** The user requested a new feature in the Operations section to document driver tasks. This needed to include driver selection, transport type (initially milk/petrol, later refined), vehicle details, quantity, timing, and location. Locations include Hajeef, Ghadu, Zik, Thumrait, Taqah, and Mirbat, with destinations like Al Safwa Company or other custom-added companies.
-2.  **Automatic Leave Balance Accrual:** A system was requested to automatically add leave days to each employee's balance at the end of every month. The accrual rate varies by position (Director/Deputy: 3.5 days, Supervisors: 3 days, Staff: 2.6 days). The user also wanted to see this new  in the employee list UI.
-3.  **Data Cleanup & Refinements:**
-    *   The user provided a list of six specific drivers who were not appearing in the Add Task dropdown and asked for them to be included.
-    *   Requested to zero out (clear all data from) the vehicle fleet, incidents, and equipment sections in the Operations module.
-    *   Refined the driver selection filter to *only* show employees whose position is explicitly سائق (Driver).
-4.  **Bug Fixes & UI/UX Improvements:**
-    *   A bug where adding a Paid holiday was incorrectly saving it as Unpaid.
-    *   A request to change the Transport Type options from (Milk/Petrol) to (Camel Milk/Cow Milk/Sheep Milk).
-    *   A request to add a feature allowing users to add new destination companies directly from the Add Driver Task form, instead of having a static list.
-5.  **Technical Debt:** The user explicitly requested to refactor the monolithic  file.
+The user's overall goal is to build out a comprehensive ERP system for their dairy farm business. The session began with several requests from a previous handoff and introduced new, large-scale data import tasks and feature enhancements.
+
+Key requests handled and in progress:
+1.  **Data Import (P0 - Completed):** Import employee salary and bank account information from an Excel file (). This included adding the necessary UI fields to display and edit bank name and account number.
+2.  **Data Import (P0 - Completed):** Import milk procurement data for suppliers from a batch of 6 Excel files. This involved creating or updating supplier records with their codes, national IDs, milk type, center, bank details, and current balance.
+3.  **Feature Enhancement (P0 - In Progress):** Update the leave balance page () to allow the monthly accrual rate to be set automatically based on job position or manually overridden. The user has specified rates for different roles (e.g., General Manager: 3.5 days, Employee: 2.6 days).
+4.  **Bug Fix (P0 - In Progress):** A bug occurred immediately after implementing the leave balance feature, where saving the adjusted rate fails.
+5.  **Bug Fix (P1 - Completed):** The System Settings page was not displaying the list of collection centers due to an incorrect API path.
+6.  **Internationalization (i18n) (P1 - In Progress):** Continue translating pages that still show hardcoded Arabic text when the language is switched to English.
+7.  **Technical Debt (P1 - Not Started):** Refactor the monolithic  file.
+8.  **Bug Fix (P2 - Not Started):** Address a recurring race condition in  that causes pages to unpredictably redirect to the dashboard.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
-The application is a full-stack ERP with a FastAPI backend and a React frontend.
-- **Procurement Module:** The previously inaccessible  page is now fixed and fully functional. A Pay Vendor button and payment dialog have been added to the Purchase Orders tab, which correctly triggers a backend API to create a journal entry.
-- **Payroll Module:** The UI now features a Disburse Payroll button that appears after a period is approved. The backend logic for disbursing payroll and creating the corresponding automated journal entry has been implemented and fixed.
-- **Settings Unification:** Holiday and weekly off day settings have been consolidated in the backend. A new API endpoint () provides a single source of truth.
-- **Operations Module:** A new Driver Tasks tab has been added. It includes a dashboard for driver analytics and a table to list tasks. A form allows for creating new driver tasks, including selecting from a filtered list of drivers and dynamically adding new destination companies. The backend includes new models and APIs to support this.
-- **HR Module:** The employee model now includes  and . A new API endpoint () calculates and adds monthly leave balances. The UI in the HR employee list now displays the current leave balance for each employee.
-- **Bug Fixes:** The bug preventing paid holidays from being saved correctly is resolved. The UI for driver tasks has been updated as per user requests.
+The application is a full-stack ERP system. Significant progress was made on data integration and feature enhancement:
+-   **Salary & Bank Data:** Employee salary structures now include bank name and account number. The data has been successfully imported from Excel and is visible and editable on the Salary Structures page ().
+-   **Supplier & Procurement Data:** Over 1,100 supplier records with detailed milk procurement data (balances, bank info, center, etc.) were imported from 6 Excel files. A Suppliers page () now correctly displays this data.
+-   **System Settings:** The bug preventing collection centers from being displayed on the System Settings page has been fixed. The page now correctly lists all centers and their supplier counts.
+-   **Leave Balance Feature:** The UI for managing employee leave balance accrual rates has been implemented on the HR page. It includes informational cards showing rates per position and a table allowing for manual or automatic rate adjustments via a new dialog. However, the save functionality is currently bugged.
+-   **Internationalization (i18n):** The  and  pages were refactored to support dual-language text. However, other pages still require translation.
 
 **Last working item**:
-- **Last item agent was working:** The agent started the significant task of refactoring the monolithic  file, which has over 12,000 lines of code. The plan is to break down the file by functionality into separate route files (e.g., , , etc.). The agent had just begun by creating the new file  and was planning the strategy for moving the code.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** both. After each module is refactored, the backend agent must run extensive regression tests on all related APIs. The frontend agent must then verify that all pages dependent on those APIs still function correctly.
-- **User Testing Done:** N
+-   **Last item agent was working:** The agent was debugging a bug reported by the user with a screenshot. When the user tries to save an adjustment to an employee's monthly leave rate on the HR page, an error occurs. The agent's investigation revealed that the error log points to a Pydantic validation failure on an unrelated  model ( for  and ), likely triggered by a broad data-refetching function called after the update attempt.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** backend testing agent. The agent should first verify the error by attempting the same action. Then, the agent needs to fix the backend API or the associated Pydantic model ( model in ) to make the  and  fields optional or provide them with default values, so they don't fail validation. After the fix, the agent must test by repeating the user's action and confirming it succeeds.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** Refactor Monolithic Codebase (P0)
-- **Issue 2:** HR Page is Inaccessible for Admin User (P1)
+-   **Issue 1:** Bug: Saving Monthly Leave Rate Adjustment Fails (P0)
+-   **Issue 2:** Refactor Monolithic  (P1)
+-   **Issue 3:** Incomplete UI Translation (P1)
+-   **Issue 4:**  Race Condition Causes Redirects (P2)
+-   **Issue 5:** Incomplete Employee Data from Previous PDF Import (P3)
 
 **Issues Detail:**
-- **Issue 1:**
-  - **Description:**  is a monolith with over 12,000 lines, making development slow, error-prone, and difficult to maintain. This is a recurring technical debt issue that the user has now explicitly asked to be addressed.
-  - **Attempted fixes:** The agent created a new file  and was analyzing the structure of  to begin moving code.
-  - **Next debug checklist:**
-    1.  Copy the entire OPERATIONS MODULE ROUTES section from  into .
-    2.  Add all necessary imports (, , Pydantic models,  object, etc.) to the top of .
-    3.  In , remove the copied operations routes.
-    4.  Import the  from the new file and include it in the main  object using .
-    5.  Restart the backend and test all functionality in the Operations page to ensure no regressions were introduced.
-    6.  Repeat this process for other modules (HR, Finance, Suppliers, etc.).
-  - **Why fix this issue and what will be achieved with the fix?** Refactoring will dramatically improve code maintainability, reduce the risk of introducing bugs, and make the application scalable for future development.
-  - **Status:** IN PROGRESS
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Both.
-  - **Blocked on other issue:** None.
-- **Issue 2:**
-  - **Description:** Navigating to the  page redirects the  user to the dashboard, even though they have  role. The agent found that the user object in the frontend state was missing the  property, causing the  logic to fail.
-  - **Attempted fixes:** The agent performed a one-time database update to set the department for  to admin. This fixed it for that specific session but may not be a permanent solution. The root cause is likely in how the user data is fetched/stored in the frontend's auth context after login.
-  - **Next debug checklist:**
-    1.  Log in as a user without a department set.
-    2.  Inspect the  and React DevTools to see the structure of the user object stored by the .
-    3.  Review the  endpoint in  to ensure the  field is always included in the user data payload within the JWT or login response.
-    4.  Review the  hook in  to ensure the user state is correctly populated from the login response.
-  - **Why fix this issue and what will be achieved with the fix?** This will ensure that role-based access control works reliably for all users, regardless of whether their department is explicitly set.
-  - **Status:** NOT STARTED
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Frontend.
-  - **Blocked on other issue:** None.
+-   **Issue 1:**
+    -   **Description:** When saving a change to an employee's monthly leave accrual rate in the new dialog on the HR page, the operation fails. The user provided a screenshot. The backend logs point to a Pydantic validation error for the  model, not the  model, suggesting a side effect from a data refresh function.
+    -   **Attempted fixes:** The agent identified the error in the logs but has not yet implemented a fix.
+    -   **Next debug checklist:**
+        1.  Open .
+        2.  Locate the  (or similar) Pydantic model.
+        3.  Change the  and  fields from  to .
+        4.  Restart the backend service.
+        5.  Retest the Save functionality in the Adjust Monthly Rate dialog on the HR page.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical bug blocking a newly implemented feature the user just requested. Fixing it will make the feature usable.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both. Backend for the API call, frontend to confirm the UI works as expected.
+    -   **Blocked on other issue:** None.
+-   **Issue 2:**
+    -   **Description:** The main  file is a large monolith that the user has repeatedly asked to refactor.
+    -   **Status:** NOT STARTED (in this session)
+    -   **Is recurring issue?** Y
+-   **Issue 3:**
+    -   **Description:** Pages like , , and  still contain hardcoded Arabic text and need to be refactored to use the i18n system. The agent noted the codebase uses a mix of a custom  hook and the  library, which should be standardized.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
+-   **Issue 4:**
+    -   **Description:** Navigating directly to protected pages via URL often fails, redirecting the user to the dashboard. This is likely a race condition where the auth state isn't loaded before the route protection logic runs. The agent experienced this multiple times but did not fix the root cause.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+-   **Issue 5:**
+    -   **Description:** From a previous session, National IDs for 2 employees were missing during a PDF import. The task is blocked waiting for user clarification.
+    -   **Status:** BLOCKED
+    -   **Is recurring issue?** N
 
 **In progress Task List**:
-- **Task 1:** Refactor  (P0)
-  - **Where to resume:** Continue with the plan outlined in Issue 1. Start by moving the Operations module routes into .
-  - **What will be achieved with this?** A more modular, maintainable, and scalable backend architecture.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Both.
-  - **Blocked on something:** None.
+-   **Task 1:** Complete UI Translations (P1)
+    -   **Where to resume:** Continue refactoring , , and  to remove hardcoded strings and use the i18n framework. Standardize on one translation method.
+    -   **What will be achieved with this?** A fully bilingual UI.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-  - **(P1)** Implement Hikvision Live Stream & Playback.
-  - **(P1)** Configure and Test SMS Provider.
-- **Future Tasks:**
-  - **(P2)** Adjust Absence Calculation Logic.
-  - **(P1)** Ekomilk Scale Integration (RS232).
-  - **(P2)** AI Camera for QR Scanning.
-  - **(P2)** Enhance Supplier Portal (cancel/modify feed requests).
-  - **(P2)** Refine Reporting UI (, ).
+-   **Upcoming Tasks:**
+    -   **(P1)** Implement Hikvision Live Stream & Playback.
+    -   **(P1)** Configure and Test SMS Provider.
+    -   **(P1)** Ekomilk Scale Integration (RS232).
+-   **Future Tasks:**
+    -   **(P2)** Adjust Absence Calculation Logic.
+    -   **(P2)** AI Camera for QR Scanning.
+    -   **(P2)** Enhance Supplier Portal (cancel/modify feed requests).
+    -   **(P2)** Generate and export salary data to an Excel file for bank processing.
 
 **Completed work in this session**
-- **Procurement Module Fix:**
-  - Resolved the critical bug preventing the  page from rendering. The issue was a CSS/layout problem where the page content was hidden below the viewport.
-- **Financial Integration UI:**
-  - Added a Disburse Payroll button to  which appears when a payroll period is approved.
-  - Added a Pay button and payment dialog to the Purchase Orders list in .
-- **Backend Journal Entry Fixes:**
-  - Corrected the account numbers ( for Bank) used for automated journal entries in both payroll and procurement.
-  - Fixed unbalanced payroll journal entries by correctly calculating debits and credits and ensuring  was used consistently.
-  - Resolved an issue where journal entries were created without any line items by correctly querying the  collection for verification.
-- **Driver Task Management Feature:**
-  - Created a new Drivers tab in .
-  - Implemented backend models (, ) and APIs for creating/getting driver tasks and managing destination companies.
-  - Built the frontend UI with analytics cards, a task table, and a dialog for adding new tasks.
-  - Updated the Add Task form to allow dynamic adding of new destination companies.
-  - Refined transport types to Camel Milk, Cow Milk, Sheep Milk.
-- **Leave Balance Accrual Feature:**
-  - Added  and  to the employee model in .
-  - Created a backend API () to automatically add leave days monthly based on employee position.
-  - Added a Leave Balance column to the employee table in  to display the accrued balance.
-- **Holiday Management Bug Fix:**
-  - Fixed a bug where creating a Paid holiday would save it as unpaid. This involved adding the  field to the frontend form state, the backend model (), and the display table.
-- **Data Management:**
-  - Zeroed-out all data for Vehicles, Equipment, and Incidents in the Operations module as requested by the user.
-  - Corrected the frontend filter to ensure the driver selection dropdown only shows employees with the position سائق.
+-   **Data Import (Salary):** Imported employee salaries and bank details from Excel into the database.
+-   **Feature (Salary):** Added Bank Name and Bank Account fields to the Salary Structures page UI, including the edit dialog.
+-   **Data Import (Suppliers):** Imported data for 1,148 suppliers from 6 Excel files, including balances and bank details.
+-   **Bugfix/Feature (Suppliers):** The Suppliers page now correctly fetches and displays the imported supplier data, resolving Pydantic validation errors by adding default values for missing fields.
+-   **Bugfix (System Settings):** Fixed the System Settings page, which now correctly fetches and displays the list of collection centers.
+-   **Feature (Leave Balance):** Implemented a new UI on the HR page to manage employee monthly leave accrual rates, with options for automatic (by position) and manual settings.
+-   **Refactoring (i18n):** Translated  and  pages.
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1:** The routing to the  page is unreliable for users without an explicitly set . The agent applied a workaround for one user but did not fix the root cause in the frontend's authentication logic.
+-   The  race condition causing random redirects was not addressed.
+-   The codebase uses two different translation systems ( hook and ), which causes confusion and should be unified.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:**  remains a large monolithic file.
-- **Recurrence count:** 3
-- **Status:** IN PROGRESS
+-   **Issue recurrence in previous fork:**  refactoring.
+-   **Recurrence count:** 6
+-   **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Monolith Refactoring:** The agent has begun the critical process of breaking down the 12,000+ line  into smaller, domain-specific router files (e.g., ).
-- **Journal Entry Debugging:** The agent debugged and fixed complex accounting logic, tracing issues from incorrect account numbers, to unbalanced debit/credit totals, to data inconsistencies in salary calculations ().
-- **Dynamic Frontend Forms:** The Add Driver Task form was enhanced to allow users to add new Destination Companies on the fly, which are then saved to the DB and made available in the dropdown for future use.
-- **CSS Rendering Bug:** The inaccessible procurement page was traced to a CSS / issue combined with the page's viewport being scrolled down, effectively hiding the main content behind an overlay.
+-   **Bulk Data Import from Excel:** Used Python scripts with  and  to parse multiple complex Excel sheets, clean data, and perform bulk updates to the MongoDB database.
+-   **Full-Stack Feature Development:** Added bank details to salary structures, which required changes to the frontend (), backend (), and database models (). The same was done for the leave balance rate feature ().
+-   **Debugging Pydantic Errors:** Resolved backend crashes by identifying  validation errors and modifying the Pydantic models to make fields optional () or by adding default values during data import.
+-   **API Path Correction:** Fixed frontend bugs by correcting malformed API endpoint URLs in  calls within React components.
+-   **Complex React UI:** Implemented dynamic UI components, including new dialogs, tables with custom actions (dropdown buttons), and conditional rendering based on complex state.
 
 **key DB schema**
-- **hr_employees:** Added  (Float) and  (Float).
-- **hr_official_holidays:** Added  (Boolean).
-- **driver_tasks:** (New Collection) 
-- **destination_companies:** (New Collection) 
-- **vehicles, equipment, incident_reports:** These collections were cleared of all documents.
-
-**changes in tech stack**
-- None.
+-   **employee_salary_structures:** MODIFIED - Now stores  and .
+-   **suppliers:** MODIFIED - This collection was heavily populated. It now includes , , , , , , , and . The  and  fields were discovered to be required by the Pydantic model but are missing from the data, causing errors.
+-   **hr_employees:** MODIFIED - Implicitly updated to store  ('auto' or 'manual') and a .
 
 **All files of reference**
-- 
-- 
-- 
--  (new)
-- 
-- 
-- 
-- 
-- 
-- 
-- 
+-   **/app/frontend/src/pages/HR.jsx**: Heavily modified for the new leave balance feature.
+-   **/app/frontend/src/pages/SalaryStructures.jsx**: Heavily modified to add bank details.
+-   **/app/frontend/src/pages/Suppliers.jsx**: The destination page for the supplier import.
+-   **/app/frontend/src/pages/SystemSettings.jsx**: Fixed to display centers.
+-   **/app/backend/server.py**: Contains the API endpoints for data import and updates.
+-   **/app/backend/models/all_models.py**: Contains the Pydantic models that needed debugging.
+-   User-uploaded files for data import (e.g., , , etc.).
 
 **Areas that need refactoring**:
-- ** (CRITICAL):** This is the highest priority task. The file is a major liability and the refactoring is currently in progress.
+-   ** (CRITICAL):** This remains the top priority for refactoring to improve maintainability.
+-   ** (HIGH):** This file has grown to over 3800 lines and is becoming unmanageable. It should be broken down into smaller components (e.g., for leave balance, employee list, etc.).
+-   **i18n Strategy (MEDIUM):** The project uses both a custom  hook and the  library. This should be consolidated into a single, consistent approach.
 
 **key api endpoints**
-- ** (POST, GET):** Create and retrieve driver tasks.
-- ** (POST, GET):** Create and retrieve destination companies for transport.
-- ** (POST):** Triggers the monthly calculation and update of employee leave balances.
-- ** (GET):** New unified endpoint for holiday settings.
-- ** (GET, POST, DELETE):** Routes now internally point to  logic.
-- ** (POST):** Logic fixed to create correct journal entries.
-- ** (POST):** New endpoint for paying vendors against a PO.
+-   **PUT **: New endpoint created to save the manual/automatic leave accrual rate.
+-   **PUT **: Updated to handle saving  and .
+-   **GET **: The response model for this endpoint is causing validation errors.
+-   **GET **: The usage of this endpoint was fixed in .
 
 **Critical Info for New Agent**
-- **Language:** The user's preferred language is **Arabic**. All communication must be in Arabic.
-- **PRIORITY 1: Refactor :** Your primary task is to continue the refactoring of  that was just started. Follow the plan of moving logic module-by-module into the  directory. Start with the  module. This is a user-requested, high-priority task.
-- **HR Page Routing Bug:** Be aware of the bug where the  page is inaccessible for some admin users. The previous agent's fix was a temporary workaround. If the user reports this again, the root cause in  or the auth context needs to be addressed properly.
-- **PRD.md:** The PRD was updated. Refer to it for a list of completed features.
+-   **Language:** The user's preferred language is **Arabic**. All communication must be in Arabic.
+-   **IMMEDIATE PRIORITY:** Fix the bug preventing the monthly leave rate from being saved. The root cause is almost certainly the  Pydantic model validation error. Check  and make the  and  fields optional.
+-   ** Bug:** Be aware that navigating to pages directly by URL will likely fail. Use the sidebar navigation links, as they are more reliable. Do not spend too much time debugging this unless requested, but be prepared to explain it if the user asks why pages are blank or redirect.
+-   **Large Files:**  is extremely large. Be cautious when editing it, as linting and other tools may time out. Focus on small, targeted changes.
 
 **documents and test reports created in this job**
--  (Updated)
+-    (Updated)
+-   Multiple Excel files downloaded to the root directory for data import (e.g., ).
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **User:** Requested to refactor the monolithic  file. (IN PROGRESS)
-9.  **User:** Requested to add a way to create new destination companies from the UI and change the transport types to different kinds of milk. (DONE)
-8.  **User:** Reported a bug where adding a Paid holiday saves it as Unpaid. (DONE)
-7.  **User:** Requested to filter the driver list to only those with the سائق position and to clear data from the incidents and equipment sections. (DONE)
-6.  **User:** Provided a list of 6 drivers who should appear in the driver selection dropdown and asked to clear the vehicle fleet data. (DONE)
-5.  **User:** Confirmed requirements for driver task logging and automatic monthly leave accrual. (DONE)
-4.  **User:** Provided new requirements for a driver tasks logging feature and automatic monthly leave accrual. (DONE)
-3.  **User:** (Testing Agent) Added a request for a driver task logging feature.
-2.  **User:** Confirmed the plan to unify holiday settings, fix the procurement page, and then build the UI for payroll/vendor payments. (DONE)
-1.  **User:** The user provided an uploaded artifact with a list of drivers.
+-   **User:** When I adjust the leave rate, I get this error. (Provides screenshot). - **Status: IN PROGRESS**
+-   **Agent:** Summarized the successful implementation of the leave rate feature and asked for confirmation.
+-   **User:** Requested the leave balance feature with specific rates per position and manual/auto modes. - **Status: DONE (but buggy)**
+-   **Agent:** Summarized the successful fix of the System Settings page and completion of supplier data import.
+-   **User:** Asked the agent to fix the System Settings page and continue with translations. - **Status: DONE**
+-   **Agent:** Confirmed successful import of all supplier data and asked for next steps.
+-   **User:** Provided the 6th Excel file and detailed requirements for importing supplier and milk procurement data. - **Status: DONE**
+-   **Agent:** Acknowledged the 5 uploaded files and asked for the user's goal with them.
+-   **User:** I have a sixth file to add. (Uploaded 5 files). - **Status: Acknowledged**
+-   **Agent:** Confirmed successful implementation of bank details in the Salary Structure page and dialog. - **Status: DONE**
 
 **Project Health Check:**
-- **Broken:**
-  - The monolithic  architecture is a high risk for future development and is actively being refactored.
-  - Role-based routing to the  page is faulty for users without an explicit .
-- **Mocked:**
-  - None.
+-   **Broken:**
+    -   The save functionality for the new monthly leave rate feature is non-operational due to a backend validation error.
+    -   The  logic remains fragile, causing frequent and unpredictable navigation failures.
+-   **Mocked:**
+    -   None.
 
 **3rd Party Integrations**
-- **:** (Exists) For CCTV integration.
-- **, , :** (Exists) For file exports.
-- **, , :** (Used) For reading and processing Excel files.
-- **:** (Used) For reading data from PDF files.
-- **:** (Used) For generating PDF reports.
+-   , : Used extensively in backend scripts for Excel data manipulation. No new integrations were added.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES, but it was used to inject a new feature request, not for testing.
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** None
-- **Known regressions:** None identified.
+-   **Testing agent used after significant changes:** NO
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None
+-   **Known regressions:** The newly created save leave rate feature is broken.
 
 **Credentials to test flow:**
-Use the default credentials provided during login (/ or similar). The default user has  privileges. Note that this user may need its  field set to admin in the database to access all pages.
+-   / (Role: admin, Dept: admin)
+-   / (Role: admin, Dept: admin)
 
 **What agent forgot to execute**
-- The agent started the  refactoring but has only completed the initial setup (creating one new route file). The main body of work for this critical task remains to be done.
-- The root cause of the HR page routing issue was identified (frontend auth state) but not fixed; a database workaround was used instead.</analysis>
+-   The agent did not fix the root cause of the  race condition, despite encountering it repeatedly.
+-   The agent did not address the technical debt of  refactoring.
+-   The agent did not consolidate the two different i18n systems ( and ).</analysis>
