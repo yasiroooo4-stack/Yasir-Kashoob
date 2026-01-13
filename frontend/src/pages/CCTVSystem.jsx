@@ -353,16 +353,16 @@ const CCTVSystem = () => {
       });
       setHikvisionConfig(prev => ({ ...prev, is_connected: false }));
       setHikvisionDevices([]);
-      toast.success('تم قطع الاتصال');
+      toast.success(t('تم قطع الاتصال', 'Disconnected'));
     } catch (error) {
-      toast.error('حدث خطأ');
+      toast.error(t('حدث خطأ', 'An error occurred'));
     }
   };
 
   // Live Stream Functions
   const handleOpenLiveStream = async (device) => {
     if (!device.is_online) {
-      toast.error('الجهاز غير متصل');
+      toast.error(t('الجهاز غير متصل', 'Device is offline'));
       return;
     }
     
@@ -420,7 +420,7 @@ const CCTVSystem = () => {
   // Playback Functions
   const handleOpenPlayback = (device) => {
     if (!device.is_online) {
-      toast.error('الجهاز غير متصل');
+      toast.error(t('الجهاز غير متصل', 'Device is offline'));
       return;
     }
     
@@ -587,7 +587,7 @@ const CCTVSystem = () => {
         toast.error('فشل في حفظ الإعدادات');
       }
     } catch (error) {
-      toast.error('حدث خطأ');
+      toast.error(t('حدث خطأ', 'An error occurred'));
     }
   };
 
