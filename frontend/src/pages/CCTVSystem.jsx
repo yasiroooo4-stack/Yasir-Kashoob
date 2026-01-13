@@ -230,11 +230,11 @@ const CCTVSystem = () => {
       
       if (res.ok) {
         const data = await res.json();
-        toast.success(data.is_online ? 'الجهاز متصل ✓' : 'الجهاز غير متصل ✗');
+        toast.success(data.is_online ? t('الجهاز متصل ✓', 'Device online ✓') : t('الجهاز غير متصل ✗', 'Device offline ✗'));
         fetchHikConnectDevices();
       }
     } catch (error) {
-      toast.error('خطأ في فحص الحالة');
+      toast.error(t('خطأ في فحص الحالة', 'Error checking status'));
     }
   };
 
@@ -248,7 +248,7 @@ const CCTVSystem = () => {
         setStreamingDevice(device);
       }
     } catch (error) {
-      toast.error('خطأ في جلب القنوات');
+      toast.error(t('خطأ في جلب القنوات', 'Error fetching channels'));
     }
   };
 
@@ -259,7 +259,7 @@ const CCTVSystem = () => {
       if (res.ok) {
         const data = await res.json();
         setSnapshot(data.snapshot);
-        toast.success('تم جلب الصورة');
+        toast.success(t('تم جلب الصورة', 'Snapshot captured'));
       } else {
         toast.error('فشل في جلب الصورة - تأكد من اتصال الجهاز');
       }
@@ -407,7 +407,7 @@ const CCTVSystem = () => {
       if (res.ok) {
         const data = await res.json();
         setSnapshot(data.snapshot);
-        toast.success('تم جلب الصورة');
+        toast.success(t('تم جلب الصورة', 'Snapshot captured'));
       } else {
         toast.error('فشل في جلب الصورة');
       }
