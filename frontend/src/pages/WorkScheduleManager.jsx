@@ -293,11 +293,12 @@ const WorkScheduleManager = () => {
 
               {/* Shift Type */}
               <div className="space-y-3">
-                <Label className="font-bold">نوع الوردية</Label>
+                <Label className="font-bold">{t("نوع الوردية", "Shift Type")}</Label>
                 <div className="grid grid-cols-3 gap-3">
                   {SHIFT_TYPES.map(shift => {
                     const ShiftIcon = shift.icon;
                     const isSelected = editForm.shift_type === shift.id;
+                    const shiftName = language === "ar" ? shift.name_ar : shift.name_en;
                     return (
                       <button
                         key={shift.id}
@@ -309,7 +310,7 @@ const WorkScheduleManager = () => {
                         }`}
                       >
                         <ShiftIcon className={`w-8 h-8 mx-auto mb-2 ${shift.color}`} />
-                        <p className="font-medium">{shift.name}</p>
+                        <p className="font-medium">{shiftName}</p>
                         <p className="text-xs text-muted-foreground">{shift.time}</p>
                       </button>
                     );
@@ -319,10 +320,11 @@ const WorkScheduleManager = () => {
 
               {/* Weekly Off Days */}
               <div className="space-y-3">
-                <Label className="font-bold">أيام الإجازة الأسبوعية</Label>
+                <Label className="font-bold">{t("أيام الإجازة الأسبوعية", "Weekly Off Days")}</Label>
                 <div className="grid grid-cols-7 gap-2">
                   {DAYS.map(day => {
                     const isOff = editForm.weekly_off_days.includes(day.id);
+                    const dayShort = language === "ar" ? day.short_ar : day.short_en;
                     return (
                       <button
                         key={day.id}
@@ -334,8 +336,8 @@ const WorkScheduleManager = () => {
                         }`}
                       >
                         <Calendar className={`w-4 h-4 mx-auto mb-1 ${isOff ? "text-red-500" : "text-green-500"}`} />
-                        <p className="text-xs font-medium">{day.short}</p>
-                        <p className="text-xs">{isOff ? "إجازة" : "عمل"}</p>
+                        <p className="text-xs font-medium">{dayShort}</p>
+                        <p className="text-xs">{isOff ? t("إجازة", "Off") : t("عمل", "Work")}</p>
                       </button>
                     );
                   })}
@@ -345,10 +347,10 @@ const WorkScheduleManager = () => {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>إلغاء</Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>{t("إلغاء", "Cancel")}</Button>
             <Button onClick={handleSave} disabled={loading}>
               {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 me-2" />}
-              حفظ التغييرات
+              {t("حفظ التغييرات", "Save Changes")}
             </Button>
           </DialogFooter>
         </DialogContent>
