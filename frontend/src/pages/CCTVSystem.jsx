@@ -339,7 +339,7 @@ const CCTVSystem = () => {
         toast.error(error.detail || t('فشل في الاتصال', 'Connection failed'));
       }
     } catch (error) {
-      toast.error('حدث خطأ في الاتصال');
+      toast.error(t('حدث خطأ في الاتصال', 'Connection error occurred'));
     } finally {
       setIsConnecting(false);
     }
@@ -393,7 +393,7 @@ const CCTVSystem = () => {
       }
     } catch (error) {
       console.error('Error getting stream URL:', error);
-      toast.error('فشل في جلب البث');
+      toast.error(t('فشل في جلب البث', 'Failed to get stream'));
     }
     
     setLoadingSnapshot(false);
@@ -409,7 +409,7 @@ const CCTVSystem = () => {
         setSnapshot(data.snapshot);
         toast.success(t('تم جلب الصورة', 'Snapshot captured'));
       } else {
-        toast.error('فشل في جلب الصورة');
+        toast.error(t('فشل في جلب الصورة', 'Failed to capture snapshot'));
       }
     } catch (error) {
       toast.error(t('خطأ في الاتصال', 'Connection error'));
@@ -454,7 +454,7 @@ const CCTVSystem = () => {
         const data = await res.json();
         setRecordings(data.recordings || []);
         if (data.recordings?.length === 0) {
-          toast.info('لا توجد تسجيلات في هذه الفترة');
+          toast.info(t('لا توجد تسجيلات في هذه الفترة', 'No recordings found in this period'));
         } else {
           toast.success(`تم العثور على ${data.recordings.length} تسجيل`);
         }
@@ -667,7 +667,7 @@ const CCTVSystem = () => {
         toast.error(error.detail || 'فشل في إضافة الكاميرا');
       }
     } catch (error) {
-      toast.error('حدث خطأ في الاتصال');
+      toast.error(t('حدث خطأ في الاتصال', 'Connection error occurred'));
     }
   };
 
