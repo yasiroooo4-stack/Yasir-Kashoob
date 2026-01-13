@@ -75,6 +75,8 @@ const SalaryStructures = () => {
     medical_allowance: "",
     special_allowance: "",
     other_allowance: "",
+    bank_name: "",
+    bank_account: "",
     notes: "",
   });
 
