@@ -173,7 +173,7 @@ const CCTVSystem = () => {
 
   const handleConnectDevice = async () => {
     if (!newDeviceForm.host || !newDeviceForm.username || !newDeviceForm.password) {
-      toast.error('يرجى إدخال جميع البيانات المطلوبة');
+      toast.error(t('يرجى إدخال جميع البيانات المطلوبة', 'Please enter all required fields'));
       return;
     }
     
@@ -187,14 +187,14 @@ const CCTVSystem = () => {
       
       if (res.ok) {
         const data = await res.json();
-        toast.success(`تم الاتصال بنجاح - ${data.channels_count} كاميرا`);
+        toast.success(t(`تم الاتصال بنجاح - ${data.channels_count} كاميرا`, `Connected successfully - ${data.channels_count} cameras`));
         setShowAddDevice(false);
         setNewDeviceForm({ host: '', port: 80, username: 'admin', password: '', rtsp_port: 554, device_name: '' });
         fetchHikConnectDevices();
         fetchHikConnectDashboard();
       } else {
         const error = await res.json();
-        toast.error(error.detail || 'فشل في الاتصال');
+        toast.error(error.detail || t('فشل في الاتصال', 'Connection failed'));
       }
     } catch (error) {
       toast.error('خطأ في الاتصال بالجهاز');
@@ -336,7 +336,7 @@ const CCTVSystem = () => {
         setShowHikvisionLogin(false);
       } else {
         const error = await res.json();
-        toast.error(error.detail || 'فشل في الاتصال');
+        toast.error(error.detail || t('فشل في الاتصال', 'Connection failed'));
       }
     } catch (error) {
       toast.error('حدث خطأ في الاتصال');
