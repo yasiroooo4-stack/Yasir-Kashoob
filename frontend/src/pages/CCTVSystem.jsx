@@ -197,13 +197,13 @@ const CCTVSystem = () => {
         toast.error(error.detail || t('فشل في الاتصال', 'Connection failed'));
       }
     } catch (error) {
-      toast.error('خطأ في الاتصال بالجهاز');
+      toast.error(t('خطأ في الاتصال بالجهاز', 'Error connecting to device'));
     }
     setConnectingDevice(false);
   };
 
   const handleDeleteDevice = async (deviceId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الجهاز؟')) return;
+    if (!window.confirm(t('هل أنت متأكد من حذف هذا الجهاز؟', 'Are you sure you want to delete this device?'))) return;
     
     try {
       const res = await fetch(`${API_URL}/api/hikconnect/devices/${deviceId}`, {
@@ -212,12 +212,12 @@ const CCTVSystem = () => {
       });
       
       if (res.ok) {
-        toast.success('تم حذف الجهاز بنجاح');
+        toast.success(t('تم حذف الجهاز بنجاح', 'Device deleted successfully'));
         fetchHikConnectDevices();
         fetchHikConnectDashboard();
       }
     } catch (error) {
-      toast.error('خطأ في حذف الجهاز');
+      toast.error(t('خطأ في حذف الجهاز', 'Error deleting device'));
     }
   };
 
