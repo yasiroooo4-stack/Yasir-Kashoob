@@ -282,23 +282,23 @@ const SystemSettings = () => {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Settings className="w-7 h-7" />
-            إعدادات النظام
+            {t("إعدادات النظام", "System Settings")}
           </h1>
-          <p className="text-muted-foreground">إدارة المراكز والأسعار والأعلاف والتنبيهات</p>
+          <p className="text-muted-foreground">{t("إدارة المراكز والأسعار والأعلاف والتنبيهات", "Manage centers, prices, feeds, and alerts")}</p>
         </div>
         <Button onClick={fetchAllData} variant="outline" disabled={loading}>
           <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
-          تحديث
+          {t("تحديث", "Refresh")}
         </Button>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4 max-w-xl">
-          <TabsTrigger value="centers"><Building className="w-4 h-4 me-1" />المراكز</TabsTrigger>
-          <TabsTrigger value="prices"><DollarSign className="w-4 h-4 me-1" />الأسعار</TabsTrigger>
-          <TabsTrigger value="feeds"><Package className="w-4 h-4 me-1" />الأعلاف</TabsTrigger>
-          <TabsTrigger value="alerts"><Bell className="w-4 h-4 me-1" />التنبيهات</TabsTrigger>
+          <TabsTrigger value="centers"><Building className="w-4 h-4 me-1" />{t("المراكز", "Centers")}</TabsTrigger>
+          <TabsTrigger value="prices"><DollarSign className="w-4 h-4 me-1" />{t("الأسعار", "Prices")}</TabsTrigger>
+          <TabsTrigger value="feeds"><Package className="w-4 h-4 me-1" />{t("الأعلاف", "Feeds")}</TabsTrigger>
+          <TabsTrigger value="alerts"><Bell className="w-4 h-4 me-1" />{t("التنبيهات", "Alerts")}</TabsTrigger>
         </TabsList>
 
         {/* Centers Tab */}
@@ -307,12 +307,12 @@ const SystemSettings = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>مراكز التجميع</CardTitle>
-                  <CardDescription>إدارة مراكز تجميع الحليب</CardDescription>
+                  <CardTitle>{t("مراكز التجميع", "Collection Centers")}</CardTitle>
+                  <CardDescription>{t("إدارة مراكز تجميع الحليب", "Manage milk collection centers")}</CardDescription>
                 </div>
                 <Button onClick={() => openCenterDialog()}>
                   <Plus className="w-4 h-4 me-2" />
-                  إضافة مركز
+                  {t("إضافة مركز", "Add Center")}
                 </Button>
               </div>
             </CardHeader>
@@ -327,13 +327,13 @@ const SystemSettings = () => {
                           <h4 className="font-bold">{center.name}</h4>
                         </div>
                         <Badge variant={center.is_active ? "default" : "secondary"}>
-                          {center.is_active ? "نشط" : "معطل"}
+                          {center.is_active ? t("نشط", "Active") : t("معطل", "Inactive")}
                         </Badge>
                       </div>
                       <div className="space-y-2 text-sm text-muted-foreground mb-4">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4" />
-                          {center.location || "غير محدد"}
+                          {center.location || t("غير محدد", "Not specified")}
                         </div>
                         {center.phone && (
                           <div className="flex items-center gap-2">
@@ -342,12 +342,18 @@ const SystemSettings = () => {
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{center.suppliers_count} مورد</Badge>
+                          <Badge variant="outline">{center.suppliers_count} {t("مورد", "suppliers")}</Badge>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => openCenterDialog(center)}>
-                        <Pencil className="w-4 h-4 me-2" />
-                        تعديل
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => openCenterDialog(center)}>
+                          <Pencil className="w-4 h-4 me-2" />
+                          {t("تعديل", "Edit")}
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-red-600" onClick={() => deleteCenter(center.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                       </Button>
                     </CardContent>
                   </Card>
