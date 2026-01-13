@@ -43,7 +43,12 @@
   - [x] AdvancedReports.jsx - ترجمة كاملة ثنائية اللغة
   - [x] CCTVSystem.jsx - ترجمة رسائل toast والنصوص الأساسية
   - [x] SupplierManagement.jsx - ترجمة كاملة ثنائية اللغة
-- [ ] إعادة هيكلة server.py الضخم (12,133 سطر) - **قيد التنفيذ**
+- [ ] إعادة هيكلة server.py الضخم (12,133 سطر) - **بدأت (يناير 2026)**
+  - [x] إنشاء customers_routes.py
+  - [x] إنشاء sales_routes.py
+  - [x] إنشاء inventory_routes.py
+  - [x] إنشاء milk_routes.py
+  - [ ] نقل المزيد من endpoints (payments, reports, settings)
 
 ### P2 - قادم
 - [x] إصلاح ProtectedRoute race condition ✅ **(تم الإصلاح)**
