@@ -46,7 +46,7 @@
 - [ ] إعادة هيكلة server.py الضخم
 
 ### P2 - قادم
-- [ ] إصلاح ProtectedRoute race condition
+- [x] إصلاح ProtectedRoute race condition ✅ **(تم الإصلاح)**
 - [ ] تكامل Hikvision للبث المباشر
 - [ ] تكوين SMS Provider
 - [ ] تكامل Ekomilk Scale (RS232)
@@ -58,7 +58,7 @@
 - [ ] تصدير بيانات الرواتب لملف Excel للبنك
 
 ## مشاكل معروفة
-1. **ProtectedRoute Race Condition:** التنقل المباشر عبر URL قد يفشل ويعيد التوجيه للـ dashboard
+1. ~~**ProtectedRoute Race Condition:** التنقل المباشر عبر URL قد يفشل ويعيد التوجيه للـ dashboard~~ ✅ **تم الإصلاح (يناير 2026)**
 2. **نظام i18n مختلط:** بعض الصفحات تستخدم `useLanguage` hook وأخرى تستخدم `react-i18next`
 
 ## API Endpoints الرئيسية
