@@ -2215,43 +2215,85 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
                       <TableHead>{language === "ar" ? "المنصب" : "Position"}</TableHead>
                       <TableHead>{language === "ar" ? "المعدل الشهري" : "Monthly Rate"}</TableHead>
+                      <TableHead>{language === "ar" ? "نوع المعدل" : "Rate Type"}</TableHead>
                       <TableHead>{language === "ar" ? "الرصيد الحالي" : "Current Balance"}</TableHead>
                       <TableHead>{language === "ar" ? "إجراءات" : "Actions"}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {employees.filter(e => e.is_active).map((emp) => (
-                      <TableRow key={emp.id}>
-                        <TableCell className="font-medium">{emp.name}</TableCell>
-                        <TableCell>{emp.position || "-"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-blue-50">
-                            {emp.monthly_leave_rate || 2.6} {language === "ar" ? "يوم" : "days"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-bold text-lg text-green-600">
-                            {(emp.leave_balance || 0).toFixed(1)}
-                          </span>
-                          <span className="text-sm text-muted-foreground ms-1">
-                            {language === "ar" ? "يوم" : "days"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedEmployee(emp);
-                              setLeaveAdjustDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="w-3 h-3 me-1" />
-                            {language === "ar" ? "تعديل" : "Adjust"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {employees.filter(e => e.is_active).map((emp) => {
+                      // Calculate auto rate based on position
+                      const getAutoRate = (position) => {
+                        const positionLower = (position || "").toLowerCase();
+                        if (positionLower.includes("مدير عام") || positionLower.includes("general manager") || positionLower.includes("ceo")) return 3.5;
+                        if (positionLower.includes("نائب المدير العام") || positionLower.includes("deputy general") || positionLower.includes("vice")) return 3.5;
+                        if (positionLower.includes("مدير الموارد") || positionLower.includes("hr manager") || positionLower.includes("human resources manager")) return 3.0;
+                        if (positionLower.includes("مدير العمليات") || positionLower.includes("operations manager")) return 3.0;
+                        if (positionLower.includes("نائب المدير العمليات") || positionLower.includes("deputy operations")) return 3.0;
+                        if (positionLower.includes("مشرف") || positionLower.includes("supervisor")) return 3.0;
+                        if (positionLower.includes("أمن") || positionLower.includes("سلامة") || positionLower.includes("safety") || positionLower.includes("security")) return 3.0;
+                        if (positionLower.includes("مدير") || positionLower.includes("manager") || positionLower.includes("director")) return 3.0;
+                        return 2.6;
+                      };
+                      const autoRate = getAutoRate(emp.position);
+                      const isManual = emp.leave_rate_type === "manual";
+                      const displayRate = isManual ? (emp.monthly_leave_rate || 2.6) : autoRate;
+                      
+                      return (
+                        <TableRow key={emp.id}>
+                          <TableCell className="font-medium">{emp.name}</TableCell>
+                          <TableCell>{emp.position || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={isManual ? "bg-orange-50 border-orange-300" : "bg-blue-50 border-blue-300"}>
+                              {displayRate.toFixed(1)} {language === "ar" ? "يوم" : "days"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={isManual ? "secondary" : "default"} className={isManual ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"}>
+                              {isManual 
+                                ? (language === "ar" ? "يدوي" : "Manual") 
+                                : (language === "ar" ? "تلقائي" : "Auto")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-bold text-lg text-green-600">
+                              {(emp.leave_balance || 0).toFixed(1)}
+                            </span>
+                            <span className="text-sm text-muted-foreground ms-1">
+                              {language === "ar" ? "يوم" : "days"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedEmployee(emp);
+                                  setLeaveAdjustDialogOpen(true);
+                                }}
+                                title={language === "ar" ? "تعديل الرصيد" : "Adjust Balance"}
+                              >
+                                <Pencil className="w-3 h-3 me-1" />
+                                {language === "ar" ? "الرصيد" : "Balance"}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedEmployee({...emp, autoRate});
+                                  setLeaveRateDialogOpen(true);
+                                }}
+                                title={language === "ar" ? "تعديل المعدل الشهري" : "Edit Monthly Rate"}
+                              >
+                                <Settings className="w-3 h-3 me-1" />
+                                {language === "ar" ? "المعدل" : "Rate"}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
