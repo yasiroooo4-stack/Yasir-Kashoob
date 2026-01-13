@@ -1,79 +1,88 @@
-# نظام المروج للألبان - ERP System
+# نظام ERP لمزرعة الألبان - PRD
 
-## وصف المشروع
-نظام ERP متكامل لإدارة مزرعة ألبان يشمل إدارة الموارد البشرية، الموردين، استلام الحليب، المخزون، المبيعات، والتقارير.
+## نظرة عامة
+نظام ERP متكامل لإدارة مزرعة الألبان يشمل:
+- إدارة الموردين واستلام الحليب
+- إدارة الموارد البشرية والرواتب
+- إدارة المبيعات والعملاء
+- النظام المالي والخزينة
+- إدارة المخزون والأعلاف
 
----
+## Tech Stack
+- **Frontend:** React + Vite + Tailwind CSS + Shadcn/UI
+- **Backend:** FastAPI (Python)
+- **Database:** MongoDB
+- **Languages:** Arabic (primary) + English
 
-## ما تم إنجازه (January 2026)
+## الميزات المُنجزة
 
-### ✅ استيراد بيانات الرواتب (P0) - مكتمل
-- تم استيراد **57 هيكل راتب** من ملف Excel
-- تم إضافة **55 حساب بنكي** للموظفين
-- إضافة حقول البنك ورقم الحساب إلى واجهة هيكل الرواتب
+### ديسمبر 2025 - يناير 2026
 
-### ✅ استيراد بيانات الموردين (P0) - مكتمل
-- تم استيراد **1,148 مورد** من 6 ملفات Excel
-- المراكز: زيك (388)، حجيف (496)، غدو (264)
-- إجمالي الرصيد: **149,144.10 ر.ع**
-- البيانات المستوردة: اسم المورد، كود المورد، الرقم المدني، نوع الحليب، المركز، رقم الحساب البنكي، الرصيد
+#### استيراد البيانات
+- ✅ استيراد رواتب الموظفين من Excel
+- ✅ استيراد بيانات الحسابات البنكية للموظفين
+- ✅ استيراد بيانات 1,148 مورد من 6 ملفات Excel
+- ✅ إضافة حقول Bank Name و Bank Account في صفحة Salary Structures
 
-### ✅ إصلاح صفحة إعدادات النظام (P1) - مكتمل
-- إصلاح مسارات API الخاطئة
-- الآن تعرض جميع المراكز الستة بشكل صحيح
+#### إدارة رصيد الإجازات (يناير 2026)
+- ✅ واجهة إدارة معدل الإجازات الشهرية
+- ✅ دعم المعدل التلقائي والمعدل اليدوي
+- ✅ API endpoint: `PUT /api/hr/employees/{id}/leave-rate`
 
-### 🔄 ترجمة الصفحات (P1) - جزئي
-- ✅ WorkScheduleManager.jsx - مكتمل
-- ✅ NotificationSettings.jsx - جزئي
-- ⏳ AdvancedReports.jsx - قيد العمل
-- ⏳ CCTVSystem.jsx - قيد العمل
-- ⏳ SupplierManagement.jsx - قيد العمل
+#### إصلاحات الأخطاء (يناير 2026)
+- ✅ إصلاح خطأ حفظ معدل الإجازة الشهري
+- ✅ جعل حقول phone و address اختيارية في نموذج Supplier
+- ✅ إصلاح صفحة System Settings لعرض المراكز
 
----
+## المهام المعلقة
 
-## المهام المتبقية
+### P0 - مكتمل ✅
 
-### P1 - أولوية عالية
-1. إكمال ترجمة الصفحات المتبقية
-2. إصلاح مشكلة ProtectedRoute (إعادة التوجيه العشوائي)
+### P1 - قيد التنفيذ
+- [ ] إكمال ترجمة الصفحات (i18n):
+  - [ ] AdvancedReports.jsx (~731 سطر)
+  - [ ] CCTVSystem.jsx (~2367 سطر)
+  - [ ] SupplierManagement.jsx (~898 سطر)
+- [ ] إعادة هيكلة server.py الضخم
 
-### P2 - أولوية متوسطة
-1. إعادة هيكلة server.py (تقسيم الملف الكبير)
-2. تكامل البث المباشر من Hikvision
-3. تكامل مزود SMS
+### P2 - قادم
+- [ ] إصلاح ProtectedRoute race condition
+- [ ] تكامل Hikvision للبث المباشر
+- [ ] تكوين SMS Provider
+- [ ] تكامل Ekomilk Scale (RS232)
 
-### P3 - أولوية منخفضة
-1. تكامل ميزان Ekomilk (RS232)
-2. كاميرا AI لمسح QR
+### P3 - مستقبلي
+- [ ] تعديل منطق حساب الغياب
+- [ ] AI Camera لمسح QR
+- [ ] تحسين بوابة الموردين
+- [ ] تصدير بيانات الرواتب لملف Excel للبنك
 
----
+## مشاكل معروفة
+1. **ProtectedRoute Race Condition:** التنقل المباشر عبر URL قد يفشل ويعيد التوجيه للـ dashboard
+2. **نظام i18n مختلط:** بعض الصفحات تستخدم `useLanguage` hook وأخرى تستخدم `react-i18next`
 
-## البنية التقنية
-
-### Frontend (React)
-- `/app/frontend/src/pages/` - صفحات التطبيق
-- `/app/frontend/src/components/` - مكونات مشتركة
-- `/app/frontend/src/i18n.js` - ملف الترجمة
-
-### Backend (FastAPI)
-- `/app/backend/server.py` - API الرئيسي (يحتاج تقسيم)
-- `/app/backend/models/all_models.py` - نماذج البيانات
-
-### Database (MongoDB)
-- `hr_employees` - الموظفين
-- `employee_salary_structures` - هيكل الرواتب
-- `suppliers` - الموردين
-- `collection_centers` - مراكز التجميع
-
----
+## API Endpoints الرئيسية
+- `PUT /api/hr/employees/{id}/leave-rate` - تحديث معدل الإجازة
+- `PUT /api/hr/salary-structures/{id}` - تحديث هيكل الراتب
+- `GET /api/suppliers` - قائمة الموردين
+- `GET /api/centers` - قائمة المراكز
+- `GET /api/hr/attendance/report` - تقرير الحضور
 
 ## بيانات الاختبار
-- **اسم المستخدم:** yasir
-- **كلمة المرور:** admin123
-- **الصلاحية:** admin
+- Admin: `yasir` / `admin123`
+- Test Admin: `testadmin` / `admin123`
 
----
+## هيكل المشروع
+```
+/app
+├── backend/
+│   ├── models/all_models.py   # Pydantic models
+│   └── server.py              # Main API server
+└── frontend/
+    └── src/
+        ├── pages/HR.jsx       # HR management
+        ├── pages/Suppliers.jsx
+        └── components/ui/     # Shadcn components
+```
 
-## ملاحظات مهمة
-- الوصول لصفحات معينة يتم عبر النقر على الرابط في القائمة (ليس عبر URL مباشر)
-- مشكلة ProtectedRoute معروفة وتؤثر على التنقل المباشر
+## آخر تحديث: 13 يناير 2026
