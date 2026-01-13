@@ -108,9 +108,14 @@ const HR = () => {
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   const [selectedWarning, setSelectedWarning] = useState(null);
   const [leaveAdjustDialogOpen, setLeaveAdjustDialogOpen] = useState(false);
+  const [leaveRateDialogOpen, setLeaveRateDialogOpen] = useState(false);
   const [leaveAdjustForm, setLeaveAdjustForm] = useState({
     adjustment: 0,
     reason: ""
+  });
+  const [leaveRateForm, setLeaveRateForm] = useState({
+    rate_type: "auto",
+    manual_rate: 2.6
   });
   const [warningForm, setWarningForm] = useState({
     employee_id: "",
