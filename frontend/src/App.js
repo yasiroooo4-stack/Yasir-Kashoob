@@ -141,8 +141,23 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPer
 
 function App() {
   const { i18n } = useTranslation();
-  const [user, setUser] = useState(null);
+  
+  // Initialize user from localStorage to prevent flash of login page
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("user");
+      const token = localStorage.getItem("token");
+      if (savedUser && token) {
+        return JSON.parse(savedUser);
+      }
+    } catch (e) {
+      console.error("Error parsing saved user:", e);
+    }
+    return null;
+  });
+  
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const [language, setLanguage] = useState(localStorage.getItem("language") || "ar");
 
   // Setup axios interceptor
@@ -168,11 +183,10 @@ function App() {
     return () => axios.interceptors.response.eject(interceptor);
   }, []);
 
-  // Check auth on mount
+  // Check auth on mount - verify token is still valid
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
-      const savedUser = localStorage.getItem("user");
 
       if (token) {
         try {
@@ -188,12 +202,13 @@ function App() {
           delete axios.defaults.headers.common["Authorization"];
           setUser(null);
         }
-      } else if (savedUser) {
-        // Clean up stale user data if no token exists
+      } else {
+        // No token - clean up any stale data
         localStorage.removeItem("user");
         setUser(null);
       }
       setLoading(false);
+      setAuthChecked(true);
     };
 
     checkAuth();
