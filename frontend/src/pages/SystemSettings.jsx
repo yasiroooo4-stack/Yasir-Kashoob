@@ -112,7 +112,7 @@ const SystemSettings = () => {
       
       // Fetch milk prices
       try {
-        const pricesRes = await axios.get(`${API}/api/settings/milk-prices`, { headers });
+        const pricesRes = await axios.get(`${API}/settings/milk-prices`, { headers });
         if (pricesRes.data && pricesRes.data.length > 0) {
           setMilkPrices(pricesRes.data);
         } else {
@@ -130,7 +130,7 @@ const SystemSettings = () => {
       
       // Fetch feed types
       try {
-        const feedRes = await axios.get(`${API}/api/feed-types`, { headers });
+        const feedRes = await axios.get(`${API}/feed-types`, { headers });
         setFeedTypes(feedRes.data || []);
       } catch {
         // Use default feed types
@@ -171,11 +171,11 @@ const SystemSettings = () => {
     try {
       if (editingCenter) {
         // Update existing center via API
-        await axios.put(`${API}/api/centers/${editingCenter.id}`, centerForm, { headers });
+        await axios.put(`${API}/centers/${editingCenter.id}`, centerForm, { headers });
         toast.success(t("تم تحديث المركز بنجاح", "Center updated successfully"));
       } else {
         // Add new center via API
-        await axios.post(`${API}/api/centers`, centerForm, { headers });
+        await axios.post(`${API}/centers`, centerForm, { headers });
         toast.success(t("تم إضافة المركز بنجاح", "Center added successfully"));
       }
       setCenterDialogOpen(false);
@@ -190,7 +190,7 @@ const SystemSettings = () => {
       return;
     }
     try {
-      await axios.delete(`${API}/api/centers/${centerId}`, { headers });
+      await axios.delete(`${API}/centers/${centerId}`, { headers });
       toast.success(t("تم حذف المركز", "Center deleted"));
       fetchAllData();
     } catch (error) {
@@ -209,7 +209,7 @@ const SystemSettings = () => {
     
     try {
       // Save to backend
-      await axios.post(`${API}/api/settings/milk-prices`, {
+      await axios.post(`${API}/settings/milk-prices`, {
         milk_type: editingPrice.id,
         name: editingPrice.name,
         price: editingPrice.price,
