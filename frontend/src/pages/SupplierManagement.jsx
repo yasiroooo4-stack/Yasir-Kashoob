@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { toast } from "sonner";
+import { API, useLanguage } from "../App";
 import {
   Card,
   CardContent,
@@ -56,27 +56,27 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL;
-
-const FEED_TYPES = [
-  { id: "barley", name: "شعير", price: 85 },
-  { id: "wheat_bran", name: "نخالة قمح", price: 70 },
-  { id: "corn", name: "ذرة", price: 95 },
-  { id: "alfalfa", name: "برسيم", price: 120 },
-  { id: "mixed", name: "علف مخلوط", price: 100 },
-];
-
-const MESSAGE_TYPES = {
-  general: "استفسار عام",
-  complaint: "شكوى",
-  inquiry: "استفسار مالي",
-  increase_quantity: "طلب زيادة كمية",
-};
-
 const SupplierManagement = () => {
-  const { t } = useTranslation();
+  const { language } = useLanguage();
+  const t = (ar, en) => language === "ar" ? ar : en;
   const [activeTab, setActiveTab] = useState("feed-requests");
   const [loading, setLoading] = useState(false);
+  
+  // Feed Types with bilingual names
+  const FEED_TYPES = [
+    { id: "barley", name: t("شعير", "Barley"), price: 85 },
+    { id: "wheat_bran", name: t("نخالة قمح", "Wheat Bran"), price: 70 },
+    { id: "corn", name: t("ذرة", "Corn"), price: 95 },
+    { id: "alfalfa", name: t("برسيم", "Alfalfa"), price: 120 },
+    { id: "mixed", name: t("علف مخلوط", "Mixed Feed"), price: 100 },
+  ];
+
+  const MESSAGE_TYPES = {
+    general: t("استفسار عام", "General Inquiry"),
+    complaint: t("شكوى", "Complaint"),
+    inquiry: t("استفسار مالي", "Financial Inquiry"),
+    increase_quantity: t("طلب زيادة كمية", "Quantity Increase Request"),
+  };
   
   // Feed Requests State
   const [feedRequests, setFeedRequests] = useState([]);
@@ -112,7 +112,7 @@ const SupplierManagement = () => {
       setFeedRequests(res.data || []);
     } catch (error) {
       console.error("Error fetching feed requests:", error);
-      toast.error("فشل في تحميل طلبات الأعلاف");
+      toast.error(t("فشل في تحميل طلبات الأعلاف", "Failed to load feed requests"));
     } finally {
       setLoading(false);
     }
@@ -124,7 +124,7 @@ const SupplierManagement = () => {
       setMessages(res.data || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
-      toast.error("فشل في تحميل الرسائل");
+      toast.error(t("فشل في تحميل الرسائل", "Failed to load messages"));
     }
   };
 
@@ -132,12 +132,12 @@ const SupplierManagement = () => {
     try {
       setLoading(true);
       await axios.put(`${API}/api/admin/supplier-feed-requests/${requestId}/approve`, {}, { headers });
-      toast.success("تمت الموافقة على الطلب وخصم المبلغ من رصيد المورد");
+      toast.success(t("تمت الموافقة على الطلب وخصم المبلغ من رصيد المورد", "Request approved and amount deducted from supplier balance"));
       setApproveDialogOpen(false);
       setSelectedRequest(null);
       fetchFeedRequests();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "فشل في الموافقة على الطلب");
+      toast.error(error.response?.data?.detail || t("فشل في الموافقة على الطلب", "Failed to approve request"));
     } finally {
       setLoading(false);
     }
@@ -162,13 +162,13 @@ const SupplierManagement = () => {
         {},
         { headers }
       );
-      toast.success("تم رفض الطلب");
+      toast.success(t("تم رفض الطلب", "Request rejected"));
       setRejectDialogOpen(false);
       setSelectedRequest(null);
       setRejectReason("");
       fetchFeedRequests();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "فشل في رفض الطلب");
+      toast.error(error.response?.data?.detail || t("فشل في رفض الطلب", "Failed to reject request"));
     } finally {
       setLoading(false);
     }
@@ -183,13 +183,13 @@ const SupplierManagement = () => {
         {},
         { headers }
       );
-      toast.success("تم إرسال الرد بنجاح");
+      toast.success(t("تم إرسال الرد بنجاح", "Reply sent successfully"));
       setReplyDialogOpen(false);
       setSelectedMessage(null);
       setReplyText("");
       fetchMessages();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "فشل في إرسال الرد");
+      toast.error(error.response?.data?.detail || t("فشل في إرسال الرد", "Failed to send reply"));
     } finally {
       setLoading(false);
     }
@@ -197,12 +197,12 @@ const SupplierManagement = () => {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { label: "قيد الانتظار", variant: "secondary", icon: Clock },
-      approved: { label: "تمت الموافقة", variant: "default", icon: CheckCircle },
-      rejected: { label: "مرفوض", variant: "destructive", icon: XCircle },
-      unread: { label: "جديد", variant: "secondary", icon: AlertCircle },
-      read: { label: "تمت القراءة", variant: "outline", icon: Eye },
-      replied: { label: "تم الرد", variant: "default", icon: Reply },
+      pending: { label: t("قيد الانتظار", "Pending"), variant: "secondary", icon: Clock },
+      approved: { label: t("تمت الموافقة", "Approved"), variant: "default", icon: CheckCircle },
+      rejected: { label: t("مرفوض", "Rejected"), variant: "destructive", icon: XCircle },
+      unread: { label: t("جديد", "New"), variant: "secondary", icon: AlertCircle },
+      read: { label: t("تمت القراءة", "Read"), variant: "outline", icon: Eye },
+      replied: { label: t("تم الرد", "Replied"), variant: "default", icon: Reply },
     };
     const config = statusMap[status] || statusMap.pending;
     const Icon = config.icon;
@@ -216,7 +216,7 @@ const SupplierManagement = () => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString("ar-SA", {
+    return new Date(dateStr).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -254,16 +254,16 @@ const SupplierManagement = () => {
   const unreadMessages = messages.filter(m => m.status === "unread").length;
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold">إدارة بوابة الموردين</h1>
-          <p className="text-muted-foreground">إدارة طلبات الأعلاف ورسائل الموردين</p>
+          <h1 className="text-2xl font-bold">{t("إدارة بوابة الموردين", "Supplier Portal Management")}</h1>
+          <p className="text-muted-foreground">{t("إدارة طلبات الأعلاف ورسائل الموردين", "Manage feed requests and supplier messages")}</p>
         </div>
         <Button onClick={() => { fetchFeedRequests(); fetchMessages(); }} variant="outline">
           <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
-          تحديث
+          {t("تحديث", "Refresh")}
         </Button>
       </div>
 
@@ -273,7 +273,7 @@ const SupplierManagement = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">طلبات الأعلاف المعلقة</p>
+                <p className="text-sm opacity-80">{t("طلبات الأعلاف المعلقة", "Pending Feed Requests")}</p>
                 <p className="text-3xl font-bold">{pendingFeedRequests}</p>
               </div>
               <Package className="w-10 h-10 opacity-80" />
@@ -284,7 +284,7 @@ const SupplierManagement = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">الرسائل غير المقروءة</p>
+                <p className="text-sm opacity-80">{t("الرسائل غير المقروءة", "Unread Messages")}</p>
                 <p className="text-3xl font-bold">{unreadMessages}</p>
               </div>
               <MessageSquare className="w-10 h-10 opacity-80" />
@@ -295,7 +295,7 @@ const SupplierManagement = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">إجمالي طلبات الأعلاف</p>
+                <p className="text-sm opacity-80">{t("إجمالي طلبات الأعلاف", "Total Feed Requests")}</p>
                 <p className="text-3xl font-bold">{feedRequests.length}</p>
               </div>
               <Package className="w-10 h-10 opacity-80" />
@@ -306,7 +306,7 @@ const SupplierManagement = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">إجمالي الرسائل</p>
+                <p className="text-sm opacity-80">{t("إجمالي الرسائل", "Total Messages")}</p>
                 <p className="text-3xl font-bold">{messages.length}</p>
               </div>
               <MessageSquare className="w-10 h-10 opacity-80" />
@@ -320,14 +320,14 @@ const SupplierManagement = () => {
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="feed-requests" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
-            طلبات الأعلاف
+            {t("طلبات الأعلاف", "Feed Requests")}
             {pendingFeedRequests > 0 && (
               <Badge variant="destructive" className="ms-1">{pendingFeedRequests}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
-            الرسائل
+            {t("الرسائل", "Messages")}
             {unreadMessages > 0 && (
               <Badge variant="destructive" className="ms-1">{unreadMessages}</Badge>
             )}
@@ -340,14 +340,14 @@ const SupplierManagement = () => {
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <CardTitle>طلبات تحويل الرصيد إلى أعلاف</CardTitle>
-                  <CardDescription>إدارة طلبات الأعلاف من الموردين</CardDescription>
+                  <CardTitle>{t("طلبات تحويل الرصيد إلى أعلاف", "Balance to Feed Conversion Requests")}</CardTitle>
+                  <CardDescription>{t("إدارة طلبات الأعلاف من الموردين", "Manage feed requests from suppliers")}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="relative flex-1 sm:flex-none">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      placeholder="بحث بالاسم أو الكود..."
+                      placeholder={t("بحث بالاسم أو الكود...", "Search by name or code...")}
                       value={feedSearchQuery}
                       onChange={(e) => setFeedSearchQuery(e.target.value)}
                       className="pr-9 w-full sm:w-64"
@@ -359,10 +359,10 @@ const SupplierManagement = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">الكل</SelectItem>
-                      <SelectItem value="pending">قيد الانتظار</SelectItem>
-                      <SelectItem value="approved">تمت الموافقة</SelectItem>
-                      <SelectItem value="rejected">مرفوض</SelectItem>
+                      <SelectItem value="all">{t("الكل", "All")}</SelectItem>
+                      <SelectItem value="pending">{t("قيد الانتظار", "Pending")}</SelectItem>
+                      <SelectItem value="approved">{t("تمت الموافقة", "Approved")}</SelectItem>
+                      <SelectItem value="rejected">{t("مرفوض", "Rejected")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -373,20 +373,20 @@ const SupplierManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>المورد</TableHead>
-                      <TableHead>نوع العلف</TableHead>
-                      <TableHead>الكمية (كجم)</TableHead>
-                      <TableHead>المبلغ (ريال)</TableHead>
-                      <TableHead>تاريخ الطلب</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead>{t("المورد", "Supplier")}</TableHead>
+                      <TableHead>{t("نوع العلف", "Feed Type")}</TableHead>
+                      <TableHead>{t("الكمية (كجم)", "Quantity (kg)")}</TableHead>
+                      <TableHead>{t("المبلغ", "Amount")} ({t("ريال", "OMR")})</TableHead>
+                      <TableHead>{t("تاريخ الطلب", "Request Date")}</TableHead>
+                      <TableHead>{t("الحالة", "Status")}</TableHead>
+                      <TableHead>{t("الإجراءات", "Actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredFeedRequests.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          لا توجد طلبات
+                          {t("لا توجد طلبات", "No requests found")}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -406,7 +406,7 @@ const SupplierManagement = () => {
                           <TableCell>{getFeedTypeName(request.feed_type)}</TableCell>
                           <TableCell>{request.quantity?.toLocaleString()}</TableCell>
                           <TableCell className="font-bold text-green-600">
-                            {request.amount_to_deduct?.toLocaleString()} ريال
+                            {request.amount_to_deduct?.toLocaleString()} {t("ريال", "OMR")}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1 text-muted-foreground">
@@ -424,7 +424,7 @@ const SupplierManagement = () => {
                                   onClick={() => openViewRequestDialog(request)}
                                 >
                                   <Eye className="w-4 h-4 me-1" />
-                                  عرض
+                                  {t("عرض", "View")}
                                 </Button>
                                 <Button
                                   size="sm"
@@ -434,7 +434,7 @@ const SupplierManagement = () => {
                                   className="bg-green-600 hover:bg-green-700"
                                 >
                                   <Check className="w-4 h-4 me-1" />
-                                  موافقة
+                                  {t("موافقة", "Approve")}
                                 </Button>
                                 <Button
                                   size="sm"
@@ -446,7 +446,7 @@ const SupplierManagement = () => {
                                   disabled={loading}
                                 >
                                   <X className="w-4 h-4 me-1" />
-                                  رفض
+                                  {t("رفض", "Reject")}
                                 </Button>
                               </div>
                             ) : (
@@ -457,10 +457,10 @@ const SupplierManagement = () => {
                                   onClick={() => openViewRequestDialog(request)}
                                 >
                                   <Eye className="w-4 h-4 me-1" />
-                                  عرض
+                                  {t("عرض", "View")}
                                 </Button>
                                 <span className="text-sm text-muted-foreground">
-                                  {request.approved_by_name && `بواسطة: ${request.approved_by_name}`}
+                                  {request.approved_by_name && `${t("بواسطة", "By")}: ${request.approved_by_name}`}
                                 </span>
                               </div>
                             )}
@@ -481,14 +481,14 @@ const SupplierManagement = () => {
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <CardTitle>رسائل الموردين</CardTitle>
-                  <CardDescription>عرض والرد على رسائل الموردين</CardDescription>
+                  <CardTitle>{t("رسائل الموردين", "Supplier Messages")}</CardTitle>
+                  <CardDescription>{t("عرض والرد على رسائل الموردين", "View and reply to supplier messages")}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="relative flex-1 sm:flex-none">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      placeholder="بحث..."
+                      placeholder={t("بحث...", "Search...")}
                       value={messageSearchQuery}
                       onChange={(e) => setMessageSearchQuery(e.target.value)}
                       className="pr-9 w-full sm:w-64"
@@ -500,10 +500,10 @@ const SupplierManagement = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">الكل</SelectItem>
-                      <SelectItem value="unread">جديد</SelectItem>
-                      <SelectItem value="read">تمت القراءة</SelectItem>
-                      <SelectItem value="replied">تم الرد</SelectItem>
+                      <SelectItem value="all">{t("الكل", "All")}</SelectItem>
+                      <SelectItem value="unread">{t("جديد", "New")}</SelectItem>
+                      <SelectItem value="read">{t("تمت القراءة", "Read")}</SelectItem>
+                      <SelectItem value="replied">{t("تم الرد", "Replied")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -514,19 +514,19 @@ const SupplierManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>المورد</TableHead>
-                      <TableHead>نوع الرسالة</TableHead>
-                      <TableHead>الموضوع</TableHead>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead>{t("المورد", "Supplier")}</TableHead>
+                      <TableHead>{t("نوع الرسالة", "Message Type")}</TableHead>
+                      <TableHead>{t("الموضوع", "Subject")}</TableHead>
+                      <TableHead>{t("التاريخ", "Date")}</TableHead>
+                      <TableHead>{t("الحالة", "Status")}</TableHead>
+                      <TableHead>{t("الإجراءات", "Actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredMessages.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          لا توجد رسائل
+                          {t("لا توجد رسائل", "No messages found")}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -569,7 +569,7 @@ const SupplierManagement = () => {
                                 }}
                               >
                                 <Eye className="w-4 h-4 me-1" />
-                                عرض
+                                {t("عرض", "View")}
                               </Button>
                               {message.status !== "replied" && (
                                 <Button
@@ -581,7 +581,7 @@ const SupplierManagement = () => {
                                   }}
                                 >
                                   <Reply className="w-4 h-4 me-1" />
-                                  رد
+                                  {t("رد", "Reply")}
                                 </Button>
                               )}
                             </div>
@@ -603,23 +603,23 @@ const SupplierManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <XCircle className="w-5 h-5" />
-              رفض طلب الأعلاف
+              {t("رفض طلب الأعلاف", "Reject Feed Request")}
             </DialogTitle>
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4">
               <div className="bg-muted p-4 rounded-lg space-y-2">
-                <p><strong>المورد:</strong> {selectedRequest.supplier_name}</p>
-                <p><strong>نوع العلف:</strong> {getFeedTypeName(selectedRequest.feed_type)}</p>
-                <p><strong>الكمية:</strong> {selectedRequest.quantity} كجم</p>
-                <p><strong>المبلغ:</strong> {selectedRequest.amount_to_deduct} ريال</p>
+                <p><strong>{t("المورد", "Supplier")}:</strong> {selectedRequest.supplier_name}</p>
+                <p><strong>{t("نوع العلف", "Feed Type")}:</strong> {getFeedTypeName(selectedRequest.feed_type)}</p>
+                <p><strong>{t("الكمية", "Quantity")}:</strong> {selectedRequest.quantity} {t("كجم", "kg")}</p>
+                <p><strong>{t("المبلغ", "Amount")}:</strong> {selectedRequest.amount_to_deduct} {t("ريال", "OMR")}</p>
               </div>
               <div className="space-y-2">
-                <Label>سبب الرفض (اختياري)</Label>
+                <Label>{t("سبب الرفض (اختياري)", "Rejection Reason (Optional)")}</Label>
                 <Textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="أدخل سبب الرفض..."
+                  placeholder={t("أدخل سبب الرفض...", "Enter rejection reason...")}
                   rows={3}
                 />
               </div>
@@ -627,11 +627,11 @@ const SupplierManagement = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
-              إلغاء
+              {t("إلغاء", "Cancel")}
             </Button>
             <Button variant="destructive" onClick={handleRejectRequest} disabled={loading}>
               {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <X className="w-4 h-4 me-2" />}
-              تأكيد الرفض
+              {t("تأكيد الرفض", "Confirm Rejection")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -643,7 +643,7 @@ const SupplierManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
-              تفاصيل الرسالة
+              {t("تفاصيل الرسالة", "Message Details")}
             </DialogTitle>
           </DialogHeader>
           {selectedMessage && (
@@ -654,7 +654,7 @@ const SupplierManagement = () => {
                 </div>
                 <div>
                   <p className="font-bold">{selectedMessage.supplier_name}</p>
-                  <p className="text-sm text-muted-foreground">كود: {selectedMessage.supplier_code}</p>
+                  <p className="text-sm text-muted-foreground">{t("كود", "Code")}: {selectedMessage.supplier_code}</p>
                 </div>
                 {getStatusBadge(selectedMessage.status)}
               </div>
@@ -676,7 +676,7 @@ const SupplierManagement = () => {
                 <div className="border-t pt-4 space-y-2">
                   <p className="text-sm font-medium text-green-600 flex items-center gap-2">
                     <Reply className="w-4 h-4" />
-                    الرد - بواسطة {selectedMessage.replied_by}
+                    {t("الرد", "Reply")} - {t("بواسطة", "By")} {selectedMessage.replied_by}
                   </p>
                   <p className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                     {selectedMessage.reply}
@@ -690,7 +690,7 @@ const SupplierManagement = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewMessageDialogOpen(false)}>
-              إغلاق
+              {t("إغلاق", "Close")}
             </Button>
             {selectedMessage && selectedMessage.status !== "replied" && (
               <Button onClick={() => {
@@ -698,7 +698,7 @@ const SupplierManagement = () => {
                 setReplyDialogOpen(true);
               }}>
                 <Reply className="w-4 h-4 me-2" />
-                رد على الرسالة
+                {t("رد على الرسالة", "Reply to Message")}
               </Button>
             )}
           </DialogFooter>
@@ -711,22 +711,22 @@ const SupplierManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Reply className="w-5 h-5" />
-              الرد على الرسالة
+              {t("الرد على الرسالة", "Reply to Message")}
             </DialogTitle>
           </DialogHeader>
           {selectedMessage && (
             <div className="space-y-4">
               <div className="bg-muted p-4 rounded-lg space-y-2">
-                <p><strong>من:</strong> {selectedMessage.supplier_name}</p>
-                <p><strong>الموضوع:</strong> {selectedMessage.subject}</p>
+                <p><strong>{t("من", "From")}:</strong> {selectedMessage.supplier_name}</p>
+                <p><strong>{t("الموضوع", "Subject")}:</strong> {selectedMessage.subject}</p>
                 <p className="text-sm text-muted-foreground">{selectedMessage.message}</p>
               </div>
               <div className="space-y-2">
-                <Label>الرد</Label>
+                <Label>{t("الرد", "Reply")}</Label>
                 <Textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="اكتب ردك هنا..."
+                  placeholder={t("اكتب ردك هنا...", "Write your reply here...")}
                   rows={4}
                 />
               </div>
@@ -734,11 +734,11 @@ const SupplierManagement = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
-              إلغاء
+              {t("إلغاء", "Cancel")}
             </Button>
             <Button onClick={handleReplyMessage} disabled={loading || !replyText.trim()}>
               {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Reply className="w-4 h-4 me-2" />}
-              إرسال الرد
+              {t("إرسال الرد", "Send Reply")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -750,7 +750,7 @@ const SupplierManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-orange-500" />
-              تفاصيل طلب الأعلاف
+              {t("تفاصيل طلب الأعلاف", "Feed Request Details")}
             </DialogTitle>
           </DialogHeader>
           {selectedRequest && (
@@ -761,36 +761,36 @@ const SupplierManagement = () => {
                 </div>
                 <div>
                   <p className="font-bold text-lg">{selectedRequest.supplier_name}</p>
-                  <p className="text-sm text-muted-foreground">كود: {selectedRequest.supplier_code}</p>
+                  <p className="text-sm text-muted-foreground">{t("كود", "Code")}: {selectedRequest.supplier_code}</p>
                 </div>
                 {getStatusBadge(selectedRequest.status)}
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted p-3 rounded-lg">
-                  <p className="text-xs text-muted-foreground">نوع العلف</p>
+                  <p className="text-xs text-muted-foreground">{t("نوع العلف", "Feed Type")}</p>
                   <p className="font-bold">{getFeedTypeName(selectedRequest.feed_type)}</p>
                 </div>
                 <div className="bg-muted p-3 rounded-lg">
-                  <p className="text-xs text-muted-foreground">الكمية</p>
-                  <p className="font-bold">{selectedRequest.quantity?.toLocaleString()} كجم</p>
+                  <p className="text-xs text-muted-foreground">{t("الكمية", "Quantity")}</p>
+                  <p className="font-bold">{selectedRequest.quantity?.toLocaleString()} {t("كجم", "kg")}</p>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg col-span-2">
-                  <p className="text-xs text-muted-foreground">المبلغ المطلوب خصمه</p>
-                  <p className="font-bold text-xl text-green-600">{selectedRequest.amount_to_deduct?.toLocaleString()} ريال</p>
+                  <p className="text-xs text-muted-foreground">{t("المبلغ المطلوب خصمه", "Amount to Deduct")}</p>
+                  <p className="font-bold text-xl text-green-600">{selectedRequest.amount_to_deduct?.toLocaleString()} {t("ريال", "OMR")}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                تاريخ الطلب: {formatDate(selectedRequest.created_at)}
+                {t("تاريخ الطلب", "Request Date")}: {formatDate(selectedRequest.created_at)}
               </div>
 
               {selectedRequest.status === "approved" && (
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                   <p className="text-sm text-green-600 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    تمت الموافقة بواسطة: {selectedRequest.approved_by_name}
+                    {t("تمت الموافقة بواسطة", "Approved by")}: {selectedRequest.approved_by_name}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {formatDate(selectedRequest.approved_at)}
@@ -802,10 +802,10 @@ const SupplierManagement = () => {
                 <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
                   <p className="text-sm text-red-600 flex items-center gap-2">
                     <XCircle className="w-4 h-4" />
-                    تم الرفض بواسطة: {selectedRequest.approved_by_name}
+                    {t("تم الرفض بواسطة", "Rejected by")}: {selectedRequest.approved_by_name}
                   </p>
                   {selectedRequest.rejection_reason && (
-                    <p className="text-sm mt-2">السبب: {selectedRequest.rejection_reason}</p>
+                    <p className="text-sm mt-2">{t("السبب", "Reason")}: {selectedRequest.rejection_reason}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
                     {formatDate(selectedRequest.approved_at)}
@@ -816,7 +816,7 @@ const SupplierManagement = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewRequestDialogOpen(false)}>
-              إغلاق
+              {t("إغلاق", "Close")}
             </Button>
             {selectedRequest?.status === "pending" && (
               <>
@@ -828,7 +828,7 @@ const SupplierManagement = () => {
                   }}
                 >
                   <X className="w-4 h-4 me-2" />
-                  رفض
+                  {t("رفض", "Reject")}
                 </Button>
                 <Button
                   className="bg-green-600 hover:bg-green-700"
@@ -838,7 +838,7 @@ const SupplierManagement = () => {
                   }}
                 >
                   <Check className="w-4 h-4 me-2" />
-                  موافقة
+                  {t("موافقة", "Approve")}
                 </Button>
               </>
             )}
@@ -852,33 +852,33 @@ const SupplierManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-600">
               <CheckCircle className="w-5 h-5" />
-              تأكيد الموافقة على الطلب
+              {t("تأكيد الموافقة على الطلب", "Confirm Request Approval")}
             </DialogTitle>
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4">
               <p className="text-muted-foreground">
-                هل أنت متأكد من الموافقة على طلب الأعلاف التالي؟
+                {t("هل أنت متأكد من الموافقة على طلب الأعلاف التالي؟", "Are you sure you want to approve this feed request?")}
               </p>
               <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg space-y-2">
-                <p><strong>المورد:</strong> {selectedRequest.supplier_name}</p>
-                <p><strong>نوع العلف:</strong> {getFeedTypeName(selectedRequest.feed_type)}</p>
-                <p><strong>الكمية:</strong> {selectedRequest.quantity} كجم</p>
+                <p><strong>{t("المورد", "Supplier")}:</strong> {selectedRequest.supplier_name}</p>
+                <p><strong>{t("نوع العلف", "Feed Type")}:</strong> {getFeedTypeName(selectedRequest.feed_type)}</p>
+                <p><strong>{t("الكمية", "Quantity")}:</strong> {selectedRequest.quantity} {t("كجم", "kg")}</p>
                 <p className="text-green-600 font-bold text-lg">
-                  المبلغ: {selectedRequest.amount_to_deduct?.toLocaleString()} ريال
+                  {t("المبلغ", "Amount")}: {selectedRequest.amount_to_deduct?.toLocaleString()} {t("ريال", "OMR")}
                 </p>
               </div>
               <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-sm">
                 <p className="flex items-center gap-2 text-yellow-700">
                   <AlertCircle className="w-4 h-4" />
-                  سيتم خصم المبلغ من رصيد المورد تلقائياً
+                  {t("سيتم خصم المبلغ من رصيد المورد تلقائياً", "The amount will be automatically deducted from supplier balance")}
                 </p>
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
-              إلغاء
+              {t("إلغاء", "Cancel")}
             </Button>
             <Button 
               className="bg-green-600 hover:bg-green-700" 
@@ -886,7 +886,7 @@ const SupplierManagement = () => {
               disabled={loading}
             >
               {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Check className="w-4 h-4 me-2" />}
-              تأكيد الموافقة
+              {t("تأكيد الموافقة", "Confirm Approval")}
             </Button>
           </DialogFooter>
         </DialogContent>
