@@ -134,8 +134,15 @@ const WorkScheduleManager = () => {
   };
 
   const getShiftInfo = (shiftType) => {
-    return SHIFT_TYPES.find(s => s.id === shiftType) || SHIFT_TYPES[0];
+    const shift = SHIFT_TYPES.find(s => s.id === shiftType) || SHIFT_TYPES[0];
+    return { ...shift, name: language === "ar" ? shift.name_ar : shift.name_en };
   };
+
+  const getDay = (day) => ({
+    ...day,
+    name: language === "ar" ? day.name_ar : day.name_en,
+    short: language === "ar" ? day.short_ar : day.short_en
+  });
 
   const filteredEmployees = employees.filter(emp =>
     !searchQuery ||
