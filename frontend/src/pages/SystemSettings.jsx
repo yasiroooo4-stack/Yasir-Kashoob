@@ -450,12 +450,12 @@ const SystemSettings = () => {
                           {feed.stock < feed.min_stock ? (
                             <Badge variant="destructive" className="flex items-center gap-1 w-fit">
                               <AlertTriangle className="w-3 h-3" />
-                              منخفض
+                              {t("منخفض", "Low")}
                             </Badge>
                           ) : (
                             <Badge variant="default" className="flex items-center gap-1 w-fit">
                               <CheckCircle className="w-3 h-3" />
-                              متوفر
+                              {t("متوفر", "Available")}
                             </Badge>
                           )}
                         </TableCell>
@@ -482,39 +482,39 @@ const SystemSettings = () => {
         <TabsContent value="alerts">
           <Card>
             <CardHeader>
-              <CardTitle>إعدادات التنبيهات</CardTitle>
-              <CardDescription>تكوين التنبيهات والإشعارات</CardDescription>
+              <CardTitle>{t("إعدادات التنبيهات", "Alert Settings")}</CardTitle>
+              <CardDescription>{t("تكوين التنبيهات والإشعارات", "Configure alerts and notifications")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h4 className="font-bold">حدود التنبيه</h4>
+                  <h4 className="font-bold">{t("حدود التنبيه", "Alert Thresholds")}</h4>
                   <div className="space-y-2">
-                    <Label>حد الرصيد المنخفض (ر.ع)</Label>
+                    <Label>{t("حد الرصيد المنخفض (ر.ع)", "Low Balance Threshold (OMR)")}</Label>
                     <Input
                       type="number"
                       value={alertSettings.low_balance_threshold}
                       onChange={(e) => setAlertSettings({ ...alertSettings, low_balance_threshold: e.target.value })}
                     />
-                    <p className="text-xs text-muted-foreground">تنبيه عند انخفاض رصيد المورد عن هذا المبلغ</p>
+                    <p className="text-xs text-muted-foreground">{t("تنبيه عند انخفاض رصيد المورد عن هذا المبلغ", "Alert when supplier balance falls below this amount")}</p>
                   </div>
                   <div className="space-y-2">
-                    <Label>حد المخزون المنخفض</Label>
+                    <Label>{t("حد المخزون المنخفض", "Low Stock Threshold")}</Label>
                     <Input
                       type="number"
                       value={alertSettings.low_stock_threshold}
                       onChange={(e) => setAlertSettings({ ...alertSettings, low_stock_threshold: e.target.value })}
                     />
-                    <p className="text-xs text-muted-foreground">تنبيه عند انخفاض مخزون الأعلاف</p>
+                    <p className="text-xs text-muted-foreground">{t("تنبيه عند انخفاض مخزون الأعلاف", "Alert when feed stock is low")}</p>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <h4 className="font-bold">قنوات الإشعار</h4>
+                  <h4 className="font-bold">{t("قنوات الإشعار", "Notification Channels")}</h4>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>إشعارات SMS</Label>
-                      <p className="text-xs text-muted-foreground">إرسال رسائل نصية</p>
+                      <Label>{t("إشعارات SMS", "SMS Notifications")}</Label>
+                      <p className="text-xs text-muted-foreground">{t("إرسال رسائل نصية", "Send text messages")}</p>
                     </div>
                     <Switch
                       checked={alertSettings.enable_sms}
