@@ -697,6 +697,49 @@ const SalaryStructures = () => {
               </div>
             </div>
 
+            {/* Bank Information */}
+            <div className="space-y-4">
+              <Label className="text-lg font-semibold">معلومات البنك</Label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>اسم البنك</Label>
+                  <Select
+                    value={form.bank_name}
+                    onValueChange={(value) => setForm({ ...form, bank_name: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر البنك" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bank Muscat">Bank Muscat</SelectItem>
+                      <SelectItem value="Bank Dhofar">Bank Dhofar</SelectItem>
+                      <SelectItem value="Bank Dhofar Islamic">Bank Dhofar Islamic</SelectItem>
+                      <SelectItem value="National Bank of Oman">National Bank of Oman</SelectItem>
+                      <SelectItem value="Bank Sohar">Bank Sohar</SelectItem>
+                      <SelectItem value="Bank Sohar Islamic">Bank Sohar Islamic</SelectItem>
+                      <SelectItem value="Bank Nizwa">Bank Nizwa</SelectItem>
+                      <SelectItem value="Oman Arab Bank">Oman Arab Bank</SelectItem>
+                      <SelectItem value="Alizz Islamic Bank">Alizz Islamic Bank</SelectItem>
+                      <SelectItem value="Ahli Bank">Ahli Bank</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>رقم الحساب البنكي</Label>
+                  <Input
+                    type="text"
+                    value={form.bank_account}
+                    onChange={(e) => setForm({ ...form, bank_account: e.target.value })}
+                    placeholder="أدخل رقم الحساب"
+                    className="font-mono"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Notes */}
             <div className="space-y-2">
               <Label>ملاحظات</Label>
