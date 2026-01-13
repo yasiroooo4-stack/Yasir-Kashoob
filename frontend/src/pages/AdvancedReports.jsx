@@ -99,7 +99,7 @@ const AdvancedReports = () => {
 
   const fetchPayrollComparison = async () => {
     if (!period1 || !period2) {
-      toast.error("يرجى اختيار الفترتين للمقارنة");
+      toast.error(t("يرجى اختيار الفترتين للمقارنة", "Please select both periods for comparison"));
       return;
     }
     
@@ -111,7 +111,7 @@ const AdvancedReports = () => {
       );
       setComparisonData(response.data);
     } catch (error) {
-      toast.error("فشل في جلب تقرير المقارنة");
+      toast.error(t("فشل في جلب تقرير المقارنة", "Failed to fetch comparison report"));
     } finally {
       setLoading(false);
     }
@@ -126,7 +126,7 @@ const AdvancedReports = () => {
       );
       setFinancialReport(response.data);
     } catch (error) {
-      toast.error("فشل في جلب التقرير المالي");
+      toast.error(t("فشل في جلب التقرير المالي", "Failed to fetch financial report"));
     } finally {
       setLoading(false);
     }
@@ -138,7 +138,7 @@ const AdvancedReports = () => {
       const response = await axios.get(`${API}/api/reports/centers/performance`, { headers });
       setCentersReport(response.data);
     } catch (error) {
-      toast.error("فشل في جلب تقرير المراكز");
+      toast.error(t("فشل في جلب تقرير المراكز", "Failed to fetch centers report"));
     } finally {
       setLoading(false);
     }
@@ -150,7 +150,7 @@ const AdvancedReports = () => {
       const response = await axios.get(`${API}/api/reports/inventory/alerts`, { headers });
       setInventoryAlerts(response.data);
     } catch (error) {
-      toast.error("فشل في جلب تنبيهات المخزون");
+      toast.error(t("فشل في جلب تنبيهات المخزون", "Failed to fetch inventory alerts"));
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ const AdvancedReports = () => {
 
   const sendInventoryAlerts = async () => {
     if (!alertEmail) {
-      toast.error("يرجى إدخال البريد الإلكتروني");
+      toast.error(t("يرجى إدخال البريد الإلكتروني", "Please enter email address"));
       return;
     }
     
@@ -177,13 +177,13 @@ const AdvancedReports = () => {
       }
       setEmailDialogOpen(false);
     } catch (error) {
-      toast.error("فشل في إرسال التنبيهات");
+      toast.error(t("فشل في إرسال التنبيهات", "Failed to send alerts"));
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (num) => `${(num || 0).toLocaleString()} ر.ع`;
+  const formatCurrency = (num) => `${(num || 0).toLocaleString()} ${t("ر.ع", "OMR")}`;
   const formatNumber = (num) => (num || 0).toLocaleString();
 
   const getChangeIcon = (change) => {
@@ -199,26 +199,37 @@ const AdvancedReports = () => {
   };
 
   const months = [
-    { value: 1, label: "يناير" },
-    { value: 2, label: "فبراير" },
-    { value: 3, label: "مارس" },
-    { value: 4, label: "أبريل" },
-    { value: 5, label: "مايو" },
-    { value: 6, label: "يونيو" },
-    { value: 7, label: "يوليو" },
-    { value: 8, label: "أغسطس" },
-    { value: 9, label: "سبتمبر" },
-    { value: 10, label: "أكتوبر" },
-    { value: 11, label: "نوفمبر" },
-    { value: 12, label: "ديسمبر" },
+    { value: 1, label: t("يناير", "January") },
+    { value: 2, label: t("فبراير", "February") },
+    { value: 3, label: t("مارس", "March") },
+    { value: 4, label: t("أبريل", "April") },
+    { value: 5, label: t("مايو", "May") },
+    { value: 6, label: t("يونيو", "June") },
+    { value: 7, label: t("يوليو", "July") },
+    { value: 8, label: t("أغسطس", "August") },
+    { value: 9, label: t("سبتمبر", "September") },
+    { value: 10, label: t("أكتوبر", "October") },
+    { value: 11, label: t("نوفمبر", "November") },
+    { value: 12, label: t("ديسمبر", "December") },
   ];
+
+  const getStatusText = (status) => {
+    const statusMap = {
+      increase: t("زيادة", "Increase"),
+      decrease: t("نقص", "Decrease"),
+      new: t("جديد", "New"),
+      removed: t("محذوف", "Removed"),
+      unchanged: t("ثابت", "Unchanged")
+    };
+    return statusMap[status] || t("ثابت", "Unchanged");
+  };
 
   return (
     <div className="space-y-6 p-6" data-testid="advanced-reports-page">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">التقارير المتقدمة</h1>
-          <p className="text-gray-600">تقارير مالية وتشغيلية مفصلة</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("التقارير المتقدمة", "Advanced Reports")}</h1>
+          <p className="text-gray-600">{t("تقارير مالية وتشغيلية مفصلة", "Detailed financial and operational reports")}</p>
         </div>
       </div>
 
@@ -226,19 +237,19 @@ const AdvancedReports = () => {
         <TabsList className="flex-wrap">
           <TabsTrigger value="payroll-comparison" data-testid="payroll-comparison-tab">
             <Users className="w-4 h-4 me-2" />
-            مقارنة الرواتب
+            {t("مقارنة الرواتب", "Payroll Comparison")}
           </TabsTrigger>
           <TabsTrigger value="financial" data-testid="financial-tab">
             <DollarSign className="w-4 h-4 me-2" />
-            التقرير المالي
+            {t("التقرير المالي", "Financial Report")}
           </TabsTrigger>
           <TabsTrigger value="centers" data-testid="centers-tab">
             <Building2 className="w-4 h-4 me-2" />
-            أداء المراكز
+            {t("أداء المراكز", "Centers Performance")}
           </TabsTrigger>
           <TabsTrigger value="inventory" data-testid="inventory-tab">
             <Package className="w-4 h-4 me-2" />
-            تنبيهات المخزون
+            {t("تنبيهات المخزون", "Inventory Alerts")}
           </TabsTrigger>
         </TabsList>
 
@@ -246,16 +257,16 @@ const AdvancedReports = () => {
         <TabsContent value="payroll-comparison">
           <Card>
             <CardHeader>
-              <CardTitle>تقرير مقارنة الرواتب</CardTitle>
-              <CardDescription>قارن بين فترتين لمعرفة التغييرات في الرواتب والبدلات</CardDescription>
+              <CardTitle>{t("تقرير مقارنة الرواتب", "Payroll Comparison Report")}</CardTitle>
+              <CardDescription>{t("قارن بين فترتين لمعرفة التغييرات في الرواتب والبدلات", "Compare two periods to see salary and allowance changes")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-4 mb-6">
                 <div className="space-y-2">
-                  <Label>الفترة الأولى</Label>
+                  <Label>{t("الفترة الأولى", "First Period")}</Label>
                   <Select value={period1} onValueChange={setPeriod1}>
                     <SelectTrigger className="w-64">
-                      <SelectValue placeholder="اختر الفترة الأولى" />
+                      <SelectValue placeholder={t("اختر الفترة الأولى", "Select first period")} />
                     </SelectTrigger>
                     <SelectContent>
                       {periods.map((p) => (
@@ -265,10 +276,10 @@ const AdvancedReports = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>الفترة الثانية</Label>
+                  <Label>{t("الفترة الثانية", "Second Period")}</Label>
                   <Select value={period2} onValueChange={setPeriod2}>
                     <SelectTrigger className="w-64">
-                      <SelectValue placeholder="اختر الفترة الثانية" />
+                      <SelectValue placeholder={t("اختر الفترة الثانية", "Select second period")} />
                     </SelectTrigger>
                     <SelectContent>
                       {periods.map((p) => (
@@ -280,7 +291,7 @@ const AdvancedReports = () => {
                 <div className="flex items-end">
                   <Button onClick={fetchPayrollComparison} disabled={loading}>
                     {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <BarChart3 className="w-4 h-4 me-2" />}
-                    عرض المقارنة
+                    {t("عرض المقارنة", "Show Comparison")}
                   </Button>
                 </div>
               </div>
@@ -291,19 +302,19 @@ const AdvancedReports = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <Card className="bg-blue-50">
                       <CardContent className="pt-4">
-                        <p className="text-sm text-blue-600">إجمالي الفترة 1</p>
+                        <p className="text-sm text-blue-600">{t("إجمالي الفترة 1", "Period 1 Total")}</p>
                         <p className="text-xl font-bold">{formatCurrency(comparisonData.summary.period1_total_net)}</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-green-50">
                       <CardContent className="pt-4">
-                        <p className="text-sm text-green-600">إجمالي الفترة 2</p>
+                        <p className="text-sm text-green-600">{t("إجمالي الفترة 2", "Period 2 Total")}</p>
                         <p className="text-xl font-bold">{formatCurrency(comparisonData.summary.period2_total_net)}</p>
                       </CardContent>
                     </Card>
                     <Card className={comparisonData.summary.net_change >= 0 ? "bg-green-50" : "bg-red-50"}>
                       <CardContent className="pt-4">
-                        <p className="text-sm text-gray-600">التغيير</p>
+                        <p className="text-sm text-gray-600">{t("التغيير", "Change")}</p>
                         <p className={`text-xl font-bold ${getChangeColor(comparisonData.summary.net_change)}`}>
                           {formatCurrency(comparisonData.summary.net_change)}
                           <span className="text-sm ms-1">({comparisonData.summary.percentage_change}%)</span>
@@ -315,15 +326,15 @@ const AdvancedReports = () => {
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-green-600 font-bold">{comparisonData.summary.employees_with_increase}</p>
-                            <p className="text-xs">زيادة</p>
+                            <p className="text-xs">{t("زيادة", "Increase")}</p>
                           </div>
                           <div>
                             <p className="text-red-600 font-bold">{comparisonData.summary.employees_with_decrease}</p>
-                            <p className="text-xs">نقص</p>
+                            <p className="text-xs">{t("نقص", "Decrease")}</p>
                           </div>
                           <div>
                             <p className="text-gray-600 font-bold">{comparisonData.summary.employees_unchanged}</p>
-                            <p className="text-xs">ثابت</p>
+                            <p className="text-xs">{t("ثابت", "Unchanged")}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -335,12 +346,12 @@ const AdvancedReports = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>الموظف</TableHead>
-                          <TableHead>القسم</TableHead>
-                          <TableHead className="text-center">الفترة 1</TableHead>
-                          <TableHead className="text-center">الفترة 2</TableHead>
-                          <TableHead className="text-center">التغيير</TableHead>
-                          <TableHead className="text-center">الحالة</TableHead>
+                          <TableHead>{t("الموظف", "Employee")}</TableHead>
+                          <TableHead>{t("القسم", "Department")}</TableHead>
+                          <TableHead className="text-center">{t("الفترة 1", "Period 1")}</TableHead>
+                          <TableHead className="text-center">{t("الفترة 2", "Period 2")}</TableHead>
+                          <TableHead className="text-center">{t("التغيير", "Change")}</TableHead>
+                          <TableHead className="text-center">{t("الحالة", "Status")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -369,10 +380,7 @@ const AdvancedReports = () => {
                                 comp.status === "removed" ? "bg-orange-100 text-orange-700" :
                                 "bg-gray-100 text-gray-700"
                               }>
-                                {comp.status === "increase" ? "زيادة" :
-                                 comp.status === "decrease" ? "نقص" :
-                                 comp.status === "new" ? "جديد" :
-                                 comp.status === "removed" ? "محذوف" : "ثابت"}
+                                {getStatusText(comp.status)}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -390,13 +398,13 @@ const AdvancedReports = () => {
         <TabsContent value="financial">
           <Card>
             <CardHeader>
-              <CardTitle>التقرير المالي الشهري</CardTitle>
-              <CardDescription>ملخص الإيرادات والمصروفات والأرباح</CardDescription>
+              <CardTitle>{t("التقرير المالي الشهري", "Monthly Financial Report")}</CardTitle>
+              <CardDescription>{t("ملخص الإيرادات والمصروفات والأرباح", "Summary of revenue, expenses, and profits")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-4 mb-6">
                 <div className="space-y-2">
-                  <Label>السنة</Label>
+                  <Label>{t("السنة", "Year")}</Label>
                   <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(parseInt(v))}>
                     <SelectTrigger className="w-32">
                       <SelectValue />
@@ -409,7 +417,7 @@ const AdvancedReports = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>الشهر</Label>
+                  <Label>{t("الشهر", "Month")}</Label>
                   <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
@@ -424,7 +432,7 @@ const AdvancedReports = () => {
                 <div className="flex items-end">
                   <Button onClick={fetchFinancialReport} disabled={loading}>
                     {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <PieChart className="w-4 h-4 me-2" />}
-                    عرض التقرير
+                    {t("عرض التقرير", "Show Report")}
                   </Button>
                 </div>
               </div>
@@ -437,14 +445,14 @@ const AdvancedReports = () => {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-green-700 text-lg flex items-center gap-2">
                           <TrendingUp className="w-5 h-5" />
-                          الإيرادات
+                          {t("الإيرادات", "Revenue")}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-3xl font-bold text-green-700">{formatCurrency(financialReport.revenue.total_sales)}</p>
                         <div className="mt-2 text-sm text-green-600">
-                          <p>نقدي: {formatCurrency(financialReport.revenue.cash_sales)}</p>
-                          <p>آجل: {formatCurrency(financialReport.revenue.credit_sales)}</p>
+                          <p>{t("نقدي", "Cash")}: {formatCurrency(financialReport.revenue.cash_sales)}</p>
+                          <p>{t("آجل", "Credit")}: {formatCurrency(financialReport.revenue.credit_sales)}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -453,14 +461,14 @@ const AdvancedReports = () => {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-red-700 text-lg flex items-center gap-2">
                           <TrendingDown className="w-5 h-5" />
-                          تكلفة البضاعة
+                          {t("تكلفة البضاعة", "Cost of Goods")}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-3xl font-bold text-red-700">{formatCurrency(financialReport.cost_of_goods.total_purchases)}</p>
                         <div className="mt-2 text-sm text-red-600">
-                          <p>الكمية: {formatNumber(financialReport.cost_of_goods.quantity_purchased_liters)} لتر</p>
-                          <p>عدد الاستلامات: {financialReport.cost_of_goods.purchases_count}</p>
+                          <p>{t("الكمية", "Quantity")}: {formatNumber(financialReport.cost_of_goods.quantity_purchased_liters)} {t("لتر", "L")}</p>
+                          <p>{t("عدد الاستلامات", "Receptions")}: {financialReport.cost_of_goods.purchases_count}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -469,14 +477,14 @@ const AdvancedReports = () => {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-blue-700 text-lg flex items-center gap-2">
                           <Users className="w-5 h-5" />
-                          المصاريف التشغيلية
+                          {t("المصاريف التشغيلية", "Operating Expenses")}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-3xl font-bold text-blue-700">{formatCurrency(financialReport.operating_expenses.salaries_and_wages)}</p>
                         <div className="mt-2 text-sm text-blue-600">
-                          <p>عدد الموظفين: {financialReport.operating_expenses.employee_count}</p>
-                          <p>البدلات: {formatCurrency(financialReport.operating_expenses.allowances)}</p>
+                          <p>{t("عدد الموظفين", "Employees")}: {financialReport.operating_expenses.employee_count}</p>
+                          <p>{t("البدلات", "Allowances")}: {formatCurrency(financialReport.operating_expenses.allowances)}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -485,28 +493,28 @@ const AdvancedReports = () => {
                   {/* Profitability */}
                   <Card className={financialReport.profitability.net_profit >= 0 ? "bg-green-50" : "bg-red-50"}>
                     <CardHeader>
-                      <CardTitle>الربحية</CardTitle>
+                      <CardTitle>{t("الربحية", "Profitability")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                          <p className="text-sm text-gray-600">إجمالي الربح</p>
+                          <p className="text-sm text-gray-600">{t("إجمالي الربح", "Gross Profit")}</p>
                           <p className={`text-2xl font-bold ${financialReport.profitability.gross_profit >= 0 ? "text-green-700" : "text-red-700"}`}>
                             {formatCurrency(financialReport.profitability.gross_profit)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">هامش الربح الإجمالي</p>
+                          <p className="text-sm text-gray-600">{t("هامش الربح الإجمالي", "Gross Margin")}</p>
                           <p className="text-2xl font-bold">{financialReport.profitability.gross_margin_percentage}%</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">صافي الربح</p>
+                          <p className="text-sm text-gray-600">{t("صافي الربح", "Net Profit")}</p>
                           <p className={`text-2xl font-bold ${financialReport.profitability.net_profit >= 0 ? "text-green-700" : "text-red-700"}`}>
                             {formatCurrency(financialReport.profitability.net_profit)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">هامش صافي الربح</p>
+                          <p className="text-sm text-gray-600">{t("هامش صافي الربح", "Net Margin")}</p>
                           <p className="text-2xl font-bold">{financialReport.profitability.net_margin_percentage}%</p>
                         </div>
                       </div>
@@ -524,12 +532,12 @@ const AdvancedReports = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>تقرير أداء مراكز التجميع</CardTitle>
-                  <CardDescription>مقارنة الأداء بين المراكز المختلفة</CardDescription>
+                  <CardTitle>{t("تقرير أداء مراكز التجميع", "Collection Centers Performance Report")}</CardTitle>
+                  <CardDescription>{t("مقارنة الأداء بين المراكز المختلفة", "Compare performance between different centers")}</CardDescription>
                 </div>
                 <Button onClick={fetchCentersReport} disabled={loading}>
                   {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Building2 className="w-4 h-4 me-2" />}
-                  تحديث
+                  {t("تحديث", "Refresh")}
                 </Button>
               </div>
             </CardHeader>
@@ -540,25 +548,25 @@ const AdvancedReports = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <Card>
                       <CardContent className="pt-4">
-                        <p className="text-sm text-gray-500">إجمالي الكمية</p>
-                        <p className="text-xl font-bold">{formatNumber(centersReport.totals.total_quantity)} لتر</p>
+                        <p className="text-sm text-gray-500">{t("إجمالي الكمية", "Total Quantity")}</p>
+                        <p className="text-xl font-bold">{formatNumber(centersReport.totals.total_quantity)} {t("لتر", "L")}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-4">
-                        <p className="text-sm text-gray-500">إجمالي المبلغ</p>
+                        <p className="text-sm text-gray-500">{t("إجمالي المبلغ", "Total Amount")}</p>
                         <p className="text-xl font-bold">{formatCurrency(centersReport.totals.total_amount)}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-4">
-                        <p className="text-sm text-gray-500">عدد الاستلامات</p>
+                        <p className="text-sm text-gray-500">{t("عدد الاستلامات", "Total Receptions")}</p>
                         <p className="text-xl font-bold">{centersReport.totals.total_receptions}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-4">
-                        <p className="text-sm text-gray-500">عدد المراكز</p>
+                        <p className="text-sm text-gray-500">{t("عدد المراكز", "Centers Count")}</p>
                         <p className="text-xl font-bold">{centersReport.totals.centers_count}</p>
                       </CardContent>
                     </Card>
@@ -569,12 +577,12 @@ const AdvancedReports = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>#</TableHead>
-                        <TableHead>المركز</TableHead>
-                        <TableHead>الكمية (لتر)</TableHead>
-                        <TableHead>المبلغ (ر.ع)</TableHead>
-                        <TableHead>عدد الموردين</TableHead>
-                        <TableHead>حليب الإبل %</TableHead>
-                        <TableHead>متوسط السعر</TableHead>
+                        <TableHead>{t("المركز", "Center")}</TableHead>
+                        <TableHead>{t("الكمية (لتر)", "Quantity (L)")}</TableHead>
+                        <TableHead>{t("المبلغ", "Amount")} ({t("ر.ع", "OMR")})</TableHead>
+                        <TableHead>{t("عدد الموردين", "Suppliers")}</TableHead>
+                        <TableHead>{t("حليب الإبل %", "Camel Milk %")}</TableHead>
+                        <TableHead>{t("متوسط السعر", "Avg Price")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -590,7 +598,7 @@ const AdvancedReports = () => {
                           <TableCell>{formatCurrency(center.total_amount)}</TableCell>
                           <TableCell>{center.suppliers_count}</TableCell>
                           <TableCell>{center.camel_percentage}%</TableCell>
-                          <TableCell>{center.avg_price_per_liter?.toFixed(3)} ر.ع</TableCell>
+                          <TableCell>{center.avg_price_per_liter?.toFixed(3)} {t("ر.ع", "OMR")}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -607,17 +615,17 @@ const AdvancedReports = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>تنبيهات المخزون المنخفض</CardTitle>
-                  <CardDescription>المنتجات التي تحتاج إعادة تخزين</CardDescription>
+                  <CardTitle>{t("تنبيهات المخزون المنخفض", "Low Inventory Alerts")}</CardTitle>
+                  <CardDescription>{t("المنتجات التي تحتاج إعادة تخزين", "Products that need restocking")}</CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={fetchInventoryAlerts} disabled={loading} variant="outline">
                     {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <RefreshCw className="w-4 h-4 me-2" />}
-                    تحديث
+                    {t("تحديث", "Refresh")}
                   </Button>
                   <Button onClick={() => setEmailDialogOpen(true)} disabled={!inventoryAlerts?.alerts?.length}>
                     <Mail className="w-4 h-4 me-2" />
-                    إرسال تنبيه
+                    {t("إرسال تنبيه", "Send Alert")}
                   </Button>
                 </div>
               </div>
@@ -631,21 +639,21 @@ const AdvancedReports = () => {
                       <CardContent className="pt-4 text-center">
                         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-red-600">{inventoryAlerts.critical_count}</p>
-                        <p className="text-sm text-red-500">تنبيهات حرجة</p>
+                        <p className="text-sm text-red-500">{t("تنبيهات حرجة", "Critical Alerts")}</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-yellow-50">
                       <CardContent className="pt-4 text-center">
                         <Bell className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-yellow-600">{inventoryAlerts.warning_count}</p>
-                        <p className="text-sm text-yellow-500">تنبيهات تحذيرية</p>
+                        <p className="text-sm text-yellow-500">{t("تنبيهات تحذيرية", "Warning Alerts")}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-4 text-center">
                         <Package className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                         <p className="text-2xl font-bold">{inventoryAlerts.alerts_count}</p>
-                        <p className="text-sm text-gray-500">إجمالي التنبيهات</p>
+                        <p className="text-sm text-gray-500">{t("إجمالي التنبيهات", "Total Alerts")}</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -654,17 +662,17 @@ const AdvancedReports = () => {
                   {inventoryAlerts.alerts.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                       <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                      <p className="text-lg">لا توجد تنبيهات - المخزون في حالة جيدة</p>
+                      <p className="text-lg">{t("لا توجد تنبيهات - المخزون في حالة جيدة", "No alerts - Inventory is in good condition")}</p>
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>المنتج</TableHead>
-                          <TableHead>الكمية الحالية</TableHead>
-                          <TableHead>الحد الأدنى</TableHead>
-                          <TableHead>النقص</TableHead>
-                          <TableHead>الحالة</TableHead>
+                          <TableHead>{t("المنتج", "Product")}</TableHead>
+                          <TableHead>{t("الكمية الحالية", "Current Qty")}</TableHead>
+                          <TableHead>{t("الحد الأدنى", "Min Threshold")}</TableHead>
+                          <TableHead>{t("النقص", "Deficit")}</TableHead>
+                          <TableHead>{t("الحالة", "Status")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -674,13 +682,13 @@ const AdvancedReports = () => {
                               {alert.product_name || alert.product_type}
                             </TableCell>
                             <TableCell>
-                              {alert.current_quantity} {alert.unit || "وحدة"}
+                              {alert.current_quantity} {alert.unit || t("وحدة", "unit")}
                             </TableCell>
                             <TableCell>{alert.threshold}</TableCell>
                             <TableCell className="font-bold text-red-600">-{alert.deficit}</TableCell>
                             <TableCell>
                               <Badge className={alert.severity === "critical" ? "bg-red-500" : "bg-yellow-500"}>
-                                {alert.severity === "critical" ? "🔴 حرج" : "🟡 تحذير"}
+                                {alert.severity === "critical" ? t("حرج", "Critical") : t("تحذير", "Warning")}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -699,11 +707,11 @@ const AdvancedReports = () => {
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>إرسال تنبيهات المخزون</DialogTitle>
+            <DialogTitle>{t("إرسال تنبيهات المخزون", "Send Inventory Alerts")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>البريد الإلكتروني</Label>
+              <Label>{t("البريد الإلكتروني", "Email Address")}</Label>
               <Input
                 type="email"
                 value={alertEmail}
@@ -712,14 +720,14 @@ const AdvancedReports = () => {
               />
             </div>
             <p className="text-sm text-gray-500">
-              سيتم إرسال {inventoryAlerts?.alerts_count || 0} تنبيه إلى البريد المحدد
+              {t(`سيتم إرسال ${inventoryAlerts?.alerts_count || 0} تنبيه إلى البريد المحدد`, `${inventoryAlerts?.alerts_count || 0} alerts will be sent to the specified email`)}
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>إلغاء</Button>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>{t("إلغاء", "Cancel")}</Button>
             <Button onClick={sendInventoryAlerts} disabled={loading}>
               {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Mail className="w-4 h-4 me-2" />}
-              إرسال
+              {t("إرسال", "Send")}
             </Button>
           </DialogFooter>
         </DialogContent>
