@@ -58,6 +58,8 @@ import {
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const NotificationSettings = () => {
+  const { language } = useLanguage();
+  const t = (ar, en) => language === "ar" ? ar : en;
   const [activeTab, setActiveTab] = useState("sms");
   const [loading, setLoading] = useState(false);
   
