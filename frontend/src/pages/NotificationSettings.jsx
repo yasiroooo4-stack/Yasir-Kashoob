@@ -253,48 +253,48 @@ const NotificationSettings = () => {
   };
 
   const reportTypes = [
-    { value: "daily_summary", label: "التقرير اليومي" },
-    { value: "weekly_summary", label: "التقرير الأسبوعي" },
-    { value: "monthly_financial", label: "التقرير المالي الشهري" },
-    { value: "inventory_alerts", label: "تنبيهات المخزون" },
+    { value: "daily_summary", label_ar: "التقرير اليومي", label_en: "Daily Report" },
+    { value: "weekly_summary", label_ar: "التقرير الأسبوعي", label_en: "Weekly Report" },
+    { value: "monthly_financial", label_ar: "التقرير المالي الشهري", label_en: "Monthly Financial Report" },
+    { value: "inventory_alerts", label_ar: "تنبيهات المخزون", label_en: "Inventory Alerts" },
   ];
 
   const frequencies = [
-    { value: "daily", label: "يومي" },
-    { value: "weekly", label: "أسبوعي" },
-    { value: "monthly", label: "شهري" },
+    { value: "daily", label_ar: "يومي", label_en: "Daily" },
+    { value: "weekly", label_ar: "أسبوعي", label_en: "Weekly" },
+    { value: "monthly", label_ar: "شهري", label_en: "Monthly" },
   ];
 
   const daysOfWeek = [
-    { value: 0, label: "الإثنين" },
-    { value: 1, label: "الثلاثاء" },
-    { value: 2, label: "الأربعاء" },
-    { value: 3, label: "الخميس" },
-    { value: 4, label: "الجمعة" },
-    { value: 5, label: "السبت" },
-    { value: 6, label: "الأحد" },
+    { value: 0, label_ar: "الإثنين", label_en: "Monday" },
+    { value: 1, label_ar: "الثلاثاء", label_en: "Tuesday" },
+    { value: 2, label_ar: "الأربعاء", label_en: "Wednesday" },
+    { value: 3, label_ar: "الخميس", label_en: "Thursday" },
+    { value: 4, label_ar: "الجمعة", label_en: "Friday" },
+    { value: 5, label_ar: "السبت", label_en: "Saturday" },
+    { value: 6, label_ar: "الأحد", label_en: "Sunday" },
   ];
 
   return (
-    <div className="space-y-6 p-6" data-testid="notification-settings-page">
+    <div className="space-y-6 p-6" dir={language === "ar" ? "rtl" : "ltr"} data-testid="notification-settings-page">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">إعدادات الإشعارات والتقارير</h1>
-        <p className="text-gray-600">إدارة SMS وجدولة التقارير التلقائية</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("إعدادات الإشعارات والتقارير", "Notifications & Reports Settings")}</h1>
+        <p className="text-gray-600">{t("إدارة SMS وجدولة التقارير التلقائية", "Manage SMS and automatic report scheduling")}</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="sms" data-testid="sms-tab">
             <MessageSquare className="w-4 h-4 me-2" />
-            إعدادات SMS
+            {t("إعدادات SMS", "SMS Settings")}
           </TabsTrigger>
           <TabsTrigger value="schedules" data-testid="schedules-tab">
             <Calendar className="w-4 h-4 me-2" />
-            جدولة التقارير
+            {t("جدولة التقارير", "Report Scheduling")}
           </TabsTrigger>
           <TabsTrigger value="logs" data-testid="logs-tab">
             <Clock className="w-4 h-4 me-2" />
-            سجل الإرسال
+            {t("سجل الإرسال", "Sending Log")}
           </TabsTrigger>
         </TabsList>
 
@@ -306,27 +306,27 @@ const NotificationSettings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="w-5 h-5" />
-                  إعدادات Tamimah SMS
+                  {t("إعدادات Tamimah SMS", "Tamimah SMS Settings")}
                 </CardTitle>
                 <CardDescription>
-                  أدخل بيانات حسابك من tamimahsms.com
+                  {t("أدخل بيانات حسابك من tamimahsms.com", "Enter your account details from tamimahsms.com")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>رابط API</Label>
+                  <Label>{t("رابط API", "API URL")}</Label>
                   <Input
                     value={smsSettings.api_url}
                     onChange={(e) => setSmsSettings({ ...smsSettings, api_url: e.target.value })}
                     placeholder="https://api.tamimahsms.com/send"
                     dir="ltr"
                   />
-                  <p className="text-xs text-gray-500">احصل على الرابط من دعم Tamimah</p>
+                  <p className="text-xs text-gray-500">{t("احصل على الرابط من دعم Tamimah", "Get the URL from Tamimah support")}</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>اسم المستخدم</Label>
+                    <Label>{t("اسم المستخدم", "Username")}</Label>
                     <Input
                       value={smsSettings.username}
                       onChange={(e) => setSmsSettings({ ...smsSettings, username: e.target.value })}
@@ -335,7 +335,7 @@ const NotificationSettings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>كلمة المرور</Label>
+                    <Label>{t("كلمة المرور", "Password")}</Label>
                     <Input
                       type="password"
                       value={smsSettings.password}
@@ -346,7 +346,7 @@ const NotificationSettings = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>معرف المرسل (Sender ID)</Label>
+                  <Label>{t("معرف المرسل", "Sender ID")} (Sender ID)</Label>
                   <Input
                     value={smsSettings.sender_id}
                     onChange={(e) => setSmsSettings({ ...smsSettings, sender_id: e.target.value })}
