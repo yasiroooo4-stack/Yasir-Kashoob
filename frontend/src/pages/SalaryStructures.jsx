@@ -155,6 +155,8 @@ const SalaryStructures = () => {
         medical_allowance: allowances.medical_allowance || "",
         special_allowance: allowances.special_allowance || "",
         other_allowance: allowances.other_allowance || "",
+        bank_name: data.bank_name || "",
+        bank_account: data.bank_account || "",
         notes: data.notes || "",
       });
     } catch (error) {
@@ -170,6 +172,8 @@ const SalaryStructures = () => {
         medical_allowance: "",
         special_allowance: "",
         other_allowance: "",
+        bank_name: "",
+        bank_account: "",
         notes: "",
       });
     } finally {
