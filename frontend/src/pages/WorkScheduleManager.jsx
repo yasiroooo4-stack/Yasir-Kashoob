@@ -50,19 +50,19 @@ import {
 } from "lucide-react";
 
 const SHIFT_TYPES = [
-  { id: "morning", name: "صباحي", icon: Sun, color: "text-amber-500", time: "6:00 - 14:00" },
-  { id: "afternoon", name: "مسائي", icon: Sunset, color: "text-orange-500", time: "14:00 - 22:00" },
-  { id: "night", name: "ليلي", icon: Moon, color: "text-blue-500", time: "22:00 - 6:00" },
+  { id: "morning", name_ar: "صباحي", name_en: "Morning", icon: Sun, color: "text-amber-500", time: "6:00 - 14:00" },
+  { id: "afternoon", name_ar: "مسائي", name_en: "Afternoon", icon: Sunset, color: "text-orange-500", time: "14:00 - 22:00" },
+  { id: "night", name_ar: "ليلي", name_en: "Night", icon: Moon, color: "text-blue-500", time: "22:00 - 6:00" },
 ];
 
 const DAYS = [
-  { id: 0, name: "الأحد", short: "أحد" },
-  { id: 1, name: "الإثنين", short: "إثن" },
-  { id: 2, name: "الثلاثاء", short: "ثلا" },
-  { id: 3, name: "الأربعاء", short: "أرب" },
-  { id: 4, name: "الخميس", short: "خمي" },
-  { id: 5, name: "الجمعة", short: "جمع" },
-  { id: 6, name: "السبت", short: "سبت" },
+  { id: 0, name_ar: "الأحد", name_en: "Sunday", short_ar: "أحد", short_en: "Sun" },
+  { id: 1, name_ar: "الإثنين", name_en: "Monday", short_ar: "إثن", short_en: "Mon" },
+  { id: 2, name_ar: "الثلاثاء", name_en: "Tuesday", short_ar: "ثلا", short_en: "Tue" },
+  { id: 3, name_ar: "الأربعاء", name_en: "Wednesday", short_ar: "أرب", short_en: "Wed" },
+  { id: 4, name_ar: "الخميس", name_en: "Thursday", short_ar: "خمي", short_en: "Thu" },
+  { id: 5, name_ar: "الجمعة", name_en: "Friday", short_ar: "جمع", short_en: "Fri" },
+  { id: 6, name_ar: "السبت", name_en: "Saturday", short_ar: "سبت", short_en: "Sat" },
 ];
 
 const WorkScheduleManager = () => {
