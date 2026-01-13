@@ -646,16 +646,13 @@ const HR = () => {
     
     try {
       const token = localStorage.getItem("token");
-      const updateData = {
-        leave_rate_type: leaveRateForm.rate_type,
-        monthly_leave_rate: leaveRateForm.rate_type === "manual" 
-          ? parseFloat(leaveRateForm.manual_rate) 
-          : selectedEmployee.autoRate
-      };
+      const rateValue = leaveRateForm.rate_type === "manual" 
+        ? parseFloat(leaveRateForm.manual_rate) 
+        : selectedEmployee.autoRate;
       
       await axios.put(
-        `${API}/hr/employees/${selectedEmployee.id}`,
-        updateData,
+        `${API}/hr/employees/${selectedEmployee.id}/leave-rate`,
+        { monthly_leave_rate: rateValue },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       

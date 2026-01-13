@@ -61,8 +61,8 @@ class PasswordResetToken(BaseModel):
 class SupplierBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: str
-    phone: str
-    address: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
     supplier_code: Optional[str] = None
     bank_account: Optional[str] = None
     bank_name: Optional[str] = None
