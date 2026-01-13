@@ -639,6 +639,36 @@ const HR = () => {
     }
   };
 
+  // Update employee monthly leave rate
+  const handleLeaveRateSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedEmployee) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const updateData = {
+        leave_rate_type: leaveRateForm.rate_type,
+        monthly_leave_rate: leaveRateForm.rate_type === "manual" 
+          ? parseFloat(leaveRateForm.manual_rate) 
+          : selectedEmployee.autoRate
+      };
+      
+      await axios.put(
+        `${API}/hr/employees/${selectedEmployee.id}`,
+        updateData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(language === "ar" ? "تم تحديث المعدل الشهري بنجاح" : "Monthly rate updated successfully");
+      setLeaveRateDialogOpen(false);
+      setLeaveRateForm({ rate_type: "auto", manual_rate: 2.6 });
+      setSelectedEmployee(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "Error occurred"));
+    }
+  };
+
   // Leave request handlers
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
