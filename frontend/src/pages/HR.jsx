@@ -3648,6 +3648,106 @@ const HR = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Monthly Leave Rate Dialog */}
+      <Dialog open={leaveRateDialogOpen} onOpenChange={(open) => {
+        setLeaveRateDialogOpen(open);
+        if (!open) {
+          setLeaveRateForm({ rate_type: "auto", manual_rate: 2.6 });
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-blue-500" />
+              {language === "ar" ? "تعديل المعدل الشهري للإجازات" : "Edit Monthly Leave Rate"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedEmployee?.name} - {language === "ar" ? "المنصب:" : "Position:"} {selectedEmployee?.position || "-"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleLeaveRateSubmit} className="space-y-4">
+            <div className="space-y-3">
+              <Label>{language === "ar" ? "نوع المعدل" : "Rate Type"}</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLeaveRateForm({ ...leaveRateForm, rate_type: "auto" })}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    leaveRateForm.rate_type === "auto"
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-200 hover:border-green-300"
+                  }`}
+                >
+                  <CheckCircle className={`w-6 h-6 mx-auto mb-2 ${leaveRateForm.rate_type === "auto" ? "text-green-500" : "text-gray-400"}`} />
+                  <p className="font-medium">{language === "ar" ? "تلقائي" : "Automatic"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === "ar" ? "حسب المنصب" : "Based on position"}
+                  </p>
+                  <p className="text-lg font-bold text-green-600 mt-2">
+                    {selectedEmployee?.autoRate || 2.6} {language === "ar" ? "يوم" : "days"}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeaveRateForm({ ...leaveRateForm, rate_type: "manual" })}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    leaveRateForm.rate_type === "manual"
+                      ? "border-orange-500 bg-orange-50"
+                      : "border-gray-200 hover:border-orange-300"
+                  }`}
+                >
+                  <Pencil className={`w-6 h-6 mx-auto mb-2 ${leaveRateForm.rate_type === "manual" ? "text-orange-500" : "text-gray-400"}`} />
+                  <p className="font-medium">{language === "ar" ? "يدوي" : "Manual"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === "ar" ? "تحديد مخصص" : "Custom rate"}
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {leaveRateForm.rate_type === "manual" && (
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "المعدل الشهري (أيام)" : "Monthly Rate (days)"}</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={leaveRateForm.manual_rate}
+                  onChange={(e) => setLeaveRateForm({ ...leaveRateForm, manual_rate: e.target.value })}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  {language === "ar" 
+                    ? "المعدلات المقترحة: مدير عام 3.5، مدير 3.0، موظف 2.6" 
+                    : "Suggested rates: GM 3.5, Manager 3.0, Employee 2.6"}
+                </p>
+              </div>
+            )}
+
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <p className="text-sm">
+                <span className="font-medium">{language === "ar" ? "المعدل المحدد:" : "Selected Rate:"}</span>
+                <span className="ms-2 font-bold text-blue-600">
+                  {leaveRateForm.rate_type === "auto" 
+                    ? (selectedEmployee?.autoRate || 2.6) 
+                    : leaveRateForm.manual_rate} {language === "ar" ? "يوم/شهر" : "days/month"}
+                </span>
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setLeaveRateDialogOpen(false)}>
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button type="submit" className="gradient-primary text-white">
+                {language === "ar" ? "حفظ التغييرات" : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Expense Request Dialog */}
       <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
         <DialogContent className="sm:max-w-md">
