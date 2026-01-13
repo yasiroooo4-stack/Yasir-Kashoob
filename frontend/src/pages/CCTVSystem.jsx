@@ -456,11 +456,11 @@ const CCTVSystem = () => {
         if (data.recordings?.length === 0) {
           toast.info(t('لا توجد تسجيلات في هذه الفترة', 'No recordings found in this period'));
         } else {
-          toast.success(`تم العثور على ${data.recordings.length} تسجيل`);
+          toast.success(t(`تم العثور على ${data.recordings.length} تسجيل`, `Found ${data.recordings.length} recordings`));
         }
       }
     } catch (error) {
-      toast.error('خطأ في البحث');
+      toast.error(t('خطأ في البحث', 'Search error'));
     }
     setSearchingRecordings(false);
   };
@@ -482,13 +482,13 @@ const CCTVSystem = () => {
         const data = await res.json();
         // Open playback URL or show in player
         if (data.playback_url) {
-          toast.success('جاري تشغيل التسجيل');
+          toast.success(t('جاري تشغيل التسجيل', 'Playing recording'));
           // Could open in new window or embedded player
           window.open(data.playback_url, '_blank');
         }
       }
     } catch (error) {
-      toast.error('فشل في تشغيل التسجيل');
+      toast.error(t('فشل في تشغيل التسجيل', 'Failed to play recording'));
     }
   };
 
