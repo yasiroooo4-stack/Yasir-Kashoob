@@ -152,18 +152,18 @@ const WorkScheduleManager = () => {
   );
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Clock className="w-7 h-7" />
-            جداول العمل والإجازات
+            {t("جداول العمل والإجازات", "Work Schedules & Leave")}
           </h1>
-          <p className="text-muted-foreground">إدارة أوقات العمل وأيام الإجازة لجميع الموظفين</p>
+          <p className="text-muted-foreground">{t("إدارة أوقات العمل وأيام الإجازة لجميع الموظفين", "Manage work schedules and leave days for all employees")}</p>
         </div>
         <Button onClick={fetchEmployees} variant="outline" disabled={loading}>
           <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
-          تحديث
+          {t("تحديث", "Refresh")}
         </Button>
       </div>
 
