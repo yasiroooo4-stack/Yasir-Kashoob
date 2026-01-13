@@ -657,14 +657,14 @@ const CCTVSystem = () => {
       });
       
       if (res.ok) {
-        toast.success('تم إضافة الكاميرا بنجاح');
+        toast.success(t('تم إضافة الكاميرا بنجاح', 'Camera added successfully'));
         setShowAddCamera(false);
         setNewCamera({ name: '', ip_address: '', port: 554, username: '', password: '', channel: 1, location: '', camera_type: 'hikvision' });
         fetchCameras();
         fetchDashboard();
       } else {
         const error = await res.json();
-        toast.error(error.detail || 'فشل في إضافة الكاميرا');
+        toast.error(error.detail || t('فشل في إضافة الكاميرا', 'Failed to add camera'));
       }
     } catch (error) {
       toast.error(t('حدث خطأ في الاتصال', 'Connection error occurred'));
