@@ -97,19 +97,18 @@ const SystemSettings = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Fetch centers from suppliers' unique center_names
-      const suppliersRes = await axios.get(`${API}/api/suppliers`, { headers });
-      const uniqueCenters = [...new Set((suppliersRes.data || []).map(s => s.center_name).filter(Boolean))];
-      const centersData = uniqueCenters.map((name, idx) => ({
-        id: `center_${idx}`,
-        name,
-        code: name.substring(0, 3).toUpperCase(),
-        location: name,
-        phone: "",
-        is_active: true,
-        suppliers_count: (suppliersRes.data || []).filter(s => s.center_name === name).length,
-      }));
-      setCenters(centersData);
+      // Fetch centers from API
+      try {
+        const centersRes = await axios.get(`${API}/api/centers`, { headers });
+        const suppliersRes = await axios.get(`${API}/api/suppliers`, { headers });
+        const centersWithCount = (centersRes.data || []).map(center => ({
+          ...center,
+          suppliers_count: (suppliersRes.data || []).filter(s => s.center_name === center.name).length,
+        }));
+        setCenters(centersWithCount);
+      } catch {
+        setCenters([]);
+      }
       
       // Fetch milk prices
       try {
@@ -117,17 +116,15 @@ const SystemSettings = () => {
         if (pricesRes.data && pricesRes.data.length > 0) {
           setMilkPrices(pricesRes.data);
         } else {
-          // Use default prices if no data
           setMilkPrices([
-            { id: "camel", name: "حليب الإبل", price: 0.350, is_active: true },
-            { id: "cow", name: "حليب الأبقار", price: 0.250, is_active: true },
+            { id: "camel", name: t("حليب الإبل", "Camel Milk"), price: 0.350, is_active: true },
+            { id: "cow", name: t("حليب الأبقار", "Cow Milk"), price: 0.250, is_active: true },
           ]);
         }
       } catch {
-        // Use default prices
         setMilkPrices([
-          { id: "camel", name: "حليب الإبل", price: 0.350, is_active: true },
-          { id: "cow", name: "حليب الأبقار", price: 0.250, is_active: true },
+          { id: "camel", name: t("حليب الإبل", "Camel Milk"), price: 0.350, is_active: true },
+          { id: "cow", name: t("حليب الأبقار", "Cow Milk"), price: 0.250, is_active: true },
         ]);
       }
       
