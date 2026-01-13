@@ -212,7 +212,7 @@ const WorkScheduleManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            قائمة الموظفين ({filteredEmployees.length})
+            {t("قائمة الموظفين", "Employees List")} ({filteredEmployees.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -220,19 +220,22 @@ const WorkScheduleManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الكود</TableHead>
-                  <TableHead>الاسم</TableHead>
-                  <TableHead>القسم</TableHead>
-                  <TableHead>الوردية</TableHead>
-                  <TableHead>أيام الإجازة</TableHead>
-                  <TableHead>الإجراءات</TableHead>
+                  <TableHead>{t("الكود", "Code")}</TableHead>
+                  <TableHead>{t("الاسم", "Name")}</TableHead>
+                  <TableHead>{t("القسم", "Department")}</TableHead>
+                  <TableHead>{t("الوردية", "Shift")}</TableHead>
+                  <TableHead>{t("أيام الإجازة", "Off Days")}</TableHead>
+                  <TableHead>{t("الإجراءات", "Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredEmployees.map((emp) => {
                   const shift = getShiftInfo(emp.shift_type);
                   const ShiftIcon = shift.icon;
-                  const offDays = (emp.weekly_off_days || [4, 5]).map(d => DAYS.find(day => day.id === d)?.short || d);
+                  const offDays = (emp.weekly_off_days || [4, 5]).map(d => {
+                    const day = DAYS.find(day => day.id === d);
+                    return language === "ar" ? day?.short_ar : day?.short_en || d;
+                  });
                   
                   return (
                     <TableRow key={emp.id}>
@@ -259,7 +262,7 @@ const WorkScheduleManager = () => {
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => openEditDialog(emp)}>
                           <Pencil className="w-4 h-4 me-1" />
-                          تعديل
+                          {t("تعديل", "Edit")}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -277,7 +280,7 @@ const WorkScheduleManager = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              تعديل جدول العمل
+              {t("تعديل جدول العمل", "Edit Work Schedule")}
             </DialogTitle>
           </DialogHeader>
           
