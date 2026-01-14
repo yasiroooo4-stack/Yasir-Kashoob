@@ -302,6 +302,7 @@ const PermissionsManagement = () => {
       "المشاريع": Building2,
       "العمليات": Settings,
       "المشتريات": Package,
+      "إدارة المخازن": Package,
     };
     const Icon = icons[category] || Shield;
     return <Icon className="w-4 h-4" />;
@@ -322,6 +323,7 @@ const PermissionsManagement = () => {
       "المشاريع": t("المشاريع", "Projects"),
       "العمليات": t("العمليات", "Operations"),
       "المشتريات": t("المشتريات", "Purchases"),
+      "إدارة المخازن": t("إدارة المخازن", "Warehouse Management"),
     };
     return labels[category] || category;
   };
