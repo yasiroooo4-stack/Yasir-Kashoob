@@ -424,6 +424,11 @@ function App() {
                     <Procurement />
                   </ProtectedRoute>
                 } />
+                <Route path="permissions" element={
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["admin", "it", "الإدارة العامة", "تقنية المعلومات"]}>
+                    <PermissionsManagement />
+                  </ProtectedRoute>
+                } />
                 <Route path="projects" element={
                   <ProtectedRoute allowedDepartments={["projects", "admin", "it"]}>
                     <Projects />
