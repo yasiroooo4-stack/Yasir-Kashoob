@@ -32,6 +32,138 @@ from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/warehouse", tags=["Warehouse Management"])
 
+# ==================== إعدادات الحسابات المالية ====================
+
+# أرقام الحسابات الافتراضية للتكامل المالي
+FINANCE_ACCOUNTS = {
+    "inventory": "1300",          # حساب المخزون (أصل)
+    "cogs": "5100",               # تكلفة البضاعة المباعة (مصروف)
+    "accounts_payable": "2100",   # الدائنون (التزام)
+    "expenses_supplies": "6200",  # مصروفات المستلزمات
+    "expenses_feed": "6201",      # مصروفات الأعلاف
+    "expenses_maintenance": "6202", # مصروفات الصيانة
+    "expenses_lab": "6203",       # مصروفات المختبر
+    "expenses_cleaning": "6204",  # مصروفات التنظيف
+    "cash": "1111",               # الصندوق (نقدية)
+}
+
+# ربط تصنيف المخزن بحساب المصروفات
+CATEGORY_TO_EXPENSE_ACCOUNT = {
+    "feed": "6201",        # الأعلاف
+    "maintenance": "6202",  # الصيانة
+    "lab": "6203",         # المختبر
+    "cleaning": "6204",    # التنظيف
+    "ppe": "6205",         # معدات الحماية
+    "equipment": "6206",   # المعدات
+    "supplies": "6200",    # المستلزمات
+}
+
+
+# ==================== وظائف التكامل المالي ====================
+
+async def create_warehouse_journal_entry(
+    description: str,
+    lines: list,
+    reference_type: str,
+    reference_id: str,
+    created_by_id: str,
+    created_by_name: str
+):
+    """
+    إنشاء قيد يومية آلي لحركات المستودعات
+    """
+    try:
+        entry_lines = []
+        total_debit = 0
+        total_credit = 0
+        
+        for line in lines:
+            account = await db.chart_of_accounts.find_one(
+                {"account_number": line["account_number"], "is_active": True},
+                {"_id": 0}
+            )
+            if not account:
+                logging.warning(f"Warehouse JV: Account not found: {line['account_number']}")
+                continue
+            
+            debit = line.get("debit", 0)
+            credit = line.get("credit", 0)
+            total_debit += debit
+            total_credit += credit
+            
+            entry_lines.append({
+                "id": str(uuid.uuid4()),
+                "account_id": account["id"],
+                "account_number": account["account_number"],
+                "account_name": account["name"],
+                "debit": debit,
+                "credit": credit,
+                "description": line.get("description", "")
+            })
+        
+        if not entry_lines:
+            logging.warning(f"Warehouse JV: No valid accounts found for: {description}")
+            return None
+        
+        # التحقق من توازن القيد
+        if abs(total_debit - total_credit) > 0.01:
+            logging.error(f"Warehouse JV: Unbalanced entry: debit={total_debit}, credit={total_credit}")
+            return None
+        
+        # توليد رقم القيد
+        count = await db.journal_entries.count_documents({})
+        entry_number = f"WH-{datetime.now().year}-{count + 1:05d}"
+        
+        entry = {
+            "id": str(uuid.uuid4()),
+            "entry_number": entry_number,
+            "entry_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "description": description,
+            "reference_type": reference_type,
+            "reference_id": reference_id,
+            "total_debit": total_debit,
+            "total_credit": total_credit,
+            "status": "posted",
+            "created_by": created_by_id,
+            "created_by_name": created_by_name,
+            "posted_at": datetime.now(timezone.utc).isoformat(),
+            "posted_by": "النظام (آلي - المستودعات)",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.journal_entries.insert_one(entry)
+        
+        # إدراج بنود القيد
+        for line in entry_lines:
+            line["journal_entry_id"] = entry["id"]
+            await db.journal_entry_lines.insert_one(line)
+        
+        # تحديث أرصدة الحسابات
+        for line in entry_lines:
+            balance_change = line["debit"] - line["credit"]
+            await db.chart_of_accounts.update_one(
+                {"id": line["account_id"]},
+                {"$inc": {"balance": balance_change}}
+            )
+        
+        logging.info(f"Warehouse JV created: {entry_number} - {description}")
+        return entry
+        
+    except Exception as e:
+        logging.error(f"Error creating warehouse journal entry: {e}")
+        return None
+
+
+async def get_expense_account_for_warehouse(warehouse_id: str):
+    """الحصول على حساب المصروفات المناسب للمخزن"""
+    warehouse = await db.warehouses.find_one({"id": warehouse_id}, {"_id": 0})
+    if not warehouse:
+        return FINANCE_ACCOUNTS["expenses_supplies"]
+    
+    category = warehouse.get("warehouse_category", "")
+    return CATEGORY_TO_EXPENSE_ACCOUNT.get(category, FINANCE_ACCOUNTS["expenses_supplies"])
+
+
 # ==================== المراكز والمخازن الافتراضية ====================
 
 CENTERS = ["زيك", "حجيف", "غدو", "طاقة", "ثمريت", "مرباط"]
