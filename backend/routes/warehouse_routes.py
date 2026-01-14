@@ -1,7 +1,7 @@
 """
 Warehouse Management Routes - مسارات إدارة المخازن الشاملة
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
@@ -14,7 +14,8 @@ from models.all_models import (
     StockMovement, StockMovementBase,
     LabSolution, LabSolutionBase,
     SolutionConsumption, SolutionConsumptionBase,
-    PurchaseRequest, PurchaseRequestBase
+    PurchaseRequest, PurchaseRequestBase,
+    StockAlert, StockAlertBase
 )
 from routes.base import get_current_user, require_role, log_activity
 import uuid
@@ -22,8 +23,280 @@ import io
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/warehouse", tags=["Warehouse Management"])
+
+# ==================== المراكز والمخازن الافتراضية ====================
+
+CENTERS = ["زيك", "حجيف", "غدو", "طاقة", "ثمريت", "مرباط"]
+
+WAREHOUSE_CATEGORIES = {
+    "internal": {
+        "name_ar": "مخزن داخلي",
+        "name_en": "Internal Warehouse",
+        "sub_warehouses": [
+            {"category": "lab", "name_ar": "مخزن المختبر", "name_en": "Lab Warehouse", "temp_controlled": True, "expiry_tracking": True},
+            {"category": "maintenance", "name_ar": "مخزن الصيانة", "name_en": "Maintenance Warehouse", "temp_controlled": False, "expiry_tracking": False},
+            {"category": "cleaning", "name_ar": "مخزن مواد التنظيف", "name_en": "Cleaning Materials Warehouse", "temp_controlled": False, "expiry_tracking": True},
+            {"category": "ppe", "name_ar": "مخزن معدات الحماية", "name_en": "PPE Warehouse", "temp_controlled": False, "expiry_tracking": False},
+        ]
+    },
+    "external": {
+        "name_ar": "مخزن خارجي",
+        "name_en": "External Warehouse",
+        "sub_warehouses": [
+            {"category": "feed", "name_ar": "مخزن الأعلاف", "name_en": "Feed Warehouse", "temp_controlled": False, "expiry_tracking": True},
+            {"category": "equipment", "name_ar": "مخزن المعدات وقطع الغيار", "name_en": "Equipment & Spare Parts", "temp_controlled": False, "expiry_tracking": False},
+            {"category": "supplies", "name_ar": "مخزن مستلزمات الموردين", "name_en": "Supplier Supplies", "temp_controlled": False, "expiry_tracking": False},
+        ]
+    }
+}
+
+
+# ==================== وظائف التنبيهات ====================
+
+async def send_email_alert(to_email: str, subject: str, body: str):
+    """إرسال تنبيه بالبريد الإلكتروني"""
+    try:
+        smtp_host = os.environ.get("SMTP_HOST", "")
+        smtp_port = int(os.environ.get("SMTP_PORT", 465))
+        smtp_user = os.environ.get("SMTP_USER", "")
+        smtp_password = os.environ.get("SMTP_PASSWORD", "")
+        smtp_from = os.environ.get("SMTP_FROM_EMAIL", smtp_user)
+        
+        if not all([smtp_host, smtp_user, smtp_password, to_email]):
+            print(f"Email config missing, skipping email to {to_email}")
+            return False
+        
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = smtp_from
+        msg["To"] = to_email
+        
+        html_body = f"""
+        <html dir="rtl">
+        <body style="font-family: Arial, sans-serif; direction: rtl;">
+            {body}
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+        
+        with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_from, to_email, msg.as_string())
+        
+        print(f"Email sent to {to_email}")
+        return True
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return False
+
+
+async def send_sms_alert(phone: str, message: str):
+    """إرسال تنبيه SMS"""
+    try:
+        # TODO: تكامل مع مزود SMS
+        # يمكن استخدام Twilio أو أي مزود آخر
+        print(f"SMS to {phone}: {message}")
+        return True
+    except Exception as e:
+        print(f"Failed to send SMS: {e}")
+        return False
+
+
+async def create_stock_alert(
+    alert_type: str,
+    product_id: str,
+    product_name: str,
+    product_code: str,
+    warehouse_id: str,
+    warehouse_name: str,
+    center_name: str,
+    current_quantity: float,
+    min_quantity: float,
+    expiry_date: str = None,
+    days_to_expiry: int = None
+):
+    """إنشاء تنبيه مخزون"""
+    
+    # تحديد الرسالة والأولوية
+    if alert_type == "low_stock":
+        if current_quantity == 0:
+            message = f"⚠️ نفاد المخزون: {product_name} في {warehouse_name} ({center_name})"
+            priority = "critical"
+        elif current_quantity <= min_quantity * 0.5:
+            message = f"🔴 مخزون منخفض جداً: {product_name} - الكمية: {current_quantity} (الحد الأدنى: {min_quantity})"
+            priority = "high"
+        else:
+            message = f"🟡 مخزون منخفض: {product_name} - الكمية: {current_quantity} (الحد الأدنى: {min_quantity})"
+            priority = "medium"
+    elif alert_type == "expiry_warning":
+        message = f"⏰ قرب انتهاء الصلاحية: {product_name} في {warehouse_name} - ينتهي في {days_to_expiry} يوم ({expiry_date})"
+        priority = "high" if days_to_expiry <= 7 else "medium"
+    elif alert_type == "expired":
+        message = f"🚫 منتهي الصلاحية: {product_name} في {warehouse_name} - انتهى في {expiry_date}"
+        priority = "critical"
+    else:
+        message = f"تنبيه مخزون: {product_name}"
+        priority = "low"
+    
+    # التحقق من عدم وجود تنبيه مشابه غير محلول
+    existing = await db.stock_alerts.find_one({
+        "alert_type": alert_type,
+        "product_id": product_id,
+        "warehouse_id": warehouse_id,
+        "is_resolved": False
+    }, {"_id": 0})
+    
+    if existing:
+        # تحديث التنبيه الموجود
+        await db.stock_alerts.update_one(
+            {"id": existing["id"]},
+            {"$set": {
+                "current_quantity": current_quantity,
+                "message": message,
+                "priority": priority,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        return existing["id"]
+    
+    # إنشاء تنبيه جديد
+    alert = StockAlert(
+        alert_type=alert_type,
+        product_id=product_id,
+        product_name=product_name,
+        product_code=product_code,
+        warehouse_id=warehouse_id,
+        warehouse_name=warehouse_name,
+        center_name=center_name,
+        current_quantity=current_quantity,
+        min_quantity=min_quantity,
+        expiry_date=expiry_date,
+        days_to_expiry=days_to_expiry,
+        message=message,
+        priority=priority
+    )
+    
+    await db.stock_alerts.insert_one(alert.model_dump())
+    
+    # إرسال التنبيهات
+    warehouse = await db.warehouses.find_one({"id": warehouse_id}, {"_id": 0})
+    if warehouse:
+        # إرسال لمشرف المركز
+        if warehouse.get("supervisor_email"):
+            await send_email_alert(
+                warehouse["supervisor_email"],
+                f"تنبيه مخزون - {center_name}",
+                f"""
+                <h2>تنبيه مخزون</h2>
+                <p><strong>{message}</strong></p>
+                <table border="1" cellpadding="10" style="border-collapse: collapse;">
+                    <tr><td>المنتج</td><td>{product_name}</td></tr>
+                    <tr><td>الرمز</td><td>{product_code}</td></tr>
+                    <tr><td>المخزن</td><td>{warehouse_name}</td></tr>
+                    <tr><td>المركز</td><td>{center_name}</td></tr>
+                    <tr><td>الكمية الحالية</td><td>{current_quantity}</td></tr>
+                    <tr><td>الحد الأدنى</td><td>{min_quantity}</td></tr>
+                </table>
+                """
+            )
+            await db.stock_alerts.update_one({"id": alert.id}, {"$set": {"notified_via_email": True}})
+        
+        if warehouse.get("supervisor_phone"):
+            sms_msg = f"تنبيه: {product_name} - الكمية: {current_quantity} ({warehouse_name})"
+            await send_sms_alert(warehouse["supervisor_phone"], sms_msg)
+            await db.stock_alerts.update_one({"id": alert.id}, {"$set": {"notified_via_sms": True}})
+        
+        # إرسال لمسؤول المخازن
+        if warehouse.get("warehouse_manager_email"):
+            await send_email_alert(
+                warehouse["warehouse_manager_email"],
+                f"تنبيه مخزون - {center_name}",
+                f"<h2>{message}</h2><p>المنتج: {product_name} | المخزن: {warehouse_name} | الكمية: {current_quantity}</p>"
+            )
+    
+    return alert.id
+
+
+async def check_stock_alerts():
+    """فحص المخزون وإنشاء التنبيهات"""
+    # فحص المخزون المنخفض
+    products = await db.warehouse_products.find({"status": "active"}, {"_id": 0}).to_list(1000)
+    product_map = {p["id"]: p for p in products}
+    
+    stock_items = await db.product_stock.find({}, {"_id": 0}).to_list(5000)
+    
+    for item in stock_items:
+        product = product_map.get(item.get("product_id"))
+        if not product:
+            continue
+        
+        min_qty = product.get("min_quantity", 0)
+        current_qty = item.get("quantity", 0)
+        
+        # تنبيه نقص المخزون
+        if min_qty > 0 and current_qty <= min_qty:
+            warehouse = await db.warehouses.find_one({"id": item.get("warehouse_id")}, {"_id": 0})
+            await create_stock_alert(
+                alert_type="low_stock",
+                product_id=item.get("product_id"),
+                product_name=item.get("product_name"),
+                product_code=item.get("product_code"),
+                warehouse_id=item.get("warehouse_id"),
+                warehouse_name=item.get("warehouse_name"),
+                center_name=warehouse.get("center_name", "") if warehouse else "",
+                current_quantity=current_qty,
+                min_quantity=min_qty
+            )
+        
+        # تنبيه انتهاء الصلاحية
+        if item.get("expiry_date") and product.get("expiry_tracking"):
+            try:
+                expiry = datetime.strptime(item["expiry_date"], "%Y-%m-%d")
+                today = datetime.now()
+                days_to_expiry = (expiry - today).days
+                
+                warehouse = await db.warehouses.find_one({"id": item.get("warehouse_id")}, {"_id": 0})
+                alert_days = warehouse.get("expiry_alert_days", 30) if warehouse else 30
+                
+                if days_to_expiry <= 0:
+                    await create_stock_alert(
+                        alert_type="expired",
+                        product_id=item.get("product_id"),
+                        product_name=item.get("product_name"),
+                        product_code=item.get("product_code"),
+                        warehouse_id=item.get("warehouse_id"),
+                        warehouse_name=item.get("warehouse_name"),
+                        center_name=warehouse.get("center_name", "") if warehouse else "",
+                        current_quantity=current_qty,
+                        min_quantity=min_qty,
+                        expiry_date=item["expiry_date"],
+                        days_to_expiry=days_to_expiry
+                    )
+                elif days_to_expiry <= alert_days:
+                    await create_stock_alert(
+                        alert_type="expiry_warning",
+                        product_id=item.get("product_id"),
+                        product_name=item.get("product_name"),
+                        product_code=item.get("product_code"),
+                        warehouse_id=item.get("warehouse_id"),
+                        warehouse_name=item.get("warehouse_name"),
+                        center_name=warehouse.get("center_name", "") if warehouse else "",
+                        current_quantity=current_qty,
+                        min_quantity=min_qty,
+                        expiry_date=item["expiry_date"],
+                        days_to_expiry=days_to_expiry
+                    )
+            except:
+                pass
 
 
 # ==================== المخازن ====================
