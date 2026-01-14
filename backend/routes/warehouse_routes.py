@@ -1878,3 +1878,325 @@ async def get_centers(current_user: dict = Depends(get_current_user)):
 async def get_warehouse_categories(current_user: dict = Depends(get_current_user)):
     """الحصول على تصنيفات المخازن"""
     return WAREHOUSE_CATEGORIES
+
+
+# ==================== التكامل مع المبيعات ====================
+
+@router.get("/stock/check-availability")
+async def check_stock_availability(
+    product_id: str,
+    warehouse_id: Optional[str] = None,
+    required_quantity: float = 1,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    التحقق من توفر الكمية المطلوبة
+    يُستخدم قبل إتمام عملية البيع
+    """
+    query = {"product_id": product_id}
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    stock_items = await db.product_stock.find(query, {"_id": 0}).to_list(100)
+    
+    if not stock_items:
+        return {
+            "available": False,
+            "message": "المنتج غير موجود في المخزون",
+            "total_available": 0,
+            "required": required_quantity
+        }
+    
+    total_available = sum(s.get("available_quantity", 0) for s in stock_items)
+    
+    return {
+        "available": total_available >= required_quantity,
+        "message": "الكمية متوفرة" if total_available >= required_quantity else "الكمية غير كافية",
+        "total_available": total_available,
+        "required": required_quantity,
+        "stock_by_warehouse": [
+            {
+                "warehouse_id": s.get("warehouse_id"),
+                "warehouse_name": s.get("warehouse_name"),
+                "available_quantity": s.get("available_quantity", 0),
+                "unit_price": s.get("unit_price", 0)
+            }
+            for s in stock_items if s.get("available_quantity", 0) > 0
+        ]
+    }
+
+
+@router.post("/stock/reserve")
+async def reserve_stock(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    حجز كمية من المخزون لعملية بيع
+    يُستخدم عند إنشاء عرض سعر أو طلب بيع
+    """
+    product_id = data.get("product_id")
+    warehouse_id = data.get("warehouse_id")
+    quantity = data.get("quantity")
+    reference_type = data.get("reference_type", "sales_order")  # sales_order, quotation
+    reference_id = data.get("reference_id")
+    
+    stock = await db.product_stock.find_one({
+        "product_id": product_id,
+        "warehouse_id": warehouse_id
+    }, {"_id": 0})
+    
+    if not stock:
+        raise HTTPException(status_code=404, detail="المخزون غير موجود")
+    
+    if stock.get("available_quantity", 0) < quantity:
+        raise HTTPException(status_code=400, detail="الكمية المطلوبة غير متوفرة")
+    
+    # تحديث الكمية المحجوزة
+    new_reserved = stock.get("reserved_quantity", 0) + quantity
+    new_available = stock.get("quantity", 0) - new_reserved
+    
+    await db.product_stock.update_one(
+        {"id": stock["id"]},
+        {"$set": {
+            "reserved_quantity": new_reserved,
+            "available_quantity": new_available,
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # تسجيل الحجز
+    reservation = {
+        "id": str(uuid.uuid4()),
+        "product_id": product_id,
+        "warehouse_id": warehouse_id,
+        "quantity": quantity,
+        "reference_type": reference_type,
+        "reference_id": reference_id,
+        "status": "active",
+        "created_by": current_user["id"],
+        "created_by_name": current_user.get("full_name", ""),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.stock_reservations.insert_one(reservation)
+    
+    return {
+        "message": "تم حجز الكمية بنجاح",
+        "reservation_id": reservation["id"],
+        "reserved_quantity": quantity,
+        "available_quantity": new_available
+    }
+
+
+@router.post("/stock/release-reservation/{reservation_id}")
+async def release_stock_reservation(
+    reservation_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    إلغاء حجز الكمية
+    يُستخدم عند إلغاء عرض السعر أو الطلب
+    """
+    reservation = await db.stock_reservations.find_one({"id": reservation_id, "status": "active"}, {"_id": 0})
+    
+    if not reservation:
+        raise HTTPException(status_code=404, detail="الحجز غير موجود أو تم إلغاؤه")
+    
+    stock = await db.product_stock.find_one({
+        "product_id": reservation["product_id"],
+        "warehouse_id": reservation["warehouse_id"]
+    }, {"_id": 0})
+    
+    if stock:
+        new_reserved = max(0, stock.get("reserved_quantity", 0) - reservation["quantity"])
+        new_available = stock.get("quantity", 0) - new_reserved
+        
+        await db.product_stock.update_one(
+            {"id": stock["id"]},
+            {"$set": {
+                "reserved_quantity": new_reserved,
+                "available_quantity": new_available,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    
+    await db.stock_reservations.update_one(
+        {"id": reservation_id},
+        {"$set": {
+            "status": "released",
+            "released_at": datetime.now(timezone.utc).isoformat(),
+            "released_by": current_user.get("full_name", "")
+        }}
+    )
+    
+    return {"message": "تم إلغاء الحجز بنجاح"}
+
+
+@router.post("/stock/issue-from-sale")
+async def issue_stock_from_sale(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    صرف مخزون لعملية بيع محددة
+    يُنشئ حركة صرف + قيد تكلفة البضاعة المباعة آلياً
+    """
+    sale_id = data.get("sale_id")
+    sale_number = data.get("sale_number")
+    customer_id = data.get("customer_id")
+    customer_name = data.get("customer_name")
+    items = data.get("items", [])  # [{product_id, warehouse_id, quantity}]
+    
+    if not items:
+        raise HTTPException(status_code=400, detail="لا توجد منتجات للصرف")
+    
+    results = []
+    total_cost = 0
+    
+    for item in items:
+        product_id = item.get("product_id")
+        warehouse_id = item.get("warehouse_id")
+        quantity = item.get("quantity")
+        
+        # صرف المنتج
+        issue_result = await issue_stock(
+            data={
+                "product_id": product_id,
+                "warehouse_id": warehouse_id,
+                "quantity": quantity,
+                "customer_id": customer_id,
+                "customer_name": customer_name,
+                "reference_number": sale_number,
+                "issue_type": "sales",
+                "notes": f"صرف لعملية البيع رقم {sale_number}"
+            },
+            current_user=current_user
+        )
+        
+        results.append({
+            "product_id": product_id,
+            "quantity": quantity,
+            "movement": issue_result.get("movement", {}).get("movement_number"),
+            "journal_entry": issue_result.get("journal_entry"),
+            "cost": issue_result.get("total_value", 0)
+        })
+        
+        total_cost += issue_result.get("total_value", 0)
+        
+        # إلغاء الحجز إذا كان موجوداً
+        reservation = await db.stock_reservations.find_one({
+            "product_id": product_id,
+            "warehouse_id": warehouse_id,
+            "reference_id": sale_id,
+            "status": "active"
+        }, {"_id": 0})
+        
+        if reservation:
+            await release_stock_reservation(reservation["id"], current_user)
+    
+    return {
+        "message": f"تم صرف {len(results)} منتج بنجاح",
+        "sale_id": sale_id,
+        "total_cost": total_cost,
+        "items": results
+    }
+
+
+# ==================== تقارير التكامل المالي ====================
+
+@router.get("/finance/stock-value-report")
+async def get_stock_value_report(
+    warehouse_id: Optional[str] = None,
+    center_name: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    تقرير قيمة المخزون
+    يُستخدم لمطابقة حساب المخزون في الميزانية
+    """
+    query = {}
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    stock_items = await db.product_stock.find(query, {"_id": 0}).to_list(5000)
+    
+    # تصفية حسب المركز إذا طُلب
+    if center_name:
+        warehouses = await db.warehouses.find({"center_name": center_name}, {"_id": 0, "id": 1}).to_list(100)
+        warehouse_ids = [w["id"] for w in warehouses]
+        stock_items = [s for s in stock_items if s.get("warehouse_id") in warehouse_ids]
+    
+    # حساب القيم
+    total_value = 0
+    by_warehouse = {}
+    by_category = {}
+    
+    for item in stock_items:
+        value = item.get("quantity", 0) * item.get("unit_price", 0)
+        total_value += value
+        
+        wh_id = item.get("warehouse_id", "unknown")
+        wh_name = item.get("warehouse_name", "غير محدد")
+        
+        if wh_id not in by_warehouse:
+            by_warehouse[wh_id] = {"name": wh_name, "value": 0, "items": 0}
+        by_warehouse[wh_id]["value"] += value
+        by_warehouse[wh_id]["items"] += 1
+    
+    return {
+        "total_value": round(total_value, 3),
+        "total_items": len(stock_items),
+        "by_warehouse": list(by_warehouse.values()),
+        "report_date": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@router.get("/finance/movements-summary")
+async def get_movements_financial_summary(
+    start_date: str = Query(default=None),
+    end_date: str = Query(default=None),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    ملخص مالي لحركات المخزون
+    يُستخدم للمراجعة المالية ومطابقة القيود
+    """
+    if not start_date:
+        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    
+    movements = await db.stock_movements.find({
+        "movement_date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0}).to_list(5000)
+    
+    summary = {
+        "period": {"start": start_date, "end": end_date},
+        "receive": {"count": 0, "total_value": 0},
+        "issue": {"count": 0, "total_value": 0, "by_type": {"sales": 0, "consumption": 0}},
+        "transfer": {"count": 0},
+        "adjust": {"count": 0, "value_change": 0}
+    }
+    
+    for m in movements:
+        mtype = m.get("movement_type")
+        value = m.get("total_value", 0)
+        
+        if mtype == "receive":
+            summary["receive"]["count"] += 1
+            summary["receive"]["total_value"] += value
+        elif mtype == "issue":
+            summary["issue"]["count"] += 1
+            summary["issue"]["total_value"] += value
+            ref_type = m.get("reference_type", "consumption")
+            if ref_type in summary["issue"]["by_type"]:
+                summary["issue"]["by_type"][ref_type] += value
+        elif mtype == "transfer":
+            summary["transfer"]["count"] += 1
+        elif mtype == "adjust":
+            summary["adjust"]["count"] += 1
+            summary["adjust"]["value_change"] += value
+    
+    summary["net_change"] = summary["receive"]["total_value"] - summary["issue"]["total_value"]
+    
+    return summary
