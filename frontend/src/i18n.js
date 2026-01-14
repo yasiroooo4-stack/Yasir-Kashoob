@@ -280,6 +280,7 @@ const resources = {
       "settings": "Settings",
       "system_settings": "System Settings",
       "permissions_management": "Permissions Management",
+      "warehouse_management": "Warehouse Management",
       "logout": "Logout",
       "login": "Login",
       "register": "Register",
