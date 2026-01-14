@@ -202,6 +202,7 @@ const WarehouseManagement = () => {
   });
 
   const [editingItem, setEditingItem] = useState(null);
+  const [initializingWarehouses, setInitializingWarehouses] = useState(false);
 
   // Fetch functions
   const fetchSummary = useCallback(async () => {
@@ -215,10 +216,50 @@ const WarehouseManagement = () => {
 
   const fetchWarehouses = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/warehouse/warehouses`);
+      const params = {};
+      if (selectedCenter !== "all") params.center_name = selectedCenter;
+      const response = await axios.get(`${API}/warehouse/warehouses`, { params });
       setWarehouses(response.data);
     } catch (error) {
       console.error("Error fetching warehouses:", error);
+    }
+  }, [selectedCenter]);
+
+  const fetchWarehousesByCenter = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/warehouses/by-center`);
+      setWarehousesByCenter(response.data);
+    } catch (error) {
+      console.error("Error fetching warehouses by center:", error);
+    }
+  }, []);
+
+  const fetchCenters = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/centers`);
+      setCenters(response.data);
+    } catch (error) {
+      console.error("Error fetching centers:", error);
+    }
+  }, []);
+
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/alerts`, {
+        params: { is_resolved: false }
+      });
+      setAlerts(response.data);
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+    }
+  }, []);
+
+  const fetchAlertsSummary = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/alerts/summary`);
+      setAlertsSummary(response.data);
+    } catch (error) {
+      console.error("Error fetching alerts summary:", error);
     }
   }, []);
 
