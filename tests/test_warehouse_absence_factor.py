@@ -161,6 +161,7 @@ class TestWarehouseStockOperations(TestAuth):
             "code": unique_code,
             "name": f"مخزن عمليات المخزون {unique_code}",
             "warehouse_type": "main",
+            "location": "موقع اختبار المخزون",
             "status": "active"
         }
         response = requests.post(f"{BASE_URL}/api/warehouse/warehouses", json=warehouse_data, headers=auth_headers)
