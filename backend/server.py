@@ -6254,17 +6254,32 @@ async def export_attendance_pdf(
         headers = ['#', 'Date', 'Check In', 'Check Out', 'Status', 'Source']
         data = [headers]
         
-        for idx, record in enumerate(sorted(records, key=lambda x: x.get('date', '')), 1):
+        records_list = list(records.values())
+        for idx, record in enumerate(sorted(records_list, key=lambda x: x.get('date', '')), 1):
             data.append([
                 str(idx),
                 record.get('date', ''),
                 record.get('check_in', '-'),
                 record.get('check_out', '-'),
+                'Present',
                 record.get('source', 'manual')
             ])
         
-        table = Table(data, repeatRows=1, colWidths=[30, 80, 80, 80, 80])
-        table.setStyle(TableStyle([
+        # Add absent dates
+        for idx, absent_date in enumerate(sorted(absent_dates_pdf), len(records_list) + 1):
+            data.append([
+                str(idx),
+                absent_date,
+                '-',
+                '-',
+                'Absent',
+                '-'
+            ])
+        
+        table = Table(data, repeatRows=1, colWidths=[30, 80, 70, 70, 60, 70])
+        
+        # Style with different colors for present/absent
+        style_commands = [
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -6272,8 +6287,16 @@ async def export_attendance_pdf(
             ('FONTSIZE', (0, 1), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
-        ]))
+        ]
+        
+        # Color rows based on status
+        for row_idx, row in enumerate(data[1:], 1):
+            if row[4] == 'Absent':
+                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#FFCDD2')))
+            else:
+                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#C8E6C9')))
+        
+        table.setStyle(TableStyle(style_commands))
         
         elements.append(table)
         elements.append(Spacer(1, 20))
