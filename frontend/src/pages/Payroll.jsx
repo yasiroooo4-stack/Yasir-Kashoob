@@ -68,6 +68,12 @@ const Payroll = () => {
   const [calculating, setCalculating] = useState(false);
   const [bankAccounts, setBankAccounts] = useState([]);
   
+  // معامل خصم الغياب
+  const [absenceDeductionFactor, setAbsenceDeductionFactor] = useState(1.0);
+  const [absenceFactorLoading, setAbsenceFactorLoading] = useState(false);
+  const [showAbsenceFactorDialog, setShowAbsenceFactorDialog] = useState(false);
+  const [newAbsenceFactor, setNewAbsenceFactor] = useState(1.0);
+  
   const [periodForm, setPeriodForm] = useState({
     name: "",
     start_date: "",
@@ -81,6 +87,7 @@ const Payroll = () => {
 
   useEffect(() => {
     fetchPeriods();
+    fetchAbsenceDeductionFactor();
   }, []);
 
   useEffect(() => {
