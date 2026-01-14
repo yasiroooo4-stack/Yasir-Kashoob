@@ -3347,6 +3347,26 @@ const HR = () => {
                   placeholder={language === "ar" ? "رقم البصمة في المركز" : "Center Fingerprint ID"}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "مركز البصمة 2" : "Fingerprint 2 Center"}</Label>
+                <Select
+                  value={employeeForm.fingerprint_center_2}
+                  onValueChange={(v) => setEmployeeForm({ ...employeeForm, fingerprint_center_2: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "ar" ? "اختر المركز" : "Select Center"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{language === "ar" ? "-- لا يوجد --" : "-- None --"}</SelectItem>
+                    <SelectItem value="حجيف">حجيف</SelectItem>
+                    <SelectItem value="غدو">غدو</SelectItem>
+                    <SelectItem value="زيك">زيك</SelectItem>
+                    <SelectItem value="ثمريت">ثمريت</SelectItem>
+                    <SelectItem value="مرباط">مرباط</SelectItem>
+                    <SelectItem value="طاقة">طاقة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {/* Work Location - موقع العمل */}
