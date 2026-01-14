@@ -121,7 +121,6 @@ const Layout = () => {
     { path: "/customers", icon: ShoppingCart, label: "customers", departments: ["sales", "admin", "it"] },
     { path: "/sales", icon: ShoppingCart, label: "sales", departments: ["sales", "admin", "it"] },
     { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
-    { path: "/inventory", icon: Package, label: "inventory", departments: ["inventory", "sales", "admin", "it"] },
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/finance-system", icon: Landmark, label: "finance_system", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/treasury", icon: PiggyBank, label: "treasury", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
