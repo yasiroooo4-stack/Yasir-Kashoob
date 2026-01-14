@@ -3994,38 +3994,50 @@ async def sync_single_attendance(
     Creates or updates the record. Merges records from different locations.
     """
     try:
+        # تحميل جدول ربط أجهزة ZKTeco بالمراكز
+        zkteco_devices = await db.zkteco_devices.find({"is_active": True}, {"_id": 0}).to_list(100)
+        device_to_center = {d.get("ip_address", ""): d.get("center_name", "") for d in zkteco_devices}
+        
         # البحث عن الموظف
         employee = None
         if record.get("fingerprint_id"):
             fp_id = str(record["fingerprint_id"])
-            device_location = record.get("device_ip", "") or record.get("location", "")
+            device_ip = record.get("device_ip", "")
+            device_location = record.get("location", "")
             
-            # أولاً: البحث في البصمات الإضافية (additional_fingerprints) مع التحقق من المركز
-            if device_location:
-                # البحث في البصمات الإضافية
-                all_employees = await db.hr_employees.find(
-                    {"additional_fingerprints": {"$exists": True, "$ne": None}},
-                    {"_id": 0}
-                ).to_list(500)
-                
-                for emp in all_employees:
+            # تحويل IP الجهاز إلى اسم المركز
+            center_from_device = device_to_center.get(device_ip, "") or device_location
+            
+            # تحميل الموظفين الذين لديهم بصمات إضافية
+            all_employees_with_fps = await db.hr_employees.find(
+                {"additional_fingerprints": {"$exists": True, "$ne": None, "$ne": []}},
+                {"_id": 0}
+            ).to_list(500)
+            
+            # أولاً: البحث في البصمات الإضافية مع التحقق من المركز
+            if center_from_device:
+                for emp in all_employees_with_fps:
                     for fp in emp.get("additional_fingerprints", []):
                         if str(fp.get("fingerprint_id")) == fp_id:
                             fp_center = fp.get("center", "")
                             if fp_center:
-                                if fp_center.lower() in device_location.lower() or device_location.lower() in fp_center.lower():
+                                if (fp_center.lower() in center_from_device.lower() or 
+                                    center_from_device.lower() in fp_center.lower() or
+                                    fp_center == center_from_device):
                                     employee = emp
                                     break
                     if employee:
                         break
             
             # ثانياً: البحث في البصمة الثانوية مع التحقق من المركز
-            if not employee and device_location:
+            if not employee and center_from_device:
                 secondary_match = await db.hr_employees.find_one({"fingerprint_id_2": fp_id}, {"_id": 0})
                 if secondary_match:
                     emp_center = secondary_match.get("fingerprint_center_2", "")
                     if emp_center:
-                        if emp_center.lower() in device_location.lower() or device_location.lower() in emp_center.lower():
+                        if (emp_center.lower() in center_from_device.lower() or 
+                            center_from_device.lower() in emp_center.lower() or
+                            emp_center == center_from_device):
                             employee = secondary_match
             
             # ثالثاً: البحث في البصمة الأساسية
