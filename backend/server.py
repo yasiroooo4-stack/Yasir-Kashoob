@@ -8794,16 +8794,17 @@ async def update_employee_leave_rate(
 ):
     """تحديث معدل الإجازة الشهرية للموظف"""
     rate = data.get("monthly_leave_rate", 2.6)
+    rate_type = data.get("leave_rate_type", "auto")
     
     result = await db.hr_employees.update_one(
         {"id": employee_id},
-        {"$set": {"monthly_leave_rate": rate}}
+        {"$set": {"monthly_leave_rate": rate, "leave_rate_type": rate_type}}
     )
     
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Employee not found")
     
-    return {"message": "تم تحديث معدل الإجازة بنجاح", "new_rate": rate}
+    return {"message": "تم تحديث معدل الإجازة بنجاح", "new_rate": rate, "rate_type": rate_type}
 
 @api_router.put("/hr/employees/{employee_id}/leave-balance")
 async def adjust_employee_leave_balance(
