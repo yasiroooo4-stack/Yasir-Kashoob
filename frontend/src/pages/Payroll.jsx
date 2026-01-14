@@ -752,6 +752,38 @@ const Payroll = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* بطاقة معامل خصم الغياب */}
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Calculator className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ar" ? "معامل خصم الغياب" : "Absence Factor"}
+                  </p>
+                  <p className="text-xl font-bold text-orange-700">
+                    {absenceDeductionFactor === 1 ? (language === "ar" ? "يوم كامل" : "Full Day") : 
+                     absenceDeductionFactor === 0.5 ? (language === "ar" ? "نصف يوم" : "Half Day") :
+                     absenceDeductionFactor === 0 ? (language === "ar" ? "بدون خصم" : "No Deduction") :
+                     `${absenceDeductionFactor}x`}
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowAbsenceFactorDialog(true)}
+                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              >
+                {language === "ar" ? "تعديل" : "Edit"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Period Selection */}
