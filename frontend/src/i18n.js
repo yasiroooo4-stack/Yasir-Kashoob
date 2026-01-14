@@ -21,6 +21,7 @@ const resources = {
       "reports": "التقارير",
       "settings": "الإعدادات",
       "system_settings": "إعدادات النظام",
+      "permissions_management": "إدارة الصلاحيات",
       "logout": "تسجيل الخروج",
       "login": "تسجيل الدخول",
       "register": "إنشاء حساب",
