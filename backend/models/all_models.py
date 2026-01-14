@@ -668,6 +668,9 @@ class EmployeeBase(BaseModel):
     fingerprint_id_2: Optional[str] = None
     fingerprint_center: Optional[str] = None
     fingerprint_center_2: Optional[str] = None
+    # دعم البصمات المتعددة (أكثر من 2)
+    # كل عنصر: {"fingerprint_id": "12345", "center": "غدو", "device_ip": "192.168.1.1"}
+    additional_fingerprints: Optional[List[dict]] = None
     work_location: Optional[str] = None
     can_login: bool = False
     exclude_from_payroll: bool = False
