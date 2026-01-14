@@ -896,7 +896,10 @@ async def receive_stock(
     data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    """استلام بضاعة"""
+    """
+    استلام بضاعة مع تكامل مالي
+    قيد مالي: من حـ/ المخزون إلى حـ/ الدائنون (أو النقدية)
+    """
     product_id = data.get("product_id")
     warehouse_id = data.get("warehouse_id")
     quantity = data.get("quantity")
@@ -907,6 +910,8 @@ async def receive_stock(
     expiry_date = data.get("expiry_date")
     reference_number = data.get("reference_number")
     notes = data.get("notes")
+    payment_type = data.get("payment_type", "credit")  # credit=آجل, cash=نقدي
+    create_journal = data.get("create_journal", True)  # إنشاء قيد مالي
     
     # الحصول على بيانات المنتج والمخزن
     product = await db.warehouse_products.find_one({"id": product_id}, {"_id": 0})
@@ -917,6 +922,8 @@ async def receive_stock(
     if not warehouse:
         raise HTTPException(status_code=404, detail="المخزن غير موجود")
     
+    total_value = quantity * unit_price
+    
     # تحديث أو إنشاء سجل المخزون
     stock = await db.product_stock.find_one({
         "product_id": product_id,
@@ -925,11 +932,17 @@ async def receive_stock(
     
     if stock:
         new_quantity = stock.get("quantity", 0) + quantity
+        # تحديث سعر التكلفة بطريقة المتوسط المرجح
+        old_value = stock.get("quantity", 0) * stock.get("unit_price", unit_price)
+        new_value = old_value + total_value
+        avg_price = new_value / new_quantity if new_quantity > 0 else unit_price
+        
         await db.product_stock.update_one(
             {"id": stock["id"]},
             {"$set": {
                 "quantity": new_quantity,
                 "available_quantity": new_quantity - stock.get("reserved_quantity", 0),
+                "unit_price": avg_price,
                 "batch_number": batch_number or stock.get("batch_number"),
                 "expiry_date": expiry_date or stock.get("expiry_date"),
                 "last_updated": datetime.now(timezone.utc).isoformat()
@@ -947,7 +960,9 @@ async def receive_stock(
             batch_number=batch_number,
             expiry_date=expiry_date
         )
-        await db.product_stock.insert_one(new_stock.model_dump())
+        new_stock_dict = new_stock.model_dump()
+        new_stock_dict["unit_price"] = unit_price
+        await db.product_stock.insert_one(new_stock_dict)
     
     # إنشاء حركة استلام
     movement = StockMovement(
@@ -958,7 +973,7 @@ async def receive_stock(
         product_code=product.get("code", ""),
         quantity=quantity,
         unit_price=unit_price,
-        total_value=quantity * unit_price,
+        total_value=total_value,
         to_warehouse_id=warehouse_id,
         to_warehouse_name=warehouse.get("name", ""),
         reference_type="purchase",
@@ -974,6 +989,23 @@ async def receive_stock(
     
     await db.stock_movements.insert_one(movement.model_dump())
     
+    # إنشاء قيد مالي آلي (إذا كانت القيمة > 0)
+    journal_entry = None
+    if create_journal and total_value > 0:
+        credit_account = FINANCE_ACCOUNTS["cash"] if payment_type == "cash" else FINANCE_ACCOUNTS["accounts_payable"]
+        
+        journal_entry = await create_warehouse_journal_entry(
+            description=f"شراء مخزون: {product.get('name', '')} - {quantity} {product.get('unit', 'قطعة')} من {supplier_name or 'مورد'}",
+            lines=[
+                {"account_number": FINANCE_ACCOUNTS["inventory"], "debit": total_value, "credit": 0, "description": f"استلام مخزون - {product.get('name', '')}"},
+                {"account_number": credit_account, "debit": 0, "credit": total_value, "description": f"مشتريات مخزون - {supplier_name or 'مورد'}"}
+            ],
+            reference_type="warehouse_receive",
+            reference_id=movement.id,
+            created_by_id=current_user["id"],
+            created_by_name=current_user.get("full_name", "")
+        )
+    
     await log_activity(
         user_id=current_user["id"],
         user_name=current_user.get("full_name", ""),
@@ -981,10 +1013,15 @@ async def receive_stock(
         entity_type="stock",
         entity_id=product_id,
         entity_name=product.get("name", ""),
-        details=f"استلام {quantity} {product.get('unit', 'قطعة')} من {product.get('name', '')} في مخزن {warehouse.get('name', '')}"
+        details=f"استلام {quantity} {product.get('unit', 'قطعة')} من {product.get('name', '')} في مخزن {warehouse.get('name', '')} بقيمة {total_value}"
     )
     
-    return {"message": "تم استلام البضاعة بنجاح", "movement": movement.model_dump()}
+    return {
+        "message": "تم استلام البضاعة بنجاح",
+        "movement": movement.model_dump(),
+        "journal_entry": journal_entry.get("entry_number") if journal_entry else None,
+        "total_value": total_value
+    }
 
 
 @router.post("/movements/issue")
