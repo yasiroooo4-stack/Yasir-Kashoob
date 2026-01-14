@@ -1,5 +1,5 @@
 {
-  "api_url": "https://farmwise-erp-1.preview.emergentagent.com",
+  "api_url": "https://dairy-farm-erp-1.preview.emergentagent.com",
   "username": "yasir",
   "password": "YOUR_PASSWORD_HERE",
   "sync_interval": 3600,
