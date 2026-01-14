@@ -4052,11 +4052,11 @@ async def sync_single_attendance(
                     if not emp_center:
                         employee = secondary_match
             
-            # خامساً: البحث في البصمات الإضافية بدون شرط المركز
+            # خامساً: البحث في البصمات الإضافية بدون شرط المركز (أي تطابق)
             if not employee:
-                for emp in all_employees if 'all_employees' in dir() else []:
+                for emp in all_employees_with_fps:
                     for fp in emp.get("additional_fingerprints", []):
-                        if str(fp.get("fingerprint_id")) == fp_id and not fp.get("center"):
+                        if str(fp.get("fingerprint_id")) == fp_id:
                             employee = emp
                             break
                     if employee:
