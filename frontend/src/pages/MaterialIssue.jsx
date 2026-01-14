@@ -146,17 +146,18 @@ const MaterialIssue = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/warehouse/my-stock`, {
+      const response = await axios.get(`${API}/warehouse/my-stock`, {
         params: { warehouse_id: selectedWarehouse },
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMyStock(response.data);
+      setMyStock(response.data || []);
     } catch (error) {
       console.error("Error fetching stock:", error);
+      toast.error(t("فشل في جلب المخزون", "Failed to fetch stock"));
     } finally {
       setLoading(false);
     }
-  }, [selectedWarehouse]);
+  }, [selectedWarehouse, t]);
 
   // Fetch requests
   const fetchMyRequests = useCallback(async () => {
