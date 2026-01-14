@@ -10103,6 +10103,58 @@ async def approve_payroll(period_id: str, current_user: dict = Depends(get_curre
         "approved_at": now
     }
 
+
+@api_router.get("/hr/payroll/periods/{period_id}/approval-status")
+async def get_payroll_approval_status(period_id: str, current_user: dict = Depends(get_current_user)):
+    """Get detailed approval status for a payroll period"""
+    period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
+    if not period:
+        raise HTTPException(status_code=404, detail="Payroll period not found")
+    
+    status = period.get("status", "draft")
+    
+    # تحديد المراحل
+    stages = [
+        {
+            "stage": 1,
+            "name": "موافقة الموارد البشرية",
+            "name_en": "HR Approval",
+            "status": "completed" if period.get("hr_approved_at") else ("current" if status in ["draft", "calculated", "pending_hr"] else "pending"),
+            "approved_at": period.get("hr_approved_at"),
+            "approved_by": period.get("hr_approved_by_name"),
+            "required_role": "hr_manager"
+        },
+        {
+            "stage": 2,
+            "name": "موافقة المالية",
+            "name_en": "Finance Approval",
+            "status": "completed" if period.get("finance_approved_at") else ("current" if status == "pending_finance" else "pending"),
+            "approved_at": period.get("finance_approved_at"),
+            "approved_by": period.get("finance_approved_by_name"),
+            "required_role": "finance_manager"
+        },
+        {
+            "stage": 3,
+            "name": "موافقة المدير العام",
+            "name_en": "GM Approval",
+            "status": "completed" if period.get("gm_approved_at") else ("current" if status == "pending_gm" else "pending"),
+            "approved_at": period.get("gm_approved_at"),
+            "approved_by": period.get("gm_approved_by_name"),
+            "required_role": "general_manager"
+        }
+    ]
+    
+    return {
+        "period_id": period_id,
+        "period_name": period.get("name"),
+        "current_status": status,
+        "stages": stages,
+        "is_fully_approved": status == "approved" or status == "disbursed",
+        "can_disburse": status == "approved"
+    }
+
+
+
 @api_router.post("/hr/payroll/periods/{period_id}/disburse")
 async def disburse_payroll(
     period_id: str, 
