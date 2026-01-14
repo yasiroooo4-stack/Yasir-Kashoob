@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://dairysoft.preview.emergentagent.com',
+            'api_url': 'https://farmops-manager-1.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,
