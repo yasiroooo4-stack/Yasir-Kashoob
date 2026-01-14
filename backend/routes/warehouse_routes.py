@@ -1471,3 +1471,190 @@ async def export_solutions_excel(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+
+# ==================== التنبيهات ====================
+
+@router.get("/alerts")
+async def get_stock_alerts(
+    alert_type: Optional[str] = None,
+    priority: Optional[str] = None,
+    is_resolved: Optional[bool] = None,
+    center_name: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على تنبيهات المخزون"""
+    query = {}
+    if alert_type:
+        query["alert_type"] = alert_type
+    if priority:
+        query["priority"] = priority
+    if is_resolved is not None:
+        query["is_resolved"] = is_resolved
+    if center_name:
+        query["center_name"] = center_name
+    
+    alerts = await db.stock_alerts.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return alerts
+
+
+@router.get("/alerts/summary")
+async def get_alerts_summary(current_user: dict = Depends(get_current_user)):
+    """ملخص التنبيهات"""
+    pipeline = [
+        {"$match": {"is_resolved": False}},
+        {"$group": {
+            "_id": {"alert_type": "$alert_type", "priority": "$priority"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    
+    results = await db.stock_alerts.aggregate(pipeline).to_list(100)
+    
+    summary = {
+        "total_unresolved": 0,
+        "by_type": {},
+        "by_priority": {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    }
+    
+    for r in results:
+        count = r["count"]
+        alert_type = r["_id"]["alert_type"]
+        priority = r["_id"]["priority"]
+        
+        summary["total_unresolved"] += count
+        
+        if alert_type not in summary["by_type"]:
+            summary["by_type"][alert_type] = 0
+        summary["by_type"][alert_type] += count
+        
+        if priority in summary["by_priority"]:
+            summary["by_priority"][priority] += count
+    
+    return summary
+
+
+@router.post("/alerts/{alert_id}/resolve")
+async def resolve_alert(
+    alert_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حل/إغلاق تنبيه"""
+    result = await db.stock_alerts.update_one(
+        {"id": alert_id},
+        {"$set": {
+            "is_resolved": True,
+            "resolved_at": datetime.now(timezone.utc).isoformat(),
+            "resolved_by": current_user.get("full_name", "")
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="التنبيه غير موجود")
+    
+    return {"message": "تم حل التنبيه بنجاح"}
+
+
+@router.post("/alerts/check")
+async def trigger_stock_check(
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(require_role(["admin", "warehouse_manager"]))
+):
+    """تشغيل فحص المخزون وإنشاء التنبيهات"""
+    background_tasks.add_task(check_stock_alerts)
+    return {"message": "تم بدء فحص المخزون"}
+
+
+@router.delete("/alerts/{alert_id}")
+async def delete_alert(
+    alert_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """حذف تنبيه"""
+    result = await db.stock_alerts.delete_one({"id": alert_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="التنبيه غير موجود")
+    return {"message": "تم حذف التنبيه"}
+
+
+# ==================== إعدادات التنبيهات ====================
+
+@router.get("/alerts/settings")
+async def get_alert_settings(current_user: dict = Depends(get_current_user)):
+    """الحصول على إعدادات التنبيهات"""
+    settings = await db.system_settings.find_one({"key": "warehouse_alert_settings"}, {"_id": 0})
+    if not settings:
+        return {
+            "email_enabled": True,
+            "sms_enabled": False,
+            "in_app_enabled": True,
+            "default_alert_recipients": []
+        }
+    return settings.get("value", {})
+
+
+@router.put("/alerts/settings")
+async def update_alert_settings(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تحديث إعدادات التنبيهات"""
+    await db.system_settings.update_one(
+        {"key": "warehouse_alert_settings"},
+        {"$set": {"key": "warehouse_alert_settings", "value": data}},
+        upsert=True
+    )
+    return {"message": "تم تحديث الإعدادات"}
+
+
+@router.put("/warehouses/{warehouse_id}/alert-recipients")
+async def update_warehouse_alert_recipients(
+    warehouse_id: str,
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "warehouse_manager"]))
+):
+    """تحديث مستلمي التنبيهات للمخزن"""
+    update_data = {}
+    
+    if "supervisor_id" in data:
+        update_data["supervisor_id"] = data["supervisor_id"]
+    if "supervisor_name" in data:
+        update_data["supervisor_name"] = data["supervisor_name"]
+    if "supervisor_email" in data:
+        update_data["supervisor_email"] = data["supervisor_email"]
+    if "supervisor_phone" in data:
+        update_data["supervisor_phone"] = data["supervisor_phone"]
+    if "warehouse_manager_id" in data:
+        update_data["warehouse_manager_id"] = data["warehouse_manager_id"]
+    if "warehouse_manager_name" in data:
+        update_data["warehouse_manager_name"] = data["warehouse_manager_name"]
+    if "warehouse_manager_email" in data:
+        update_data["warehouse_manager_email"] = data["warehouse_manager_email"]
+    if "warehouse_manager_phone" in data:
+        update_data["warehouse_manager_phone"] = data["warehouse_manager_phone"]
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        result = await db.warehouses.update_one(
+            {"id": warehouse_id},
+            {"$set": update_data}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="المخزن غير موجود")
+    
+    return {"message": "تم تحديث مستلمي التنبيهات"}
+
+
+# ==================== المراكز ====================
+
+@router.get("/centers")
+async def get_centers(current_user: dict = Depends(get_current_user)):
+    """الحصول على قائمة المراكز"""
+    return CENTERS
+
+
+@router.get("/warehouse-categories")
+async def get_warehouse_categories(current_user: dict = Depends(get_current_user)):
+    """الحصول على تصنيفات المخازن"""
+    return WAREHOUSE_CATEGORIES
