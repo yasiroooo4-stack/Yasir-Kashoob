@@ -37,6 +37,7 @@ import {
   Bell,
   Video,
   Palette,
+  Shield,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
