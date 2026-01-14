@@ -240,6 +240,189 @@ class Inventory(InventoryBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     last_updated: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+
+# ==================== WAREHOUSE MANAGEMENT MODELS ====================
+
+# المخازن
+class WarehouseBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str                           # اسم المخزن
+    code: str                           # رمز المخزن
+    location: str                       # الموقع
+    warehouse_type: str = "main"        # نوع المخزن: main, branch, cold
+    capacity: Optional[float] = None    # السعة
+    temperature_controlled: bool = False # تحكم بالحرارة
+    manager_id: Optional[str] = None    # مدير المخزن
+    manager_name: Optional[str] = None
+    status: str = "active"              # حالة المخزن
+    notes: Optional[str] = None
+
+class Warehouse(WarehouseBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+
+
+# فئات المنتجات
+class ProductCategoryBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str                           # اسم الفئة
+    code: str                           # رمز الفئة
+    description: Optional[str] = None
+    parent_category_id: Optional[str] = None  # فئة أب
+    status: str = "active"
+
+class ProductCategory(ProductCategoryBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# المنتجات/الأصناف
+class WarehouseProductBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str                           # اسم المنتج
+    code: str                           # رمز/باركود المنتج
+    category_id: Optional[str] = None   # فئة المنتج
+    category_name: Optional[str] = None
+    unit: str = "piece"                 # وحدة القياس: piece, kg, liter, box
+    unit_price: float = 0               # سعر الوحدة
+    cost_price: float = 0               # سعر التكلفة
+    min_quantity: float = 0             # الحد الأدنى للكمية
+    max_quantity: Optional[float] = None # الحد الأقصى
+    expiry_tracking: bool = False       # تتبع الصلاحية
+    batch_tracking: bool = False        # تتبع الدفعات
+    description: Optional[str] = None
+    status: str = "active"
+
+class WarehouseProduct(WarehouseProductBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+
+
+# مخزون المنتجات (الكميات في كل مخزن)
+class ProductStockBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    product_id: str                     # معرف المنتج
+    product_name: str
+    product_code: str
+    warehouse_id: str                   # معرف المخزن
+    warehouse_name: str
+    quantity: float = 0                 # الكمية الحالية
+    reserved_quantity: float = 0        # الكمية المحجوزة
+    available_quantity: float = 0       # الكمية المتاحة
+    batch_number: Optional[str] = None  # رقم الدفعة
+    expiry_date: Optional[str] = None   # تاريخ الصلاحية
+    location_in_warehouse: Optional[str] = None  # الموقع داخل المخزن (رف/قسم)
+
+class ProductStock(ProductStockBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    last_updated: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# حركات المخزون
+class StockMovementBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    movement_type: str                  # نوع الحركة: receive, issue, transfer, adjust, return
+    movement_number: str                # رقم الحركة
+    product_id: str
+    product_name: str
+    product_code: str
+    quantity: float                     # الكمية
+    unit_price: float = 0               # سعر الوحدة
+    total_value: float = 0              # القيمة الإجمالية
+    from_warehouse_id: Optional[str] = None  # من مخزن
+    from_warehouse_name: Optional[str] = None
+    to_warehouse_id: Optional[str] = None    # إلى مخزن
+    to_warehouse_name: Optional[str] = None
+    reference_type: Optional[str] = None     # نوع المرجع: purchase_order, sales_order, transfer
+    reference_id: Optional[str] = None       # معرف المرجع
+    reference_number: Optional[str] = None   # رقم المرجع
+    batch_number: Optional[str] = None
+    expiry_date: Optional[str] = None
+    supplier_id: Optional[str] = None        # المورد
+    supplier_name: Optional[str] = None
+    customer_id: Optional[str] = None        # العميل
+    customer_name: Optional[str] = None
+    notes: Optional[str] = None
+    status: str = "completed"               # حالة الحركة
+
+class StockMovement(StockMovementBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    movement_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+
+
+# المحاليل والفحوصات (خاص بالمختبرات)
+class LabSolutionBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str                           # اسم المحلول
+    code: str                           # رمز المحلول
+    solution_type: str                  # نوع المحلول: reagent, buffer, standard, cleaning
+    unit: str = "ml"                    # وحدة القياس
+    current_quantity: float = 0         # الكمية الحالية
+    min_quantity: float = 0             # الحد الأدنى
+    warehouse_id: Optional[str] = None  # المخزن
+    warehouse_name: Optional[str] = None
+    expiry_date: Optional[str] = None   # تاريخ الصلاحية
+    batch_number: Optional[str] = None  # رقم الدفعة
+    supplier_id: Optional[str] = None
+    supplier_name: Optional[str] = None
+    cost_per_unit: float = 0            # التكلفة لكل وحدة
+    status: str = "active"
+    notes: Optional[str] = None
+
+class LabSolution(LabSolutionBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+
+
+# استهلاك المحاليل اليومي
+class SolutionConsumptionBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    solution_id: str
+    solution_name: str
+    solution_code: str
+    consumption_date: str               # تاريخ الاستهلاك
+    quantity_consumed: float            # الكمية المستهلكة
+    test_type: Optional[str] = None     # نوع الفحص
+    test_count: int = 0                 # عدد الفحوصات
+    notes: Optional[str] = None
+
+class SolutionConsumption(SolutionConsumptionBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+
+
+# طلبات الشراء للمخزون
+class PurchaseRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    request_number: str                 # رقم الطلب
+    request_date: str                   # تاريخ الطلب
+    requester_id: str                   # طالب الشراء
+    requester_name: str
+    department: str                     # القسم
+    priority: str = "normal"            # الأولوية: low, normal, high, urgent
+    total_amount: float = 0             # المبلغ الإجمالي
+    status: str = "pending"             # حالة الطلب: pending, approved, rejected, ordered, received
+    notes: Optional[str] = None
+    items: List[dict] = []              # قائمة المنتجات المطلوبة
+
+class PurchaseRequest(PurchaseRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+
+
 # ==================== PAYMENT MODELS ====================
 
 class PaymentBase(BaseModel):
