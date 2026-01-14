@@ -2270,13 +2270,21 @@ const HR = () => {
                       // Calculate auto rate based on position
                       const getAutoRate = (position) => {
                         const positionLower = (position || "").toLowerCase();
-                        if (positionLower.includes("مدير عام") || positionLower.includes("general manager") || positionLower.includes("ceo")) return 3.5;
-                        if (positionLower.includes("نائب المدير العام") || positionLower.includes("deputy general") || positionLower.includes("vice")) return 3.5;
+                        // المدير العام / مدير عام
+                        if (positionLower.includes("المدير العام") || positionLower.includes("مدير عام") || positionLower.includes("general manager") || positionLower.includes("ceo")) return 3.5;
+                        // نائب المدير العام
+                        if (positionLower.includes("نائب المدير العام") || positionLower.includes("نائب مدير عام") || positionLower.includes("deputy general") || positionLower.includes("vice")) return 3.5;
+                        // مدير الموارد البشرية
                         if (positionLower.includes("مدير الموارد") || positionLower.includes("hr manager") || positionLower.includes("human resources manager")) return 3.0;
+                        // مدير العمليات
                         if (positionLower.includes("مدير العمليات") || positionLower.includes("operations manager")) return 3.0;
-                        if (positionLower.includes("نائب المدير العمليات") || positionLower.includes("deputy operations")) return 3.0;
+                        // نائب مدير العمليات
+                        if (positionLower.includes("نائب المدير العمليات") || positionLower.includes("نائب مدير العمليات") || positionLower.includes("deputy operations")) return 3.0;
+                        // مشرف
                         if (positionLower.includes("مشرف") || positionLower.includes("supervisor")) return 3.0;
+                        // أمن وسلامة
                         if (positionLower.includes("أمن") || positionLower.includes("سلامة") || positionLower.includes("safety") || positionLower.includes("security")) return 3.0;
+                        // مدير عام (any other manager)
                         if (positionLower.includes("مدير") || positionLower.includes("manager") || positionLower.includes("director")) return 3.0;
                         return 2.6;
                       };
