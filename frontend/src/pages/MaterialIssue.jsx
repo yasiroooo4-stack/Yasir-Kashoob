@@ -280,7 +280,7 @@ const MaterialIssue = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${API}/api/warehouse/issue-request`,
+        `${API}/warehouse/issue-request`,
         {
           warehouse_id: selectedWarehouse,
           items: cart.map((c) => ({
