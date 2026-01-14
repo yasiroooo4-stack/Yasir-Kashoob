@@ -5992,12 +5992,24 @@ async def export_attendance_excel(
             cell.font = header_font
             cell.alignment = Alignment(horizontal='center')
         
-        # Style employee header rows (rows starting with 📋)
+        # Style employee header rows (rows starting with 📋) and absent rows
+        absent_fill = PatternFill(start_color='FFCDD2', end_color='FFCDD2', fill_type='solid')  # Light red
+        present_fill = PatternFill(start_color='C8E6C9', end_color='C8E6C9', fill_type='solid')  # Light green
+        
         for row_idx, row in enumerate(worksheet.iter_rows(min_row=2), start=2):
             if row[0].value and str(row[0].value).startswith('📋'):
                 for cell in row:
                     cell.fill = employee_header_fill
                     cell.font = employee_header_font
+            # Check Status column (index 6) for coloring
+            status_cell = row[6] if len(row) > 6 else None
+            if status_cell and status_cell.value:
+                if 'غائب' in str(status_cell.value):
+                    for cell in row:
+                        cell.fill = absent_fill
+                elif 'حاضر' in str(status_cell.value):
+                    for cell in row:
+                        cell.fill = present_fill
         
         # Auto-adjust column widths
         for column in worksheet.columns:
