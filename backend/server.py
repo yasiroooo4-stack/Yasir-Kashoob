@@ -12425,6 +12425,10 @@ app.include_router(procurement_router)
 from routes.operations_routes import router as operations_router
 app.include_router(operations_router)
 
+# Include Warehouse Management router
+from routes.warehouse_routes import router as warehouse_router
+app.include_router(warehouse_router)
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
