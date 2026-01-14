@@ -10074,8 +10074,8 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
                 if installment > 0:
                     loan_deduction += installment
         
-        # Deductions
-        absence_deduction = daily_rate * absent_days
+        # Deductions - استخدام معامل خصم الغياب القابل للتعديل
+        absence_deduction = daily_rate * absent_days * ABSENCE_DEDUCTION_FACTOR
         unpaid_deduction = daily_rate * unpaid_leave
         otp_deduction = daily_rate * otp_days * 0.5  # Half day deduction for OTP issues
         total_deductions = absence_deduction + unpaid_deduction + otp_deduction + loan_deduction
