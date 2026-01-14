@@ -810,6 +810,49 @@ const Payroll = () => {
               <span>({currentPeriod.total_days} {language === "ar" ? "يوم" : "days"})</span>
               {getStatusBadge(currentPeriod.status)}
             </div>
+            
+            {/* Approval Progress */}
+            {currentPeriod.status !== "draft" && (
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="text-sm font-semibold mb-3">{language === "ar" ? "مراحل الموافقة" : "Approval Stages"}</h4>
+                <div className="flex items-center gap-2">
+                  {/* HR Stage */}
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentPeriod.hr_approved_at ? 'bg-green-100 text-green-800' : currentPeriod.status === 'pending_hr' || currentPeriod.status === 'calculated' ? 'bg-yellow-100 text-yellow-800 animate-pulse' : 'bg-gray-100 text-gray-500'}`}>
+                    <span className="text-xs font-medium">1. {language === "ar" ? "الموارد البشرية" : "HR"}</span>
+                    {currentPeriod.hr_approved_at && <CheckCircle className="w-4 h-4" />}
+                  </div>
+                  
+                  <span className="text-gray-400">→</span>
+                  
+                  {/* Finance Stage */}
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentPeriod.finance_approved_at ? 'bg-green-100 text-green-800' : currentPeriod.status === 'pending_finance' ? 'bg-blue-100 text-blue-800 animate-pulse' : 'bg-gray-100 text-gray-500'}`}>
+                    <span className="text-xs font-medium">2. {language === "ar" ? "المالية" : "Finance"}</span>
+                    {currentPeriod.finance_approved_at && <CheckCircle className="w-4 h-4" />}
+                  </div>
+                  
+                  <span className="text-gray-400">→</span>
+                  
+                  {/* GM Stage */}
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentPeriod.gm_approved_at ? 'bg-green-100 text-green-800' : currentPeriod.status === 'pending_gm' ? 'bg-purple-100 text-purple-800 animate-pulse' : 'bg-gray-100 text-gray-500'}`}>
+                    <span className="text-xs font-medium">3. {language === "ar" ? "المدير العام" : "GM"}</span>
+                    {currentPeriod.gm_approved_at && <CheckCircle className="w-4 h-4" />}
+                  </div>
+                </div>
+                
+                {/* Approval Details */}
+                <div className="mt-3 text-xs text-muted-foreground space-y-1">
+                  {currentPeriod.hr_approved_by_name && (
+                    <p>✓ HR: {currentPeriod.hr_approved_by_name} - {new Date(currentPeriod.hr_approved_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</p>
+                  )}
+                  {currentPeriod.finance_approved_by_name && (
+                    <p>✓ {language === "ar" ? "المالية" : "Finance"}: {currentPeriod.finance_approved_by_name} - {new Date(currentPeriod.finance_approved_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</p>
+                  )}
+                  {currentPeriod.gm_approved_by_name && (
+                    <p>✓ {language === "ar" ? "المدير العام" : "GM"}: {currentPeriod.gm_approved_by_name} - {new Date(currentPeriod.gm_approved_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         )}
       </Card>
