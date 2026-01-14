@@ -5837,8 +5837,11 @@ async def export_attendance_excel(
     
     attendance = await db.hr_attendance.find(query, {"_id": 0}).sort([("employee_name", 1), ("date", 1)]).to_list(10000)
     
-    # Get all employees for name/code lookup
-    employees_list = await db.hr_employees.find({}, {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "fingerprint_id": 1}).to_list(1000)
+    # Get all employees for name/code lookup and weekly off days
+    employees_list = await db.hr_employees.find(
+        {"exclude_from_payroll": {"$ne": True}}, 
+        {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "fingerprint_id": 1, "weekly_off_days": 1}
+    ).to_list(1000)
     emp_lookup = {}
     for emp in employees_list:
         emp_lookup[emp.get('id')] = emp
@@ -5846,13 +5849,28 @@ async def export_attendance_excel(
         emp_lookup[emp.get('employee_code')] = emp
         emp_lookup[emp.get('name')] = emp
     
-    if not attendance:
+    # Get official holidays
+    official_holidays = await db.hr_official_holidays.find({
+        "date": {"$gte": date_from, "$lte": date_to}
+    }, {"_id": 0, "date": 1}).to_list(100)
+    holiday_dates = set(h.get("date") for h in official_holidays)
+    
+    # Generate all working days in the period
+    from datetime import datetime as dt, timedelta
+    all_dates = []
+    current = dt.strptime(date_from, "%Y-%m-%d")
+    end_dt = dt.strptime(date_to, "%Y-%m-%d")
+    while current <= end_dt:
+        all_dates.append(current.strftime("%Y-%m-%d"))
+        current += timedelta(days=1)
+    
+    if not attendance and not employees_list:
         # Return empty template
-        df = pd.DataFrame(columns=['Employee Name', 'Employee Code', 'Fingerprint ID', 'Date', 'Check In', 'Check Out', 'Source'])
+        df = pd.DataFrame(columns=['Employee Name', 'Employee Code', 'Fingerprint ID', 'Date', 'Check In', 'Check Out', 'Status', 'Source'])
     else:
         # Group attendance by employee and add summary - REMOVE DUPLICATE DATES
         from collections import defaultdict
-        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": ""})
+        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [4, 5]})
         
         for record in attendance:
             emp_id = record.get('employee_id', '')
@@ -5865,6 +5883,7 @@ async def export_attendance_excel(
                 employee_data[key]["name"] = emp_info.get('name', emp_name)
                 employee_data[key]["code"] = emp_info.get('employee_code', '')
                 employee_data[key]["fingerprint"] = emp_info.get('fingerprint_id', '')
+                employee_data[key]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
             else:
                 key = emp_id or emp_name
                 employee_data[key]["name"] = emp_name
