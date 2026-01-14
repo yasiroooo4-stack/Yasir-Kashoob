@@ -5897,26 +5897,47 @@ async def export_attendance_excel(
         rows = []
         for emp_key in sorted(employee_data.keys(), key=lambda x: employee_data[x]["name"]):
             emp_info = employee_data[emp_key]
-            records = list(emp_info["records"].values())  # Convert dict to list
-            days_count = len(records)  # Each date appears only once now
+            records = emp_info["records"]  # Dict of date -> record
+            present_dates = set(records.keys())
+            days_count = len(records)
+            weekly_off_days = emp_info.get("weekly_off_days", [4, 5])
             
             emp_name = emp_info["name"] or "Unknown"
             emp_code = emp_info["code"] or "-"
             emp_fp = emp_info["fingerprint"] or "-"
             
-            # Add employee header row
+            # Calculate absent dates (working days without attendance)
+            absent_dates = []
+            for date_str in all_dates:
+                date_obj = dt.strptime(date_str, "%Y-%m-%d")
+                day_of_week = date_obj.weekday()
+                
+                # Skip weekends and holidays
+                if day_of_week in weekly_off_days:
+                    continue
+                if date_str in holiday_dates:
+                    continue
+                
+                # If no attendance record for this working day, it's absent
+                if date_str not in present_dates:
+                    absent_dates.append(date_str)
+            
+            absent_count = len(absent_dates)
+            
+            # Add employee header row with summary
             rows.append({
                 'Employee Name': f"📋 {emp_name}",
                 'Employee Code': emp_code,
                 'Fingerprint ID': emp_fp,
-                'Date': f"Attendance Days: {days_count}",
+                'Date': f"حضور: {days_count} | غياب: {absent_count}",
                 'Check In': '',
                 'Check Out': '',
+                'Status': '',
                 'Source': ''
             })
             
-            # Add attendance records
-            for record in sorted(records, key=lambda x: x.get('date', '')):
+            # Add attendance records (present days)
+            for record in sorted(records.values(), key=lambda x: x.get('date', '')):
                 rows.append({
                     'Employee Name': emp_name,
                     'Employee Code': emp_code,
@@ -5924,7 +5945,21 @@ async def export_attendance_excel(
                     'Date': record.get('date', ''),
                     'Check In': record.get('check_in', '-'),
                     'Check Out': record.get('check_out', '-'),
+                    'Status': '✅ حاضر',
                     'Source': record.get('source', 'manual')
+                })
+            
+            # Add absent dates
+            for absent_date in sorted(absent_dates):
+                rows.append({
+                    'Employee Name': emp_name,
+                    'Employee Code': emp_code,
+                    'Fingerprint ID': emp_fp,
+                    'Date': absent_date,
+                    'Check In': '-',
+                    'Check Out': '-',
+                    'Status': '❌ غائب',
+                    'Source': '-'
                 })
             
             # Add empty row after each employee
@@ -5935,6 +5970,7 @@ async def export_attendance_excel(
                 'Date': '',
                 'Check In': '',
                 'Check Out': '',
+                'Status': '',
                 'Source': ''
             })
         
