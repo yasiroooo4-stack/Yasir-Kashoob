@@ -89,6 +89,7 @@ async def get_available_permissions(current_user: dict = Depends(get_current_use
         "المشاريع": [p for p in AVAILABLE_PERMISSIONS if p.startswith("projects_")],
         "العمليات": [p for p in AVAILABLE_PERMISSIONS if p.startswith("operations_")],
         "المشتريات": [p for p in AVAILABLE_PERMISSIONS if p.startswith("purchases_")],
+        "إدارة المخازن": [p for p in AVAILABLE_PERMISSIONS if p.startswith("warehouse_")],
         "النظام": [p for p in AVAILABLE_PERMISSIONS if p.startswith("settings_") or p.startswith("users_") or p.startswith("permissions_")],
     }
     return {"permissions": AVAILABLE_PERMISSIONS, "categories": categories}
