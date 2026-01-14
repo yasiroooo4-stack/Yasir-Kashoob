@@ -860,9 +860,22 @@ class PayrollPeriod(BaseModel):
     start_date: str
     end_date: str
     total_days: int = 31
-    status: str = "draft"
+    status: str = "draft"  # draft, pending_hr, pending_finance, pending_gm, approved, disbursed
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     calculated_at: Optional[str] = None
+    # HR Approval (المرحلة الأولى)
+    hr_approved_at: Optional[str] = None
+    hr_approved_by: Optional[str] = None
+    hr_approved_by_name: Optional[str] = None
+    # Finance Approval (المرحلة الثانية)
+    finance_approved_at: Optional[str] = None
+    finance_approved_by: Optional[str] = None
+    finance_approved_by_name: Optional[str] = None
+    # General Manager Final Approval (المرحلة الثالثة)
+    gm_approved_at: Optional[str] = None
+    gm_approved_by: Optional[str] = None
+    gm_approved_by_name: Optional[str] = None
+    # Legacy fields for backward compatibility
     approved_at: Optional[str] = None
     approved_by: Optional[str] = None
 
