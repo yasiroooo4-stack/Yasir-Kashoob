@@ -3386,9 +3386,90 @@ const HR = () => {
                     <SelectItem value="ثمريت">ثمريت</SelectItem>
                     <SelectItem value="مرباط">مرباط</SelectItem>
                     <SelectItem value="طاقة">طاقة</SelectItem>
+                    <SelectItem value="الإدارة">الإدارة</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            
+            {/* البصمات الإضافية - Additional Fingerprints */}
+            <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex justify-between items-center">
+                <Label className="text-lg font-semibold text-blue-700">
+                  {language === "ar" ? "البصمات الإضافية (المراكز المتعددة)" : "Additional Fingerprints (Multiple Centers)"}
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newFingerprints = [...(employeeForm.additional_fingerprints || [])];
+                    newFingerprints.push({ fingerprint_id: "", center: "" });
+                    setEmployeeForm({ ...employeeForm, additional_fingerprints: newFingerprints });
+                  }}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  + {language === "ar" ? "إضافة بصمة" : "Add Fingerprint"}
+                </Button>
+              </div>
+              
+              {(employeeForm.additional_fingerprints || []).map((fp, index) => (
+                <div key={index} className="grid grid-cols-3 gap-2 items-end bg-white p-2 rounded border">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === "ar" ? `رقم البصمة ${index + 3}` : `Fingerprint ID ${index + 3}`}</Label>
+                    <Input
+                      value={fp.fingerprint_id || ""}
+                      onChange={(e) => {
+                        const newFingerprints = [...employeeForm.additional_fingerprints];
+                        newFingerprints[index] = { ...newFingerprints[index], fingerprint_id: e.target.value };
+                        setEmployeeForm({ ...employeeForm, additional_fingerprints: newFingerprints });
+                      }}
+                      placeholder={language === "ar" ? "رقم البصمة" : "Fingerprint ID"}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === "ar" ? "المركز" : "Center"}</Label>
+                    <Select
+                      value={fp.center || ""}
+                      onValueChange={(v) => {
+                        const newFingerprints = [...employeeForm.additional_fingerprints];
+                        newFingerprints[index] = { ...newFingerprints[index], center: v };
+                        setEmployeeForm({ ...employeeForm, additional_fingerprints: newFingerprints });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === "ar" ? "المركز" : "Center"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="حجيف">حجيف</SelectItem>
+                        <SelectItem value="غدو">غدو</SelectItem>
+                        <SelectItem value="زيك">زيك</SelectItem>
+                        <SelectItem value="ثمريت">ثمريت</SelectItem>
+                        <SelectItem value="مرباط">مرباط</SelectItem>
+                        <SelectItem value="طاقة">طاقة</SelectItem>
+                        <SelectItem value="الإدارة">الإدارة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      const newFingerprints = employeeForm.additional_fingerprints.filter((_, i) => i !== index);
+                      setEmployeeForm({ ...employeeForm, additional_fingerprints: newFingerprints });
+                    }}
+                  >
+                    {language === "ar" ? "حذف" : "Delete"}
+                  </Button>
+                </div>
+              ))}
+              
+              {(!employeeForm.additional_fingerprints || employeeForm.additional_fingerprints.length === 0) && (
+                <p className="text-sm text-blue-600 text-center py-2">
+                  {language === "ar" ? "لا توجد بصمات إضافية. اضغط على 'إضافة بصمة' لإضافة بصمات لمراكز أخرى." : "No additional fingerprints. Click 'Add Fingerprint' to add fingerprints for other centers."}
+                </p>
+              )}
             </div>
             
             {/* Work Location - موقع العمل */}
