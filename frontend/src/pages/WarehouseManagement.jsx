@@ -337,7 +337,11 @@ const WarehouseManagement = () => {
     fetchProducts();
     fetchCategories();
     fetchSolutions();
-  }, [fetchSummary, fetchWarehouses, fetchProducts, fetchCategories, fetchSolutions]);
+    fetchCenters();
+    fetchAlerts();
+    fetchAlertsSummary();
+    fetchWarehousesByCenter();
+  }, [fetchSummary, fetchWarehouses, fetchProducts, fetchCategories, fetchSolutions, fetchCenters, fetchAlerts, fetchAlertsSummary, fetchWarehousesByCenter]);
 
   useEffect(() => {
     fetchStock();
@@ -351,6 +355,38 @@ const WarehouseManagement = () => {
     fetchConsumption();
   }, [fetchConsumption]);
 
+  // Initialize all warehouses for all centers
+  const handleInitializeWarehouses = async () => {
+    try {
+      setInitializingWarehouses(true);
+      const response = await axios.post(`${API}/warehouse/warehouses/initialize-all`);
+      toast.success(
+        t(
+          `تم إنشاء ${response.data.created} مخزن بنجاح`,
+          `Created ${response.data.created} warehouses successfully`
+        )
+      );
+      fetchWarehouses();
+      fetchWarehousesByCenter();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("فشل في إنشاء المخازن", "Failed to initialize warehouses"));
+    } finally {
+      setInitializingWarehouses(false);
+    }
+  };
+
+  // Resolve alert
+  const handleResolveAlert = async (alertId) => {
+    try {
+      await axios.post(`${API}/warehouse/alerts/${alertId}/resolve`);
+      toast.success(t("تم حل التنبيه", "Alert resolved"));
+      fetchAlerts();
+      fetchAlertsSummary();
+    } catch (error) {
+      toast.error(t("فشل في حل التنبيه", "Failed to resolve alert"));
+    }
+  };
+
   // Handlers
   const handleCreateWarehouse = async () => {
     try {
@@ -358,8 +394,14 @@ const WarehouseManagement = () => {
       await axios.post(`${API}/warehouse/warehouses`, warehouseForm);
       toast.success(t("تم إنشاء المخزن بنجاح", "Warehouse created successfully"));
       setWarehouseDialog(false);
-      setWarehouseForm({ name: "", code: "", location: "", warehouse_type: "main", capacity: "", temperature_controlled: false });
+      setWarehouseForm({ 
+        name: "", code: "", location: "", warehouse_type: "internal", 
+        warehouse_category: "", center_name: "", capacity: "", 
+        temperature_controlled: false, supervisor_email: "", supervisor_phone: "",
+        warehouse_manager_email: "", warehouse_manager_phone: ""
+      });
       fetchWarehouses();
+      fetchWarehousesByCenter();
     } catch (error) {
       toast.error(error.response?.data?.detail || t("فشل في إنشاء المخزن", "Failed to create warehouse"));
     } finally {
