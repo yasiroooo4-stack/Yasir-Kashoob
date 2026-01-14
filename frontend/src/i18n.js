@@ -22,6 +22,7 @@ const resources = {
       "settings": "الإعدادات",
       "system_settings": "إعدادات النظام",
       "permissions_management": "إدارة الصلاحيات",
+      "warehouse_management": "إدارة المخازن",
       "logout": "تسجيل الخروج",
       "login": "تسجيل الدخول",
       "register": "إنشاء حساب",
