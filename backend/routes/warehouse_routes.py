@@ -1,5 +1,6 @@
 """
 Warehouse Management Routes - مسارات إدارة المخازن الشاملة
+مع التكامل المالي والمبيعات
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
@@ -20,6 +21,7 @@ from models.all_models import (
 from routes.base import get_current_user, require_role, log_activity
 import uuid
 import io
+import logging
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
