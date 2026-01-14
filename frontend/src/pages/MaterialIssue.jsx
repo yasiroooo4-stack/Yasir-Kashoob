@@ -333,7 +333,7 @@ const MaterialIssue = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${API}/api/warehouse/issue-requests/${requestId}/reject`,
+        `${API}/warehouse/issue-requests/${requestId}/reject`,
         { reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
