@@ -1772,6 +1772,31 @@ AVAILABLE_PERMISSIONS = [
     "settings_edit",            # تعديل الإعدادات
     "users_manage",             # إدارة المستخدمين
     "permissions_grant",        # منح الصلاحيات للآخرين
+    
+    # القانون
+    "legal_contracts_view",     # عرض العقود
+    "legal_contracts_create",   # إنشاء عقد
+    "legal_contracts_edit",     # تعديل عقد
+    "legal_cases_view",         # عرض القضايا
+    "legal_cases_create",       # إنشاء قضية
+    "legal_cases_edit",         # تعديل قضية
+    
+    # المشاريع
+    "projects_view",            # عرض المشاريع
+    "projects_create",          # إنشاء مشروع
+    "projects_edit",            # تعديل مشروع
+    "projects_delete",          # حذف مشروع
+    
+    # العمليات
+    "operations_view",          # عرض العمليات
+    "operations_edit",          # تعديل العمليات
+    "operations_reports",       # تقارير العمليات
+    
+    # المشتريات
+    "purchases_view",           # عرض المشتريات
+    "purchases_create",         # إنشاء عملية شراء
+    "purchases_edit",           # تعديل عملية شراء
+    "purchases_approve",        # الموافقة على المشتريات
 ]
 
 class DepartmentPermissions(BaseModel):
