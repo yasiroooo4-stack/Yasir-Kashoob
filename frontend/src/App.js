@@ -68,6 +68,7 @@ import NotificationSettings from "./pages/NotificationSettings";
 import CCTVSystem from "./pages/CCTVSystem";
 import Procurement from "./pages/Procurement";
 import PermissionsManagement from "./pages/PermissionsManagement";
+import WarehouseManagement from "./pages/WarehouseManagement";
 
 // Layout
 import Layout from "./components/Layout";
