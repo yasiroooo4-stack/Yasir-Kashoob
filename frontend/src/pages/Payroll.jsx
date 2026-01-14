@@ -1150,6 +1150,77 @@ const Payroll = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog تعديل معامل خصم الغياب */}
+      <Dialog open={showAbsenceFactorDialog} onOpenChange={setShowAbsenceFactorDialog}>
+        <DialogContent className="max-w-md" dir={language === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "تعديل معامل خصم الغياب" : "Edit Absence Deduction Factor"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg text-sm">
+              <p className="font-medium mb-2">
+                {language === "ar" ? "شرح المعامل:" : "Factor Explanation:"}
+              </p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• <strong>0</strong> = {language === "ar" ? "بدون خصم للغياب" : "No deduction for absence"}</li>
+                <li>• <strong>0.5</strong> = {language === "ar" ? "خصم نصف يوم لكل يوم غياب" : "Half day deduction per absence"}</li>
+                <li>• <strong>1.0</strong> = {language === "ar" ? "خصم يوم كامل (الافتراضي)" : "Full day deduction (default)"}</li>
+                <li>• <strong>1.5</strong> = {language === "ar" ? "خصم يوم ونصف" : "1.5 day deduction"}</li>
+                <li>• <strong>2.0</strong> = {language === "ar" ? "خصم ضعف اليوم" : "Double day deduction"}</li>
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>
+                {language === "ar" ? "معامل الخصم" : "Deduction Factor"}
+              </Label>
+              <Select 
+                value={newAbsenceFactor.toString()} 
+                onValueChange={(v) => setNewAbsenceFactor(parseFloat(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{language === "ar" ? "0 - بدون خصم" : "0 - No deduction"}</SelectItem>
+                  <SelectItem value="0.5">{language === "ar" ? "0.5 - نصف يوم" : "0.5 - Half day"}</SelectItem>
+                  <SelectItem value="1">{language === "ar" ? "1.0 - يوم كامل (افتراضي)" : "1.0 - Full day (default)"}</SelectItem>
+                  <SelectItem value="1.5">{language === "ar" ? "1.5 - يوم ونصف" : "1.5 - One and half day"}</SelectItem>
+                  <SelectItem value="2">{language === "ar" ? "2.0 - ضعف اليوم" : "2.0 - Double day"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              <strong>{language === "ar" ? "ملاحظة:" : "Note:"}</strong>{" "}
+              {language === "ar" 
+                ? "يجب إعادة حساب الرواتب بعد تغيير هذا المعامل ليتم تطبيقه."
+                : "Recalculate payroll after changing this factor to apply it."}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAbsenceFactorDialog(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button 
+              onClick={handleUpdateAbsenceFactor} 
+              disabled={absenceFactorLoading}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {absenceFactorLoading ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                language === "ar" ? "حفظ" : "Save"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
