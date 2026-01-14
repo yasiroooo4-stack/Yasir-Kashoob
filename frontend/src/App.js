@@ -68,6 +68,7 @@ import CCTVSystem from "./pages/CCTVSystem";
 import Procurement from "./pages/Procurement";
 import PermissionsManagement from "./pages/PermissionsManagement";
 import WarehouseManagement from "./pages/WarehouseManagement";
+import MaterialIssue from "./pages/MaterialIssue";
 
 // Layout
 import Layout from "./components/Layout";
