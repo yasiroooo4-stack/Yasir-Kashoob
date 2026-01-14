@@ -9994,31 +9994,114 @@ async def update_payroll_record(
 
 @api_router.post("/hr/payroll/periods/{period_id}/approve")
 async def approve_payroll(period_id: str, current_user: dict = Depends(get_current_user)):
-    """Approve a payroll period"""
+    """Approve a payroll period - Sequential approval (HR -> Finance -> GM)"""
     period = await db.payroll_periods.find_one({"id": period_id}, {"_id": 0})
     if not period:
         raise HTTPException(status_code=404, detail="Payroll period not found")
     
+    current_status = period.get("status", "draft")
+    user_role = current_user.get("role", "")
+    user_department = current_user.get("department", "")
+    user_position = current_user.get("position", "")
+    user_id = current_user.get("id", "")
+    user_name = current_user.get("full_name", "")
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Check permissions and determine next status
+    new_status = None
+    update_fields = {}
+    approval_message = ""
+    
+    # مرحلة 1: موافقة الموارد البشرية
+    if current_status in ["draft", "calculated", "pending_hr"]:
+        # Check if user is HR
+        is_hr = (user_department in ["الموارد البشرية", "hr", "HR"] or 
+                 user_role in ["hr_manager", "admin"] or
+                 "الموارد البشرية" in user_position or "HR" in user_position.upper())
+        
+        if is_hr or user_role == "admin":
+            new_status = "pending_finance"
+            update_fields = {
+                "status": new_status,
+                "hr_approved_at": now,
+                "hr_approved_by": user_id,
+                "hr_approved_by_name": user_name
+            }
+            approval_message = "تمت موافقة الموارد البشرية - بانتظار موافقة المالية"
+        else:
+            raise HTTPException(status_code=403, detail="يجب موافقة الموارد البشرية أولاً")
+    
+    # مرحلة 2: موافقة المالية
+    elif current_status == "pending_finance":
+        is_finance = (user_department in ["المالية", "finance", "Finance"] or
+                      user_role in ["finance_manager", "admin"] or
+                      "المالية" in user_position or "Finance" in user_position)
+        
+        if is_finance or user_role == "admin":
+            new_status = "pending_gm"
+            update_fields = {
+                "status": new_status,
+                "finance_approved_at": now,
+                "finance_approved_by": user_id,
+                "finance_approved_by_name": user_name
+            }
+            approval_message = "تمت موافقة المالية - بانتظار موافقة المدير العام"
+        else:
+            raise HTTPException(status_code=403, detail="هذه المرحلة تتطلب موافقة المالية")
+    
+    # مرحلة 3: موافقة المدير العام (الموافقة النهائية)
+    elif current_status == "pending_gm":
+        is_gm = ("المدير العام" in user_position or 
+                 "نائب المدير العام" in user_position or
+                 "General Manager" in user_position or
+                 user_role == "admin")
+        
+        if is_gm or user_role == "admin":
+            new_status = "approved"
+            update_fields = {
+                "status": new_status,
+                "gm_approved_at": now,
+                "gm_approved_by": user_id,
+                "gm_approved_by_name": user_name,
+                # Legacy fields for backward compatibility
+                "approved_at": now,
+                "approved_by": user_name
+            }
+            approval_message = "تمت الموافقة النهائية من المدير العام - كشف الرواتب جاهز للصرف"
+        else:
+            raise HTTPException(status_code=403, detail="هذه المرحلة تتطلب موافقة المدير العام")
+    
+    elif current_status == "approved":
+        raise HTTPException(status_code=400, detail="كشف الرواتب معتمد مسبقاً")
+    
+    elif current_status == "disbursed":
+        raise HTTPException(status_code=400, detail="تم صرف كشف الرواتب مسبقاً")
+    
+    else:
+        raise HTTPException(status_code=400, detail=f"حالة غير صالحة: {current_status}")
+    
+    # تحديث كشف الرواتب
     await db.payroll_periods.update_one(
         {"id": period_id},
-        {"$set": {
-            "status": "approved",
-            "approved_at": datetime.now(timezone.utc).isoformat(),
-            "approved_by": current_user["full_name"]
-        }}
+        {"$set": update_fields}
     )
     
     await log_activity(
-        user_id=current_user["id"],
-        user_name=current_user["full_name"],
+        user_id=user_id,
+        user_name=user_name,
         action="approve_payroll",
         entity_type="payroll",
         entity_id=period_id,
         entity_name=period["name"],
-        details=f"اعتماد كشف رواتب: {period['name']}"
+        details=f"{approval_message} - {period['name']}"
     )
     
-    return {"message": "تم اعتماد كشف الرواتب بنجاح"}
+    return {
+        "message": approval_message,
+        "new_status": new_status,
+        "approved_by": user_name,
+        "approved_at": now
+    }
 
 @api_router.post("/hr/payroll/periods/{period_id}/disburse")
 async def disburse_payroll(
