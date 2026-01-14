@@ -5872,6 +5872,15 @@ async def export_attendance_excel(
         from collections import defaultdict
         employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [4, 5]})
         
+        # If filtering by employee_id, add that employee even if no attendance records
+        if employee_id:
+            emp_info = emp_lookup.get(employee_id)
+            if emp_info:
+                employee_data[employee_id]["name"] = emp_info.get('name', '')
+                employee_data[employee_id]["code"] = emp_info.get('employee_code', '')
+                employee_data[employee_id]["fingerprint"] = emp_info.get('fingerprint_id', '')
+                employee_data[employee_id]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
+        
         for record in attendance:
             emp_id = record.get('employee_id', '')
             emp_name = record.get('employee_name', 'Unknown')
