@@ -249,18 +249,64 @@ class WarehouseBase(BaseModel):
     name: str                           # اسم المخزن
     code: str                           # رمز المخزن
     location: str                       # الموقع
-    warehouse_type: str = "main"        # نوع المخزن: main, branch, cold
+    warehouse_type: str = "main"        # نوع المخزن: main, branch, cold, internal, external
+    warehouse_category: Optional[str] = None  # تصنيف المخزن: lab, maintenance, cleaning, ppe, feed, equipment
+    center_id: Optional[str] = None     # معرف المركز
+    center_name: Optional[str] = None   # اسم المركز (زيك، حجيف، غدو، طاقة، ثمريت، مرباط)
+    parent_warehouse_id: Optional[str] = None  # المخزن الأب (للمخازن الفرعية)
+    parent_warehouse_name: Optional[str] = None
     capacity: Optional[float] = None    # السعة
     temperature_controlled: bool = False # تحكم بالحرارة
+    required_temperature: Optional[str] = None  # درجة الحرارة المطلوبة
     manager_id: Optional[str] = None    # مدير المخزن
     manager_name: Optional[str] = None
+    supervisor_id: Optional[str] = None # مشرف المركز (للتنبيهات)
+    supervisor_name: Optional[str] = None
+    supervisor_email: Optional[str] = None
+    supervisor_phone: Optional[str] = None
+    warehouse_manager_id: Optional[str] = None  # مسؤول إدارة المخازن (للتنبيهات)
+    warehouse_manager_name: Optional[str] = None
+    warehouse_manager_email: Optional[str] = None
+    warehouse_manager_phone: Optional[str] = None
     status: str = "active"              # حالة المخزن
     notes: Optional[str] = None
+    # إعدادات التنبيهات
+    alert_on_low_stock: bool = True     # تنبيه عند نقص المخزون
+    alert_on_expiry: bool = True        # تنبيه عند قرب انتهاء الصلاحية
+    expiry_alert_days: int = 30         # أيام قبل انتهاء الصلاحية للتنبيه
 
 class Warehouse(WarehouseBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: Optional[str] = None
+
+
+# نموذج تنبيهات المخزون
+class StockAlertBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    alert_type: str                     # نوع التنبيه: low_stock, expiry_warning, expired
+    product_id: str
+    product_name: str
+    product_code: str
+    warehouse_id: str
+    warehouse_name: str
+    center_name: Optional[str] = None
+    current_quantity: float = 0
+    min_quantity: float = 0
+    expiry_date: Optional[str] = None
+    days_to_expiry: Optional[int] = None
+    message: str
+    priority: str = "medium"            # low, medium, high, critical
+    is_read: bool = False
+    is_resolved: bool = False
+
+class StockAlert(StockAlertBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    resolved_at: Optional[str] = None
+    resolved_by: Optional[str] = None
+    notified_via_email: bool = False
+    notified_via_sms: bool = False
 
 
 # فئات المنتجات
