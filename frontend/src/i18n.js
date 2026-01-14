@@ -278,6 +278,7 @@ const resources = {
       "reports": "Reports",
       "settings": "Settings",
       "system_settings": "System Settings",
+      "permissions_management": "Permissions Management",
       "logout": "Logout",
       "login": "Login",
       "register": "Register",
