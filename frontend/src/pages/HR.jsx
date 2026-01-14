@@ -1060,7 +1060,8 @@ const HR = () => {
       const response = await axios.get(`${API}/hr/attendance/export/excel`, {
         params: { 
           start_date: exportDateFrom,
-          end_date: exportDateTo
+          end_date: exportDateTo,
+          employee_id: selectedAttendanceEmployee && selectedAttendanceEmployee !== "all" ? selectedAttendanceEmployee : undefined
         },
         responseType: 'blob'
       });
@@ -1068,7 +1069,10 @@ const HR = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `attendance_${exportDateFrom}_to_${exportDateTo}.xlsx`);
+      const empName = selectedAttendanceEmployee && selectedAttendanceEmployee !== "all" 
+        ? employees.find(e => e.id === selectedAttendanceEmployee)?.name || "employee"
+        : "all";
+      link.setAttribute('download', `attendance_${empName}_${exportDateFrom}_to_${exportDateTo}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1085,7 +1089,8 @@ const HR = () => {
       const response = await axios.get(`${API}/hr/attendance/export/pdf`, {
         params: { 
           start_date: exportDateFrom,
-          end_date: exportDateTo
+          end_date: exportDateTo,
+          employee_id: selectedAttendanceEmployee && selectedAttendanceEmployee !== "all" ? selectedAttendanceEmployee : undefined
         },
         responseType: 'blob'
       });
@@ -1093,7 +1098,10 @@ const HR = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `attendance_${exportDateFrom}_to_${exportDateTo}.pdf`);
+      const empName = selectedAttendanceEmployee && selectedAttendanceEmployee !== "all" 
+        ? employees.find(e => e.id === selectedAttendanceEmployee)?.name || "employee"
+        : "all";
+      link.setAttribute('download', `attendance_${empName}_${exportDateFrom}_to_${exportDateTo}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
