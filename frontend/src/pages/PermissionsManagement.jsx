@@ -265,6 +265,24 @@ const PermissionsManagement = () => {
       purchases_create: t("إنشاء عملية شراء", "Create Purchase"),
       purchases_edit: t("تعديل عملية شراء", "Edit Purchase"),
       purchases_approve: t("الموافقة على المشتريات", "Approve Purchases"),
+      // إدارة المخازن
+      warehouse_view: t("عرض المخازن", "View Warehouses"),
+      warehouse_create: t("إنشاء مخزن", "Create Warehouse"),
+      warehouse_edit: t("تعديل مخزن", "Edit Warehouse"),
+      warehouse_delete: t("حذف مخزن", "Delete Warehouse"),
+      warehouse_products_view: t("عرض المنتجات", "View Products"),
+      warehouse_products_create: t("إضافة منتج", "Add Product"),
+      warehouse_products_edit: t("تعديل منتج", "Edit Product"),
+      warehouse_stock_receive: t("استلام بضاعة", "Receive Stock"),
+      warehouse_stock_issue: t("صرف بضاعة", "Issue Stock"),
+      warehouse_stock_transfer: t("تحويل بضاعة", "Transfer Stock"),
+      warehouse_stock_adjust: t("تعديل/جرد المخزون", "Adjust Stock"),
+      warehouse_solutions_view: t("عرض المحاليل", "View Solutions"),
+      warehouse_solutions_create: t("إضافة محلول", "Add Solution"),
+      warehouse_solutions_edit: t("تعديل محلول", "Edit Solution"),
+      warehouse_consumption_record: t("تسجيل استهلاك", "Record Consumption"),
+      warehouse_reports: t("تقارير المخازن", "Warehouse Reports"),
+      warehouse_export: t("تصدير بيانات المخازن", "Export Warehouse Data"),
     };
     return labels[permission] || permission;
   };
