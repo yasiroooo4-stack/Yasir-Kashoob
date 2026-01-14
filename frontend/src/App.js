@@ -42,7 +42,6 @@ import Suppliers from "./pages/Suppliers";
 import MilkReception from "./pages/MilkReception";
 import Customers from "./pages/Customers";
 import Sales from "./pages/Sales";
-import Inventory from "./pages/Inventory";
 import Finance from "./pages/Finance";
 import FinanceSystem from "./pages/FinanceSystem";
 import Employees from "./pages/Employees";
