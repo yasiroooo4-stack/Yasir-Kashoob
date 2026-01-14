@@ -178,13 +178,13 @@ const Payroll = () => {
     
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
+      const response = await axios.post(
         `${API}/api/hr/payroll/periods/${selectedPeriod}/approve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      toast.success(language === "ar" ? "تم اعتماد كشف الرواتب" : "Payroll approved");
+      toast.success(response.data?.message || (language === "ar" ? "تمت الموافقة" : "Approved"));
       fetchPeriods();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error approving payroll");
