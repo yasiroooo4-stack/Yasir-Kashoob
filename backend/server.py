@@ -3957,18 +3957,26 @@ async def sync_single_attendance(
             fp_id = str(record["fingerprint_id"])
             device_location = record.get("device_ip", "") or record.get("location", "")
             
-            # أولاً: البحث عن البصمة الأساسية
-            employee = await db.hr_employees.find_one({"fingerprint_id": fp_id}, {"_id": 0})
+            # أولاً: البحث في البصمة الثانوية مع التحقق من المركز (الأولوية للمركز المحدد)
+            if device_location:
+                secondary_match = await db.hr_employees.find_one({"fingerprint_id_2": fp_id}, {"_id": 0})
+                if secondary_match:
+                    emp_center = secondary_match.get("fingerprint_center_2", "")
+                    if emp_center:
+                        # تحقق من تطابق المركز
+                        if emp_center.lower() in device_location.lower() or device_location.lower() in emp_center.lower():
+                            employee = secondary_match
             
-            # إذا لم نجد في البصمة الأساسية، نبحث في البصمة الثانوية مع التحقق من المركز
+            # ثانياً: إذا لم يتم العثور على تطابق بالمركز، نبحث في البصمة الأساسية
+            if not employee:
+                employee = await db.hr_employees.find_one({"fingerprint_id": fp_id}, {"_id": 0})
+            
+            # ثالثاً: إذا لم نجد في البصمة الأساسية، نبحث في البصمة الثانوية بدون شرط المركز
             if not employee:
                 secondary_match = await db.hr_employees.find_one({"fingerprint_id_2": fp_id}, {"_id": 0})
                 if secondary_match:
                     emp_center = secondary_match.get("fingerprint_center_2", "")
-                    if emp_center and device_location:
-                        if emp_center.lower() in device_location.lower() or device_location.lower() in emp_center.lower():
-                            employee = secondary_match
-                    else:
+                    if not emp_center:  # لا يوجد مركز محدد، نستخدم الموظف
                         employee = secondary_match
         
         if not employee and record.get("employee_id"):
