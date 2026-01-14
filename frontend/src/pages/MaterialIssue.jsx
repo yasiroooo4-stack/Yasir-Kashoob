@@ -177,11 +177,11 @@ const MaterialIssue = () => {
   const fetchPendingRequests = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/warehouse/issue-requests`, {
+      const response = await axios.get(`${API}/warehouse/issue-requests`, {
         params: { status: "pending" },
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPendingRequests(response.data);
+      setPendingRequests(response.data || []);
     } catch (error) {
       console.error("Error fetching pending requests:", error);
     }
