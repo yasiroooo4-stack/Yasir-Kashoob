@@ -4588,6 +4588,83 @@ async def set_default_weekly_off_days(
     
     return {"message": "تم تحديث أيام الراحة الأسبوعية الافتراضية", "weekly_off_days": weekly_off_days}
 
+
+# ==================== إعدادات معامل خصم الغياب ====================
+
+@api_router.get("/hr/settings/absence-deduction-factor")
+async def get_absence_deduction_factor(current_user: dict = Depends(get_current_user)):
+    """
+    الحصول على معامل خصم الغياب
+    معامل 1.0 = خصم يوم كامل لكل يوم غياب
+    معامل 0.5 = خصم نصف يوم لكل يوم غياب
+    معامل 0 = لا يوجد خصم
+    """
+    settings = await db.system_settings.find_one({"key": "absence_deduction_factor"}, {"_id": 0})
+    if settings:
+        return {
+            "absence_deduction_factor": settings.get("value", 1.0),
+            "description": settings.get("description", "معامل خصم الغياب"),
+            "updated_at": settings.get("updated_at"),
+            "updated_by": settings.get("updated_by_name")
+        }
+    return {
+        "absence_deduction_factor": 1.0,
+        "description": "معامل خصم الغياب الافتراضي (1.0 = خصم يوم كامل)",
+        "updated_at": None,
+        "updated_by": None
+    }
+
+
+@api_router.put("/hr/settings/absence-deduction-factor")
+async def set_absence_deduction_factor(
+    data: dict,
+    current_user: dict = Depends(require_role(["admin", "hr_manager", "general_manager"]))
+):
+    """
+    تعيين معامل خصم الغياب
+    factor: رقم من 0 إلى 2
+    - 0 = لا يوجد خصم للغياب
+    - 0.5 = خصم نصف يوم لكل يوم غياب
+    - 1.0 = خصم يوم كامل لكل يوم غياب (الافتراضي)
+    - 1.5 = خصم يوم ونصف لكل يوم غياب
+    - 2.0 = خصم ضعف اليوم لكل يوم غياب
+    """
+    factor = data.get("factor", 1.0)
+    description = data.get("description", "معامل خصم الغياب")
+    
+    # التحقق من صحة القيمة
+    if not isinstance(factor, (int, float)) or factor < 0 or factor > 2:
+        raise HTTPException(status_code=400, detail="معامل الخصم يجب أن يكون رقم بين 0 و 2")
+    
+    await db.system_settings.update_one(
+        {"key": "absence_deduction_factor"},
+        {"$set": {
+            "key": "absence_deduction_factor",
+            "value": float(factor),
+            "description": description,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": current_user["id"],
+            "updated_by_name": current_user.get("full_name", "")
+        }},
+        upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="update_absence_deduction_factor",
+        entity_type="settings",
+        entity_id="absence_deduction_factor",
+        entity_name="معامل خصم الغياب",
+        details=f"تم تحديث معامل خصم الغياب إلى {factor}"
+    )
+    
+    return {
+        "message": "تم تحديث معامل خصم الغياب بنجاح",
+        "absence_deduction_factor": factor,
+        "description": description
+    }
+
 @api_router.put("/hr/employees/{employee_id}/weekly-off")
 async def set_employee_weekly_off(
     employee_id: str,
