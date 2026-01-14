@@ -191,11 +191,11 @@ const MaterialIssue = () => {
   const fetchConsumptionLog = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/warehouse/consumption-log`, {
+      const response = await axios.get(`${API}/warehouse/consumption-log`, {
         params: { warehouse_id: selectedWarehouse || undefined },
         headers: { Authorization: `Bearer ${token}` },
       });
-      setConsumptionLog(response.data);
+      setConsumptionLog(response.data || []);
     } catch (error) {
       console.error("Error fetching consumption log:", error);
     }
