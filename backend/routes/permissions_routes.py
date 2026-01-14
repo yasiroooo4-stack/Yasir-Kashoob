@@ -141,8 +141,11 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
     
     granted_list = [g["permission"] for g in granted_permissions]
     
-    # دمج الصلاحيات
-    all_permissions = list(set(role_permissions + granted_list))
+    # الصلاحيات المحظورة
+    denied_permissions = employee.get("denied_permissions", [])
+    
+    # دمج الصلاحيات مع استثناء المحظورة
+    all_permissions = list(set(role_permissions + granted_list) - set(denied_permissions))
     
     return {
         "employee_id": employee_id,
@@ -152,6 +155,7 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
         "position": position,
         "role_permissions": role_permissions,
         "granted_permissions": granted_list,
+        "denied_permissions": denied_permissions,
         "all_permissions": all_permissions
     }
 
