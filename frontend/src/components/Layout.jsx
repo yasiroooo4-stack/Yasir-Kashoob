@@ -30,6 +30,7 @@ import {
   Image,
   PiggyBank,
   PackageSearch,
+  PackageOpen,
   CalendarClock,
   Landmark,
   DollarSign,
