@@ -121,6 +121,40 @@ const Payroll = () => {
     }
   };
 
+  // جلب معامل خصم الغياب
+  const fetchAbsenceDeductionFactor = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/api/hr/settings/absence-deduction-factor`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAbsenceDeductionFactor(response.data.absence_deduction_factor);
+      setNewAbsenceFactor(response.data.absence_deduction_factor);
+    } catch (error) {
+      console.error("Error fetching absence deduction factor:", error);
+    }
+  };
+
+  // تحديث معامل خصم الغياب
+  const handleUpdateAbsenceFactor = async () => {
+    setAbsenceFactorLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/api/hr/settings/absence-deduction-factor`,
+        { factor: parseFloat(newAbsenceFactor) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === "ar" ? "تم تحديث معامل خصم الغياب بنجاح" : "Absence deduction factor updated");
+      setAbsenceDeductionFactor(parseFloat(newAbsenceFactor));
+      setShowAbsenceFactorDialog(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل في التحديث" : "Update failed"));
+    } finally {
+      setAbsenceFactorLoading(false);
+    }
+  };
+
   const fetchPeriodDetails = async (periodId) => {
     setLoading(true);
     try {
