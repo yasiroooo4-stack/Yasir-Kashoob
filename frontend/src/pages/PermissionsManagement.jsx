@@ -280,6 +280,10 @@ const PermissionsManagement = () => {
       "المخزون": Package,
       "الخزينة": DollarSign,
       "النظام": Settings,
+      "القانون": FileText,
+      "المشاريع": Building2,
+      "العمليات": Settings,
+      "المشتريات": Package,
     };
     const Icon = icons[category] || Shield;
     return <Icon className="w-4 h-4" />;
@@ -296,6 +300,10 @@ const PermissionsManagement = () => {
       "المخزون": t("المخزون", "Inventory"),
       "الخزينة": t("الخزينة", "Treasury"),
       "النظام": t("النظام", "System"),
+      "القانون": t("القانون", "Legal"),
+      "المشاريع": t("المشاريع", "Projects"),
+      "العمليات": t("العمليات", "Operations"),
+      "المشتريات": t("المشتريات", "Purchases"),
     };
     return labels[category] || category;
   };
