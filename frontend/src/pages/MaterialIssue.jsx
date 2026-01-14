@@ -129,16 +129,17 @@ const MaterialIssue = () => {
       const response = await axios.get(`${API}/warehouse/my-warehouses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Fetched warehouses:", response.data);
-      setMyWarehouses(response.data || []);
-      if (response.data && response.data.length > 0 && !selectedWarehouse) {
-        setSelectedWarehouse(response.data[0].id);
+      const warehouses = response.data || [];
+      setMyWarehouses(warehouses);
+      // Set first warehouse as selected only if not already selected
+      if (warehouses.length > 0) {
+        setSelectedWarehouse(prev => prev || warehouses[0].id);
       }
     } catch (error) {
       console.error("Error fetching warehouses:", error);
       toast.error(t("فشل في جلب المخازن", "Failed to fetch warehouses"));
     }
-  }, [selectedWarehouse, t]);
+  }, [t]);
 
   // Fetch stock for selected warehouse
   const fetchMyStock = useCallback(async () => {
