@@ -34,20 +34,25 @@ DEFAULT_DEPARTMENT_PERMISSIONS = {
         "suppliers_view", "suppliers_create", "suppliers_edit",
         "customers_view", "customers_create", "customers_edit",
         "sales_view", "sales_create", "sales_edit",
+        "purchases_view", "purchases_create", "purchases_edit", "purchases_approve",
         "inventory_view", "reports_view"
     ],
     "العمليات": [
         "milk_reception_view", "milk_reception_create", "milk_reception_edit",
+        "operations_view", "operations_edit", "operations_reports",
         "suppliers_view", "inventory_view", "inventory_edit",
         "reports_view", "reports_operational"
     ],
     "المشاريع": [
+        "projects_view", "projects_create", "projects_edit", "projects_delete",
         "reports_view", "reports_operational"
     ],
     "التسويق": [
         "customers_view", "reports_view"
     ],
     "القانون": [
+        "legal_contracts_view", "legal_contracts_create", "legal_contracts_edit",
+        "legal_cases_view", "legal_cases_create", "legal_cases_edit",
         "reports_view", "hr_employees_view"
     ],
     "تقنية المعلومات": [
