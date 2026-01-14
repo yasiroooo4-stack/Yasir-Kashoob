@@ -9909,6 +9909,10 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
     WEEKEND_WORK_MULTIPLIER = 1.5  # مضاعف العمل في أيام الإجازة الأسبوعية
     HOLIDAY_WORK_MULTIPLIER = 2.0   # مضاعف العمل في العطل الرسمية
     
+    # جلب معامل خصم الغياب من إعدادات النظام
+    absence_factor_settings = await db.system_settings.find_one({"key": "absence_deduction_factor"}, {"_id": 0})
+    ABSENCE_DEDUCTION_FACTOR = absence_factor_settings.get("value", 1.0) if absence_factor_settings else 1.0
+    
     from datetime import datetime as dt, timedelta
     
     for emp in employees:
