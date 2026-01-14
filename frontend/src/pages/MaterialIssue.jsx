@@ -163,11 +163,11 @@ const MaterialIssue = () => {
   const fetchMyRequests = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/warehouse/issue-requests`, {
+      const response = await axios.get(`${API}/warehouse/issue-requests`, {
         params: { my_requests: true },
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMyRequests(response.data);
+      setMyRequests(response.data || []);
     } catch (error) {
       console.error("Error fetching requests:", error);
     }
