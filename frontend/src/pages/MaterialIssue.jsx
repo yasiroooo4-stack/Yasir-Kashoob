@@ -106,7 +106,7 @@ const MaterialIssue = () => {
     const fetchUserInfo = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`${API}/api/auth/me`, {
+        const response = await axios.get(`${API}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUserPermissions(response.data.permissions || []);
