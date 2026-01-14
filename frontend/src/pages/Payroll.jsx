@@ -751,7 +751,28 @@ const Payroll = () => {
                   {currentPeriod.status === "calculated" && (
                     <Button onClick={handleApprovePayroll} className="bg-green-600 hover:bg-green-700">
                       <CheckCircle className="w-4 h-4 me-2" />
-                      {language === "ar" ? "اعتماد" : "Approve"}
+                      {language === "ar" ? "موافقة HR" : "HR Approve"}
+                    </Button>
+                  )}
+                  
+                  {currentPeriod.status === "pending_hr" && (
+                    <Button onClick={handleApprovePayroll} className="bg-green-600 hover:bg-green-700">
+                      <CheckCircle className="w-4 h-4 me-2" />
+                      {language === "ar" ? "موافقة HR" : "HR Approve"}
+                    </Button>
+                  )}
+                  
+                  {currentPeriod.status === "pending_finance" && (
+                    <Button onClick={handleApprovePayroll} className="bg-blue-600 hover:bg-blue-700">
+                      <CheckCircle className="w-4 h-4 me-2" />
+                      {language === "ar" ? "موافقة المالية" : "Finance Approve"}
+                    </Button>
+                  )}
+                  
+                  {currentPeriod.status === "pending_gm" && (
+                    <Button onClick={handleApprovePayroll} className="bg-purple-600 hover:bg-purple-700">
+                      <CheckCircle className="w-4 h-4 me-2" />
+                      {language === "ar" ? "موافقة المدير العام" : "GM Approve"}
                     </Button>
                   )}
                   
