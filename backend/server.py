@@ -3958,27 +3958,55 @@ async def sync_single_attendance(
             fp_id = str(record["fingerprint_id"])
             device_location = record.get("device_ip", "") or record.get("location", "")
             
-            # أولاً: البحث في البصمة الثانوية مع التحقق من المركز (الأولوية للمركز المحدد)
+            # أولاً: البحث في البصمات الإضافية (additional_fingerprints) مع التحقق من المركز
             if device_location:
+                # البحث في البصمات الإضافية
+                all_employees = await db.hr_employees.find(
+                    {"additional_fingerprints": {"$exists": True, "$ne": None}},
+                    {"_id": 0}
+                ).to_list(500)
+                
+                for emp in all_employees:
+                    for fp in emp.get("additional_fingerprints", []):
+                        if str(fp.get("fingerprint_id")) == fp_id:
+                            fp_center = fp.get("center", "")
+                            if fp_center:
+                                if fp_center.lower() in device_location.lower() or device_location.lower() in fp_center.lower():
+                                    employee = emp
+                                    break
+                    if employee:
+                        break
+            
+            # ثانياً: البحث في البصمة الثانوية مع التحقق من المركز
+            if not employee and device_location:
                 secondary_match = await db.hr_employees.find_one({"fingerprint_id_2": fp_id}, {"_id": 0})
                 if secondary_match:
                     emp_center = secondary_match.get("fingerprint_center_2", "")
                     if emp_center:
-                        # تحقق من تطابق المركز
                         if emp_center.lower() in device_location.lower() or device_location.lower() in emp_center.lower():
                             employee = secondary_match
             
-            # ثانياً: إذا لم يتم العثور على تطابق بالمركز، نبحث في البصمة الأساسية
+            # ثالثاً: البحث في البصمة الأساسية
             if not employee:
                 employee = await db.hr_employees.find_one({"fingerprint_id": fp_id}, {"_id": 0})
             
-            # ثالثاً: إذا لم نجد في البصمة الأساسية، نبحث في البصمة الثانوية بدون شرط المركز
+            # رابعاً: البحث في البصمة الثانوية بدون شرط المركز
             if not employee:
                 secondary_match = await db.hr_employees.find_one({"fingerprint_id_2": fp_id}, {"_id": 0})
                 if secondary_match:
                     emp_center = secondary_match.get("fingerprint_center_2", "")
-                    if not emp_center:  # لا يوجد مركز محدد، نستخدم الموظف
+                    if not emp_center:
                         employee = secondary_match
+            
+            # خامساً: البحث في البصمات الإضافية بدون شرط المركز
+            if not employee:
+                for emp in all_employees if 'all_employees' in dir() else []:
+                    for fp in emp.get("additional_fingerprints", []):
+                        if str(fp.get("fingerprint_id")) == fp_id and not fp.get("center"):
+                            employee = emp
+                            break
+                    if employee:
+                        break
         
         if not employee and record.get("employee_id"):
             employee = await db.hr_employees.find_one({"id": record["employee_id"]}, {"_id": 0})
