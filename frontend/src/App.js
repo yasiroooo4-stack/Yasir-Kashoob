@@ -430,6 +430,11 @@ function App() {
                     <WarehouseManagement />
                   </ProtectedRoute>
                 } />
+                <Route path="material-issue" element={
+                  <ProtectedRoute>
+                    <MaterialIssue />
+                  </ProtectedRoute>
+                } />
                 <Route path="projects" element={
                   <ProtectedRoute allowedDepartments={["projects", "admin", "it"]}>
                     <Projects />
