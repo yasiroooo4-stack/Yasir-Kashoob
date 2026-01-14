@@ -112,6 +112,7 @@ class TestWarehouseAPIs(TestAuth):
             "code": unique_code,
             "name": f"مخزن اختبار {unique_code}",
             "warehouse_type": "main",
+            "location": "موقع اختبار",
             "status": "active"
         }
         
