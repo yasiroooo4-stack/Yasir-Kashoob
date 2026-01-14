@@ -3955,13 +3955,22 @@ async def sync_single_attendance(
         employee = None
         if record.get("fingerprint_id"):
             fp_id = str(record["fingerprint_id"])
-            # البحث في fingerprint_id أو fingerprint_id_2
-            employee = await db.hr_employees.find_one({
-                "$or": [
-                    {"fingerprint_id": fp_id},
-                    {"fingerprint_id_2": fp_id}
-                ]
-            }, {"_id": 0})
+            device_location = record.get("device_ip", "") or record.get("location", "")
+            
+            # أولاً: البحث عن البصمة الأساسية
+            employee = await db.hr_employees.find_one({"fingerprint_id": fp_id}, {"_id": 0})
+            
+            # إذا لم نجد في البصمة الأساسية، نبحث في البصمة الثانوية مع التحقق من المركز
+            if not employee:
+                secondary_match = await db.hr_employees.find_one({"fingerprint_id_2": fp_id}, {"_id": 0})
+                if secondary_match:
+                    emp_center = secondary_match.get("fingerprint_center_2", "")
+                    if emp_center and device_location:
+                        if emp_center.lower() in device_location.lower() or device_location.lower() in emp_center.lower():
+                            employee = secondary_match
+                    else:
+                        employee = secondary_match
+        
         if not employee and record.get("employee_id"):
             employee = await db.hr_employees.find_one({"id": record["employee_id"]}, {"_id": 0})
         
