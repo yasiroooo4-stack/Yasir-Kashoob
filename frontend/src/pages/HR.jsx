@@ -553,6 +553,7 @@ const HR = () => {
       fingerprint_id: employee.fingerprint_id || "",
       fingerprint_id_2: employee.fingerprint_id_2 || "",
       fingerprint_center_2: employee.fingerprint_center_2 || "",
+      additional_fingerprints: employee.additional_fingerprints || [],
       work_location: employee.work_location || "",
       exclude_from_payroll: employee.exclude_from_payroll || false,
       permissions: employee.permissions || [],
