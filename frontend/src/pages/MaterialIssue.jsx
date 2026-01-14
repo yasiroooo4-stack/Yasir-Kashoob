@@ -59,8 +59,6 @@ import {
   Box,
 } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL;
-
 // أيقونات تصنيفات المخازن
 const categoryIcons = {
   lab: Beaker,
