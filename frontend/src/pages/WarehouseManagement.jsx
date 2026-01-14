@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage } from "../App";
 import {
   Card,
   CardContent,
