@@ -1050,47 +1050,273 @@ const WarehouseManagement = () => {
           </Card>
         </TabsContent>
 
+        {/* Alerts Tab */}
+        <TabsContent value="alerts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-500" />
+                    {t("تنبيهات المخزون", "Stock Alerts")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t("تنبيهات نقص المخزون وانتهاء الصلاحية", "Low stock and expiry alerts")}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { fetchAlerts(); fetchAlertsSummary(); }}
+                  >
+                    <RefreshCw className="w-4 h-4 me-2" />
+                    {t("تحديث", "Refresh")}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Alert Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <Card className="bg-red-50 border-red-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-red-600">{t("حرج", "Critical")}</p>
+                    <p className="text-2xl font-bold text-red-700">{alertsSummary.by_priority?.critical || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-orange-50 border-orange-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-orange-600">{t("عالي", "High")}</p>
+                    <p className="text-2xl font-bold text-orange-700">{alertsSummary.by_priority?.high || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-yellow-50 border-yellow-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-yellow-600">{t("متوسط", "Medium")}</p>
+                    <p className="text-2xl font-bold text-yellow-700">{alertsSummary.by_priority?.medium || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-blue-600">{t("منخفض", "Low")}</p>
+                    <p className="text-2xl font-bold text-blue-700">{alertsSummary.by_priority?.low || 0}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Alerts List */}
+              {alerts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <AlertTriangle className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg">{t("لا توجد تنبيهات حالياً", "No alerts at the moment")}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {alerts.map((alert) => (
+                    <Card key={alert.id} className={`border-s-4 ${
+                      alert.priority === 'critical' ? 'border-s-red-500 bg-red-50/50' :
+                      alert.priority === 'high' ? 'border-s-orange-500 bg-orange-50/50' :
+                      alert.priority === 'medium' ? 'border-s-yellow-500 bg-yellow-50/50' :
+                      'border-s-blue-500 bg-blue-50/50'
+                    }`}>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge className={
+                                alert.priority === 'critical' ? 'bg-red-500' :
+                                alert.priority === 'high' ? 'bg-orange-500' :
+                                alert.priority === 'medium' ? 'bg-yellow-500' :
+                                'bg-blue-500'
+                              }>
+                                {alert.priority === 'critical' ? t("حرج", "Critical") :
+                                 alert.priority === 'high' ? t("عالي", "High") :
+                                 alert.priority === 'medium' ? t("متوسط", "Medium") :
+                                 t("منخفض", "Low")}
+                              </Badge>
+                              <Badge variant="outline">
+                                {alert.alert_type === 'low_stock' ? t("نقص مخزون", "Low Stock") :
+                                 alert.alert_type === 'expiry_warning' ? t("قرب انتهاء الصلاحية", "Expiry Warning") :
+                                 alert.alert_type === 'expired' ? t("منتهي الصلاحية", "Expired") :
+                                 alert.alert_type}
+                              </Badge>
+                            </div>
+                            <p className="font-medium text-lg">{alert.message}</p>
+                            <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                              <span>{t("المنتج:", "Product:")} {alert.product_name}</span>
+                              <span>{t("المخزن:", "Warehouse:")} {alert.warehouse_name}</span>
+                              {alert.center_name && <span>{t("المركز:", "Center:")} {alert.center_name}</span>}
+                              <span>{t("الكمية:", "Qty:")} {alert.current_quantity} / {alert.min_quantity}</span>
+                              {alert.expiry_date && <span>{t("الصلاحية:", "Expiry:")} {alert.expiry_date}</span>}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {new Date(alert.created_at).toLocaleString(language === "ar" ? "ar-OM" : "en-US")}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleResolveAlert(alert.id)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-100"
+                          >
+                            ✓ {t("تم الحل", "Resolved")}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Warehouses Tab */}
         <TabsContent value="warehouses" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <CardTitle>{t("المخازن", "Warehouses")}</CardTitle>
-                  <CardDescription>{t("إدارة مواقع التخزين", "Manage storage locations")}</CardDescription>
+                  <CardDescription>{t("إدارة مواقع التخزين لجميع المراكز", "Manage storage locations for all centers")}</CardDescription>
                 </div>
-                <Button onClick={() => setWarehouseDialog(true)}>
-                  <Plus className="w-4 h-4 me-2" />
-                  {t("إضافة مخزن", "Add Warehouse")}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Select value={selectedCenter} onValueChange={setSelectedCenter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t("كل المراكز", "All Centers")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("كل المراكز", "All Centers")}</SelectItem>
+                      {centers.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleInitializeWarehouses}
+                    disabled={initializingWarehouses}
+                  >
+                    {initializingWarehouses ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Building2 className="w-4 h-4 me-2" />}
+                    {t("تهيئة مخازن جميع المراكز", "Initialize All Centers")}
+                  </Button>
+                  <Button onClick={() => setWarehouseDialog(true)}>
+                    <Plus className="w-4 h-4 me-2" />
+                    {t("إضافة مخزن", "Add Warehouse")}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {warehouses.map((w) => (
-                  <Card key={w.id} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-bold text-lg">{w.name}</h3>
-                          <p className="text-sm text-muted-foreground">{w.code}</p>
+              {/* Group by Center */}
+              {selectedCenter === "all" ? (
+                <div className="space-y-6">
+                  {centers.map((center) => {
+                    const centerWarehouses = warehouses.filter(w => w.center_name === center);
+                    if (centerWarehouses.length === 0) return null;
+                    return (
+                      <div key={center}>
+                        <h3 className="text-lg font-bold mb-3 border-b pb-2">{t("مركز", "Center")} {center}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {centerWarehouses.map((w) => (
+                            <Card key={w.id} className={`border-2 ${w.warehouse_type === 'internal' ? 'border-blue-200' : 'border-green-200'}`}>
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h4 className="font-bold">{w.name}</h4>
+                                    <p className="text-xs text-muted-foreground">{w.code}</p>
+                                  </div>
+                                  <Badge variant={w.status === "active" ? "default" : "secondary"}>
+                                    {w.status === "active" ? t("نشط", "Active") : t("غير نشط", "Inactive")}
+                                  </Badge>
+                                </div>
+                                <div className="mt-3 space-y-1 text-sm">
+                                  <div className="flex gap-2">
+                                    <Badge variant="outline" className={w.warehouse_type === 'internal' ? 'bg-blue-50' : 'bg-green-50'}>
+                                      {w.warehouse_type === 'internal' ? t("داخلي", "Internal") : t("خارجي", "External")}
+                                    </Badge>
+                                    {w.warehouse_category && (
+                                      <Badge variant="outline">
+                                        {w.warehouse_category === 'lab' ? t("مختبر", "Lab") :
+                                         w.warehouse_category === 'maintenance' ? t("صيانة", "Maintenance") :
+                                         w.warehouse_category === 'cleaning' ? t("تنظيف", "Cleaning") :
+                                         w.warehouse_category === 'ppe' ? t("حماية", "PPE") :
+                                         w.warehouse_category === 'feed' ? t("أعلاف", "Feed") :
+                                         w.warehouse_category === 'equipment' ? t("معدات", "Equipment") :
+                                         w.warehouse_category === 'supplies' ? t("مستلزمات", "Supplies") :
+                                         w.warehouse_category}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {w.temperature_controlled && (
+                                    <Badge variant="outline" className="bg-cyan-50">{t("تحكم بالحرارة", "Temp Controlled")}</Badge>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
-                        <Badge variant={w.status === "active" ? "default" : "secondary"}>
-                          {w.status === "active" ? t("نشط", "Active") : t("غير نشط", "Inactive")}
-                        </Badge>
                       </div>
-                      <div className="mt-4 space-y-2 text-sm">
-                        <p><span className="text-muted-foreground">{t("الموقع:", "Location:")}</span> {w.location}</p>
-                        <p><span className="text-muted-foreground">{t("النوع:", "Type:")}</span> {w.warehouse_type}</p>
-                        {w.capacity && <p><span className="text-muted-foreground">{t("السعة:", "Capacity:")}</span> {w.capacity}</p>}
-                        {w.temperature_controlled && (
-                          <Badge variant="outline" className="mt-2">{t("تحكم بالحرارة", "Temperature Controlled")}</Badge>
-                        )}
+                    );
+                  })}
+                  {/* Warehouses without center */}
+                  {warehouses.filter(w => !w.center_name).length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold mb-3 border-b pb-2">{t("مخازن عامة", "General Warehouses")}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {warehouses.filter(w => !w.center_name).map((w) => (
+                          <Card key={w.id} className="border-2">
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h4 className="font-bold">{w.name}</h4>
+                                  <p className="text-xs text-muted-foreground">{w.code}</p>
+                                </div>
+                                <Badge variant={w.status === "active" ? "default" : "secondary"}>
+                                  {w.status === "active" ? t("نشط", "Active") : t("غير نشط", "Inactive")}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-2">{w.location}</p>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {warehouses.map((w) => (
+                    <Card key={w.id} className={`border-2 ${w.warehouse_type === 'internal' ? 'border-blue-200' : 'border-green-200'}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-bold text-lg">{w.name}</h3>
+                            <p className="text-sm text-muted-foreground">{w.code}</p>
+                          </div>
+                          <Badge variant={w.status === "active" ? "default" : "secondary"}>
+                            {w.status === "active" ? t("نشط", "Active") : t("غير نشط", "Inactive")}
+                          </Badge>
+                        </div>
+                        <div className="mt-4 space-y-2 text-sm">
+                          <p><span className="text-muted-foreground">{t("الموقع:", "Location:")}</span> {w.location}</p>
+                          <div className="flex gap-2">
+                            <Badge variant="outline" className={w.warehouse_type === 'internal' ? 'bg-blue-50' : 'bg-green-50'}>
+                              {w.warehouse_type === 'internal' ? t("داخلي", "Internal") : t("خارجي", "External")}
+                            </Badge>
+                            {w.warehouse_category && (
+                              <Badge variant="outline">{w.warehouse_category}</Badge>
+                            )}
+                          </div>
+                          {w.temperature_controlled && (
+                            <Badge variant="outline" className="mt-2">{t("تحكم بالحرارة", "Temperature Controlled")}</Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
