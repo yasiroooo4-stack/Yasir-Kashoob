@@ -737,6 +737,15 @@ const WarehouseManagement = () => {
             <Beaker className="w-4 h-4" />
             {t("المحاليل", "Solutions")}
           </TabsTrigger>
+          <TabsTrigger value="alerts" className="flex items-center gap-1 relative">
+            <AlertTriangle className="w-4 h-4" />
+            {t("التنبيهات", "Alerts")}
+            {alertsSummary.total_unresolved > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {alertsSummary.total_unresolved}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="warehouses" className="flex items-center gap-1">
             <Building2 className="w-4 h-4" />
             {t("المخازن", "Warehouses")}
