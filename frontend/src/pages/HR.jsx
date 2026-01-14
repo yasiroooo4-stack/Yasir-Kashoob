@@ -655,7 +655,10 @@ const HR = () => {
       
       await axios.put(
         `${API}/hr/employees/${selectedEmployee.id}/leave-rate`,
-        { monthly_leave_rate: rateValue },
+        { 
+          monthly_leave_rate: rateValue,
+          leave_rate_type: leaveRateForm.rate_type
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
