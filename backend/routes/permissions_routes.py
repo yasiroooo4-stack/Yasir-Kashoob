@@ -141,6 +141,10 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
     
     granted_list = [g["permission"] for g in granted_permissions]
     
+    # DEBUG
+    import logging
+    logging.info(f"Employee {employee_id}: DB grants = {granted_permissions}, granted_list = {granted_list}")
+    
     # الصلاحيات المحظورة
     denied_permissions = employee.get("denied_permissions", [])
     
