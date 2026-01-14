@@ -6144,16 +6144,34 @@ async def export_attendance_pdf(
     elements.append(Spacer(1, 20))
     
     # Get all employees for name/code lookup
-    employees_list = await db.hr_employees.find({}, {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "fingerprint_id": 1}).to_list(1000)
+    employees_list = await db.hr_employees.find(
+        {"exclude_from_payroll": {"$ne": True}},
+        {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "fingerprint_id": 1, "weekly_off_days": 1}
+    ).to_list(1000)
     emp_lookup = {}
     for emp in employees_list:
         emp_lookup[emp.get('id')] = emp
         emp_lookup[emp.get('fingerprint_id')] = emp
         emp_lookup[emp.get('employee_code')] = emp
     
+    # Get official holidays
+    official_holidays_pdf = await db.hr_official_holidays.find({
+        "date": {"$gte": date_from, "$lte": date_to}
+    }, {"_id": 0, "date": 1}).to_list(100)
+    holiday_dates_pdf = set(h.get("date") for h in official_holidays_pdf)
+    
+    # Generate all working days in the period
+    from datetime import datetime as dt_pdf, timedelta as td_pdf
+    all_dates_pdf = []
+    current_pdf = dt_pdf.strptime(date_from, "%Y-%m-%d")
+    end_dt_pdf = dt_pdf.strptime(date_to, "%Y-%m-%d")
+    while current_pdf <= end_dt_pdf:
+        all_dates_pdf.append(current_pdf.strftime("%Y-%m-%d"))
+        current_pdf += td_pdf(days=1)
+    
     # Group by employee - REMOVE DUPLICATE DATES
     from collections import defaultdict
-    employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": ""})
+    employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [4, 5]})
     
     for record in attendance:
         emp_id = record.get('employee_id', '')
@@ -6166,6 +6184,7 @@ async def export_attendance_pdf(
             employee_data[key]["name"] = emp_info.get('name', emp_name)
             employee_data[key]["code"] = emp_info.get('employee_code', '')
             employee_data[key]["fingerprint"] = emp_info.get('fingerprint_id', '')
+            employee_data[key]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
         else:
             key = emp_id or emp_name
             employee_data[key]["name"] = emp_name
@@ -6181,9 +6200,25 @@ async def export_attendance_pdf(
     for emp_key in sorted(employee_data.keys(), key=lambda x: employee_data[x]["name"]):
         emp_count += 1
         emp_info = employee_data[emp_key]
-        records = list(emp_info["records"].values())  # Convert dict to list
+        records = emp_info["records"]  # Dict of date -> record
+        present_dates = set(records.keys())
+        weekly_off_days = emp_info.get("weekly_off_days", [4, 5])
+        
+        # Calculate absent dates
+        absent_dates_pdf = []
+        for date_str in all_dates_pdf:
+            date_obj = dt_pdf.strptime(date_str, "%Y-%m-%d")
+            day_of_week = date_obj.weekday()
+            if day_of_week in weekly_off_days:
+                continue
+            if date_str in holiday_dates_pdf:
+                continue
+            if date_str not in present_dates:
+                absent_dates_pdf.append(date_str)
+        
         total_records += len(records)
         days_count = len(records)
+        absent_count = len(absent_dates_pdf)
         
         # Employee header box with full details
         emp_name = emp_info["name"] or "Unknown"
@@ -6193,15 +6228,16 @@ async def export_attendance_pdf(
         # Create employee info table with name displayed properly
         name_para = Paragraph(f'<b>{emp_name}</b>', ParagraphStyle('EmpName', fontSize=10, alignment=TA_CENTER))
         emp_header_data = [
-            ['Employee Name', 'Code', 'Fingerprint ID', 'Days'],
-            [name_para, emp_code, emp_fp, str(days_count)]
+            ['Employee Name', 'Code', 'Fingerprint ID', 'Present', 'Absent'],
+            [name_para, emp_code, emp_fp, str(days_count), str(absent_count)]
         ]
         
-        emp_table = Table(emp_header_data, colWidths=[250, 80, 100, 70])
+        emp_table = Table(emp_header_data, colWidths=[200, 80, 100, 60, 60])
         emp_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E7D32')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#E8F5E9')),
+            ('BACKGROUND', (4, 1), (4, 1), colors.HexColor('#FFCDD2')),  # Absent column red
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
             ('FONTSIZE', (0, 1), (-1, 1), 10),
@@ -6214,8 +6250,8 @@ async def export_attendance_pdf(
         elements.append(emp_table)
         elements.append(Spacer(1, 5))
         
-        # Attendance records table
-        headers = ['#', 'Date', 'Check In', 'Check Out', 'Source']
+        # Attendance records table (present days)
+        headers = ['#', 'Date', 'Check In', 'Check Out', 'Status', 'Source']
         data = [headers]
         
         for idx, record in enumerate(sorted(records, key=lambda x: x.get('date', '')), 1):
