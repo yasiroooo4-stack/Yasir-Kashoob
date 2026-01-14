@@ -244,6 +244,27 @@ const PermissionsManagement = () => {
       settings_edit: t("تعديل الإعدادات", "Edit Settings"),
       users_manage: t("إدارة المستخدمين", "Manage Users"),
       permissions_grant: t("منح الصلاحيات", "Grant Permissions"),
+      // القانون
+      legal_contracts_view: t("عرض العقود", "View Contracts"),
+      legal_contracts_create: t("إنشاء عقد", "Create Contract"),
+      legal_contracts_edit: t("تعديل عقد", "Edit Contract"),
+      legal_cases_view: t("عرض القضايا", "View Cases"),
+      legal_cases_create: t("إنشاء قضية", "Create Case"),
+      legal_cases_edit: t("تعديل قضية", "Edit Case"),
+      // المشاريع
+      projects_view: t("عرض المشاريع", "View Projects"),
+      projects_create: t("إنشاء مشروع", "Create Project"),
+      projects_edit: t("تعديل مشروع", "Edit Project"),
+      projects_delete: t("حذف مشروع", "Delete Project"),
+      // العمليات
+      operations_view: t("عرض العمليات", "View Operations"),
+      operations_edit: t("تعديل العمليات", "Edit Operations"),
+      operations_reports: t("تقارير العمليات", "Operations Reports"),
+      // المشتريات
+      purchases_view: t("عرض المشتريات", "View Purchases"),
+      purchases_create: t("إنشاء عملية شراء", "Create Purchase"),
+      purchases_edit: t("تعديل عملية شراء", "Edit Purchase"),
+      purchases_approve: t("الموافقة على المشتريات", "Approve Purchases"),
     };
     return labels[permission] || permission;
   };
