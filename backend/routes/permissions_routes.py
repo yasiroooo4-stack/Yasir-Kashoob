@@ -246,6 +246,70 @@ async def revoke_permission(grant_id: str, current_user: dict = Depends(get_curr
     return {"message": "تم إلغاء الصلاحية بنجاح"}
 
 
+@router.post("/deny/{employee_id}")
+async def deny_permission(
+    employee_id: str,
+    permission: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حظر صلاحية معينة من موظف (حتى لو كانت من القسم)"""
+    # التحقق من صلاحية المستخدم
+    user_perms = await get_user_permissions_helper(current_user["id"])
+    if "permissions_grant" not in user_perms and current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية تعديل الصلاحيات")
+    
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # إضافة الصلاحية إلى قائمة الصلاحيات المحظورة
+    denied_permissions = employee.get("denied_permissions", [])
+    if permission not in denied_permissions:
+        denied_permissions.append(permission)
+        await db.hr_employees.update_one(
+            {"id": employee_id},
+            {"$set": {"denied_permissions": denied_permissions}}
+        )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="deny_permission",
+        entity_type="permission",
+        entity_id=employee_id,
+        entity_name=f"{employee.get('name')} - {permission}",
+        details=f"حظر صلاحية {permission} من الموظف {employee.get('name')}"
+    )
+    
+    return {"message": "تم حظر الصلاحية بنجاح"}
+
+
+@router.delete("/deny/{employee_id}/{permission}")
+async def remove_permission_denial(
+    employee_id: str,
+    permission: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """إزالة حظر صلاحية معينة"""
+    user_perms = await get_user_permissions_helper(current_user["id"])
+    if "permissions_grant" not in user_perms and current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية تعديل الصلاحيات")
+    
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    denied_permissions = employee.get("denied_permissions", [])
+    if permission in denied_permissions:
+        denied_permissions.remove(permission)
+        await db.hr_employees.update_one(
+            {"id": employee_id},
+            {"$set": {"denied_permissions": denied_permissions}}
+        )
+    
+    return {"message": "تم إزالة حظر الصلاحية"}
+
+
 @router.get("/check/{permission}")
 async def check_permission(permission: str, current_user: dict = Depends(get_current_user)):
     """التحقق من صلاحية المستخدم الحالي"""
