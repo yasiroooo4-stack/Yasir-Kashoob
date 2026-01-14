@@ -2200,3 +2200,408 @@ async def get_movements_financial_summary(
     summary["net_change"] = summary["receive"]["total_value"] - summary["issue"]["total_value"]
     
     return summary
+
+
+# ==================== طلبات صرف المواد ====================
+
+# ربط تصنيف المخزن بالصلاحية المطلوبة
+CATEGORY_TO_PERMISSION = {
+    "lab": "warehouse_issue_lab",
+    "cleaning": "warehouse_issue_cleaning",
+    "maintenance": "warehouse_issue_maintenance",
+    "ppe": "warehouse_issue_ppe",
+    "feed": "warehouse_issue_feed",
+    "equipment": "warehouse_issue_equipment",
+    "supplies": "warehouse_issue_supplies",
+}
+
+
+@router.get("/my-warehouses")
+async def get_my_warehouses(current_user: dict = Depends(get_current_user)):
+    """
+    الحصول على المخازن التي يمكن للمستخدم الصرف منها
+    بناءً على صلاحياته
+    """
+    user_permissions = current_user.get("permissions", [])
+    user_role = current_user.get("role", "")
+    
+    # المدير أو من لديه صلاحية الصرف من الكل
+    if user_role == "admin" or "warehouse_issue_all" in user_permissions or "warehouse_stock_issue" in user_permissions:
+        warehouses = await db.warehouses.find({"status": "active"}, {"_id": 0}).to_list(200)
+        return warehouses
+    
+    # تحديد تصنيفات المخازن المتاحة بناءً على الصلاحيات
+    allowed_categories = []
+    for category, permission in CATEGORY_TO_PERMISSION.items():
+        if permission in user_permissions:
+            allowed_categories.append(category)
+    
+    if not allowed_categories:
+        return []
+    
+    # جلب المخازن حسب التصنيفات المتاحة
+    warehouses = await db.warehouses.find({
+        "status": "active",
+        "warehouse_category": {"$in": allowed_categories}
+    }, {"_id": 0}).to_list(200)
+    
+    return warehouses
+
+
+@router.get("/my-stock")
+async def get_my_stock(
+    warehouse_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    الحصول على المخزون المتاح للمستخدم
+    """
+    # جلب المخازن المتاحة للمستخدم
+    my_warehouses = await get_my_warehouses(current_user)
+    warehouse_ids = [w["id"] for w in my_warehouses]
+    
+    if not warehouse_ids:
+        return []
+    
+    query = {"warehouse_id": {"$in": warehouse_ids}}
+    if warehouse_id and warehouse_id in warehouse_ids:
+        query["warehouse_id"] = warehouse_id
+    
+    stock = await db.product_stock.find(query, {"_id": 0}).to_list(1000)
+    
+    # إضافة معلومات المخزن لكل عنصر
+    warehouse_map = {w["id"]: w for w in my_warehouses}
+    for item in stock:
+        wh = warehouse_map.get(item.get("warehouse_id"), {})
+        item["warehouse_category"] = wh.get("warehouse_category", "")
+        item["center_name"] = wh.get("center_name", "")
+    
+    return stock
+
+
+@router.post("/issue-request")
+async def create_issue_request(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    إنشاء طلب صرف مواد
+    يمكن للموظف إنشاء طلب والمشرف يوافق عليه
+    أو الصرف المباشر إذا كان لديه الصلاحية
+    """
+    warehouse_id = data.get("warehouse_id")
+    items = data.get("items", [])  # [{product_id, quantity, notes}]
+    purpose = data.get("purpose", "")  # الغرض من الصرف
+    direct_issue = data.get("direct_issue", False)  # صرف مباشر بدون موافقة
+    
+    if not warehouse_id or not items:
+        raise HTTPException(status_code=400, detail="يجب تحديد المخزن والمنتجات")
+    
+    # التحقق من صلاحية المستخدم للصرف من هذا المخزن
+    warehouse = await db.warehouses.find_one({"id": warehouse_id}, {"_id": 0})
+    if not warehouse:
+        raise HTTPException(status_code=404, detail="المخزن غير موجود")
+    
+    category = warehouse.get("warehouse_category", "")
+    required_permission = CATEGORY_TO_PERMISSION.get(category, "warehouse_stock_issue")
+    user_permissions = current_user.get("permissions", [])
+    user_role = current_user.get("role", "")
+    
+    has_permission = (
+        user_role == "admin" or
+        "warehouse_issue_all" in user_permissions or
+        "warehouse_stock_issue" in user_permissions or
+        required_permission in user_permissions
+    )
+    
+    if not has_permission:
+        raise HTTPException(status_code=403, detail=f"ليس لديك صلاحية الصرف من هذا المخزن ({warehouse.get('name')})")
+    
+    # التحقق من توفر الكميات
+    for item in items:
+        stock = await db.product_stock.find_one({
+            "product_id": item["product_id"],
+            "warehouse_id": warehouse_id
+        }, {"_id": 0})
+        
+        if not stock:
+            product = await db.warehouse_products.find_one({"id": item["product_id"]}, {"_id": 0})
+            raise HTTPException(
+                status_code=400, 
+                detail=f"المنتج {product.get('name', item['product_id'])} غير متوفر في هذا المخزن"
+            )
+        
+        if stock.get("available_quantity", 0) < item["quantity"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"الكمية المطلوبة ({item['quantity']}) من {stock.get('product_name')} غير متوفرة (المتاح: {stock.get('available_quantity', 0)})"
+            )
+    
+    # إنشاء طلب الصرف
+    request_id = str(uuid.uuid4())
+    request_number = f"ISS-REQ-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    issue_request = {
+        "id": request_id,
+        "request_number": request_number,
+        "warehouse_id": warehouse_id,
+        "warehouse_name": warehouse.get("name", ""),
+        "warehouse_category": category,
+        "center_name": warehouse.get("center_name", ""),
+        "items": [],
+        "purpose": purpose,
+        "status": "approved" if direct_issue else "pending",  # pending, approved, rejected, completed
+        "requested_by": current_user["id"],
+        "requested_by_name": current_user.get("full_name", ""),
+        "requested_at": datetime.now(timezone.utc).isoformat(),
+        "approved_by": current_user["id"] if direct_issue else None,
+        "approved_by_name": current_user.get("full_name", "") if direct_issue else None,
+        "approved_at": datetime.now(timezone.utc).isoformat() if direct_issue else None,
+        "total_items": len(items),
+        "total_value": 0
+    }
+    
+    total_value = 0
+    for item in items:
+        stock = await db.product_stock.find_one({
+            "product_id": item["product_id"],
+            "warehouse_id": warehouse_id
+        }, {"_id": 0})
+        
+        product = await db.warehouse_products.find_one({"id": item["product_id"]}, {"_id": 0})
+        item_value = item["quantity"] * stock.get("unit_price", 0)
+        total_value += item_value
+        
+        issue_request["items"].append({
+            "product_id": item["product_id"],
+            "product_name": product.get("name", ""),
+            "product_code": product.get("code", ""),
+            "quantity": item["quantity"],
+            "unit": product.get("unit", ""),
+            "unit_price": stock.get("unit_price", 0),
+            "total_value": item_value,
+            "notes": item.get("notes", "")
+        })
+    
+    issue_request["total_value"] = total_value
+    
+    await db.warehouse_issue_requests.insert_one(issue_request)
+    
+    # إذا كان صرف مباشر، ننفذ الصرف فوراً
+    if direct_issue:
+        for item in items:
+            await issue_stock(
+                data={
+                    "product_id": item["product_id"],
+                    "warehouse_id": warehouse_id,
+                    "quantity": item["quantity"],
+                    "issue_type": "consumption",
+                    "reference_number": request_number,
+                    "notes": f"{purpose} - {item.get('notes', '')}",
+                    "create_journal": True
+                },
+                current_user=current_user
+            )
+        
+        # تحديث حالة الطلب
+        await db.warehouse_issue_requests.update_one(
+            {"id": request_id},
+            {"$set": {
+                "status": "completed",
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        await log_activity(
+            user_id=current_user["id"],
+            user_name=current_user.get("full_name", ""),
+            action="direct_issue",
+            entity_type="warehouse_issue",
+            entity_id=request_id,
+            entity_name=request_number,
+            details=f"صرف مباشر من {warehouse.get('name')} - {len(items)} منتج بقيمة {total_value}"
+        )
+        
+        return {
+            "message": "تم الصرف بنجاح",
+            "request": issue_request,
+            "status": "completed"
+        }
+    
+    # إذا كان طلب يحتاج موافقة
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="create_issue_request",
+        entity_type="warehouse_issue",
+        entity_id=request_id,
+        entity_name=request_number,
+        details=f"طلب صرف من {warehouse.get('name')} - {len(items)} منتج"
+    )
+    
+    return {
+        "message": "تم إنشاء طلب الصرف بنجاح",
+        "request": issue_request,
+        "status": "pending"
+    }
+
+
+@router.get("/issue-requests")
+async def get_issue_requests(
+    status: Optional[str] = None,
+    warehouse_id: Optional[str] = None,
+    my_requests: bool = False,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    الحصول على طلبات الصرف
+    """
+    query = {}
+    
+    if status:
+        query["status"] = status
+    
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    if my_requests:
+        query["requested_by"] = current_user["id"]
+    
+    requests = await db.warehouse_issue_requests.find(query, {"_id": 0}).sort("requested_at", -1).to_list(500)
+    return requests
+
+
+@router.post("/issue-requests/{request_id}/approve")
+async def approve_issue_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    الموافقة على طلب صرف
+    """
+    # التحقق من صلاحية الموافقة
+    user_permissions = current_user.get("permissions", [])
+    user_role = current_user.get("role", "")
+    
+    if user_role != "admin" and "warehouse_approve_issue" not in user_permissions and "warehouse_issue_all" not in user_permissions:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية الموافقة على طلبات الصرف")
+    
+    request = await db.warehouse_issue_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    if request["status"] != "pending":
+        raise HTTPException(status_code=400, detail="الطلب ليس في حالة انتظار")
+    
+    # تنفيذ الصرف
+    for item in request["items"]:
+        await issue_stock(
+            data={
+                "product_id": item["product_id"],
+                "warehouse_id": request["warehouse_id"],
+                "quantity": item["quantity"],
+                "issue_type": "consumption",
+                "reference_number": request["request_number"],
+                "notes": f"{request.get('purpose', '')} - {item.get('notes', '')}",
+                "create_journal": True
+            },
+            current_user=current_user
+        )
+    
+    # تحديث الطلب
+    await db.warehouse_issue_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "completed",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user.get("full_name", ""),
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="approve_issue_request",
+        entity_type="warehouse_issue",
+        entity_id=request_id,
+        entity_name=request["request_number"],
+        details=f"موافقة على صرف من {request.get('warehouse_name')}"
+    )
+    
+    return {"message": "تم الموافقة والصرف بنجاح"}
+
+
+@router.post("/issue-requests/{request_id}/reject")
+async def reject_issue_request(
+    request_id: str,
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    رفض طلب صرف
+    """
+    reason = data.get("reason", "")
+    
+    user_permissions = current_user.get("permissions", [])
+    user_role = current_user.get("role", "")
+    
+    if user_role != "admin" and "warehouse_approve_issue" not in user_permissions:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية رفض طلبات الصرف")
+    
+    request = await db.warehouse_issue_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    await db.warehouse_issue_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "rejected_by": current_user["id"],
+            "rejected_by_name": current_user.get("full_name", ""),
+            "rejected_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason
+        }}
+    )
+    
+    return {"message": "تم رفض الطلب"}
+
+
+@router.get("/consumption-log")
+async def get_consumption_log(
+    warehouse_id: Optional[str] = None,
+    category: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    سجل الاستهلاك - من صرف ماذا ومتى
+    """
+    query = {"movement_type": "issue"}
+    
+    if warehouse_id:
+        query["from_warehouse_id"] = warehouse_id
+    
+    if start_date:
+        query["movement_date"] = {"$gte": start_date}
+    if end_date:
+        if "movement_date" in query:
+            query["movement_date"]["$lte"] = end_date
+        else:
+            query["movement_date"] = {"$lte": end_date}
+    
+    movements = await db.stock_movements.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    # إضافة تصنيف المخزن
+    if category:
+        warehouse_ids = [m.get("from_warehouse_id") for m in movements]
+        warehouses = await db.warehouses.find(
+            {"id": {"$in": warehouse_ids}, "warehouse_category": category}, 
+            {"_id": 0, "id": 1}
+        ).to_list(100)
+        valid_warehouse_ids = [w["id"] for w in warehouses]
+        movements = [m for m in movements if m.get("from_warehouse_id") in valid_warehouse_ids]
+    
+    return movements
