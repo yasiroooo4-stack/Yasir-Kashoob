@@ -524,6 +524,7 @@ const HR = () => {
       center_name: "",
       fingerprint_id: "",
       fingerprint_id_2: "",
+      fingerprint_center_2: "",
       work_location: "",
       exclude_from_payroll: false,
       permissions: [],
