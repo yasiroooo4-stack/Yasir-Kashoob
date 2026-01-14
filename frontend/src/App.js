@@ -354,11 +354,6 @@ function App() {
                     <FeedPurchases />
                   </ProtectedRoute>
                 } />
-                <Route path="inventory" element={
-                  <ProtectedRoute allowedDepartments={["inventory", "sales", "admin", "it"]}>
-                    <Inventory />
-                  </ProtectedRoute>
-                } />
                 <Route path="finance" element={
                   <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
                     <Finance />
