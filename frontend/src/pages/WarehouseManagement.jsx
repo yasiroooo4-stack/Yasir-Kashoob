@@ -89,9 +89,14 @@ const WarehouseManagement = () => {
   const [movements, setMovements] = useState([]);
   const [solutions, setSolutions] = useState([]);
   const [consumption, setConsumption] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [alertsSummary, setAlertsSummary] = useState({});
+  const [centers, setCenters] = useState([]);
+  const [warehousesByCenter, setWarehousesByCenter] = useState({});
 
   // Filters
   const [selectedWarehouse, setSelectedWarehouse] = useState("all");
+  const [selectedCenter, setSelectedCenter] = useState("all");
   const [movementType, setMovementType] = useState("all");
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
