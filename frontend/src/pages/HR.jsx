@@ -3357,7 +3357,7 @@ const HR = () => {
                     <SelectValue placeholder={language === "ar" ? "اختر المركز" : "Select Center"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{language === "ar" ? "-- لا يوجد --" : "-- None --"}</SelectItem>
+                    <SelectItem value="none">{language === "ar" ? "-- لا يوجد --" : "-- None --"}</SelectItem>
                     <SelectItem value="حجيف">حجيف</SelectItem>
                     <SelectItem value="غدو">غدو</SelectItem>
                     <SelectItem value="زيك">زيك</SelectItem>
