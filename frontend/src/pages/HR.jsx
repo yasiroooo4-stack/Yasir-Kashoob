@@ -254,6 +254,7 @@ const HR = () => {
     fingerprint_id: "",
     fingerprint_id_2: "",
     fingerprint_center_2: "",
+    additional_fingerprints: [], // [{fingerprint_id: "", center: ""}]
     work_location: "",
     exclude_from_payroll: false,
     permissions: [],
