@@ -136,6 +136,7 @@ const Layout = () => {
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
     { path: "/reports", icon: BarChart3, label: "reports" },
     { path: "/advanced-reports", icon: PieChart, label: "advanced_reports", roles: ["admin", "hr_manager", "accountant"], departments: ["hr", "finance", "admin", "it"] },
+    { path: "/permissions", icon: Shield, label: "permissions_management", roles: ["admin"], departments: ["admin", "it", "الإدارة العامة", "تقنية المعلومات"] },
     { path: "/settings", icon: Palette, label: "appearance_settings", roles: ["admin"], departments: ["admin", "it"] },
     { path: "/notification-settings", icon: Bell, label: "notification_settings", roles: ["admin"], departments: ["admin", "it"] },
     { path: "/cctv", icon: Video, label: "cctv_system", roles: ["admin"], departments: ["admin", "it", "operations"] },
