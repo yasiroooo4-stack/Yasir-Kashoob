@@ -3990,7 +3990,7 @@ async def sync_single_attendance(
         existing = await db.hr_attendance.find_one({
             "employee_id": employee["id"],
             "date": record.get("date")
-        })
+        }, {"_id": 0})
         
         new_location = record.get("device_ip") or record.get("location", "unknown")
         
