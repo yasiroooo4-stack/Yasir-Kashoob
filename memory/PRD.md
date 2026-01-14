@@ -6,8 +6,8 @@
 - إدارة الموارد البشرية والرواتب
 - إدارة المبيعات والعملاء
 - النظام المالي والخزينة
-- إدارة المخزون والأعلاف
-- **إدارة المستودعات الشاملة (جديد)**
+- **إدارة المخازن الشاملة مع دعم المراكز المتعددة**
+- **نظام التنبيهات الذكي للمخزون**
 
 ## Tech Stack
 - **Frontend:** React + Vite + Tailwind CSS + Shadcn/UI
@@ -17,126 +17,144 @@
 
 ## الميزات المُنجزة
 
-### ديسمبر 2025 - يناير 2026
+### يناير 2026
 
-#### استيراد البيانات
-- ✅ استيراد رواتب الموظفين من Excel
-- ✅ استيراد بيانات الحسابات البنكية للموظفين
-- ✅ استيراد بيانات 1,148 مورد من 6 ملفات Excel
-- ✅ إضافة حقول Bank Name و Bank Account في صفحة Salary Structures
+#### نظام إدارة المخازن المتقدم (14 يناير 2026) ✅
 
-#### إدارة رصيد الإجازات (يناير 2026)
-- ✅ واجهة إدارة معدل الإجازات الشهرية
-- ✅ دعم المعدل التلقائي والمعدل اليدوي
-- ✅ API endpoint: `PUT /api/hr/employees/{id}/leave-rate`
+##### هيكل المخازن حسب المراكز
+- ✅ 6 مراكز: زيك، حجيف، غدو، طاقة، ثمريت، مرباط
+- ✅ كل مركز له مخزن داخلي ومخزن خارجي
+- ✅ المخزن الداخلي يشمل:
+  - مخزن المختبر (مع تحكم بالحرارة وتتبع الصلاحية)
+  - مخزن الصيانة
+  - مخزن مواد التنظيف
+  - مخزن معدات الحماية (PPE)
+- ✅ المخزن الخارجي يشمل:
+  - مخزن الأعلاف
+  - مخزن المعدات وقطع الغيار
+  - مخزن مستلزمات الموردين (دلو ستيل للموردين الجدد)
 
-#### إصلاحات الأخطاء (يناير 2026)
-- ✅ إصلاح خطأ حفظ معدل الإجازة الشهري
-- ✅ جعل حقول phone و address اختيارية في نموذج Supplier
-- ✅ إصلاح صفحة System Settings لعرض المراكز
+##### نظام التنبيهات الذكي
+- ✅ تنبيه نقص المخزون (عندما تقل الكمية عن الحد الأدنى)
+- ✅ تنبيه قرب انتهاء الصلاحية (قابل للتعديل - افتراضي 30 يوم)
+- ✅ تنبيه المنتجات المنتهية الصلاحية
+- ✅ أولويات التنبيهات: حرج، عالي، متوسط، منخفض
+- ✅ إرسال التنبيهات إلى:
+  - مشرف المركز (بريد إلكتروني + SMS)
+  - مسؤول إدارة المخازن (بريد إلكتروني + SMS)
+  - إشعارات داخل النظام (تبويب التنبيهات)
 
-#### نظام إدارة المستودعات (14 يناير 2026) ✅
-- ✅ CRUD كامل للمخازن (إنشاء، قراءة، تحديث، حذف)
-- ✅ CRUD كامل للمنتجات مع فئات المنتجات
-- ✅ حركات المخزون: استلام، صرف، تحويل، تعديل
-- ✅ إدارة المحاليل والكواشف للمختبر
-- ✅ تسجيل استهلاك المحاليل
-- ✅ تصدير التقارير (Excel): المخزون، الحركات، المحاليل
-- ✅ ملخص المخزون: إجمالي المنتجات، المخازن، المنخفض، المنتهي الصلاحية
-- ✅ واجهة مستخدم شاملة مع تبويبات متعددة
+##### APIs الجديدة
+- `GET /api/warehouse/centers` - قائمة المراكز
+- `GET /api/warehouse/warehouse-categories` - تصنيفات المخازن
+- `POST /api/warehouse/warehouses/initialize-all` - إنشاء 54 مخزن لجميع المراكز
+- `GET /api/warehouse/warehouses/by-center` - المخازن مجمعة حسب المركز
+- `GET /api/warehouse/alerts` - قائمة التنبيهات
+- `GET /api/warehouse/alerts/summary` - ملخص التنبيهات
+- `POST /api/warehouse/alerts/{id}/resolve` - حل تنبيه
+- `POST /api/warehouse/alerts/check` - تشغيل فحص المخزون
+- `PUT /api/warehouse/warehouses/{id}/alert-recipients` - تحديث مستلمي التنبيهات
 
 #### معامل خصم الغياب (14 يناير 2026) ✅
-- ✅ API للحصول على معامل الخصم: `GET /api/hr/settings/absence-deduction-factor`
-- ✅ API لتحديث معامل الخصم: `PUT /api/hr/settings/absence-deduction-factor`
-- ✅ دعم القيم: 0 (بدون خصم)، 0.5 (نصف يوم)، 1.0 (يوم كامل)، 1.5، 2.0
+- ✅ API: `GET/PUT /api/hr/settings/absence-deduction-factor`
+- ✅ دعم القيم: 0 (بدون خصم) → 2.0 (ضعف الخصم)
 - ✅ تطبيق المعامل في حساب الرواتب
-- ✅ واجهة تعديل المعامل في صفحة كشف الرواتب
+- ✅ واجهة تعديل في صفحة كشف الرواتب
 
-#### تنظيف الكود (14 يناير 2026) ✅
-- ✅ حذف ملف Inventory.jsx القديم
-- ✅ إزالة الـ route والـ import من App.js
+## واجهة المستخدم المحدثة
+
+### صفحة إدارة المخازن
+- تبويب **نظرة عامة**: ملخص المخزون والحركات
+- تبويب **المخزون**: قائمة المنتجات والكميات
+- تبويب **الحركات**: سجل حركات الاستلام والصرف والتحويل
+- تبويب **المحاليل**: إدارة كواشف ومحاليل المختبر
+- تبويب **التنبيهات** (جديد): عرض تنبيهات المخزون بحسب الأولوية
+- تبويب **المخازن** (محدث): المخازن مجمعة حسب المراكز
+- تبويب **المنتجات**: إدارة الأصناف
+
+### بطاقات ملخص المخازن
+- عدد المخازن: 58 (54 تم إنشاؤها تلقائياً + 4 سابقة)
+- عدد المنتجات
+- المنتجات منخفضة المخزون
+- المنتجات المنتهية الصلاحية
+- حركات اليوم
+- قيمة المخزون
 
 ## المهام المعلقة
 
 ### P1 - قيد التنفيذ
-- [ ] إعادة هيكلة server.py الضخم (~12,500 سطر)
-  - [x] إنشاء customers_routes.py
-  - [x] إنشاء sales_routes.py
-  - [x] إنشاء inventory_routes.py
-  - [x] إنشاء milk_routes.py
-  - [x] إنشاء warehouse_routes.py
-  - [ ] نقل المزيد من endpoints (payments, reports, settings)
+- [ ] تكامل SMS للتنبيهات (يحتاج إعداد مزود SMS)
+- [ ] تكامل Email للتنبيهات (يحتاج إعداد SMTP)
+- [ ] إعادة هيكلة server.py
 
 ### P2 - قادم
+- [ ] دمج المستودعات مع النظام المالي
 - [ ] تكامل Hikvision للبث المباشر
-- [ ] تكوين SMS Provider
-- [ ] تكامل Ekomilk Scale (RS232)
-- [ ] دمج المستودعات مع المالية والمبيعات
+- [ ] تكامل Ekomilk Scale
 
 ### P3 - مستقبلي
 - [ ] AI Camera لمسح QR
 - [ ] تحسين بوابة الموردين
-- [ ] تصدير بيانات الرواتب لملف Excel للبنك
-
-## مشاكل معروفة
-1. **نظام i18n مختلط:** بعض الصفحات تستخدم `useLanguage` hook وأخرى تستخدم `react-i18next`
-
-## API Endpoints الرئيسية
-
-### إدارة المستودعات
-- `GET /api/warehouse/warehouses` - قائمة المخازن
-- `POST /api/warehouse/warehouses` - إنشاء مخزن
-- `GET /api/warehouse/products` - قائمة المنتجات
-- `POST /api/warehouse/products` - إنشاء منتج
-- `GET /api/warehouse/stock` - المخزون الحالي
-- `GET /api/warehouse/stock/summary` - ملخص المخزون
-- `POST /api/warehouse/movements/receive` - استلام بضاعة
-- `POST /api/warehouse/movements/issue` - صرف بضاعة
-- `POST /api/warehouse/movements/transfer` - تحويل بين المخازن
-- `GET /api/warehouse/solutions` - المحاليل
-- `POST /api/warehouse/solutions/consumption` - تسجيل استهلاك
-- `GET /api/warehouse/export/stock/excel` - تصدير المخزون
-
-### معامل خصم الغياب
-- `GET /api/hr/settings/absence-deduction-factor` - جلب المعامل
-- `PUT /api/hr/settings/absence-deduction-factor` - تحديث المعامل
-
-### الحضور والرواتب
-- `GET /api/hr/attendance/report` - تقرير الحضور
-- `GET /api/hr/attendance` - سجلات الحضور
-- `POST /api/hr/payroll/periods/{id}/calculate` - حساب الرواتب
 
 ## بيانات الاختبار
 - Admin: `yasir` / `admin123`
-- Test Admin: `testadmin` / `admin123`
+- عدد المخازن: 58
+- عدد المراكز: 6
 
-## هيكل المشروع
+## هيكل قاعدة البيانات المحدث
+
+### warehouses (محدث)
+```json
+{
+  "id": "uuid",
+  "name": "مخزن المختبر - زيك",
+  "code": "ZIK-LAB",
+  "location": "زيك",
+  "warehouse_type": "internal",
+  "warehouse_category": "lab",
+  "center_id": "uuid",
+  "center_name": "زيك",
+  "parent_warehouse_id": "uuid",
+  "parent_warehouse_name": "مخزن داخلي - زيك",
+  "temperature_controlled": true,
+  "supervisor_email": "supervisor@example.com",
+  "supervisor_phone": "+968...",
+  "warehouse_manager_email": "manager@example.com",
+  "warehouse_manager_phone": "+968...",
+  "alert_on_low_stock": true,
+  "alert_on_expiry": true,
+  "expiry_alert_days": 30
+}
 ```
-/app
-├── backend/
-│   ├── models/all_models.py
-│   ├── routes/
-│   │   ├── warehouse_routes.py   # إدارة المستودعات
-│   │   ├── customers_routes.py
-│   │   ├── sales_routes.py
-│   │   ├── permissions_routes.py
-│   │   └── ...
-│   └── server.py
-└── frontend/
-    └── src/
-        ├── App.js
-        ├── pages/
-        │   ├── WarehouseManagement.jsx  # صفحة المستودعات
-        │   ├── Payroll.jsx              # كشف الرواتب + معامل الخصم
-        │   ├── HR.jsx
-        │   └── ...
-        └── components/ui/
+
+### stock_alerts (جديد)
+```json
+{
+  "id": "uuid",
+  "alert_type": "low_stock|expiry_warning|expired",
+  "product_id": "uuid",
+  "product_name": "كاشف الحموضة",
+  "warehouse_id": "uuid",
+  "warehouse_name": "مخزن المختبر - زيك",
+  "center_name": "زيك",
+  "current_quantity": 5,
+  "min_quantity": 10,
+  "expiry_date": "2026-02-01",
+  "days_to_expiry": 18,
+  "message": "مخزون منخفض: كاشف الحموضة",
+  "priority": "high",
+  "is_resolved": false,
+  "notified_via_email": true,
+  "notified_via_sms": false
+}
 ```
 
 ## آخر تحديث: 14 يناير 2026
 
 ### التحديثات الأخيرة:
-1. ✅ نظام إدارة المستودعات الشامل
-2. ✅ معامل خصم الغياب القابل للتعديل
-3. ✅ حذف صفحة Inventory القديمة
-4. ✅ إصلاح prefix الـ API للمستودعات
+1. ✅ هيكلة المخازن حسب المراكز الستة
+2. ✅ إنشاء 54 مخزن تلقائياً (9 لكل مركز)
+3. ✅ نظام التنبيهات الذكي للمخزون
+4. ✅ تتبع الصلاحية للكواشف والمحاليل
+5. ✅ دعم إرسال التنبيهات لمشرف المركز ومسؤول المخازن
+6. ✅ معامل خصم الغياب القابل للتعديل
