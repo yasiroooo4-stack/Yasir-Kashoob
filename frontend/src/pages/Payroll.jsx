@@ -250,11 +250,15 @@ const Payroll = () => {
     const statusConfig = {
       draft: { label: language === "ar" ? "مسودة" : "Draft", variant: "secondary" },
       calculated: { label: language === "ar" ? "محسوب" : "Calculated", variant: "outline" },
-      approved: { label: language === "ar" ? "معتمد" : "Approved", variant: "default" },
+      pending_hr: { label: language === "ar" ? "بانتظار HR" : "Pending HR", variant: "outline", className: "bg-yellow-100 text-yellow-800" },
+      pending_finance: { label: language === "ar" ? "بانتظار المالية" : "Pending Finance", variant: "outline", className: "bg-blue-100 text-blue-800" },
+      pending_gm: { label: language === "ar" ? "بانتظار المدير العام" : "Pending GM", variant: "outline", className: "bg-purple-100 text-purple-800" },
+      approved: { label: language === "ar" ? "معتمد ✓" : "Approved ✓", variant: "default", className: "bg-green-500" },
+      disbursed: { label: language === "ar" ? "تم الصرف ✓" : "Disbursed ✓", variant: "default", className: "bg-emerald-600" },
       paid: { label: language === "ar" ? "مدفوع" : "Paid", variant: "default" },
     };
     const config = statusConfig[status] || statusConfig.draft;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
   };
 
   const currentPeriod = periods.find(p => p.id === selectedPeriod);
