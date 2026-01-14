@@ -132,6 +132,7 @@ const Layout = () => {
     { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
     { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "finance", "admin", "it"] },
     { path: "/warehouse", icon: Package, label: "warehouse_management", departments: ["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"] },
+    { path: "/material-issue", icon: PackageOpen, label: "material_issue" },
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
     { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
