@@ -1980,6 +1980,25 @@ AVAILABLE_PERMISSIONS = [
     "purchases_create",         # إنشاء عملية شراء
     "purchases_edit",           # تعديل عملية شراء
     "purchases_approve",        # الموافقة على المشتريات
+    
+    # إدارة المخازن
+    "warehouse_view",           # عرض المخازن
+    "warehouse_create",         # إنشاء مخزن
+    "warehouse_edit",           # تعديل مخزن
+    "warehouse_delete",         # حذف مخزن
+    "warehouse_products_view",  # عرض المنتجات
+    "warehouse_products_create", # إضافة منتج
+    "warehouse_products_edit",  # تعديل منتج
+    "warehouse_stock_receive",  # استلام بضاعة
+    "warehouse_stock_issue",    # صرف بضاعة
+    "warehouse_stock_transfer", # تحويل بضاعة
+    "warehouse_stock_adjust",   # تعديل/جرد المخزون
+    "warehouse_solutions_view", # عرض المحاليل
+    "warehouse_solutions_create", # إضافة محلول
+    "warehouse_solutions_edit", # تعديل محلول
+    "warehouse_consumption_record", # تسجيل استهلاك
+    "warehouse_reports",        # تقارير المخازن
+    "warehouse_export",         # تصدير بيانات المخازن
 ]
 
 class DepartmentPermissions(BaseModel):
