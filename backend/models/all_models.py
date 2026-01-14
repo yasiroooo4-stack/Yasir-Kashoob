@@ -1696,3 +1696,100 @@ class LeaveBalanceLog(BaseModel):
     new_balance: float
     reason: str = "monthly_accrual"  # monthly_accrual, manual_adjustment, used
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# ==================== نظام الصلاحيات (Permission System) ====================
+
+# الأقسام المتاحة
+DEPARTMENTS = [
+    "الموارد البشرية",      # HR
+    "المالية",              # Finance
+    "المشتريات والمبيعات",  # Procurement & Sales
+    "العمليات",             # Operations
+    "المشاريع",             # Projects
+    "التسويق",              # Marketing
+    "القانون",              # Legal
+    "تقنية المعلومات",      # IT
+    "الإدارة العامة",       # General Management
+]
+
+# الصلاحيات المتاحة
+AVAILABLE_PERMISSIONS = [
+    # استلام الحليب
+    "milk_reception_view",      # عرض استلامات الحليب
+    "milk_reception_create",    # إنشاء استلام حليب
+    "milk_reception_edit",      # تعديل استلام حليب
+    "milk_reception_delete",    # حذف استلام حليب
+    
+    # إدارة الموردين
+    "suppliers_view",           # عرض الموردين
+    "suppliers_create",         # إضافة مورد
+    "suppliers_edit",           # تعديل مورد
+    "suppliers_delete",         # حذف مورد
+    "suppliers_payment",        # دفع للموردين
+    
+    # إدارة العملاء
+    "customers_view",           # عرض العملاء
+    "customers_create",         # إضافة عميل
+    "customers_edit",           # تعديل عميل
+    "customers_delete",         # حذف عميل
+    "customers_receipt",        # استلام من العملاء
+    
+    # المبيعات
+    "sales_view",               # عرض المبيعات
+    "sales_create",             # إنشاء عملية بيع
+    "sales_edit",               # تعديل عملية بيع
+    
+    # التقارير
+    "reports_view",             # عرض التقارير
+    "reports_financial",        # التقارير المالية
+    "reports_operational",      # التقارير التشغيلية
+    "reports_export",           # تصدير التقارير
+    
+    # الموارد البشرية
+    "hr_employees_view",        # عرض الموظفين
+    "hr_employees_edit",        # تعديل بيانات الموظفين
+    "hr_attendance_view",       # عرض الحضور
+    "hr_attendance_edit",       # تعديل الحضور
+    "hr_leaves_view",           # عرض الإجازات
+    "hr_leaves_approve",        # الموافقة على الإجازات
+    "hr_payroll_view",          # عرض كشف الرواتب
+    "hr_payroll_edit",          # تعديل كشف الرواتب
+    "hr_payroll_approve_hr",    # موافقة HR على الرواتب
+    "hr_payroll_approve_finance", # موافقة المالية على الرواتب
+    "hr_payroll_approve_gm",    # موافقة المدير العام على الرواتب
+    
+    # المخزون
+    "inventory_view",           # عرض المخزون
+    "inventory_edit",           # تعديل المخزون
+    
+    # الخزينة
+    "treasury_view",            # عرض الخزينة
+    "treasury_transactions",    # إجراء معاملات الخزينة
+    
+    # النظام والإعدادات
+    "settings_view",            # عرض الإعدادات
+    "settings_edit",            # تعديل الإعدادات
+    "users_manage",             # إدارة المستخدمين
+    "permissions_grant",        # منح الصلاحيات للآخرين
+]
+
+class DepartmentPermissions(BaseModel):
+    """صلاحيات القسم"""
+    model_config = ConfigDict(extra="ignore")
+    department: str
+    permissions: List[str] = []  # قائمة الصلاحيات المتاحة لهذا القسم
+
+class UserPermissionGrant(BaseModel):
+    """منح صلاحية لموظف"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: str
+    permission: str
+    granted_by: str
+    granted_by_name: str
+    granted_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    expires_at: Optional[str] = None  # تاريخ انتهاء الصلاحية (اختياري)
+    is_active: bool = True
+
