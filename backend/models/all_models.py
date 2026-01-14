@@ -2048,6 +2048,17 @@ AVAILABLE_PERMISSIONS = [
     "warehouse_consumption_record", # تسجيل استهلاك
     "warehouse_reports",        # تقارير المخازن
     "warehouse_export",         # تصدير بيانات المخازن
+    
+    # صلاحيات صرف المواد حسب نوع المخزن
+    "warehouse_issue_lab",      # صرف من مخزن المختبر
+    "warehouse_issue_cleaning", # صرف من مخزن مواد التنظيف
+    "warehouse_issue_maintenance", # صرف من مخزن الصيانة
+    "warehouse_issue_ppe",      # صرف من مخزن معدات الحماية
+    "warehouse_issue_feed",     # صرف من مخزن الأعلاف
+    "warehouse_issue_equipment", # صرف من مخزن المعدات وقطع الغيار
+    "warehouse_issue_supplies", # صرف من مخزن مستلزمات الموردين
+    "warehouse_issue_all",      # صرف من جميع المخازن (للمشرفين)
+    "warehouse_approve_issue",  # الموافقة على طلبات الصرف
 ]
 
 class DepartmentPermissions(BaseModel):
