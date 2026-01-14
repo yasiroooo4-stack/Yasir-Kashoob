@@ -122,17 +122,23 @@ const MaterialIssue = () => {
   const fetchMyWarehouses = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API}/api/warehouse/my-warehouses`, {
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
+      const response = await axios.get(`${API}/warehouse/my-warehouses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMyWarehouses(response.data);
-      if (response.data.length > 0 && !selectedWarehouse) {
+      console.log("Fetched warehouses:", response.data);
+      setMyWarehouses(response.data || []);
+      if (response.data && response.data.length > 0 && !selectedWarehouse) {
         setSelectedWarehouse(response.data[0].id);
       }
     } catch (error) {
       console.error("Error fetching warehouses:", error);
+      toast.error(t("فشل في جلب المخازن", "Failed to fetch warehouses"));
     }
-  }, [selectedWarehouse]);
+  }, [selectedWarehouse, t]);
 
   // Fetch stock for selected warehouse
   const fetchMyStock = useCallback(async () => {
