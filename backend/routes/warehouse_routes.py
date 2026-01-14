@@ -305,6 +305,8 @@ async def check_stock_alerts():
 async def get_warehouses(
     status: Optional[str] = None,
     warehouse_type: Optional[str] = None,
+    center_name: Optional[str] = None,
+    warehouse_category: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """الحصول على قائمة المخازن"""
@@ -313,9 +315,115 @@ async def get_warehouses(
         query["status"] = status
     if warehouse_type:
         query["warehouse_type"] = warehouse_type
+    if center_name:
+        query["center_name"] = center_name
+    if warehouse_category:
+        query["warehouse_category"] = warehouse_category
     
-    warehouses = await db.warehouses.find(query, {"_id": 0}).sort("name", 1).to_list(100)
+    warehouses = await db.warehouses.find(query, {"_id": 0}).sort([("center_name", 1), ("warehouse_type", 1), ("name", 1)]).to_list(200)
     return warehouses
+
+
+@router.get("/warehouses/by-center")
+async def get_warehouses_by_center(current_user: dict = Depends(get_current_user)):
+    """الحصول على المخازن مجمعة حسب المركز"""
+    warehouses = await db.warehouses.find({"status": "active"}, {"_id": 0}).to_list(200)
+    
+    result = {}
+    for center in CENTERS:
+        result[center] = {
+            "internal": [],
+            "external": []
+        }
+    
+    for wh in warehouses:
+        center = wh.get("center_name")
+        wh_type = wh.get("warehouse_type", "internal")
+        if center in result:
+            if wh_type in result[center]:
+                result[center][wh_type].append(wh)
+    
+    return result
+
+
+@router.post("/warehouses/initialize-all")
+async def initialize_all_warehouses(
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """إنشاء جميع المخازن لكل المراكز"""
+    created_count = 0
+    skipped_count = 0
+    
+    for center in CENTERS:
+        # الحصول على معلومات المركز
+        center_doc = await db.centers.find_one({"name": center}, {"_id": 0})
+        center_id = center_doc.get("id") if center_doc else None
+        
+        for wh_type, wh_config in WAREHOUSE_CATEGORIES.items():
+            # إنشاء المخزن الرئيسي (داخلي/خارجي)
+            main_code = f"{center[:3].upper()}-{wh_type[:3].upper()}"
+            existing_main = await db.warehouses.find_one({"code": main_code})
+            
+            main_warehouse_id = None
+            if not existing_main:
+                main_warehouse = Warehouse(
+                    name=f"{wh_config['name_ar']} - {center}",
+                    code=main_code,
+                    location=center,
+                    warehouse_type=wh_type,
+                    center_id=center_id,
+                    center_name=center,
+                    alert_on_low_stock=True,
+                    alert_on_expiry=True
+                )
+                await db.warehouses.insert_one(main_warehouse.model_dump())
+                main_warehouse_id = main_warehouse.id
+                created_count += 1
+            else:
+                main_warehouse_id = existing_main.get("id")
+                skipped_count += 1
+            
+            # إنشاء المخازن الفرعية
+            for sub_wh in wh_config["sub_warehouses"]:
+                sub_code = f"{center[:3].upper()}-{sub_wh['category'][:4].upper()}"
+                existing_sub = await db.warehouses.find_one({"code": sub_code})
+                
+                if not existing_sub:
+                    sub_warehouse = Warehouse(
+                        name=f"{sub_wh['name_ar']} - {center}",
+                        code=sub_code,
+                        location=center,
+                        warehouse_type=wh_type,
+                        warehouse_category=sub_wh["category"],
+                        center_id=center_id,
+                        center_name=center,
+                        parent_warehouse_id=main_warehouse_id,
+                        parent_warehouse_name=f"{wh_config['name_ar']} - {center}",
+                        temperature_controlled=sub_wh.get("temp_controlled", False),
+                        alert_on_low_stock=True,
+                        alert_on_expiry=sub_wh.get("expiry_tracking", False)
+                    )
+                    await db.warehouses.insert_one(sub_warehouse.model_dump())
+                    created_count += 1
+                else:
+                    skipped_count += 1
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="initialize_warehouses",
+        entity_type="warehouse",
+        entity_id="all",
+        entity_name="جميع المخازن",
+        details=f"تم إنشاء {created_count} مخزن جديد، تم تخطي {skipped_count} موجود"
+    )
+    
+    return {
+        "message": f"تم إنشاء {created_count} مخزن بنجاح",
+        "created": created_count,
+        "skipped": skipped_count,
+        "centers": CENTERS
+    }
 
 
 @router.post("/warehouses")
