@@ -1029,7 +1029,11 @@ async def issue_stock(
     data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    """صرف بضاعة"""
+    """
+    صرف بضاعة مع تكامل مالي
+    قيد مالي: من حـ/ المصروفات (حسب نوع المخزن) إلى حـ/ المخزون
+    للمبيعات: من حـ/ تكلفة البضاعة المباعة إلى حـ/ المخزون
+    """
     product_id = data.get("product_id")
     warehouse_id = data.get("warehouse_id")
     quantity = data.get("quantity")
@@ -1038,6 +1042,8 @@ async def issue_stock(
     customer_name = data.get("customer_name")
     reference_number = data.get("reference_number")
     notes = data.get("notes")
+    issue_type = data.get("issue_type", "consumption")  # consumption=استهلاك داخلي, sales=مبيعات
+    create_journal = data.get("create_journal", True)
     
     # الحصول على المخزون الحالي
     stock = await db.product_stock.find_one({
@@ -1050,6 +1056,10 @@ async def issue_stock(
     
     if stock.get("available_quantity", 0) < quantity:
         raise HTTPException(status_code=400, detail="الكمية المطلوبة غير متوفرة")
+    
+    # استخدام سعر التكلفة من المخزون إذا لم يُحدد
+    cost_price = stock.get("unit_price", unit_price) or unit_price
+    total_value = quantity * cost_price
     
     # تحديث المخزون
     new_quantity = stock.get("quantity", 0) - quantity
@@ -1072,11 +1082,11 @@ async def issue_stock(
         product_name=stock.get("product_name", ""),
         product_code=stock.get("product_code", ""),
         quantity=quantity,
-        unit_price=unit_price,
-        total_value=quantity * unit_price,
+        unit_price=cost_price,
+        total_value=total_value,
         from_warehouse_id=warehouse_id,
         from_warehouse_name=warehouse.get("name", "") if warehouse else "",
-        reference_type="sales",
+        reference_type="sales" if issue_type == "sales" else "consumption",
         reference_number=reference_number,
         customer_id=customer_id,
         customer_name=customer_name,
@@ -1087,7 +1097,46 @@ async def issue_stock(
     
     await db.stock_movements.insert_one(movement.model_dump())
     
-    return {"message": "تم صرف البضاعة بنجاح", "movement": movement.model_dump()}
+    # إنشاء قيد مالي آلي
+    journal_entry = None
+    if create_journal and total_value > 0:
+        if issue_type == "sales":
+            # صرف للمبيعات: تكلفة البضاعة المباعة
+            debit_account = FINANCE_ACCOUNTS["cogs"]
+            description = f"تكلفة بيع: {stock.get('product_name', '')} - {quantity} للعميل {customer_name or ''}"
+        else:
+            # صرف للاستهلاك الداخلي: حسب نوع المخزن
+            debit_account = await get_expense_account_for_warehouse(warehouse_id)
+            description = f"صرف مخزون: {stock.get('product_name', '')} - {quantity} من {warehouse.get('name', '')}"
+        
+        journal_entry = await create_warehouse_journal_entry(
+            description=description,
+            lines=[
+                {"account_number": debit_account, "debit": total_value, "credit": 0, "description": f"صرف مخزون - {stock.get('product_name', '')}"},
+                {"account_number": FINANCE_ACCOUNTS["inventory"], "debit": 0, "credit": total_value, "description": f"تخفيض المخزون"}
+            ],
+            reference_type="warehouse_issue",
+            reference_id=movement.id,
+            created_by_id=current_user["id"],
+            created_by_name=current_user.get("full_name", "")
+        )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="issue_stock",
+        entity_type="stock",
+        entity_id=product_id,
+        entity_name=stock.get("product_name", ""),
+        details=f"صرف {quantity} من {stock.get('product_name', '')} بقيمة {total_value}"
+    )
+    
+    return {
+        "message": "تم صرف البضاعة بنجاح",
+        "movement": movement.model_dump(),
+        "journal_entry": journal_entry.get("entry_number") if journal_entry else None,
+        "total_value": total_value
+    }
 
 
 @router.post("/movements/transfer")
