@@ -559,6 +559,39 @@ const SystemSettings = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Appearance Settings Tab */}
+        <TabsContent value="appearance">
+          <Suspense fallback={
+            <div className="flex justify-center items-center p-12">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          }>
+            <AppearanceSettings embedded={true} />
+          </Suspense>
+        </TabsContent>
+
+        {/* Notification Settings Tab */}
+        <TabsContent value="notifications">
+          <Suspense fallback={
+            <div className="flex justify-center items-center p-12">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          }>
+            <NotificationSettings embedded={true} />
+          </Suspense>
+        </TabsContent>
+
+        {/* CCTV System Tab */}
+        <TabsContent value="cctv">
+          <Suspense fallback={
+            <div className="flex justify-center items-center p-12">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          }>
+            <CCTVSystem embedded={true} />
+          </Suspense>
+        </TabsContent>
       </Tabs>
 
       {/* Center Dialog */}
