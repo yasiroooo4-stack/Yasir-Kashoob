@@ -136,6 +136,7 @@ const HR = () => {
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [refreshingAttendance, setRefreshingAttendance] = useState(false);
   
   // New dialogs for HR features
   const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
