@@ -34,7 +34,7 @@ import {
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const CCTVSystem = () => {
+const CCTVSystem = ({ embedded = false }) => {
   const { language } = useLanguage();
   const t = (ar, en) => language === "ar" ? ar : en;
   const [cameras, setCameras] = useState([]);
