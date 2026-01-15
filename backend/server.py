@@ -4826,6 +4826,17 @@ async def get_leave_requests(
 
 @api_router.put("/hr/leave-requests/{request_id}/approve")
 async def approve_leave_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """الموافقة على طلب إجازة مع تحديث سجلات الحضور وخصم الرصيد"""
+    
+    # Get the leave request first
+    request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+    
+    if request.get("status") == "approved":
+        raise HTTPException(status_code=400, detail="Leave request already approved")
+    
+    # Update leave request status
     result = await db.hr_leave_requests.update_one(
         {"id": request_id},
         {"$set": {
@@ -4834,11 +4845,113 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
             "approved_at": datetime.now(timezone.utc).isoformat()
         }}
     )
+    
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Leave request not found")
     
-    request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    employee_id = request.get("employee_id")
+    start_date = request.get("start_date")
+    end_date = request.get("end_date")
+    leave_type = request.get("leave_type", "annual")
     
+    # Calculate leave days
+    leave_days = 0
+    if start_date and end_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00")) if isinstance(start_date, str) else start_date
+            end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00")) if isinstance(end_date, str) else end_date
+            
+            # Ensure we have date objects
+            if hasattr(start_dt, 'date'):
+                start_dt = start_dt.date()
+            if hasattr(end_dt, 'date'):
+                end_dt = end_dt.date()
+            
+            # Calculate days between dates
+            if isinstance(start_dt, datetime):
+                start_dt = start_dt.date()
+            if isinstance(end_dt, datetime):
+                end_dt = end_dt.date()
+                
+            leave_days = (end_dt - start_dt).days + 1
+            
+            # Update attendance records for the leave period
+            current_date = start_dt
+            while current_date <= end_dt:
+                date_str = current_date.isoformat()
+                
+                # Update existing attendance record from "absent" to "leave"
+                update_result = await db.hr_attendance.update_one(
+                    {
+                        "employee_id": employee_id,
+                        "date": date_str,
+                        "status": {"$in": ["absent", "غائب"]}
+                    },
+                    {
+                        "$set": {
+                            "status": "leave",
+                            "leave_type": leave_type,
+                            "leave_request_id": request_id,
+                            "updated_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    }
+                )
+                
+                # If no existing record, create one with leave status
+                if update_result.matched_count == 0:
+                    existing = await db.hr_attendance.find_one({
+                        "employee_id": employee_id,
+                        "date": date_str
+                    })
+                    if not existing:
+                        await db.hr_attendance.insert_one({
+                            "id": str(uuid4()),
+                            "employee_id": employee_id,
+                            "employee_name": request.get("employee_name"),
+                            "date": date_str,
+                            "status": "leave",
+                            "leave_type": leave_type,
+                            "leave_request_id": request_id,
+                            "created_at": datetime.now(timezone.utc).isoformat()
+                        })
+                
+                current_date = current_date + timedelta(days=1)
+            
+        except Exception as e:
+            print(f"Error processing leave dates: {e}")
+    
+    # Deduct from leave balance if it's annual leave
+    if leave_type in ["annual", "سنوية", "اعتيادية"] and leave_days > 0 and employee_id:
+        try:
+            # Get current employee leave balance
+            employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+            if employee:
+                current_balance = employee.get("leave_balance", 21)  # Default 21 days
+                new_balance = max(0, current_balance - leave_days)
+                
+                # Update employee leave balance
+                await db.hr_employees.update_one(
+                    {"id": employee_id},
+                    {
+                        "$set": {"leave_balance": new_balance},
+                        "$push": {
+                            "leave_balance_log": {
+                                "date": datetime.now(timezone.utc).isoformat(),
+                                "action": "deduct",
+                                "days": leave_days,
+                                "reason": f"إجازة من {start_date} إلى {end_date}",
+                                "request_id": request_id,
+                                "previous_balance": current_balance,
+                                "new_balance": new_balance,
+                                "approved_by": current_user["full_name"]
+                            }
+                        }
+                    }
+                )
+        except Exception as e:
+            print(f"Error updating leave balance: {e}")
+    
+    # Log activity
     await log_activity(
         user_id=current_user["id"],
         user_name=current_user["full_name"],
@@ -4846,10 +4959,16 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
         entity_type="leave_request",
         entity_id=request_id,
         entity_name=request.get("employee_name"),
-        details=f"الموافقة على إجازة: {request.get('employee_name')}"
+        details=f"الموافقة على إجازة: {request.get('employee_name')} - {leave_days} يوم من {start_date} إلى {end_date}"
     )
     
-    return request
+    # Return updated request
+    updated_request = await db.hr_leave_requests.find_one({"id": request_id}, {"_id": 0})
+    return {
+        **updated_request,
+        "leave_days_deducted": leave_days,
+        "message": f"تمت الموافقة على الإجازة وخصم {leave_days} يوم من الرصيد" if leave_days > 0 else "تمت الموافقة على الإجازة"
+    }
 
 @api_router.put("/hr/leave-requests/{request_id}/reject")
 async def reject_leave_request(request_id: str, reason: str = "", current_user: dict = Depends(get_current_user)):
