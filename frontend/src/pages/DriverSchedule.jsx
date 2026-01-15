@@ -822,8 +822,7 @@ const DriverSchedule = ({ embedded = false }) => {
         </Button>
         <Button variant="outline" onClick={fetchSchedules}>
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
-        </div>
+        </Button>
       </div>
 
       {/* No drivers warning */}
