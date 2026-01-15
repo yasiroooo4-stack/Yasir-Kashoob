@@ -503,6 +503,8 @@ const resources = {
       "advanced_reports": "Advanced Reports",
       "notification_settings": "Notification Settings",
       "cctv_system": "CCTV System",
+      "extra_pay_approvals": "Extra Pay Approvals",
+      "appearance_settings": "Appearance Settings",
       
       // Analysis
       "analysis": "Smart Analysis",
