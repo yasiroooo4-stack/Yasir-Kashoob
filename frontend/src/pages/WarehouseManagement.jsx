@@ -67,7 +67,9 @@ import {
   History,
   Settings,
   Filter,
+  ShoppingCart,
 } from "lucide-react";
+import MaterialIssue from "./MaterialIssue";
 
 const API = process.env.REACT_APP_BACKEND_URL + "/api";
 
