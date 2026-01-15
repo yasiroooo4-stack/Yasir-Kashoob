@@ -1692,37 +1692,49 @@ async def import_milk_receptions(
         )
     
     # جلب قائمة الموردين للمطابقة
-    suppliers = await db.suppliers.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(1000)
-    supplier_map = {s["name"].strip().lower(): s for s in suppliers}
+    suppliers = await db.suppliers.find({}, {"_id": 0, "id": 1, "name": 1, "code": 1}).to_list(10000)
+    supplier_map_name = {s["name"].strip().lower(): s for s in suppliers}
+    supplier_map_code = {str(s.get("code", "")).strip(): s for s in suppliers if s.get("code")}
     
     # معالجة كل صف
     imported = []
     errors = []
     skipped = []
+    new_suppliers_created = []
     
     for idx, row in df.iterrows():
         try:
-            supplier_name = str(row.get('supplier_name', '')).strip()
-            if not supplier_name:
-                errors.append(f"صف {idx + 2}: اسم المورد فارغ")
+            # البحث عن المورد بالكود أولاً ثم بالاسم
+            supplier = None
+            supplier_code = str(row.get('supplier_code', '')).strip() if pd.notna(row.get('supplier_code')) else ''
+            supplier_name = str(row.get('supplier_name', '')).strip() if pd.notna(row.get('supplier_name')) else ''
+            
+            if not supplier_name and not supplier_code:
+                errors.append(f"صف {idx + 2}: بيانات المورد فارغة")
                 continue
             
-            # البحث عن المورد
-            supplier_key = supplier_name.lower()
-            supplier = supplier_map.get(supplier_key)
+            # البحث بالكود
+            if supplier_code and supplier_code in supplier_map_code:
+                supplier = supplier_map_code[supplier_code]
             
-            if not supplier:
-                # محاولة البحث الجزئي
-                for key, sup in supplier_map.items():
-                    if supplier_key in key or key in supplier_key:
-                        supplier = sup
-                        break
+            # البحث بالاسم
+            if not supplier and supplier_name:
+                supplier_key = supplier_name.lower()
+                supplier = supplier_map_name.get(supplier_key)
+                
+                # البحث الجزئي
+                if not supplier:
+                    for key, sup in supplier_map_name.items():
+                        if supplier_key in key or key in supplier_key:
+                            supplier = sup
+                            break
             
             if not supplier:
                 # إنشاء مورد جديد
                 new_supplier = {
                     "id": str(uuid.uuid4()),
-                    "name": supplier_name,
+                    "name": supplier_name if supplier_name else f"مورد #{supplier_code}",
+                    "code": supplier_code,
                     "phone": "",
                     "address": "",
                     "supplier_type": "individual",
@@ -1733,39 +1745,59 @@ async def import_milk_receptions(
                 }
                 await db.suppliers.insert_one(new_supplier)
                 supplier = new_supplier
-                supplier_map[supplier_key] = supplier
+                supplier_map_name[supplier_name.lower()] = supplier
+                if supplier_code:
+                    supplier_map_code[supplier_code] = supplier
+                new_suppliers_created.append(supplier_name or f"مورد #{supplier_code}")
             
-            # قراءة البيانات المطلوبة
-            quantity = float(row.get('quantity_liters', 0))
-            price = float(row.get('price_per_liter', 0))
-            fat = float(row.get('fat_percentage', 0))
-            protein = float(row.get('protein_percentage', 0))
-            temp = float(row.get('temperature', 0))
+            # قراءة البيانات
+            quantity = float(row.get('quantity_liters', 0)) if pd.notna(row.get('quantity_liters')) else 0
             
-            # البيانات الاختيارية
+            # السعر - من RTPL أو حساب من المبلغ الإجمالي
+            price = 0
+            if 'price_per_liter' in row and pd.notna(row.get('price_per_liter')):
+                price = float(row.get('price_per_liter', 0))
+            elif 'total_amount' in row and pd.notna(row.get('total_amount')) and quantity > 0:
+                price = float(row.get('total_amount', 0)) / quantity
+            
+            # الدهون
+            fat = float(row.get('fat_percentage', 0)) if pd.notna(row.get('fat_percentage')) else 0
+            
+            # البروتين
+            protein = float(row.get('protein_percentage', 0)) if pd.notna(row.get('protein_percentage')) else 0
+            
+            # الحرارة - إذا لم تكن موجودة نستخدم قيمة افتراضية
+            temp = float(row.get('temperature', 4)) if pd.notna(row.get('temperature')) else 4
+            
+            # البيانات الإضافية من Ekomilk
             density = float(row.get('density')) if pd.notna(row.get('density')) else None
-            acidity = float(row.get('acidity')) if pd.notna(row.get('acidity')) else None
+            snf = float(row.get('snf_percentage')) if pd.notna(row.get('snf_percentage')) else None
+            clr = float(row.get('clr')) if pd.notna(row.get('clr')) else None
+            lactose = float(row.get('lactose')) if pd.notna(row.get('lactose')) else None
             water_content = float(row.get('water_content')) if pd.notna(row.get('water_content')) else None
+            milk_type = str(row.get('milk_type', 'cow')) if pd.notna(row.get('milk_type')) else 'cow'
+            shift = str(row.get('shift', 'Morning')) if pd.notna(row.get('shift')) else 'Morning'
+            
+            # المبلغ الإجمالي
+            total_amount = float(row.get('total_amount', 0)) if pd.notna(row.get('total_amount')) else (quantity * price)
+            
             notes = str(row.get('notes', '')) if pd.notna(row.get('notes')) else ''
             
-            # is_accepted - الافتراضي True
-            is_accepted = True
-            if 'is_accepted' in row and pd.notna(row.get('is_accepted')):
-                val = row.get('is_accepted')
-                if isinstance(val, bool):
-                    is_accepted = val
-                elif isinstance(val, str):
-                    is_accepted = val.lower() in ['true', 'yes', 'نعم', '1', 'مقبول']
-                elif isinstance(val, (int, float)):
-                    is_accepted = val == 1
-            
-            # التاريخ
+            # التاريخ - دعم صيغ متعددة
             reception_date = None
             if 'reception_date' in row and pd.notna(row.get('reception_date')):
                 try:
                     date_val = row.get('reception_date')
                     if isinstance(date_val, str):
-                        reception_date = date_val
+                        # محاولة التعرف على صيغة التاريخ
+                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y']:
+                            try:
+                                reception_date = datetime.strptime(date_val, fmt).isoformat()
+                                break
+                            except:
+                                continue
+                        if not reception_date:
+                            reception_date = date_val
                     else:
                         reception_date = pd.to_datetime(date_val).isoformat()
                 except:
@@ -1773,16 +1805,19 @@ async def import_milk_receptions(
             else:
                 reception_date = datetime.now(timezone.utc).isoformat()
             
-            # التحقق من البيانات المطلوبة
+            # التحقق من البيانات الأساسية
             if quantity <= 0:
-                skipped.append(f"صف {idx + 2}: الكمية صفر أو سالبة")
+                skipped.append(f"صف {idx + 2}: الكمية صفر أو سالبة ({quantity})")
                 continue
-            if price <= 0:
-                errors.append(f"صف {idx + 2}: سعر اللتر غير صحيح")
-                continue
-            if fat <= 0:
-                errors.append(f"صف {idx + 2}: نسبة الدهون غير صحيحة")
-                continue
+            
+            # تحويل نوع الحليب
+            milk_type_map = {
+                'cow': 'cow', 'بقر': 'cow', 'أبقار': 'cow',
+                'camel': 'camel', 'إبل': 'camel', 'جمل': 'camel', 'ناقة': 'camel',
+                'goat': 'goat', 'ماعز': 'goat',
+                'sheep': 'sheep', 'أغنام': 'sheep', 'غنم': 'sheep',
+            }
+            milk_type = milk_type_map.get(milk_type.lower(), 'cow')
             
             # إنشاء سجل استلام الحليب
             reception = {
