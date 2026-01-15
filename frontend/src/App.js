@@ -455,6 +455,11 @@ function App() {
                     <SalaryStructures />
                   </ProtectedRoute>
                 } />
+                <Route path="extra-pay-approvals" element={
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                    <ExtraPayApprovals />
+                  </ProtectedRoute>
+                } />
                 <Route path="analytics" element={
                   <ProtectedRoute>
                     <Analytics />
