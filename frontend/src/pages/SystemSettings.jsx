@@ -301,11 +301,14 @@ const SystemSettings = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 max-w-xl">
+        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
           <TabsTrigger value="centers"><Building className="w-4 h-4 me-1" />{t("المراكز", "Centers")}</TabsTrigger>
           <TabsTrigger value="prices"><DollarSign className="w-4 h-4 me-1" />{t("الأسعار", "Prices")}</TabsTrigger>
           <TabsTrigger value="feeds"><Package className="w-4 h-4 me-1" />{t("الأعلاف", "Feeds")}</TabsTrigger>
           <TabsTrigger value="alerts"><Bell className="w-4 h-4 me-1" />{t("التنبيهات", "Alerts")}</TabsTrigger>
+          <TabsTrigger value="appearance"><Palette className="w-4 h-4 me-1" />{t("المظهر", "Appearance")}</TabsTrigger>
+          <TabsTrigger value="notifications"><Bell className="w-4 h-4 me-1" />{t("الإشعارات", "Notifications")}</TabsTrigger>
+          <TabsTrigger value="cctv"><Video className="w-4 h-4 me-1" />{t("الكاميرات", "CCTV")}</TabsTrigger>
         </TabsList>
 
         {/* Centers Tab */}
