@@ -70,6 +70,22 @@ const Layout = () => {
   const [backgroundUrl, setBackgroundUrl] = useState("");
   const [backgrounds, setBackgrounds] = useState([]);
   const [backgroundDialogOpen, setBackgroundDialogOpen] = useState(false);
+  
+  // Account Settings State
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   // Fetch user settings and backgrounds
   useEffect(() => {
