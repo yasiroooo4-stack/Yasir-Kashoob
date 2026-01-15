@@ -78,7 +78,7 @@ class SyncManagerApp:
     def load_config(self):
         """تحميل ملف التكوين"""
         default_config = {
-            'api_url': 'https://milkmanage-3.preview.emergentagent.com',
+            'api_url': 'https://agro-manager-7.preview.emergentagent.com',
             'username': 'yasir',
             'password': 'admin123',
             'sync_interval': 3600,  # ساعة واحدة (60 دقيقة)

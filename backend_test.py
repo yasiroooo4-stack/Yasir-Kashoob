@@ -20,7 +20,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://milkmanage-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://agro-manager-7.preview.emergentagent.com/api"
 
 # Test credentials (as specified in review request)
 TEST_USERNAME = "yasir"
