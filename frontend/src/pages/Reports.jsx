@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { API, useLanguage } from "../App";
@@ -44,7 +44,11 @@ import {
   Calendar,
   Building,
   BarChart3,
+  PieChart,
 } from "lucide-react";
+
+// Lazy load Advanced Reports component
+const AdvancedReportsContent = lazy(() => import("./AdvancedReports"));
 
 const Reports = () => {
   const { language } = useLanguage();
