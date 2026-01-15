@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { API, useLanguage } from "../App";
+import { API, useLanguage, useAuth } from "../App";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -30,8 +30,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import { Checkbox } from "../components/ui/checkbox";
-import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle, Search, Upload, Download, FileSpreadsheet } from "lucide-react";
+import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle, Search, Upload, Download, FileSpreadsheet, Pencil, Trash2 } from "lucide-react";
 
 const MilkReception = () => {
   const { t } = useTranslation();
