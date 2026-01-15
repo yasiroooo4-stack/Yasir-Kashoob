@@ -44,21 +44,34 @@ const Login = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Hero Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative">
-        <img
-          src="https://customer-assets.emergentagent.com/job_agrodairy/artifacts/w3qzpk27_Milk-Bottle-2.png"
-          alt="الحليب"
-          className="w-full h-full object-contain bg-gradient-to-br from-sky-100 to-sky-200"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-        <div className="absolute bottom-12 start-12 end-12 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-              <Milk className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold">{t("app_name")}</h1>
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }} />
+        </div>
+        
+        {/* Animated Logo */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative">
+            {/* Glow Effect */}
+            <div className="absolute inset-0 blur-3xl bg-white/20 rounded-full animate-pulse" />
+            <img
+              src={LOGO_URL}
+              alt="المروج للألبان"
+              className="relative w-72 h-72 object-contain drop-shadow-2xl animate-float"
+              style={{
+                animation: "float 3s ease-in-out infinite",
+              }}
+            />
           </div>
-          <p className="text-lg text-white/80 max-w-md">
+        </div>
+        
+        {/* Bottom Content */}
+        <div className="absolute bottom-12 start-12 end-12 text-white">
+          <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">Almorooj Dairy</h1>
+          <p className="text-lg text-white/90 max-w-md">
             {language === "ar" 
               ? "نظام متكامل لإدارة مراكز تجميع الحليب بكفاءة عالية"
               : "A comprehensive system for managing milk collection centers efficiently"}
@@ -67,7 +80,7 @@ const Login = () => {
       </div>
 
       {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col">
+      <div className="w-full lg:w-1/2 flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
         {/* Language Toggle */}
         <div className="flex justify-end p-4">
           <Button
@@ -84,14 +97,31 @@ const Login = () => {
 
         {/* Form Container */}
         <div className="flex-1 flex items-center justify-center p-8">
-          <Card className="w-full max-w-md border-0 shadow-xl">
+          <Card className="w-full max-w-md border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
             <CardHeader className="text-center pb-2">
-              <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                  <Milk className="w-7 h-7 text-white" />
+              {/* Welcome Logo - Animated */}
+              <div className="flex flex-col items-center justify-center mb-6">
+                <div className="relative">
+                  {/* Pulse Ring */}
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" style={{ animationDuration: "2s" }} />
+                  <img
+                    src={LOGO_URL}
+                    alt="المروج للألبان"
+                    className="relative w-24 h-24 object-contain rounded-2xl shadow-lg animate-bounce-slow"
+                    style={{
+                      animation: "bounce-slow 2s ease-in-out infinite",
+                    }}
+                  />
                 </div>
+                <h2 className="mt-4 text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
+                  Almorooj Dairy
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {language === "ar" ? "المروج للألبان" : "Al-Morooj Dairy"}
+                </p>
               </div>
-              <CardTitle className="text-2xl font-bold">
+              
+              <CardTitle className="text-xl font-bold text-slate-800">
                 {t("login_title")}
               </CardTitle>
               <CardDescription>
