@@ -1819,10 +1819,6 @@ async def download_import_template(current_user: dict = Depends(get_current_user
         "reception_date": ["2026-01-15", "2026-01-15"],
         "notes": ["ملاحظة 1", ""]
     }
-        "price_per_liter": [0.25, 0.25],
-        "reception_date": ["2026-01-15", "2026-01-15"],
-        "notes": ["ملاحظة 1", ""]
-    }
     
     df = pd.DataFrame(template_data)
     
