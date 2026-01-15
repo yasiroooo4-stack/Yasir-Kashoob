@@ -572,6 +572,110 @@ const Layout = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Profile Edit Dialog */}
+      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="w-5 h-5" />
+              {language === "ar" ? "تعديل الملف الشخصي" : "Edit Profile"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الاسم الكامل" : "Full Name"}</Label>
+              <Input
+                value={profileForm.full_name}
+                onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+                placeholder={language === "ar" ? "أدخل الاسم الكامل" : "Enter full name"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "البريد الإلكتروني" : "Email"}</Label>
+              <Input
+                type="email"
+                value={profileForm.email}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                placeholder={language === "ar" ? "أدخل البريد الإلكتروني" : "Enter email"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "رقم الهاتف" : "Phone"}</Label>
+              <Input
+                value={profileForm.phone}
+                onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                placeholder={language === "ar" ? "أدخل رقم الهاتف" : "Enter phone number"}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileDialogOpen(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={savingProfile}>
+              {savingProfile ? (
+                <>{language === "ar" ? "جاري الحفظ..." : "Saving..."}</>
+              ) : (
+                <>{language === "ar" ? "حفظ" : "Save"}</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5" />
+              {language === "ar" ? "تغيير كلمة المرور" : "Change Password"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "كلمة المرور الحالية" : "Current Password"}</Label>
+              <Input
+                type="password"
+                value={passwordForm.current_password}
+                onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+                placeholder={language === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "كلمة المرور الجديدة" : "New Password"}</Label>
+              <Input
+                type="password"
+                value={passwordForm.new_password}
+                onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                placeholder={language === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "تأكيد كلمة المرور" : "Confirm Password"}</Label>
+              <Input
+                type="password"
+                value={passwordForm.confirm_password}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                placeholder={language === "ar" ? "أعد إدخال كلمة المرور الجديدة" : "Re-enter new password"}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button onClick={handleSavePassword} disabled={savingPassword}>
+              {savingPassword ? (
+                <>{language === "ar" ? "جاري الحفظ..." : "Saving..."}</>
+              ) : (
+                <>{language === "ar" ? "تغيير" : "Change"}</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
