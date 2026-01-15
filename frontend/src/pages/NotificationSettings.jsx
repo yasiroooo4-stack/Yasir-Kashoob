@@ -274,11 +274,13 @@ const NotificationSettings = ({ embedded = false }) => {
   ];
 
   return (
-    <div className="space-y-6 p-6" dir={language === "ar" ? "rtl" : "ltr"} data-testid="notification-settings-page">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t("إعدادات الإشعارات والتقارير", "Notifications & Reports Settings")}</h1>
-        <p className="text-gray-600">{t("إدارة SMS وجدولة التقارير التلقائية", "Manage SMS and automatic report scheduling")}</p>
-      </div>
+    <div className={embedded ? "space-y-4" : "space-y-6 p-6"} dir={language === "ar" ? "rtl" : "ltr"} data-testid="notification-settings-page">
+      {!embedded && (
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t("إعدادات الإشعارات والتقارير", "Notifications & Reports Settings")}</h1>
+          <p className="text-gray-600">{t("إدارة SMS وجدولة التقارير التلقائية", "Manage SMS and automatic report scheduling")}</p>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
