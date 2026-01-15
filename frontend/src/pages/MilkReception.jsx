@@ -769,20 +769,27 @@ const MilkReception = () => {
 
             {/* Required Columns Info */}
             <div className="p-4 border rounded-lg">
-              <p className="font-medium mb-2">
-                {language === "ar" ? "الأعمدة المطلوبة:" : "Required columns:"}
+              <p className="font-medium mb-2 text-red-600">
+                {language === "ar" ? "الأعمدة المطلوبة (*):" : "Required columns (*):"}
               </p>
-              <ul className="text-sm space-y-1 text-muted-foreground">
+              <ul className="text-sm space-y-1 text-muted-foreground grid grid-cols-2 gap-1">
                 <li>• <code>supplier_name</code> - {language === "ar" ? "اسم المورد" : "Supplier name"}</li>
-                <li>• <code>quantity_liters</code> - {language === "ar" ? "كمية الحليب (لتر)" : "Milk quantity (liters)"}</li>
-                <li>• <code>fat_percentage</code> - {language === "ar" ? "نسبة الدهون" : "Fat percentage"}</li>
+                <li>• <code>quantity_liters</code> - {language === "ar" ? "الكمية (لتر)" : "Quantity (L)"}</li>
+                <li>• <code>price_per_liter</code> - {language === "ar" ? "سعر اللتر" : "Price per liter"}</li>
+                <li>• <code>fat_percentage</code> - {language === "ar" ? "نسبة الدهون" : "Fat %"}</li>
+                <li>• <code>protein_percentage</code> - {language === "ar" ? "نسبة البروتين" : "Protein %"}</li>
+                <li>• <code>temperature</code> - {language === "ar" ? "درجة الحرارة" : "Temperature"}</li>
               </ul>
-              <p className="font-medium mt-3 mb-2">
+              <p className="font-medium mt-3 mb-2 text-gray-600">
                 {language === "ar" ? "الأعمدة الاختيارية:" : "Optional columns:"}
               </p>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• <code>protein_percentage</code>, <code>temperature</code>, <code>price_per_liter</code></li>
-                <li>• <code>reception_date</code>, <code>notes</code></li>
+              <ul className="text-sm space-y-1 text-muted-foreground grid grid-cols-2 gap-1">
+                <li>• <code>density</code> - {language === "ar" ? "الكثافة" : "Density"}</li>
+                <li>• <code>acidity</code> - {language === "ar" ? "الحموضة" : "Acidity"}</li>
+                <li>• <code>water_content</code> - {language === "ar" ? "نسبة الماء" : "Water %"}</li>
+                <li>• <code>is_accepted</code> - {language === "ar" ? "مقبول (نعم/لا)" : "Accepted"}</li>
+                <li>• <code>reception_date</code> - {language === "ar" ? "التاريخ" : "Date"}</li>
+                <li>• <code>notes</code> - {language === "ar" ? "ملاحظات" : "Notes"}</li>
               </ul>
             </div>
 
