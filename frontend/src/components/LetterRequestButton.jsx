@@ -156,28 +156,11 @@ const LetterRequestButton = ({ currentUser }) => {
       return;
     }
 
-    // Validate leave dates if letter type is leave_request
-    if (letterForm.letter_type === "leave_request") {
-      if (!letterForm.leave_start_date || !letterForm.leave_end_date) {
-        toast.error(language === "ar" ? "يرجى تحديد فترة الإجازة" : "Please select leave period");
-        return;
-      }
-    }
-
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
       
-      // Prepare submission data
-      const submitData = { ...letterForm };
-      if (letterForm.leave_start_date) {
-        submitData.leave_start_date = format(letterForm.leave_start_date, "yyyy-MM-dd");
-      }
-      if (letterForm.leave_end_date) {
-        submitData.leave_end_date = format(letterForm.leave_end_date, "yyyy-MM-dd");
-      }
-      
-      await axios.post(`${API}/api/hr/official-letters`, submitData, {
+      await axios.post(`${API}/api/hr/official-letters`, letterForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
