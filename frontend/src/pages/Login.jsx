@@ -6,7 +6,10 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Milk, Globe, Eye, EyeOff } from "lucide-react";
+import { Globe, Eye, EyeOff } from "lucide-react";
+
+// شعار المروج للألبان
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_milkmanage-3/artifacts/valn5g7i_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%AC%20%D9%84%D9%84%D8%A7%D9%84%D8%A8%D8%A7%D9%86.png";
 
 const Login = () => {
   const { t } = useTranslation();
