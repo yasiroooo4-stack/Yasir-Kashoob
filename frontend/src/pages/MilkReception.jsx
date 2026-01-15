@@ -107,6 +107,18 @@ const MilkReception = () => {
     }
   };
 
+  const fetchUserPermissions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/permissions/user`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserPermissions(res.data?.granted_permissions || []);
+    } catch (error) {
+      console.log("Could not fetch permissions");
+    }
+  };
+
   const fetchData = async () => {
     try {
       const [receptionsRes, suppliersRes] = await Promise.all([
