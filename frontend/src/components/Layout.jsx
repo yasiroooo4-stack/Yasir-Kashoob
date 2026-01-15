@@ -10,7 +10,6 @@ import {
   ShoppingCart,
   Package,
   Wallet,
-  UserCog,
   BarChart3,
   Menu,
   X,
@@ -33,10 +32,6 @@ import {
   CalendarClock,
   Landmark,
   DollarSign,
-  PieChart,
-  Bell,
-  Video,
-  Palette,
   Shield,
 } from "lucide-react";
 import { Button } from "./ui/button";
