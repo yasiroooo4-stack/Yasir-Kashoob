@@ -1552,8 +1552,8 @@ async def import_milk_receptions(
 ):
     """
     استيراد بيانات استلام الحليب من ملف Excel أو CSV
-    الأعمدة المطلوبة: supplier_name, quantity_liters, fat_percentage
-    الأعمدة الاختيارية: reception_date, price_per_liter, protein_percentage, temperature, density, acidity, notes
+    الأعمدة المطلوبة: supplier_name, quantity_liters, price_per_liter, fat_percentage, protein_percentage, temperature
+    الأعمدة الاختيارية: reception_date, density, acidity, water_content, is_accepted, notes
     """
     import pandas as pd
     
@@ -1570,35 +1570,77 @@ async def import_milk_receptions(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"خطأ في قراءة الملف: {str(e)}")
     
-    # التحقق من الأعمدة المطلوبة
-    required_columns = ['supplier_name', 'quantity_liters', 'fat_percentage']
+    # الأعمدة المطلوبة - نفس حقول نموذج الإضافة
+    required_columns = ['supplier_name', 'quantity_liters', 'price_per_liter', 'fat_percentage', 'protein_percentage', 'temperature']
+    
     # محاولة التعرف على أسماء الأعمدة بالعربية والإنجليزية
     column_mapping = {
+        # المورد
         'اسم المورد': 'supplier_name',
         'المورد': 'supplier_name',
         'supplier': 'supplier_name',
         'name': 'supplier_name',
+        'اسم': 'supplier_name',
+        # الكمية
         'الكمية': 'quantity_liters',
         'كمية الحليب': 'quantity_liters',
+        'الكمية (لتر)': 'quantity_liters',
         'quantity': 'quantity_liters',
         'liters': 'quantity_liters',
-        'الدهون': 'fat_percentage',
-        'نسبة الدهون': 'fat_percentage',
-        'fat': 'fat_percentage',
-        'البروتين': 'protein_percentage',
-        'نسبة البروتين': 'protein_percentage',
-        'protein': 'protein_percentage',
-        'الحرارة': 'temperature',
-        'درجة الحرارة': 'temperature',
-        'temp': 'temperature',
-        'الكثافة': 'density',
-        'الحموضة': 'acidity',
+        'كمية': 'quantity_liters',
+        # السعر
         'السعر': 'price_per_liter',
         'سعر اللتر': 'price_per_liter',
         'price': 'price_per_liter',
+        'price_per_liter': 'price_per_liter',
+        'سعر': 'price_per_liter',
+        # الدهون
+        'الدهون': 'fat_percentage',
+        'نسبة الدهون': 'fat_percentage',
+        'fat': 'fat_percentage',
+        'fat_percentage': 'fat_percentage',
+        'دهون': 'fat_percentage',
+        '% دهون': 'fat_percentage',
+        # البروتين
+        'البروتين': 'protein_percentage',
+        'نسبة البروتين': 'protein_percentage',
+        'protein': 'protein_percentage',
+        'protein_percentage': 'protein_percentage',
+        'بروتين': 'protein_percentage',
+        '% بروتين': 'protein_percentage',
+        # الحرارة
+        'الحرارة': 'temperature',
+        'درجة الحرارة': 'temperature',
+        'temp': 'temperature',
+        'temperature': 'temperature',
+        'حرارة': 'temperature',
+        # الكثافة
+        'الكثافة': 'density',
+        'density': 'density',
+        'كثافة': 'density',
+        # الحموضة
+        'الحموضة': 'acidity',
+        'acidity': 'acidity',
+        'حموضة': 'acidity',
+        # نسبة الماء
+        'نسبة الماء': 'water_content',
+        'الماء': 'water_content',
+        'water': 'water_content',
+        'water_content': 'water_content',
+        'ماء': 'water_content',
+        # مقبول
+        'مقبول': 'is_accepted',
+        'accepted': 'is_accepted',
+        'is_accepted': 'is_accepted',
+        # التاريخ
         'التاريخ': 'reception_date',
+        'تاريخ': 'reception_date',
         'date': 'reception_date',
+        'reception_date': 'reception_date',
+        # ملاحظات
         'ملاحظات': 'notes',
+        'notes': 'notes',
+        'ملاحظة': 'notes',
     }
     
     # تحويل أسماء الأعمدة
