@@ -27,13 +27,13 @@ async def get_drivers(current_user: dict = Depends(get_current_user)):
     # البحث عن الموظفين بوظيفة سائق
     drivers = await db.hr_employees.find({
         "$or": [
-            {"job_title": {"$regex": "سائق", "$options": "i"}},
-            {"job_title": {"$regex": "driver", "$options": "i"}},
+            {"position": {"$regex": "سائق", "$options": "i"}},
+            {"position": {"$regex": "driver", "$options": "i"}},
             {"department": {"$regex": "النقل", "$options": "i"}},
             {"department": {"$regex": "transport", "$options": "i"}},
         ],
-        "status": "active"
-    }, {"_id": 0, "id": 1, "name": 1, "job_title": 1, "phone": 1}).to_list(100)
+        "is_active": True
+    }, {"_id": 0, "id": 1, "name": 1, "position": 1, "phone": 1}).to_list(100)
     
     return drivers
 
