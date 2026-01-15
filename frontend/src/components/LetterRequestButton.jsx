@@ -183,8 +183,6 @@ const LetterRequestButton = ({ currentUser }) => {
         purpose: "",
         recipient: "",
         content: "",
-        leave_start_date: null,
-        leave_end_date: null,
       });
     } else if (currentEmployee) {
       // Keep current employee data for regular employees
@@ -197,8 +195,6 @@ const LetterRequestButton = ({ currentUser }) => {
         purpose: "",
         recipient: "",
         content: "",
-        leave_start_date: null,
-        leave_end_date: null,
       });
     }
   };
