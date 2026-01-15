@@ -275,7 +275,7 @@ const Reports = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-6 max-w-2xl">
           <TabsTrigger value="suppliers"><Users className="w-4 h-4 me-1" />{t("الموردين", "Suppliers")}</TabsTrigger>
           <TabsTrigger value="receptions"><Milk className="w-4 h-4 me-1" />{t("التوريدات", "Deliveries")}</TabsTrigger>
           <TabsTrigger value="finance"><DollarSign className="w-4 h-4 me-1" />{t("المالية", "Finance")}</TabsTrigger>
