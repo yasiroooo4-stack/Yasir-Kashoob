@@ -544,6 +544,34 @@ const MilkReception = () => {
                           </span>
                         )}
                       </TableCell>
+                      {(canEdit || canDelete) && (
+                        <TableCell className="text-center">
+                          <div className="flex justify-center gap-2">
+                            {canEdit && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(reception)}
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                data-testid={`edit-reception-${reception.id}`}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {canDelete && !reception.is_paid && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => confirmDelete(reception)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                data-testid={`delete-reception-${reception.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
