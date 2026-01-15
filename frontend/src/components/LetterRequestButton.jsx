@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, Plus, CalendarIcon } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -19,10 +19,6 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Calendar } from "./ui/calendar";
-import { format } from "date-fns";
-import { ar, enUS } from "date-fns/locale";
 import axios from "axios";
 import { toast } from "sonner";
 import { useLanguage } from "../App";
