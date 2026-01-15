@@ -196,6 +196,7 @@ const MilkReception = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem("token");
       const data = {
         ...formData,
         quantity_liters: parseFloat(formData.quantity_liters),
@@ -211,14 +212,77 @@ const MilkReception = () => {
         },
       };
 
-      await axios.post(`${API}/milk-receptions`, data);
-      toast.success(t("success"));
+      if (editMode && editingReception) {
+        // Update existing reception
+        await axios.put(`${API}/milk-receptions/${editingReception.id}`, data, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(language === "ar" ? "تم تعديل الاستلام بنجاح" : "Reception updated successfully");
+      } else {
+        // Create new reception
+        await axios.post(`${API}/milk-receptions`, data, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(t("success"));
+      }
+      
       setDialogOpen(false);
+      setEditMode(false);
+      setEditingReception(null);
       resetForm();
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || t("error"));
     }
+  };
+
+  // Open edit dialog
+  const handleEdit = (reception) => {
+    setEditMode(true);
+    setEditingReception(reception);
+    setFormData({
+      supplier_id: reception.supplier_id || "",
+      supplier_name: reception.supplier_name || "",
+      quantity_liters: reception.quantity_liters?.toString() || "",
+      price_per_liter: reception.price_per_liter?.toString() || "",
+      quality_test: {
+        fat_percentage: reception.quality_test?.fat_percentage?.toString() || "",
+        protein_percentage: reception.quality_test?.protein_percentage?.toString() || "",
+        temperature: reception.quality_test?.temperature?.toString() || "",
+        density: reception.quality_test?.density?.toString() || "",
+        acidity: reception.quality_test?.acidity?.toString() || "",
+        water_content: reception.quality_test?.water_content?.toString() || "",
+        is_accepted: reception.quality_test?.is_accepted ?? true,
+        notes: reception.quality_test?.notes || "",
+      },
+    });
+    setSupplierCode(reception.supplier_code || "");
+    setSupplierFound(suppliers.find(s => s.id === reception.supplier_id));
+    setDialogOpen(true);
+  };
+
+  // Delete reception
+  const handleDelete = async () => {
+    if (!deletingReception) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API}/milk-receptions/${deletingReception.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تم حذف الاستلام بنجاح" : "Reception deleted successfully");
+      setDeleteDialogOpen(false);
+      setDeletingReception(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ في الحذف" : "Delete error"));
+    }
+  };
+
+  // Open delete confirmation
+  const confirmDelete = (reception) => {
+    setDeletingReception(reception);
+    setDeleteDialogOpen(true);
   };
 
   const resetForm = () => {
