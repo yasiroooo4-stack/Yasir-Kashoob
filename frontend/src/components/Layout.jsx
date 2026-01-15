@@ -114,34 +114,48 @@ const Layout = () => {
   };
 
   const navItems = [
+    // لوحة التحكم
     { path: "/dashboard", icon: LayoutDashboard, label: "dashboard" },
+    
+    // الموردين واستلام الحليب
     { path: "/suppliers", icon: Users, label: "suppliers", departments: ["purchasing", "milk_reception", "admin", "it"] },
     { path: "/supplier-management", icon: PackageSearch, label: "supplier_management", departments: ["purchasing", "admin", "it"] },
     { path: "/milk-reception", icon: Milk, label: "milk_reception", departments: ["milk_reception", "admin", "it"] },
+    
+    // العملاء والمبيعات
     { path: "/customers", icon: ShoppingCart, label: "customers", departments: ["sales", "admin", "it"] },
     { path: "/sales", icon: ShoppingCart, label: "sales", departments: ["sales", "admin", "it"] },
+    
+    // المشتريات والمخازن
     { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
+    { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "finance", "admin", "it"] },
+    { path: "/warehouse", icon: Package, label: "warehouse_management", departments: ["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"] },
+    
+    // المالية
     { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/finance-system", icon: Landmark, label: "finance_system", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
     { path: "/treasury", icon: PiggyBank, label: "treasury", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
-    { path: "/analytics", icon: BarChart3, label: "analytics" },
+    
+    // الموارد البشرية (تم دمج الرواتب وجدولة الموظفين هنا)
     { path: "/hr", icon: Building2, label: "hr", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/employee-scheduling", icon: CalendarClock, label: "employee_scheduling", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
     { path: "/payroll", icon: Calculator, label: "payroll", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/salary-structures", icon: DollarSign, label: "salary_structures", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
+    { path: "/extra-pay-approvals", icon: DollarSign, label: "extra_pay_approvals", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
+    
+    // التحليلات والتقارير (تم دمج التقارير المتقدمة هنا)
+    { path: "/analytics", icon: BarChart3, label: "analytics" },
+    { path: "/reports", icon: BarChart3, label: "reports" },
+    
+    // الأقسام الأخرى
     { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
-    { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "finance", "admin", "it"] },
-    { path: "/warehouse", icon: Package, label: "warehouse_management", departments: ["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"] },
     { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
     { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
-    { path: "/reports", icon: BarChart3, label: "reports" },
-    { path: "/advanced-reports", icon: PieChart, label: "advanced_reports", roles: ["admin", "hr_manager", "accountant"], departments: ["hr", "finance", "admin", "it"] },
-    { path: "/permissions", icon: Shield, label: "permissions_management", roles: ["admin"], departments: ["admin", "it", "الإدارة العامة", "تقنية المعلومات"] },
-    { path: "/settings", icon: Palette, label: "appearance_settings", roles: ["admin"], departments: ["admin", "it"] },
-    { path: "/notification-settings", icon: Bell, label: "notification_settings", roles: ["admin"], departments: ["admin", "it"] },
-    { path: "/cctv", icon: Video, label: "cctv_system", roles: ["admin"], departments: ["admin", "it", "operations"] },
+    
+    // إعدادات النظام (تم دمج إعدادات المظهر والإشعارات والكاميرات هنا)
     { path: "/system-settings", icon: Settings, label: "system_settings", roles: ["admin"], departments: ["admin", "it"] },
+    { path: "/permissions", icon: Shield, label: "permissions_management", roles: ["admin"], departments: ["admin", "it", "الإدارة العامة", "تقنية المعلومات"] },
   ];
 
   // Filter nav items based on role, department, and permissions
