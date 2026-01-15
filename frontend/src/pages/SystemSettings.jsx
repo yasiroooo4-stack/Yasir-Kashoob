@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { API, useLanguage } from "../App";
@@ -52,7 +52,14 @@ import {
   Phone,
   AlertTriangle,
   CheckCircle,
+  Palette,
+  Video,
 } from "lucide-react";
+
+// Lazy load additional settings components
+const AppearanceSettings = lazy(() => import("./Settings"));
+const NotificationSettings = lazy(() => import("./NotificationSettings"));
+const CCTVSystem = lazy(() => import("./CCTVSystem"));
 
 const SystemSettings = () => {
   const { language } = useLanguage();
