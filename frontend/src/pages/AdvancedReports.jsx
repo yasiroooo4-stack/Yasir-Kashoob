@@ -225,13 +225,15 @@ const AdvancedReports = ({ embedded = false }) => {
   };
 
   return (
-    <div className="space-y-6 p-6" data-testid="advanced-reports-page">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("التقارير المتقدمة", "Advanced Reports")}</h1>
-          <p className="text-gray-600">{t("تقارير مالية وتشغيلية مفصلة", "Detailed financial and operational reports")}</p>
+    <div className={embedded ? "space-y-4" : "space-y-6 p-6"} data-testid="advanced-reports-page">
+      {!embedded && (
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{t("التقارير المتقدمة", "Advanced Reports")}</h1>
+            <p className="text-gray-600">{t("تقارير مالية وتشغيلية مفصلة", "Detailed financial and operational reports")}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap">
