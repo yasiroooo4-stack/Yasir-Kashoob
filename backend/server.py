@@ -1544,6 +1544,226 @@ async def get_milk_reception(reception_id: str, current_user: dict = Depends(get
         raise HTTPException(status_code=404, detail="Milk reception not found")
     return reception
 
+
+@api_router.post("/milk-receptions/import")
+async def import_milk_receptions(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    استيراد بيانات استلام الحليب من ملف Excel أو CSV
+    الأعمدة المطلوبة: supplier_name, quantity_liters, fat_percentage
+    الأعمدة الاختيارية: reception_date, price_per_liter, protein_percentage, temperature, density, acidity, notes
+    """
+    import pandas as pd
+    
+    # قراءة الملف
+    try:
+        content = await file.read()
+        
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(io.BytesIO(content))
+        elif file.filename.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(io.BytesIO(content))
+        else:
+            raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يرجى استخدام CSV أو Excel")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"خطأ في قراءة الملف: {str(e)}")
+    
+    # التحقق من الأعمدة المطلوبة
+    required_columns = ['supplier_name', 'quantity_liters', 'fat_percentage']
+    # محاولة التعرف على أسماء الأعمدة بالعربية والإنجليزية
+    column_mapping = {
+        'اسم المورد': 'supplier_name',
+        'المورد': 'supplier_name',
+        'supplier': 'supplier_name',
+        'name': 'supplier_name',
+        'الكمية': 'quantity_liters',
+        'كمية الحليب': 'quantity_liters',
+        'quantity': 'quantity_liters',
+        'liters': 'quantity_liters',
+        'الدهون': 'fat_percentage',
+        'نسبة الدهون': 'fat_percentage',
+        'fat': 'fat_percentage',
+        'البروتين': 'protein_percentage',
+        'نسبة البروتين': 'protein_percentage',
+        'protein': 'protein_percentage',
+        'الحرارة': 'temperature',
+        'درجة الحرارة': 'temperature',
+        'temp': 'temperature',
+        'الكثافة': 'density',
+        'الحموضة': 'acidity',
+        'السعر': 'price_per_liter',
+        'سعر اللتر': 'price_per_liter',
+        'price': 'price_per_liter',
+        'التاريخ': 'reception_date',
+        'date': 'reception_date',
+        'ملاحظات': 'notes',
+    }
+    
+    # تحويل أسماء الأعمدة
+    df.columns = df.columns.str.strip().str.lower()
+    df.rename(columns={k.lower(): v for k, v in column_mapping.items()}, inplace=True)
+    
+    # التحقق من الأعمدة المطلوبة
+    missing = [col for col in required_columns if col not in df.columns]
+    if missing:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"الأعمدة التالية مطلوبة ولم يتم العثور عليها: {', '.join(missing)}. الأعمدة الموجودة: {', '.join(df.columns.tolist())}"
+        )
+    
+    # جلب قائمة الموردين للمطابقة
+    suppliers = await db.suppliers.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(1000)
+    supplier_map = {s["name"].strip().lower(): s for s in suppliers}
+    
+    # معالجة كل صف
+    imported = []
+    errors = []
+    skipped = []
+    
+    for idx, row in df.iterrows():
+        try:
+            supplier_name = str(row.get('supplier_name', '')).strip()
+            if not supplier_name:
+                errors.append(f"صف {idx + 2}: اسم المورد فارغ")
+                continue
+            
+            # البحث عن المورد
+            supplier_key = supplier_name.lower()
+            supplier = supplier_map.get(supplier_key)
+            
+            if not supplier:
+                # محاولة البحث الجزئي
+                for key, sup in supplier_map.items():
+                    if supplier_key in key or key in supplier_key:
+                        supplier = sup
+                        break
+            
+            if not supplier:
+                # إنشاء مورد جديد
+                new_supplier = {
+                    "id": str(uuid.uuid4()),
+                    "name": supplier_name,
+                    "phone": "",
+                    "address": "",
+                    "supplier_type": "individual",
+                    "bank_name": "",
+                    "account_number": "",
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.suppliers.insert_one(new_supplier)
+                supplier = new_supplier
+                supplier_map[supplier_key] = supplier
+            
+            # قراءة البيانات
+            quantity = float(row.get('quantity_liters', 0))
+            fat = float(row.get('fat_percentage', 0))
+            protein = float(row.get('protein_percentage', 3.0)) if pd.notna(row.get('protein_percentage')) else 3.0
+            temp = float(row.get('temperature', 4.0)) if pd.notna(row.get('temperature')) else 4.0
+            density = float(row.get('density', 1.030)) if pd.notna(row.get('density')) else None
+            acidity = float(row.get('acidity', 0.16)) if pd.notna(row.get('acidity')) else None
+            price = float(row.get('price_per_liter', 0.25)) if pd.notna(row.get('price_per_liter')) else 0.25
+            notes = str(row.get('notes', '')) if pd.notna(row.get('notes')) else ''
+            
+            # التاريخ
+            reception_date = None
+            if 'reception_date' in row and pd.notna(row.get('reception_date')):
+                try:
+                    date_val = row.get('reception_date')
+                    if isinstance(date_val, str):
+                        reception_date = date_val
+                    else:
+                        reception_date = pd.to_datetime(date_val).isoformat()
+                except:
+                    reception_date = datetime.now(timezone.utc).isoformat()
+            else:
+                reception_date = datetime.now(timezone.utc).isoformat()
+            
+            if quantity <= 0:
+                skipped.append(f"صف {idx + 2}: الكمية صفر أو سالبة")
+                continue
+            
+            # إنشاء سجل استلام الحليب
+            reception = {
+                "id": str(uuid.uuid4()),
+                "supplier_id": supplier["id"],
+                "supplier_name": supplier["name"],
+                "quantity_liters": quantity,
+                "price_per_liter": price,
+                "quality_test": {
+                    "fat_percentage": fat,
+                    "protein_percentage": protein,
+                    "temperature": temp,
+                    "density": density,
+                    "acidity": acidity,
+                    "water_content": None,
+                    "is_accepted": True,
+                    "notes": notes
+                },
+                "reception_date": reception_date,
+                "total_amount": quantity * price,
+                "is_paid": False,
+                "created_by": current_user.get("id"),
+                "imported": True,
+                "import_date": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.milk_receptions.insert_one(reception)
+            imported.append({
+                "supplier": supplier["name"],
+                "quantity": quantity,
+                "fat": fat,
+                "date": reception_date[:10] if reception_date else ""
+            })
+            
+        except Exception as e:
+            errors.append(f"صف {idx + 2}: {str(e)}")
+    
+    return {
+        "success": True,
+        "message": f"تم استيراد {len(imported)} سجل بنجاح",
+        "imported_count": len(imported),
+        "errors_count": len(errors),
+        "skipped_count": len(skipped),
+        "imported": imported[:20],  # أول 20 سجل فقط
+        "errors": errors[:10],  # أول 10 أخطاء
+        "skipped": skipped[:10]
+    }
+
+
+@api_router.get("/milk-receptions/import/template")
+async def download_import_template(current_user: dict = Depends(get_current_user)):
+    """تحميل قالب استيراد بيانات استلام الحليب"""
+    import pandas as pd
+    
+    # إنشاء قالب
+    template_data = {
+        "supplier_name": ["اسم المورد 1", "اسم المورد 2"],
+        "quantity_liters": [100, 150],
+        "fat_percentage": [3.5, 4.0],
+        "protein_percentage": [3.2, 3.3],
+        "temperature": [4.0, 4.5],
+        "price_per_liter": [0.25, 0.25],
+        "reception_date": ["2026-01-15", "2026-01-15"],
+        "notes": ["ملاحظة 1", ""]
+    }
+    
+    df = pd.DataFrame(template_data)
+    
+    # حفظ كملف Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='milk_receptions')
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=milk_reception_template.xlsx"}
+    )
+
 # ==================== CUSTOMER ROUTES ====================
 
 @api_router.post("/customers", response_model=Customer)
