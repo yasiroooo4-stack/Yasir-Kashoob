@@ -4585,6 +4585,133 @@ async def get_attendance(
     
     return attendance
 
+
+@api_router.get("/hr/attendance/pending-extra-pay")
+async def get_pending_extra_pay_requests(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على سجلات العمل الإضافي التي تحتاج موافقة"""
+    from datetime import datetime, timedelta
+    
+    # الافتراضي: آخر 30 يوم
+    if not end_date:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    if not start_date:
+        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    # جلب أيام الإجازة الأسبوعية والعطل الرسمية
+    holidays = await db.official_holidays.find({
+        "date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0, "date": 1}).to_list(100)
+    holiday_dates = set(h["date"] for h in holidays)
+    
+    # جلب سجلات الحضور في أيام العطل/نهاية الأسبوع بدون موافقة
+    attendance = await db.hr_attendance.find({
+        "date": {"$gte": start_date, "$lte": end_date},
+        "status": "present",
+        "$or": [
+            {"extra_pay_approved": {"$exists": False}},
+            {"extra_pay_approved": False}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    pending = []
+    for record in attendance:
+        date_str = record.get("date")
+        d = datetime.strptime(date_str, "%Y-%m-%d")
+        weekday = d.weekday()  # Friday=4, Saturday=5
+        
+        is_weekend = weekday in [4, 5]  # الجمعة أو السبت
+        is_holiday = date_str in holiday_dates
+        
+        if is_weekend or is_holiday:
+            record["is_weekend"] = is_weekend
+            record["is_holiday"] = is_holiday
+            record["day_name"] = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"][weekday]
+            pending.append(record)
+    
+    return pending
+
+
+@api_router.post("/hr/attendance/{attendance_id}/approve-extra-pay")
+async def approve_extra_pay(
+    attendance_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """الموافقة على أجر العمل الإضافي (نهاية الأسبوع/العطل)"""
+    # التحقق من الصلاحيات
+    user_permissions = current_user.get("permissions", [])
+    if "all" not in user_permissions and "admin" not in user_permissions and "hr_full" not in user_permissions and "payroll_full" not in user_permissions:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية الموافقة على أجر العمل الإضافي")
+    
+    result = await db.hr_attendance.update_one(
+        {"id": attendance_id},
+        {"$set": {
+            "extra_pay_approved": True,
+            "extra_pay_approved_by": current_user.get("id"),
+            "extra_pay_approved_by_name": current_user.get("full_name"),
+            "extra_pay_approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="سجل الحضور غير موجود")
+    
+    return {"message": "تمت الموافقة على أجر العمل الإضافي بنجاح"}
+
+
+@api_router.post("/hr/attendance/{attendance_id}/reject-extra-pay")
+async def reject_extra_pay(
+    attendance_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """رفض أجر العمل الإضافي"""
+    user_permissions = current_user.get("permissions", [])
+    if "all" not in user_permissions and "admin" not in user_permissions and "hr_full" not in user_permissions and "payroll_full" not in user_permissions:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية رفض أجر العمل الإضافي")
+    
+    result = await db.hr_attendance.update_one(
+        {"id": attendance_id},
+        {"$set": {
+            "extra_pay_approved": False,
+            "extra_pay_rejected": True,
+            "extra_pay_rejected_by": current_user.get("id"),
+            "extra_pay_rejected_by_name": current_user.get("full_name"),
+            "extra_pay_rejected_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="سجل الحضور غير موجود")
+    
+    return {"message": "تم رفض أجر العمل الإضافي"}
+
+
+@api_router.post("/hr/attendance/bulk-approve-extra-pay")
+async def bulk_approve_extra_pay(
+    attendance_ids: List[str],
+    current_user: dict = Depends(get_current_user)
+):
+    """الموافقة على أجر العمل الإضافي لعدة سجلات"""
+    user_permissions = current_user.get("permissions", [])
+    if "all" not in user_permissions and "admin" not in user_permissions and "hr_full" not in user_permissions and "payroll_full" not in user_permissions:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية الموافقة على أجر العمل الإضافي")
+    
+    result = await db.hr_attendance.update_many(
+        {"id": {"$in": attendance_ids}},
+        {"$set": {
+            "extra_pay_approved": True,
+            "extra_pay_approved_by": current_user.get("id"),
+            "extra_pay_approved_by_name": current_user.get("full_name"),
+            "extra_pay_approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": f"تمت الموافقة على {result.modified_count} سجل"}
+
+
 @api_router.get("/hr/attendance/report")
 async def get_attendance_report(
     year: int,
