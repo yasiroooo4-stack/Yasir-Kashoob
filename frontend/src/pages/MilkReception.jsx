@@ -1009,6 +1009,37 @@ const MilkReception = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">
+              {language === "ar" ? "تأكيد الحذف" : "Confirm Delete"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ar" 
+                ? `هل أنت متأكد من حذف استلام الحليب هذا؟ المورد: ${deletingReception?.supplier_name} - الكمية: ${deletingReception?.quantity_liters} لتر`
+                : `Are you sure you want to delete this milk reception? Supplier: ${deletingReception?.supplier_name} - Quantity: ${deletingReception?.quantity_liters} liters`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false);
+              setDeletingReception(null);
+            }}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {language === "ar" ? "حذف" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
