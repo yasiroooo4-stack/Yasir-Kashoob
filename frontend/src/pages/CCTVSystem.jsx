@@ -801,45 +801,83 @@ const CCTVSystem = ({ embedded = false }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" data-testid="cctv-system">
-      <div className="bg-white rounded-xl shadow-xl p-6 m-4 space-y-6 border border-slate-200">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">نظام الكاميرات CCTV</h1>
-            <p className="text-slate-600">Hikvision Integration</p>
+    <div className={embedded ? "" : "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100"} data-testid="cctv-system">
+      <div className={embedded ? "space-y-6" : "bg-white rounded-xl shadow-xl p-6 m-4 space-y-6 border border-slate-200"}>
+        {!embedded && (
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">نظام الكاميرات CCTV</h1>
+              <p className="text-slate-600">Hikvision Integration</p>
+            </div>
+          <div className="flex gap-2">
+            <Button 
+              variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
+              onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
+              data-testid="hikvision-connect-btn"
+            >
+              {hikvisionConfig.is_connected ? (
+                <>
+                  <WifiOff className="h-4 w-4 ml-2" />
+                  قطع الاتصال
+                </>
+              ) : (
+                <>
+                  <Wifi className="h-4 w-4 ml-2" />
+                  تسجيل دخول Hikvision
+                </>
+              )}
+            </Button>
+            <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
+              <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
+              فحص الكاميرات
+            </Button>
+            <Button variant="outline" onClick={() => setShowSettings(true)}>
+              <Settings className="h-4 w-4 ml-2" />
+              الإعدادات
+            </Button>
+            <Button onClick={() => setShowAddCamera(true)}>
+              <Plus className="h-4 w-4 ml-2" />
+              إضافة كاميرا
+            </Button>
           </div>
-        <div className="flex gap-2">
-          <Button 
-            variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
-            onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
-            data-testid="hikvision-connect-btn"
-          >
-            {hikvisionConfig.is_connected ? (
-              <>
-                <WifiOff className="h-4 w-4 ml-2" />
-                قطع الاتصال
-              </>
-            ) : (
-              <>
-                <Wifi className="h-4 w-4 ml-2" />
-                تسجيل دخول Hikvision
-              </>
-            )}
-          </Button>
-          <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
-            <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
-            فحص الكاميرات
-          </Button>
-          <Button variant="outline" onClick={() => setShowSettings(true)}>
-            <Settings className="h-4 w-4 ml-2" />
-            الإعدادات
-          </Button>
-          <Button onClick={() => setShowAddCamera(true)}>
-            <Plus className="h-4 w-4 ml-2" />
-            إضافة كاميرا
-          </Button>
         </div>
-      </div>
+        )}
+        
+        {/* Header for embedded mode */}
+        {embedded && (
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-2">
+              <Button 
+                variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
+                onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
+                data-testid="hikvision-connect-btn"
+              >
+                {hikvisionConfig.is_connected ? (
+                  <>
+                    <WifiOff className="h-4 w-4 ml-2" />
+                    قطع الاتصال
+                  </>
+                ) : (
+                  <>
+                    <Wifi className="h-4 w-4 ml-2" />
+                    تسجيل دخول Hikvision
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
+                <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
+                فحص
+              </Button>
+              <Button variant="outline" onClick={() => setShowSettings(true)}>
+                <Settings className="h-4 w-4 ml-2" />
+              </Button>
+              <Button onClick={() => setShowAddCamera(true)}>
+                <Plus className="h-4 w-4 ml-2" />
+                كاميرا
+              </Button>
+            </div>
+          </div>
+        )}
 
       {/* Hikvision Connection Status */}
       {hikvisionConfig.is_connected && (
