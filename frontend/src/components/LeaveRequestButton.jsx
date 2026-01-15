@@ -156,10 +156,13 @@ const LeaveRequestButton = () => {
     try {
       const token = localStorage.getItem("token");
       const data = {
-        ...leaveForm,
+        employee_id: leaveForm.employee_id,
+        employee_name: leaveForm.employee_name,
+        leave_type: leaveForm.leave_type,
         start_date: format(leaveForm.start_date, "yyyy-MM-dd"),
         end_date: format(leaveForm.end_date, "yyyy-MM-dd"),
-        days_requested: calculateDays(),
+        reason: leaveForm.reason || "",
+        days_count: calculateDays(),
       };
 
       await axios.post(`${API}/hr/leave-requests`, data, {
@@ -170,7 +173,20 @@ const LeaveRequestButton = () => {
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || (language === "ar" ? "حدث خطأ" : "An error occurred"));
+      // Handle error properly - ensure we get a string message
+      let errorMessage = language === "ar" ? "حدث خطأ" : "An error occurred";
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (typeof detail === "string") {
+          errorMessage = detail;
+        } else if (Array.isArray(detail)) {
+          // Pydantic validation errors come as array
+          errorMessage = detail.map(e => e.msg || e.message || JSON.stringify(e)).join(", ");
+        } else if (typeof detail === "object") {
+          errorMessage = detail.msg || detail.message || JSON.stringify(detail);
+        }
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
