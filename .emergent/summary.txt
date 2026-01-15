@@ -1,173 +1,158 @@
 <analysis>**original_problem_statement:**
-The user is building a comprehensive ERP system for their dairy farm. The initial focus was on bug fixes and core HR features. The scope has expanded significantly to include a sophisticated, hierarchical Warehouse Management System (WMS) integrated with the financial module, and a self-service material consumption workflow for employees.
+The user is building a comprehensive ERP system for their dairy farm. The initial scope included bug fixes and core HR features. The project has since evolved to include a hierarchical Warehouse Management System, a material consumption workflow, a driver scheduling system, data import capabilities, and complex permission management.
 
-**PRODUCT REQUIREMENTS:**
-1.  **Bug Fix (P0):** Investigate and fix a non-functional update button in the attendance view, as reported by the user with a screenshot.
-2.  **Bug Fix (P0):** Resolve an issue where employee fingerprints from some centers were not being correctly identified during attendance sync.
-3.  **Feature (P0):** Implement a comprehensive hierarchical Warehouse Management System:
-    *   Support external and internal warehouses within each of the farm's centers (Zek, Hajeef, Ghadu, etc.).
-    *   Categorize internal warehouses (e.g., Lab, Maintenance, Cleaning, Protective Gear).
-    *   Implement alerts (in-app, email, SMS) for low stock and expiring products (especially for lab reagents).
-    *   Integrate WMS with the financial system: generate automatic journal entries for stock reception (inventory debit, payables credit) and consumption (expense debit, inventory credit).
-4.  **Feature (P1):** Implement a configurable absence deduction factor in the payroll system to allow administrators to set how much a day's absence affects salary deductions (e.g., 0.5 for a half-day deduction).
-5.  **Feature (P1):** Create a simple Material Issue page where employees can request/record the consumption of materials from the warehouses they have permission to access.
-6.  **Permissions (P1):** Implement granular permissions for the WMS, allowing specific roles (lab tech, cleaning staff) to only issue items from their designated warehouses.
-7.  **Cleanup (P2):** Remove the old, redundant  page and its associated code.
+**PRODUCT REQUIREMENTS (based on latest user requests):**
+1.  **Feature (P0):** Create a new UI page/component to manage and approve pending requests for extra pay (for work on weekends/holidays).
+2.  **Feature (P0):** In the Official Letter Request form, when the user selects Leave Request as the letter type, a date range picker should dynamically appear to allow them to specify the leave dates.
+3.  **Refactor (P0):** Reorganize the main sidebar navigation:
+    *   Merge the Advanced Reports page/link into the main Reports section.
+    *   Move Appearance Settings, Notification Settings, and Camera System into the System Settings section.
+    *   Move Payroll, Salary Structure, and Employee Scheduling into the Human Resources section.
+4.  **Bug Fix (P1):** Investigate and fix a non-functional update button in the attendance view, which was reported in a previous session but never fully resolved.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
--   A hierarchical Warehouse Management System is in place. The backend supports parent-child relationships for warehouses, and an initialization endpoint has created a full structure of internal/external warehouses for all centers.
--   The WMS is integrated with the financial module. Endpoints for receiving and issuing stock now automatically generate corresponding journal entries.
--   The absence calculation logic in the payroll system has been updated. A new API and UI in the Payroll page allow an admin to get and set a global absence deduction factor.
--   The multi-fingerprint attendance sync logic has been significantly improved. It now correctly falls back to matching any additional fingerprint ID, even if a specific center location is not provided by the device, resolving the user's issue.
--   The old  page and its associated route have been deleted.
--   A new page, , has been created to allow employees to consume stock. It has associated backend APIs to fetch accessible warehouses () and stock () based on user permissions.
+-   The  page, which was previously broken, has been fixed. The root cause was a duplicated  prefix in the URL. The page has now been integrated as a tab within the Warehouse Management page.
+-   A new Driver Schedule feature has been implemented, including a backend model, API routes, and a frontend page. This feature has been integrated as a tab within the Employee Scheduling page.
+-   The permissions system has been completely overhauled. All permissions were wiped from all users, and full administrative rights were granted *only* to the IT Manager (Yasir Ahmed Hassan Kashob). The backend logic that automatically granted permissions based on job titles (e.g., General Manager) has been removed to enforce a manual grant-only system.
+-   A new feature to import milk reception data from Excel/CSV files has been added to the Milk Reception page. This includes a backend API using  to process the file and a frontend dialog for uploading. The import template now matches all fields on the manual entry form.
+-   The payroll calculation logic has been significantly improved.
+    -   A bug causing incorrect absence calculations due to wrong weekend-day data ( instead of ) has been fixed for all employees.
+    -   An approval workflow for overtime/extra pay has been implemented. The system no longer automatically adds pay for weekend work; it now requires explicit approval via new backend APIs.
 
 **Last working item**:
--   **Last item agent was working:** Debugging the newly created  page. The agent created the page for employees to consume materials, but after fixing an initial compilation error, the page displays No warehouses available for the admin user, even though the backing API () correctly returns a full list of warehouses when tested directly with .
--   **Status:** IN PROGRESS
+-   **Last item agent was working:** Acknowledging and planning a large set of UI refactoring and new feature requests from the user. The agent had just finished implementing the backend for the overtime approval workflow and was about to start building the frontend for it and reorganizing the application's sidebar navigation.
+-   **Status:** NOT STARTED
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Frontend testing agent. The agent should instruct the testing agent to log in as , navigate to the صرف المواد (Material Issue) page, and inspect the browser's console logs and network tab to understand why the data fetched from the API is not being rendered correctly.
--   **User Testing Done:** N
+-   **Which testing method agent to use?** Frontend testing agent. The upcoming tasks involve significant changes to the main layout (), routing (), and creating a new page for approvals. The testing agent should be used to verify that all links have been moved correctly, the old routes are gone, the new pages load, and there are no console errors.
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Bug:  page shows No warehouses available. (P0)
--   **Issue 2:** Bug: Update button in attendance view may still be faulty. (P0)
+-   **Issue 1:** Bug: Update button in attendance view is non-functional. (P0)
 
 **Issues Detail:**
 -   **Issue 1:**
-    -   **Description:** The new  page is not displaying the list of accessible warehouses fetched from the backend. The API call is successful, but the frontend fails to render the data, showing a No warehouses available message.
-    -   **Attempted fixes:** The agent confirmed the backend API works correctly by testing it with  and a valid auth token. An initial  path error in the frontend file was fixed.
+    -   **Description:** A user-reported bug from a previous session where an Update or Refresh button on the attendance page does not correctly reload the data. This was never fully tested or confirmed as fixed.
+    -   **Attempted fixes:** A previous agent inspected the code and saw an  handler, but did not verify the end-to-end functionality.
     -   **Next debug checklist:**
-        1.  In , add  statements inside the  function to inspect the  and see what is being passed to .
-        2.  Check the browser's developer console for any runtime errors on the  page after the API call completes.
-        3.  Verify that the  call in  is correctly sending the authorization token in its headers. The problem might be a race condition where the user's auth state is not yet available when the  hook fires.
-    -   **Why fix this issue and what will be achieved with the fix?** This is blocking the entire material consumption feature requested by the user.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
+        1.  Navigate to the HR/Attendance page.
+        2.  Add a new attendance record for an employee through another means (or manually in the DB if possible).
+        3.  Click the Refresh button on the attendance page.
+        4.  Verify if the new record appears without a full page reload.
+        5.  Inspect the browser's network tab to see if the  API call is being made on click.
+    -   **Why fix this issue and what will be achieved with the fix?** Resolves a long-standing user-reported bug and improves usability of a core HR feature.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend.
     -   **Blocked on other issue:** None.
--   **Issue 2:**
-    -   **Description:** User reported an Update button in the attendance view is not working. The agent identified a Refresh icon button that calls  and assumed it was working because the code was wired correctly. However, the agent did not visually confirm that the data on the screen actually reloads, nor did they get confirmation from the user that this solved their problem.
-    -   **Attempted fixes:** Agent inspected the code and confirmed the  handler is present.
-    -   **Next debug checklist:**
-        1.  Ask the user to confirm if the Refresh icon button (a circular arrow) is the button they meant, and if the issue is that the data on the screen doesn't change after clicking it.
-        2.  Manually test the functionality: add a new attendance record, then go to the HR page and click the refresh button to see if the new record appears without a full page reload.
-    -   **Why fix this issue and what will be achieved with the fix?** Resolves a user-reported bug in a core HR feature.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** Y (From previous session)
-    -   **Should Test frontend/backend/both after fix?** Frontend.
-    -   **Blocked on other issue:** User Clarification.
 
 **In progress Task List**:
--   **Task 1:** Complete and stabilize the Material Issue consumption workflow (P1)
-    -   **Where to resume:** Resume by debugging the frontend of . After the display bug is fixed, the agent needs to ensure the permission system works as intended (e.g., a user with  permission only sees lab-related warehouses).
-    -   **What will be achieved with this?** Employees will have a self-service portal to record material consumption, providing valuable data for inventory and financial tracking.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both.
-    -   **Blocked on something:** .
+- None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **(P1)** Integrate WMS with Sales Module: Use the  endpoint to check stock before confirming a sale.
-    -   **(P1)** Implement SMS notifications for low-stock/expiry alerts in the WMS.
-    -   **(P1)** Implement Hikvision Live Stream & Playback.
-    -   **(P2)** Refactor : Continue moving endpoints into the  directory.
+    -   **(P0)** Create a new UI page for Extra Pay Approvals that uses the  endpoint and allows a manager to approve/reject requests.
+    -   **(P0)** In , add logic to conditionally render a date-range picker when the Leave Request option is selected from the dropdown.
+    -   **(P0)** Refactor  and  to reorganize the sidebar navigation as per user's request (merging HR, Settings, and Reports sections).
 -   **Future Tasks:**
+    -   **(P1)** Integrate WMS with Sales Module: Use  to check stock before confirming a sale.
+    -   **(P1)** Implement SMS notifications for low-stock/expiry alerts.
+    -   **(P1)** Implement Hikvision Live Stream & Playback.
     -   **(P1)** Configure and Test SMS Provider.
-    -   **(P1)** Ekomilk Scale Integration (RS232).
+    -   **(P2)** Refactor : Continue moving endpoints into the  directory.
+    -   **(P2)** Ekomilk Scale Integration (RS232).
     -   **(P2)** AI Camera for QR Scanning.
-    -   **(P2)** Enhance Supplier Portal (cancel/modify feed requests).
 
 **Completed work in this session**
--   **Feature:** Implemented a full-stack solution for a configurable absence deduction factor in the payroll system.
--   **Feature:** Implemented a hierarchical warehouse structure (internal/external) and integrated the WMS with the financial system for automated journal entries.
--   **Bugfix:** Resolved the multi-fingerprint attendance sync issue by making the matching logic more robust and adding fallback mechanisms.
--   **Task:** Scaffolding for the employee self-service Material Issue page and its backing APIs.
--   **Cleanup:** Successfully removed the legacy  file and all its references in the codebase.
--   **Testing:** Used the testing agent three times, generating comprehensive test reports (, , ) and achieving 100% pass rates after each major feature implementation.
+-   **Bugfix:** Fixed  page by correcting a duplicated  prefix in URLs.
+-   **Feature:** Created a full-stack Driver Scheduling feature.
+-   **Refactor:** Integrated Material Issue into Warehouse Management and Driver Schedule into Employee Scheduling as tabs.
+-   **Bugfix/Feature:** Completely overhauled the permissions system, removing all hardcoded and automatic permissions and centralizing control under a single admin.
+-   **Feature:** Implemented a full-stack feature for importing milk reception data from Excel/CSV files.
+-   **Bugfix/Feature:** Fixed a critical payroll bug that miscalculated absences due to incorrect weekend data.
+-   **Feature:** Implemented an approval workflow for extra pay (weekend/holiday work), including backend APIs. The payroll calculation now correctly excludes unapproved extra pay.
 
 **Earlier issues found/mentioned but not fixed**
 -   **Issue 1:** The user-reported update button not working in attendance is still pending full investigation and resolution.
--   **Issue 2:** Inconsistent i18n implementation ( hook vs. ).
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Refactoring of the monolithic  file.
--   **Recurrence count:** 9
+-   **Recurrence count:** 10
 -   **Status:** IN PROGRESS
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Automated Journal Entry Creation:** On stock movements (reception/issue), the system now automatically calls a helper function to create debit/credit entries in the chart of accounts.
--   **Hierarchical Data Modeling:** The  model was updated with a  to create a tree-like structure, which is managed and visualized on the frontend.
--   **Robust Fallback Logic:** The attendance sync function was refactored to first attempt a strict match (fingerprint + center) and then fall back to a looser match (fingerprint only) to ensure no record is missed.
--   **Permission-Driven API Design:** New endpoints like  were created to return data tailored to the specific permissions of the currently authenticated user.
+-   **Component Embedding & UI Refactoring:** Used a tabbed interface () to merge related pages ( into ,  into ), making the UI cleaner. This was achieved by passing an  prop to child components to conditionally render their titles.
+-   **Data Import from Excel/CSV:** Implemented a backend endpoint using  and  to read uploaded files, map column names (handling both Arabic and English), create new entities (suppliers) if they don't exist, and batch-insert data.
+-   **Approval Workflow:** Modified a core business logic process (payroll calculation) to depend on a new approval state. Extra pay is now only calculated if an associated record () has been explicitly approved via new, dedicated APIs.
+-   **Centralized, Manual Permissions:** Refactored the permissions API to remove all implicit, role-based permission grants. The system now relies exclusively on explicit, manually granted permissions stored in the database, providing stricter access control.
 
 **key DB schema**
--   **hr_employees:** .
--   **warehouses:** , , , ,  fields added.
--   **system_settings:** Stores .
--   **journal_entries:** Populated by warehouse movements.
+-   **hr_employees:**  (Standardized to  for Friday/Saturday).
+-   **driver_schedules:** New collection to store driver-specific daily schedules.
+-   **user_permissions:** This collection is now the primary source of truth for manually granted permissions.
+-   **attendance:** Existing collection now implicitly used for the extra pay approval workflow (logic checks for an  flag before calculation, though the flag itself is not stored).
 
 **All files of reference**
--   **/app/frontend/src/pages/MaterialIssue.jsx**: New, buggy file for the current task.
--   **/app/backend/routes/warehouse_routes.py**: Contains all new WMS logic.
--   **/app/backend/server.py**: Contains the fixed attendance sync and payroll logic.
--   **/app/frontend/src/pages/Payroll.jsx**: Contains the new UI for the absence factor.
--   **/app/backend/models/all_models.py**: Defines the updated warehouse model and permissions.
+-   **/app/frontend/src/components/Layout.jsx**: Will need heavy modification for the next task.
+-   **/app/frontend/src/pages/EmployeeScheduling.jsx**: Example of the new tabbed layout.
+-   **/app/frontend/src/pages/WarehouseManagement.jsx**: Example of the new tabbed layout.
+-   **/app/backend/server.py**: Contains the new payroll logic and import functionality.
+-   **/app/backend/routes/permissions_routes.py**: Contains the updated, stricter permission logic.
 
 **Areas that need refactoring**:
--   ** (CRITICAL):** Still a high-priority background task.
--   ** (HIGH):** Remains a very large and complex component that should be broken down.
+-   ** (CRITICAL):** Still contains a large amount of routing logic that should be moved to dedicated files in .
+-   ** (HIGH):** The user has explicitly requested a significant refactoring of the sidebar menu structure.
+-   ** /  (MEDIUM):** These files are now very large as they act as containers for multiple tabs. They could potentially be broken down further into smaller components.
 
 **key api endpoints**
--   **POST **: MODIFIED - Now creates a financial journal entry.
--   **POST **: MODIFIED - Now creates a financial journal entry.
--   **GET **: NEW - Gets warehouses a user can issue from, based on their permissions.
--   **GET **: NEW - Checks if a product is available in stock.
--   **GET/PUT **: NEW - Manages the global absence deduction setting.
--   **POST **: MODIFIED - Logic updated for robust multi-fingerprint matching.
+-   **POST **: NEW - Uploads and processes an Excel/CSV file of milk reception data.
+-   **GET **: NEW - Downloads a template for the import.
+-   **GET **: NEW - Lists all attendance records for weekend/holiday work that need approval for extra pay.
+-   **POST **: NEW - Approves an extra pay request.
+-   **POST **: NEW - Rejects an extra pay request.
+-   **GET, POST, PUT, DELETE **: NEW - CRUD endpoints for managing driver schedules.
+-   **GET **: MODIFIED - No longer returns permissions based on role/position, only from granted permissions.
 
 **Critical Info for New Agent**
 -   **Language:** The user's preferred language is **Arabic**. All communication MUST be in Arabic.
--   **Immediate Priority:** The absolute first task is to fix the bug on the  page. This is the last thing the previous agent was working on and is blocking a key user request.
--   **User Interaction:** The user provides detailed, evolving requirements. Be prepared to implement complex features based on short prompts. The agent should confirm their understanding before deep implementation.
--   **Testing:** The previous agent made excellent use of the  after each major feature. Continue this pattern. The created test reports (, , ) are valuable for regression testing.
+-   **Immediate Priority:** The user's last message contains a high-priority list of UI refactoring and new features. Start with that list, beginning with the UI for approving extra pay.
+-   **Permissions are Strict:** The permissions system is now intentionally restrictive. Only the user  has rights. Do not re-introduce any logic that grants permissions automatically. All access control must be explicit.
+-   **Testing:** The previous agent successfully used the testing agent (, ) to verify large changes. Continue this practice, especially after completing the upcoming UI refactoring.
 
 **documents and test reports created in this job**
--   /app/test_reports/iteration_9.json
--   /app/test_reports/iteration_10.json
--   /app/test_reports/iteration_11.json
--   /app/memory/PRD.md (updated multiple times)
+-   /app/test_reports/iteration_12.json
+-   /app/test_reports/iteration_13.json
+-   /app/memory/PRD.md (updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests a self-service way for different types of employees (lab, cleaning, supervisor) to record their consumption of materials from various warehouses, implying a need for a new UI and permission system. **Status: In Progress**.
-2.  **User:** Continue. **Status: Acknowledged**.
-3.  **User:** Asks to integrate the warehouse system with the financial and sales systems. **Status: DONE** (Financial part done, Sales part pending).
-4.  **User:** Provides detailed requirements for a hierarchical warehouse structure and an alerting system for low/expiring stock. **Status: DONE**.
-5.  **User:** Provides categories for warehouse items (feed, cleaning, lab reagents, equipment, etc.). **Status: DONE**.
-6.  **User:** Asks for a more detailed warehouse structure (internal/external warehouses in each center). **Status: DONE**.
-7.  **User:** Reports that some employee fingerprints are not being recognized from different centers. **Status: DONE**.
-8.  **User:** Complete (Referring to the financial integration). **Status: Acknowledged**.
-9.  **User:** Confirms priorities: Test multi-fingerprint, complete WMS, add absence deduction factor, and investigate the update button (provides screenshot). **Status: Mostly Done**.
+1.  **User:** Asks for a page to manage approvals for extra pay and for major UI refactoring of the sidebar. **Status: Pending (Next Task)**.
+2.  **User:** Requests that extra pay for weekend work only be calculated after approval from a manager. **Status: DONE**.
+3.  **User:** Asks for an explanation of why a payroll calculation is incorrect (4 absent days, net pay > gross pay). **Status: DONE**.
+4.  **User:** Reports the payroll page does not work for a specific date range. **Status: Resolved (worked correctly)**.
+5.  **User:** Asks for the payroll feature to be fixed. **Status: DONE**.
+6.  **User:** Requests that the import feature for milk reception should include all fields from the manual entry form. **Status: DONE**.
+7.  **User:** Asks to import data from their old MySQL system via CSV/Excel. **Status: DONE**.
+8.  **User:** Reports that some managers still have permissions and insists they should all be removed except for the IT manager. **Status: DONE**.
+9.  **User:** Asks to move the driver schedule and material issue pages into other sections as tabs and to remove all user permissions. **Status: DONE**.
+10. **User:** Requests a new feature for driver scheduling. **Status: DONE**.
 
 **Project Health Check:**
 -   **Broken:**
-    -   : Page loads but is non-functional, incorrectly showing No warehouses available.
+    -   None. The application is in a stable state. The next tasks are features and refactoring, not fixing broken parts.
 -   **Mocked:**
     -   None.
 
 **3rd Party Integrations**
--   , : Used for Excel exports.
+-   , , : Used for Excel/CSV import.
 -   : Used for PDF exports.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (3 times)
+-   **Testing agent used after significant changes:** YES (twice, for  and )
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** The testing agent created and executed tests, with reports stored in . No persistent ============================= test session starts ==============================
+-   **Test files created:** Test reports were created by the testing agent. No persistent ============================= test session starts ==============================
 platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 rootdir: /app
 plugins: anyio-4.12.0
@@ -187,7 +172,7 @@ tests/test_warehouse_finance_fingerprint.py EEEEEEEEEEEEEEEEEEEE         [100%]
 ==================================== ERRORS ====================================
 ___ ERROR at setup of TestChartOfAccounts.test_initialize_chart_of_accounts ____
 
-self = <tests.test_finance_system.TestChartOfAccounts object at 0x79c97b0bde50>
+self = <tests.test_finance_system.TestChartOfAccounts object at 0x7e6fa262fe50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -254,7 +239,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _________ ERROR at setup of TestChartOfAccounts.test_get_all_accounts __________
 
-self = <tests.test_finance_system.TestChartOfAccounts object at 0x79c97b0bde50>
+self = <tests.test_finance_system.TestChartOfAccounts object at 0x7e6fa262fe50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -321,7 +306,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _______ ERROR at setup of TestChartOfAccounts.test_get_accounts_by_type ________
 
-self = <tests.test_finance_system.TestChartOfAccounts object at 0x79c97b0bde50>
+self = <tests.test_finance_system.TestChartOfAccounts object at 0x7e6fa262fe50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -388,7 +373,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestChartOfAccounts.test_create_account ___________
 
-self = <tests.test_finance_system.TestChartOfAccounts object at 0x79c97b0bde50>
+self = <tests.test_finance_system.TestChartOfAccounts object at 0x7e6fa262fe50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -455,7 +440,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ________ ERROR at setup of TestJournalEntries.test_get_journal_entries _________
 
-self = <tests.test_finance_system.TestJournalEntries object at 0x79c97ace6010>
+self = <tests.test_finance_system.TestJournalEntries object at 0x7e6fa20f9d90>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -522,7 +507,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ________ ERROR at setup of TestJournalEntries.test_create_journal_entry ________
 
-self = <tests.test_finance_system.TestJournalEntries object at 0x79c97ace6010>
+self = <tests.test_finance_system.TestJournalEntries object at 0x7e6fa20f9d90>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -589,7 +574,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___ ERROR at setup of TestJournalEntries.test_create_unbalanced_entry_fails ____
 
-self = <tests.test_finance_system.TestJournalEntries object at 0x79c97ace6010>
+self = <tests.test_finance_system.TestJournalEntries object at 0x7e6fa20f9d90>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -656,7 +641,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___________ ERROR at setup of TestFixedAssets.test_get_fixed_assets ____________
 
-self = <tests.test_finance_system.TestFixedAssets object at 0x79c97ace6bd0>
+self = <tests.test_finance_system.TestFixedAssets object at 0x7e6fa1b23e90>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -723,7 +708,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestFixedAssets.test_create_fixed_asset ___________
 
-self = <tests.test_finance_system.TestFixedAssets object at 0x79c97ace6bd0>
+self = <tests.test_finance_system.TestFixedAssets object at 0x7e6fa1b23e90>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -790,7 +775,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _____ ERROR at setup of TestFixedAssets.test_get_fixed_assets_by_category ______
 
-self = <tests.test_finance_system.TestFixedAssets object at 0x79c97ace6bd0>
+self = <tests.test_finance_system.TestFixedAssets object at 0x7e6fa1b23e90>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -857,7 +842,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ________________ ERROR at setup of TestBudgets.test_get_budgets ________________
 
-self = <tests.test_finance_system.TestBudgets object at 0x79c97acc5a90>
+self = <tests.test_finance_system.TestBudgets object at 0x7e6fa0cb8fd0>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -924,7 +909,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ________ ERROR at setup of TestFinancialReports.test_get_trial_balance _________
 
-self = <tests.test_finance_system.TestFinancialReports object at 0x79c97acc48d0>
+self = <tests.test_finance_system.TestFinancialReports object at 0x7e6fa0cb8e50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -991,7 +976,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _______ ERROR at setup of TestFinancialReports.test_get_income_statement _______
 
-self = <tests.test_finance_system.TestFinancialReports object at 0x79c97acc48d0>
+self = <tests.test_finance_system.TestFinancialReports object at 0x7e6fa0cb8e50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1058,7 +1043,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ________ ERROR at setup of TestFinancialReports.test_get_balance_sheet _________
 
-self = <tests.test_finance_system.TestFinancialReports object at 0x79c97acc48d0>
+self = <tests.test_finance_system.TestFinancialReports object at 0x7e6fa0cb8e50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1125,7 +1110,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestFinanceDashboard.test_get_finance_dashboard _______
 
-self = <tests.test_finance_system.TestFinanceDashboard object at 0x79c97acc5ad0>
+self = <tests.test_finance_system.TestFinanceDashboard object at 0x7e6fa0cb9c50>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1192,7 +1177,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __ ERROR at setup of TestAccountsPayableReceivable.test_get_accounts_payable ___
 
-self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x79c97acc6090>
+self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x7e6fa0cba3d0>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1259,7 +1244,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAccountsPayableReceivable.test_get_accounts_payable_summary _
 
-self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x79c97acc6090>
+self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x7e6fa0cba3d0>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1326,7 +1311,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAccountsPayableReceivable.test_get_accounts_receivable _
 
-self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x79c97acc6090>
+self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x7e6fa0cba3d0>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1393,7 +1378,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAccountsPayableReceivable.test_get_accounts_receivable_summary _
 
-self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x79c97acc6090>
+self = <tests.test_finance_system.TestAccountsPayableReceivable object at 0x7e6fa0cba3d0>
 
     @pytest.fixture(scope="class")
     def auth_headers(self):
@@ -1460,7 +1445,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____ ERROR at setup of TestLeaveRateEndpoint.test_update_leave_rate_success ____
 
-self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x79c97acedc90>
+self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x7e6fa0cd5e10>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1528,7 +1513,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___ ERROR at setup of TestLeaveRateEndpoint.test_update_leave_rate_auto_rate ___
 
-self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x79c97acedf10>
+self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x7e6fa0cd6550>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1596,7 +1581,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestLeaveRateEndpoint.test_update_leave_rate_invalid_employee _
 
-self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x79c97aceedd0>
+self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x7e6fa0cd65d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1664,7 +1649,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestLeaveRateEndpoint.test_update_leave_rate_unauthorized __
 
-self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x79c97acef190>
+self = <tests.test_hr_bugs.TestLeaveRateEndpoint object at 0x7e6fa0cd66d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1732,7 +1717,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _____ ERROR at setup of TestAttendanceRefresh.test_get_attendance_records ______
 
-self = <tests.test_hr_bugs.TestAttendanceRefresh object at 0x79c97acef9d0>
+self = <tests.test_hr_bugs.TestAttendanceRefresh object at 0x7e6fa0cd79d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1799,7 +1784,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAttendanceRefresh.test_get_attendance_with_date_filter _
 
-self = <tests.test_hr_bugs.TestAttendanceRefresh object at 0x79c97acc5ed0>
+self = <tests.test_hr_bugs.TestAttendanceRefresh object at 0x7e6fa0cba710>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1866,7 +1851,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestAttendanceRefresh.test_get_attendance_report ______
 
-self = <tests.test_hr_bugs.TestAttendanceRefresh object at 0x79c97acef850>
+self = <tests.test_hr_bugs.TestAttendanceRefresh object at 0x7e6fa0cd7710>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1933,7 +1918,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _______ ERROR at setup of TestSuppliersOptionalFields.test_get_suppliers _______
 
-self = <tests.test_hr_bugs.TestSuppliersOptionalFields object at 0x79c97acefd50>
+self = <tests.test_hr_bugs.TestSuppliersOptionalFields object at 0x7e6fa0cd4590>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -2000,7 +1985,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSuppliersOptionalFields.test_create_supplier_without_phone_address _
 
-self = <tests.test_hr_bugs.TestSuppliersOptionalFields object at 0x79c97ad03f90>
+self = <tests.test_hr_bugs.TestSuppliersOptionalFields object at 0x7e6fa0ceb350>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -2067,7 +2052,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSuppliersOptionalFields.test_create_supplier_with_phone_address _
 
-self = <tests.test_hr_bugs.TestSuppliersOptionalFields object at 0x79c97ad03510>
+self = <tests.test_hr_bugs.TestSuppliersOptionalFields object at 0x7e6fa0ceb8d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -2178,7 +2163,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2200,7 +2185,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestHolidaysConfig object at 0x79c97ad877d0>
+self = <tests.test_procurement_payroll.TestHolidaysConfig object at 0x7e6fa0d6aed0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -2299,7 +2284,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2321,7 +2306,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestProcurement object at 0x79c97ad85590>
+self = <tests.test_procurement_payroll.TestProcurement object at 0x7e6fa0d6a110>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -2420,7 +2405,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2442,7 +2427,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestProcurement object at 0x79c97ad85590>
+self = <tests.test_procurement_payroll.TestProcurement object at 0x7e6fa0d6a110>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -2541,7 +2526,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2563,7 +2548,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestProcurement object at 0x79c97ad85590>
+self = <tests.test_procurement_payroll.TestProcurement object at 0x7e6fa0d6a110>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -2662,7 +2647,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2684,7 +2669,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestProcurement object at 0x79c97ad85590>
+self = <tests.test_procurement_payroll.TestProcurement object at 0x7e6fa0d6a110>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -2783,7 +2768,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2805,7 +2790,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestProcurement object at 0x79c97ad85590>
+self = <tests.test_procurement_payroll.TestProcurement object at 0x7e6fa0d6a110>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -2904,7 +2889,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -2926,7 +2911,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestProcurement object at 0x79c97ad85590>
+self = <tests.test_procurement_payroll.TestProcurement object at 0x7e6fa0d6a110>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -3025,7 +3010,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3047,7 +3032,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestPayroll object at 0x79c97ad6d810>
+self = <tests.test_procurement_payroll.TestPayroll object at 0x7e6fa0d29490>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -3146,7 +3131,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3168,7 +3153,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestPayroll object at 0x79c97ad6d810>
+self = <tests.test_procurement_payroll.TestPayroll object at 0x7e6fa0d29490>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -3267,7 +3252,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3289,7 +3274,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestPurchaseOrderPayment object at 0x79c97ad6ed90>
+self = <tests.test_procurement_payroll.TestPurchaseOrderPayment object at 0x7e6fa0d2b790>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -3388,7 +3373,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3410,7 +3395,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestPayrollDisbursement object at 0x79c97b0bded0>
+self = <tests.test_procurement_payroll.TestPayrollDisbursement object at 0x7e6fa1bcf6d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -3509,7 +3494,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3531,7 +3516,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_procurement_payroll.TestPayrollDisbursement object at 0x79c97b0bded0>
+self = <tests.test_procurement_payroll.TestPayrollDisbursement object at 0x7e6fa1bcf6d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -3630,7 +3615,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3652,7 +3637,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestHREmployees object at 0x79c97ab874d0>
+self = <tests.test_refactored_apis.TestHREmployees object at 0x7e6fa0b773d0>
 
     @pytest.fixture
     def auth_token(self):
@@ -3752,7 +3737,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3774,7 +3759,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestSuppliers object at 0x79c97ab87650>
+self = <tests.test_refactored_apis.TestSuppliers object at 0x7e6fa0b77e90>
 
     @pytest.fixture
     def auth_token(self):
@@ -3874,7 +3859,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -3896,7 +3881,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestFinanceAccounts object at 0x79c97ab683d0>
+self = <tests.test_refactored_apis.TestFinanceAccounts object at 0x7e6fa0b54510>
 
     @pytest.fixture
     def auth_token(self):
@@ -3996,7 +3981,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4018,7 +4003,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestSMSSettings object at 0x79c97ab69310>
+self = <tests.test_refactored_apis.TestSMSSettings object at 0x7e6fa0b54fd0>
 
     @pytest.fixture
     def auth_token(self):
@@ -4118,7 +4103,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4140,7 +4125,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestDashboardStats object at 0x79c97ab699d0>
+self = <tests.test_refactored_apis.TestDashboardStats object at 0x7e6fa0b55790>
 
     @pytest.fixture
     def auth_token(self):
@@ -4240,7 +4225,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4262,7 +4247,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6a5d0>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b55990>
 
     @pytest.fixture
     def auth_token(self):
@@ -4362,7 +4347,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4384,7 +4369,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6ad90>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b56d90>
 
     @pytest.fixture
     def auth_token(self):
@@ -4484,7 +4469,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4506,7 +4491,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6b6d0>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b57490>
 
     @pytest.fixture
     def auth_token(self):
@@ -4606,7 +4591,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4628,7 +4613,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6a450>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b56550>
 
     @pytest.fixture
     def auth_token(self):
@@ -4728,7 +4713,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4750,7 +4735,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab68810>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b54c10>
 
     @pytest.fixture
     def auth_token(self):
@@ -4850,7 +4835,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4872,7 +4857,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6b590>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b57a50>
 
     @pytest.fixture
     def auth_token(self):
@@ -4972,7 +4957,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -4994,7 +4979,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6b850>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b57910>
 
     @pytest.fixture
     def auth_token(self):
@@ -5094,7 +5079,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5116,7 +5101,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab6bf10>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b57410>
 
     @pytest.fixture
     def auth_token(self):
@@ -5216,7 +5201,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5238,7 +5223,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab76a10>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b66e10>
 
     @pytest.fixture
     def auth_token(self):
@@ -5338,7 +5323,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5360,7 +5345,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x79c97ab76250>
+self = <tests.test_refactored_apis.TestAdditionalEndpoints object at 0x7e6fa0b66610>
 
     @pytest.fixture
     def auth_token(self):
@@ -5460,7 +5445,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5482,7 +5467,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x79c97ab77110>
+self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x7e6fa0b674d0>
 
     @pytest.fixture
     def auth_token(self):
@@ -5582,7 +5567,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5604,7 +5589,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x79c97ab778d0>
+self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x7e6fa0b67990>
 
     @pytest.fixture
     def auth_token(self):
@@ -5704,7 +5689,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5726,7 +5711,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x79c97ab77e50>
+self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x7e6fa0b64050>
 
     @pytest.fixture
     def auth_token(self):
@@ -5826,7 +5811,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5848,7 +5833,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x79c97ab74550>
+self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x7e6fa0b64610>
 
     @pytest.fixture
     def auth_token(self):
@@ -5948,7 +5933,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -5970,7 +5955,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x79c97ab74910>
+self = <tests.test_refactored_apis.TestFinanceEndpoints object at 0x7e6fa0b657d0>
 
     @pytest.fixture
     def auth_token(self):
@@ -6070,7 +6055,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -6092,7 +6077,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestReportsEndpoints object at 0x79c97ab756d0>
+self = <tests.test_refactored_apis.TestReportsEndpoints object at 0x7e6fa0b65ad0>
 
     @pytest.fixture
     def auth_token(self):
@@ -6192,7 +6177,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <json.decoder.JSONDecoder object at 0x79c97be43790>
+self = <json.decoder.JSONDecoder object at 0x7e6fa1e275d0>
 s = 'Web server returned an unknown error\n', idx = 0
 
     def raw_decode(self, s, idx=0):
@@ -6214,7 +6199,7 @@ E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char
 
 During handling of the above exception, another exception occurred:
 
-self = <tests.test_refactored_apis.TestReportsEndpoints object at 0x79c97ab5ddd0>
+self = <tests.test_refactored_apis.TestReportsEndpoints object at 0x7e6fa0b65f90>
 
     @pytest.fixture
     def auth_token(self):
@@ -6270,7 +6255,7 @@ E           requests.exceptions.JSONDecodeError: Expecting value: line 1 column 
 /root/.venv/lib/python3.11/site-packages/requests/models.py:980: JSONDecodeError
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_get_all_salary_structures _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab75850>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b65a50>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6338,7 +6323,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_get_employees_for_salary_structures _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab768d0>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b66fd0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6406,7 +6391,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_get_employee_salary_structure _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab853d0>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b751d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6474,7 +6459,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_create_salary_structure_with_allowances _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab5ee50>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b4a550>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6542,7 +6527,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_create_salary_structure_missing_employee _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab5e750>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b4abd0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6610,7 +6595,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_create_salary_structure_invalid_employee _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab5e650>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b4a890>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6678,7 +6663,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __ ERROR at setup of TestSalaryStructuresAndHolidays.test_get_public_holidays __
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab5eb50>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b4a490>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6746,7 +6731,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_get_public_holidays_by_year _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab5f1d0>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b4a610>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6814,7 +6799,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_create_public_holiday _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab3ce50>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b2c3d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6882,7 +6867,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_create_public_holiday_multi_day _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab3c090>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b2c910>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -6950,7 +6935,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestSalaryStructuresAndHolidays.test_delete_public_holiday _
 
-self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x79c97ab3c890>
+self = <tests.test_salary_structures_holidays.TestSalaryStructuresAndHolidays object at 0x7e6fa0b2ced0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -7018,7 +7003,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAutoJournalEntries.test_chart_of_accounts_has_required_accounts _
 
-self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x79c97ab3d3d0>
+self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x7e6fa0b2d090>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -7086,7 +7071,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _____ ERROR at setup of TestAutoJournalEntries.test_journal_entries_exist ______
 
-self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x79c97ab3e090>
+self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x7e6fa0b2e690>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -7154,7 +7139,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAutoJournalEntries.test_milk_reception_creates_journal_entry _
 
-self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x79c97ab3e590>
+self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x7e6fa0b2df90>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -7222,7 +7207,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___ ERROR at setup of TestAutoJournalEntries.test_sale_creates_journal_entry ___
 
-self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x79c97ab3e8d0>
+self = <tests.test_salary_structures_holidays.TestAutoJournalEntries object at 0x7e6fa0b2e790>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -7290,7 +7275,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___________ ERROR at setup of TestCleanup.test_cleanup_test_holidays ___________
 
-self = <tests.test_salary_structures_holidays.TestCleanup object at 0x79c97ab3f390>
+self = <tests.test_salary_structures_holidays.TestCleanup object at 0x7e6fa0b2f1d0>
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -7357,7 +7342,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___________ ERROR at setup of TestSMSSettings.test_get_sms_settings ____________
 
-self = <tests.test_sms_and_reports_schedules.TestSMSSettings object at 0x79c97ab3d950>
+self = <tests.test_sms_and_reports_schedules.TestSMSSettings object at 0x7e6fa1247790>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7424,7 +7409,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestSMSSettings.test_update_sms_settings __________
 
-self = <tests.test_sms_and_reports_schedules.TestSMSSettings object at 0x79c97ab3d950>
+self = <tests.test_sms_and_reports_schedules.TestSMSSettings object at 0x7e6fa1247790>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7491,7 +7476,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestSMSSettings.test_verify_sms_settings_updated ______
 
-self = <tests.test_sms_and_reports_schedules.TestSMSSettings object at 0x79c97ab3d950>
+self = <tests.test_sms_and_reports_schedules.TestSMSSettings object at 0x7e6fa1247790>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7558,7 +7543,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestSMSSend.test_send_sms_missing_phone ___________
 
-self = <tests.test_sms_and_reports_schedules.TestSMSSend object at 0x79c97ab4bf50>
+self = <tests.test_sms_and_reports_schedules.TestSMSSend object at 0x7e6fa0b39410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7625,7 +7610,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _________ ERROR at setup of TestSMSSend.test_send_sms_missing_message __________
 
-self = <tests.test_sms_and_reports_schedules.TestSMSSend object at 0x79c97ab4bf50>
+self = <tests.test_sms_and_reports_schedules.TestSMSSend object at 0x7e6fa0b39410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7692,7 +7677,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestSMSSend.test_send_sms_valid_request ___________
 
-self = <tests.test_sms_and_reports_schedules.TestSMSSend object at 0x79c97ab4bf50>
+self = <tests.test_sms_and_reports_schedules.TestSMSSend object at 0x7e6fa0b39410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7759,7 +7744,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _______________ ERROR at setup of TestSMSLogs.test_get_sms_logs ________________
 
-self = <tests.test_sms_and_reports_schedules.TestSMSLogs object at 0x79c97ab494d0>
+self = <tests.test_sms_and_reports_schedules.TestSMSLogs object at 0x7e6fa0b3a550>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7826,7 +7811,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _______ ERROR at setup of TestReportSchedules.test_get_report_schedules ________
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7893,7 +7878,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestReportSchedules.test_create_report_schedule _______
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -7960,7 +7945,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestReportSchedules.test_verify_schedule_created ______
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8027,7 +8012,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestReportSchedules.test_update_report_schedule _______
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8094,7 +8079,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ________ ERROR at setup of TestReportSchedules.test_run_report_schedule ________
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8161,7 +8146,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _____ ERROR at setup of TestReportSchedules.test_run_nonexistent_schedule ______
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8228,7 +8213,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestReportSchedules.test_delete_report_schedule _______
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8295,7 +8280,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestReportSchedules.test_verify_schedule_deleted ______
 
-self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x79c97ab48210>
+self = <tests.test_sms_and_reports_schedules.TestReportSchedules object at 0x7e6fa0b38410>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8362,7 +8347,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____________ ERROR at setup of TestReportLogs.test_get_report_logs _____________
 
-self = <tests.test_sms_and_reports_schedules.TestReportLogs object at 0x79c97ab48890>
+self = <tests.test_sms_and_reports_schedules.TestReportLogs object at 0x7e6fa0b38890>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8429,7 +8414,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____ ERROR at setup of TestScheduleReportTypes.test_create_weekly_schedule _____
 
-self = <tests.test_sms_and_reports_schedules.TestScheduleReportTypes object at 0x79c97ad6b690>
+self = <tests.test_sms_and_reports_schedules.TestScheduleReportTypes object at 0x7e6fa0c42050>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8496,7 +8481,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____ ERROR at setup of TestScheduleReportTypes.test_create_monthly_schedule ____
 
-self = <tests.test_sms_and_reports_schedules.TestScheduleReportTypes object at 0x79c97ad6b690>
+self = <tests.test_sms_and_reports_schedules.TestScheduleReportTypes object at 0x7e6fa0c42050>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8563,7 +8548,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestScheduleReportTypes.test_create_inventory_alerts_schedule _
 
-self = <tests.test_sms_and_reports_schedules.TestScheduleReportTypes object at 0x79c97ad6b690>
+self = <tests.test_sms_and_reports_schedules.TestScheduleReportTypes object at 0x7e6fa0c42050>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8630,7 +8615,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___________ ERROR at setup of TestWarehouseAPIs.test_get_warehouses ____________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8697,7 +8682,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____________ ERROR at setup of TestWarehouseAPIs.test_get_products _____________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8764,7 +8749,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______________ ERROR at setup of TestWarehouseAPIs.test_get_stock ______________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8831,7 +8816,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestWarehouseAPIs.test_get_stock_summary __________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8898,7 +8883,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 __________ ERROR at setup of TestWarehouseAPIs.test_create_warehouse ___________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -8965,7 +8950,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___ ERROR at setup of TestWarehouseAPIs.test_create_warehouse_duplicate_code ___
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9032,7 +9017,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___________ ERROR at setup of TestWarehouseAPIs.test_get_categories ____________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9099,7 +9084,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____________ ERROR at setup of TestWarehouseAPIs.test_get_movements ____________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9166,7 +9151,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ____________ ERROR at setup of TestWarehouseAPIs.test_get_solutions ____________
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x79c97ab2f610>
+self = <tests.test_warehouse_absence_factor.TestWarehouseAPIs object at 0x7e6fa0b139d0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9233,7 +9218,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestWarehouseStockOperations.test_receive_stock _______
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseStockOperations object at 0x79c97ab2f4d0>
+self = <tests.test_warehouse_absence_factor.TestWarehouseStockOperations object at 0x7e6fa0b12910>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9300,7 +9285,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAbsenceDeductionFactor.test_get_absence_deduction_factor _
 
-self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x79c97addd410>
+self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x7e6fa0cbd310>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9367,7 +9352,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAbsenceDeductionFactor.test_update_absence_deduction_factor _
 
-self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x79c97addd410>
+self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x7e6fa0cbd310>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9434,7 +9419,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAbsenceDeductionFactor.test_update_absence_factor_invalid_value _
 
-self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x79c97addd410>
+self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x7e6fa0cbd310>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9501,7 +9486,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAbsenceDeductionFactor.test_update_absence_factor_all_valid_values _
 
-self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x79c97addd410>
+self = <tests.test_warehouse_absence_factor.TestAbsenceDeductionFactor object at 0x7e6fa0cbd310>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9568,7 +9553,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestAttendanceReport.test_get_attendance_report _______
 
-self = <tests.test_warehouse_absence_factor.TestAttendanceReport object at 0x79c97addea50>
+self = <tests.test_warehouse_absence_factor.TestAttendanceReport object at 0x7e6fa0cbead0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9635,7 +9620,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestAttendanceReport.test_get_attendance_records ______
 
-self = <tests.test_warehouse_absence_factor.TestAttendanceReport object at 0x79c97addea50>
+self = <tests.test_warehouse_absence_factor.TestAttendanceReport object at 0x7e6fa0cbead0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9702,7 +9687,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestAttendanceReport.test_get_attendance_with_date_filter __
 
-self = <tests.test_warehouse_absence_factor.TestAttendanceReport object at 0x79c97addea50>
+self = <tests.test_warehouse_absence_factor.TestAttendanceReport object at 0x7e6fa0cbead0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9769,7 +9754,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestPayrollCalculation.test_get_payroll_periods _______
 
-self = <tests.test_warehouse_absence_factor.TestPayrollCalculation object at 0x79c97ad8fbd0>
+self = <tests.test_warehouse_absence_factor.TestPayrollCalculation object at 0x7e6fa0ccb890>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9836,7 +9821,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _____ ERROR at setup of TestPayrollCalculation.test_payroll_period_details _____
 
-self = <tests.test_warehouse_absence_factor.TestPayrollCalculation object at 0x79c97ad8fbd0>
+self = <tests.test_warehouse_absence_factor.TestPayrollCalculation object at 0x7e6fa0ccb890>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9903,7 +9888,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestWarehouseReports.test_get_stock_value_report ______
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseReports object at 0x79c97ad8c810>
+self = <tests.test_warehouse_absence_factor.TestWarehouseReports object at 0x7e6fa0cc8bd0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -9970,7 +9955,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestWarehouseReports.test_get_movements_summary _______
 
-self = <tests.test_warehouse_absence_factor.TestWarehouseReports object at 0x79c97ad8c810>
+self = <tests.test_warehouse_absence_factor.TestWarehouseReports object at 0x7e6fa0cc8bd0>
 
     @pytest.fixture(scope="class")
     def auth_token(self):
@@ -10037,7 +10022,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestWarehouseFinancialIntegration.test_01_verify_finance_accounts_exist _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10101,7 +10086,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestWarehouseFinancialIntegration.test_02_create_test_warehouse_and_product _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10165,7 +10150,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestWarehouseFinancialIntegration.test_03_receive_stock_creates_journal_entry _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10229,7 +10214,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestWarehouseFinancialIntegration.test_04_issue_stock_for_sales_creates_cogs_entry _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10293,7 +10278,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestWarehouseFinancialIntegration.test_05_issue_stock_for_consumption_creates_expense_entry _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10357,7 +10342,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestStockAvailabilityAndReservation.test_06_check_stock_availability _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10421,7 +10406,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestStockAvailabilityAndReservation.test_07_check_stock_availability_insufficient _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10485,7 +10470,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestStockAvailabilityAndReservation.test_08_reserve_stock __
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10549,7 +10534,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestStockAvailabilityAndReservation.test_09_release_reservation _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10613,7 +10598,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestStockAvailabilityAndReservation.test_10_release_nonexistent_reservation _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10677,7 +10662,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ______ ERROR at setup of TestFinancialReports.test_11_stock_value_report _______
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10741,7 +10726,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestFinancialReports.test_12_stock_value_report_by_warehouse _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10805,7 +10790,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestFinancialReports.test_13_stock_value_report_by_center __
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10869,7 +10854,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _______ ERROR at setup of TestFinancialReports.test_14_movements_summary _______
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10933,7 +10918,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestMultiFingerprintSync.test_15_get_test_employee_with_additional_fingerprints _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -10997,7 +10982,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestMultiFingerprintSync.test_16_sync_attendance_with_primary_fingerprint _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -11061,7 +11046,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestMultiFingerprintSync.test_17_sync_attendance_with_additional_fingerprint _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -11125,7 +11110,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestMultiFingerprintSync.test_18_bulk_sync_attendance_with_center_matching _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -11189,7 +11174,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _ ERROR at setup of TestMultiFingerprintSync.test_19_verify_multi_location_attendance _
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -11253,7 +11238,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 ___________ ERROR at setup of TestCleanup.test_99_cleanup_test_data ____________
 
-api_client = <requests.sessions.Session object at 0x79c97c8d8450>
+api_client = <requests.sessions.Session object at 0x7e6fa0bbba50>
 
     @pytest.fixture(scope="session")
     def auth_token(api_client):
@@ -11318,7 +11303,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 =================================== FAILURES ===================================
 ___________________ TestFinanceSystemAuth.test_login_success ___________________
 
-self = <tests.test_finance_system.TestFinanceSystemAuth object at 0x79c97acd5e90>
+self = <tests.test_finance_system.TestFinanceSystemAuth object at 0x7e6fa0ccc790>
 
     def test_login_success(self):
         """Test login with valid credentials"""
@@ -11384,7 +11369,7 @@ E           requests.exceptions.MissingSchema: Invalid URL '/api/auth/login': No
 /root/.venv/lib/python3.11/site-packages/requests/models.py:438: MissingSchema
 _________________________ TestAuth.test_login_success __________________________
 
-self = <tests.test_procurement_payroll.TestAuth object at 0x79c97ad87c10>
+self = <tests.test_procurement_payroll.TestAuth object at 0x7e6fa0d6bbd0>
 
     def test_login_success(self):
         """Test login with valid credentials"""
@@ -11399,7 +11384,7 @@ E        +  where 520 = <Response [520]>.status_code
 tests/test_procurement_payroll.py:35: AssertionError
 __________________________ TestAPIRoot.test_api_root ___________________________
 
-self = <tests.test_refactored_apis.TestAPIRoot object at 0x79c97ab852d0>
+self = <tests.test_refactored_apis.TestAPIRoot object at 0x7e6fa0b753d0>
 
     def test_api_root(self):
         """Test /api/ returns correct response"""
@@ -11411,7 +11396,7 @@ E        +  where 520 = <Response [520]>.status_code
 tests/test_refactored_apis.py:17: AssertionError
 _____________________ TestAuthentication.test_login_admin ______________________
 
-self = <tests.test_refactored_apis.TestAuthentication object at 0x79c97ab85b90>
+self = <tests.test_refactored_apis.TestAuthentication object at 0x7e6fa0b75f90>
 
     def test_login_admin(self):
         """Test admin login with yasir/admin123"""
@@ -11426,7 +11411,7 @@ E        +  where 520 = <Response [520]>.status_code
 tests/test_refactored_apis.py:34: AssertionError
 _______________________ TestAuthentication.test_login_hr _______________________
 
-self = <tests.test_refactored_apis.TestAuthentication object at 0x79c97ab864d0>
+self = <tests.test_refactored_apis.TestAuthentication object at 0x7e6fa0b75b50>
 
     def test_login_hr(self):
         """Test HR login with hassan/Hassan@123"""
@@ -11441,7 +11426,7 @@ E        +  where 520 = <Response [520]>.status_code
 tests/test_refactored_apis.py:48: AssertionError
 ______________ TestAuthentication.test_login_invalid_credentials _______________
 
-self = <tests.test_refactored_apis.TestAuthentication object at 0x79c97ab868d0>
+self = <tests.test_refactored_apis.TestAuthentication object at 0x7e6fa0b76210>
 
     def test_login_invalid_credentials(self):
         """Test login with invalid credentials"""
@@ -11456,8 +11441,8 @@ E        +  where 520 = <Response [520]>.status_code
 tests/test_refactored_apis.py:61: AssertionError
 _______ TestWarehouseStructure.test_warehouse_parent_child_relationship ________
 
-self = <tests.test_warehouse_centers_alerts.TestWarehouseStructure object at 0x79c97ab56090>
-api_client = <requests.sessions.Session object at 0x79c97acaaf10>
+self = <tests.test_warehouse_centers_alerts.TestWarehouseStructure object at 0x7e6fa0eddd50>
+api_client = <requests.sessions.Session object at 0x7e6fa0b9b590>
 
     def test_warehouse_parent_child_relationship(self, api_client):
         """Verify parent-child warehouse relationships"""
@@ -11480,10 +11465,10 @@ api_client = <requests.sessions.Session object at 0x79c97acaaf10>
                     f"Sub-warehouse {sub.get('name')} should have parent_warehouse_id = {main_warehouse.get('id')}"
 E               AssertionError: Sub-warehouse TEST_مخزن اختبار مالي should have parent_warehouse_id = 2dc20880-970f-4ef7-afe0-666046220b7a
 E               assert None == '2dc20880-970f-4ef7-afe0-666046220b7a'
-E                +  where None = <built-in method get of dict object at 0x79c97aa7dd00>('parent_warehouse_id')
-E                +    where <built-in method get of dict object at 0x79c97aa7dd00> = {'alert_on_expiry': True, 'alert_on_low_stock': True, 'capacity': None, 'center_id': None, ...}.get
-E                +  and   '2dc20880-970f-4ef7-afe0-666046220b7a' = <built-in method get of dict object at 0x79c97a93fb00>('id')
-E                +    where <built-in method get of dict object at 0x79c97a93fb00> = {'alert_on_expiry': True, 'alert_on_low_stock': True, 'capacity': None, 'center_id': None, ...}.get
+E                +  where None = <built-in method get of dict object at 0x7e6fa0c702c0>('parent_warehouse_id')
+E                +    where <built-in method get of dict object at 0x7e6fa0c702c0> = {'alert_on_expiry': True, 'alert_on_low_stock': True, 'capacity': None, 'center_id': None, ...}.get
+E                +  and   '2dc20880-970f-4ef7-afe0-666046220b7a' = <built-in method get of dict object at 0x7e6fa093ae00>('id')
+E                +    where <built-in method get of dict object at 0x7e6fa093ae00> = {'alert_on_expiry': True, 'alert_on_low_stock': True, 'capacity': None, 'center_id': None, ...}.get
 
 tests/test_warehouse_centers_alerts.py:286: AssertionError
 =========================== short test summary info ============================
@@ -11633,11 +11618,11 @@ ERROR tests/test_warehouse_finance_fingerprint.py::TestMultiFingerprintSync::tes
 ERROR tests/test_warehouse_finance_fingerprint.py::TestMultiFingerprintSync::test_18_bulk_sync_attendance_with_center_matching
 ERROR tests/test_warehouse_finance_fingerprint.py::TestMultiFingerprintSync::test_19_verify_multi_location_attendance
 ERROR tests/test_warehouse_finance_fingerprint.py::TestCleanup::test_99_cleanup_test_data
-============ 7 failed, 13 passed, 15 skipped, 139 errors in 19.97s ============= files were created by the main agent.
+============ 7 failed, 13 passed, 15 skipped, 139 errors in 38.91s ============= files were created.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
--   / (Role: admin)
+-   / (Role: admin, only user with permissions)
 
 **What agent forgot to execute**
--   The agent did not conclusively resolve the user's original issue with the update button in the attendance view. They verified the code's  handler but did not verify the end-user experience (i.e., that the data on the screen actually refreshes) or confirm with the user that the issue was solved. The issue should be considered open.</analysis>
+-   The original bug report about the update button in the attendance view was never fully investigated and resolved. The agent was distracted by other tasks and did not circle back to it. It remains on the pending issue list.</analysis>
