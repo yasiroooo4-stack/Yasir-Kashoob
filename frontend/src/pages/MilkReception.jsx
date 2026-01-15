@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
-import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle, Search } from "lucide-react";
+import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle, Search, Upload, Download, FileSpreadsheet } from "lucide-react";
 
 const MilkReception = () => {
   const { t } = useTranslation();
@@ -40,6 +40,10 @@ const MilkReception = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const [supplierCode, setSupplierCode] = useState("");
   const [supplierFound, setSupplierFound] = useState(null);
   const [matchingSuppliers, setMatchingSuppliers] = useState([]);
