@@ -361,41 +361,43 @@ const MaterialIssue = ({ embedded = false }) => {
   const cartTotal = cart.reduce((sum, c) => sum + c.quantity * c.unit_price, 0);
 
   return (
-    <div className="p-6 space-y-6" dir={language === "ar" ? "rtl" : "ltr"}>
+    <div className={embedded ? "space-y-6" : "p-6 space-y-6"} dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Package className="w-7 h-7 text-primary" />
-            {t("صرف المواد", "Material Issue")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t("طلب وصرف المواد من المخازن", "Request and issue materials from warehouses")}
-          </p>
+      {!embedded && (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Package className="w-7 h-7 text-primary" />
+              {t("صرف المواد", "Material Issue")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("طلب وصرف المواد من المخازن", "Request and issue materials from warehouses")}
+            </p>
+          </div>
         </div>
+      )}
 
-        {/* Warehouse Selector */}
-        <div className="flex items-center gap-2">
-          <Label>{t("المخزن:", "Warehouse:")}</Label>
-          <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder={t("اختر المخزن", "Select warehouse")} />
-            </SelectTrigger>
-            <SelectContent>
-              {myWarehouses.map((wh) => (
-                <SelectItem key={wh.id} value={wh.id}>
-                  <div className="flex items-center gap-2">
-                    {getCategoryIcon(wh.warehouse_category)}
-                    <span>{wh.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" onClick={fetchMyStock}>
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-        </div>
+      {/* Warehouse Selector */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Label>{t("المخزن:", "Warehouse:")}</Label>
+        <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
+          <SelectTrigger className="w-[250px]">
+            <SelectValue placeholder={t("اختر المخزن", "Select warehouse")} />
+          </SelectTrigger>
+          <SelectContent>
+            {myWarehouses.map((wh) => (
+              <SelectItem key={wh.id} value={wh.id}>
+                <div className="flex items-center gap-2">
+                  {getCategoryIcon(wh.warehouse_category)}
+                  <span>{wh.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="icon" onClick={fetchMyStock}>
+          <RefreshCw className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* No warehouses message */}
