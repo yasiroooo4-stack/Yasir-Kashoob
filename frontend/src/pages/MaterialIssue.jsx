@@ -80,7 +80,7 @@ const categoryLabels = {
   supplies: { ar: "مخزن المستلزمات", en: "Supplies Warehouse" },
 };
 
-const MaterialIssue = () => {
+const MaterialIssue = ({ embedded = false }) => {
   const { language } = useLanguage();
   const t = (ar, en) => (language === "ar" ? ar : en);
 
