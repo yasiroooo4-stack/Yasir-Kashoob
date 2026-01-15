@@ -607,6 +607,13 @@ const EmployeeScheduling = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        {/* Drivers Tab */}
+        <TabsContent value="drivers">
+          <DriverSchedule embedded={true} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
