@@ -46,10 +46,16 @@ import { Plus, Milk, Droplets, Thermometer, CheckCircle, XCircle, Search, Upload
 const MilkReception = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [receptions, setReceptions] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingReception, setEditingReception] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingReception, setDeletingReception] = useState(null);
+  const [userPermissions, setUserPermissions] = useState([]);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -75,9 +81,14 @@ const MilkReception = () => {
     },
   });
 
+  // Check permissions
+  const canEdit = user?.role === "admin" || userPermissions.includes("milk_reception_edit") || userPermissions.includes("all");
+  const canDelete = user?.role === "admin" || userPermissions.includes("milk_reception_delete") || userPermissions.includes("all");
+
   useEffect(() => {
     fetchData();
     fetchPriceSettings();
+    fetchUserPermissions();
   }, []);
 
   const fetchPriceSettings = async () => {
