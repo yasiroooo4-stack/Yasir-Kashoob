@@ -442,8 +442,9 @@ const HR = () => {
     }
   };
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = async (showMessage = false) => {
     try {
+      setRefreshingAttendance(true);
       const res = await axios.get(`${API}/hr/attendance/report`, {
         params: { year: attendanceYear, month: attendanceMonth }
       });
@@ -457,8 +458,17 @@ const HR = () => {
         }
       });
       setAttendanceRecords(recordsRes.data || []);
+      
+      if (showMessage) {
+        toast.success(language === "ar" ? "تم تحديث البيانات بنجاح" : "Data refreshed successfully");
+      }
     } catch (error) {
       console.error("Error fetching attendance:", error);
+      if (showMessage) {
+        toast.error(language === "ar" ? "خطأ في تحديث البيانات" : "Error refreshing data");
+      }
+    } finally {
+      setRefreshingAttendance(false);
     }
   };
 
