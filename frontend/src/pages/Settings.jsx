@@ -402,14 +402,16 @@ const Settings = ({ embedded = false }) => {
   }
 
   return (
-    <div className="space-y-6" data-testid="settings-page">
+    <div className={embedded ? "space-y-4" : "space-y-6"} data-testid="settings-page">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("settings")}</h1>
-        <p className="text-muted-foreground">
-          {language === "ar" ? "إدارة إعدادات الحساب والنظام" : "Manage account and system settings"}
-        </p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t("settings")}</h1>
+          <p className="text-muted-foreground">
+            {language === "ar" ? "إدارة إعدادات الحساب والنظام" : "Manage account and system settings"}
+          </p>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-3xl grid-cols-5">
