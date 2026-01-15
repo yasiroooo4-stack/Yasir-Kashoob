@@ -491,6 +491,9 @@ const MilkReception = () => {
                   <TableHead>{t("fat_percentage")}</TableHead>
                   <TableHead>{language === "ar" ? "نوع الحليب" : "Milk Type"}</TableHead>
                   <TableHead>{t("status")}</TableHead>
+                  {(canEdit || canDelete) && (
+                    <TableHead className="text-center">{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
