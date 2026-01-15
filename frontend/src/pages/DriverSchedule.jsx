@@ -70,7 +70,7 @@ const STATUSES = {
   reassigned: { label: "معاد تعيينه", label_en: "Reassigned", color: "bg-purple-100 text-purple-700" },
 };
 
-const DriverSchedule = () => {
+const DriverSchedule = ({ embedded = false }) => {
   const { language } = useLanguage();
   const t = (ar, en) => (language === "ar" ? ar : en);
 
