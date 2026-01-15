@@ -442,13 +442,33 @@ const Layout = () => {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={language === "ar" ? "start" : "end"} className="w-48">
+              <DropdownMenuContent align={language === "ar" ? "start" : "end"} className="w-56">
                 <DropdownMenuLabel>{t("settings")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2">
                   <User className="w-4 h-4" />
                   {user?.username}
                 </DropdownMenuItem>
+                
+                {/* Profile Settings */}
+                <DropdownMenuItem 
+                  className="gap-2 cursor-pointer"
+                  onClick={openProfileDialog}
+                >
+                  <UserCog className="w-4 h-4" />
+                  {language === "ar" ? "تعديل الملف الشخصي" : "Edit Profile"}
+                </DropdownMenuItem>
+                
+                {/* Change Password */}
+                <DropdownMenuItem 
+                  className="gap-2 cursor-pointer"
+                  onClick={() => setPasswordDialogOpen(true)}
+                >
+                  <KeyRound className="w-4 h-4" />
+                  {language === "ar" ? "تغيير كلمة المرور" : "Change Password"}
+                </DropdownMenuItem>
+                
+                {/* Change Background */}
                 <DropdownMenuItem 
                   className="gap-2 cursor-pointer"
                   onClick={() => setBackgroundDialogOpen(true)}
@@ -456,6 +476,7 @@ const Layout = () => {
                   <Image className="w-4 h-4" />
                   {language === "ar" ? "تغيير الخلفية" : "Change Background"}
                 </DropdownMenuItem>
+                
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="gap-2 text-destructive focus:text-destructive"
