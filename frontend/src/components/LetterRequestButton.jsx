@@ -59,8 +59,6 @@ const LetterRequestButton = ({ currentUser }) => {
     purpose: "",
     recipient: "",
     content: "",
-    leave_start_date: null,
-    leave_end_date: null,
   });
 
   // Fetch employees when dialog opens
