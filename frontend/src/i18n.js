@@ -241,6 +241,8 @@ const resources = {
       "advanced_reports": "التقارير المتقدمة",
       "notification_settings": "إعدادات الإشعارات",
       "cctv_system": "نظام الكاميرات",
+      "extra_pay_approvals": "الموافقة على البدلات",
+      "appearance_settings": "إعدادات المظهر",
       
       // Analysis
       "analysis": "التحليل الذكي",
