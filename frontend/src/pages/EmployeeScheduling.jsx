@@ -227,7 +227,7 @@ const EmployeeScheduling = () => {
     return matchesSearch && matchesDepartment && matchesShift;
   });
 
-  if (loading) {
+  if (loading && activeMainTab === "employees") {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
@@ -236,44 +236,66 @@ const EmployeeScheduling = () => {
   }
 
   return (
-    <div className="space-y-6" data-testid="employee-scheduling-page">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {language === "ar" ? "جدولة الموظفين" : "Employee Scheduling"}
-          </h1>
-          <p className="text-muted-foreground">
-            {language === "ar" ? "إدارة ورديات العمل وأيام الإجازة الأسبوعية" : "Manage work shifts and weekly off-days"}
-          </p>
+    <div className="space-y-6 p-6" data-testid="employee-scheduling-page">
+      {/* Main Tabs */}
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {language === "ar" ? "جدولة العمل" : "Work Scheduling"}
+            </h1>
+            <p className="text-muted-foreground">
+              {language === "ar" ? "إدارة جداول الموظفين والسائقين" : "Manage employee and driver schedules"}
+            </p>
+          </div>
+          <TabsList className="grid grid-cols-2 w-[300px]">
+            <TabsTrigger value="employees" className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              {language === "ar" ? "جدول الموظفين" : "Employees"}
+            </TabsTrigger>
+            <TabsTrigger value="drivers" className="flex items-center gap-2">
+              <Truck className="w-4 h-4" />
+              {language === "ar" ? "جدول السائقين" : "Drivers"}
+            </TabsTrigger>
+          </TabsList>
         </div>
-        <div className="flex gap-2">
-          {bulkEditMode ? (
-            <>
-              <Button variant="outline" onClick={() => { setBulkEditMode(false); clearSelection(); }}>
-                {language === "ar" ? "إلغاء" : "Cancel"}
-              </Button>
-              <Button 
-                onClick={handleBulkSave}
-                className="gradient-primary text-white"
-                disabled={selectedEmployees.length === 0}
-              >
-                <Save className="w-4 h-4 me-2" />
-                {language === "ar" ? `حفظ (${selectedEmployees.length})` : `Save (${selectedEmployees.length})`}
-              </Button>
-            </>
-          ) : (
-            <Button 
-              onClick={() => setBulkEditMode(true)}
-              variant="outline"
-              data-testid="bulk-edit-btn"
-            >
-              <Edit2 className="w-4 h-4 me-2" />
-              {language === "ar" ? "تعديل جماعي" : "Bulk Edit"}
-            </Button>
-          )}
-        </div>
-      </div>
+
+        {/* Employees Tab */}
+        <TabsContent value="employees" className="space-y-6">
+          {/* Employee Schedule Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {language === "ar" ? "ورديات الموظفين" : "Employee Shifts"}
+              </h2>
+            </div>
+            <div className="flex gap-2">
+              {bulkEditMode ? (
+                <>
+                  <Button variant="outline" onClick={() => { setBulkEditMode(false); clearSelection(); }}>
+                    {language === "ar" ? "إلغاء" : "Cancel"}
+                  </Button>
+                  <Button 
+                    onClick={handleBulkSave}
+                    className="gradient-primary text-white"
+                    disabled={selectedEmployees.length === 0}
+                  >
+                    <Save className="w-4 h-4 me-2" />
+                    {language === "ar" ? `حفظ (${selectedEmployees.length})` : `Save (${selectedEmployees.length})`}
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  onClick={() => setBulkEditMode(true)}
+                  variant="outline"
+                  data-testid="bulk-edit-btn"
+                >
+                  <Edit2 className="w-4 h-4 me-2" />
+                  {language === "ar" ? "تعديل جماعي" : "Bulk Edit"}
+                </Button>
+              )}
+            </div>
+          </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
