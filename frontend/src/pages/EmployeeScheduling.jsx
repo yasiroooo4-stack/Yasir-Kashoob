@@ -32,6 +32,7 @@ import {
 } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
 import { Badge } from "../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { 
   Calendar, 
   Clock, 
@@ -42,8 +43,11 @@ import {
   Moon,
   Save,
   Edit2,
-  Filter
+  Filter,
+  Truck,
+  CalendarDays,
 } from "lucide-react";
+import DriverSchedule from "./DriverSchedule";
 
 const EmployeeScheduling = () => {
   const { t } = useTranslation();
