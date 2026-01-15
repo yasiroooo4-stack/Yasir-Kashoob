@@ -39,6 +39,7 @@ import {
   Video,
   Palette,
   Shield,
+  Truck,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
