@@ -786,38 +786,42 @@ const DriverSchedule = ({ embedded = false }) => {
   );
 
   return (
-    <div className="p-6 space-y-6" dir={language === "ar" ? "rtl" : "ltr"}>
+    <div className={embedded ? "space-y-6" : "p-6 space-y-6"} dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Truck className="w-7 h-7 text-primary" />
-            {t("جدول السائقين", "Driver Schedule")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t("إدارة جداول السائقين الشهرية ورحلات نقل الحليب", "Manage monthly driver schedules and milk transport trips")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigateMonth(-1)}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <div className="px-4 py-2 bg-muted rounded-lg font-medium min-w-[150px] text-center">
-            {new Date(currentMonth + "-01").toLocaleDateString(language === "ar" ? "ar-OM" : "en-US", {
-              year: "numeric",
-              month: "long",
-            })}
+      {!embedded && (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Truck className="w-7 h-7 text-primary" />
+              {t("جدول السائقين", "Driver Schedule")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("إدارة جداول السائقين الشهرية ورحلات نقل الحليب", "Manage monthly driver schedules and milk transport trips")}
+            </p>
           </div>
-          <Button variant="outline" onClick={() => navigateMonth(1)}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button onClick={() => openAddDialog()}>
-            <Plus className="w-4 h-4 me-2" />
-            {t("إضافة جدولة", "Add Schedule")}
-          </Button>
-          <Button variant="outline" onClick={fetchSchedules}>
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" onClick={() => navigateMonth(-1)}>
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+        <div className="px-4 py-2 bg-muted rounded-lg font-medium min-w-[150px] text-center">
+          {new Date(currentMonth + "-01").toLocaleDateString(language === "ar" ? "ar-OM" : "en-US", {
+            year: "numeric",
+            month: "long",
+          })}
+        </div>
+        <Button variant="outline" onClick={() => navigateMonth(1)}>
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <Button onClick={() => openAddDialog()}>
+          <Plus className="w-4 h-4 me-2" />
+          {t("إضافة جدولة", "Add Schedule")}
+        </Button>
+        <Button variant="outline" onClick={fetchSchedules}>
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
