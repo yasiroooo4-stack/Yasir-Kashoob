@@ -10298,12 +10298,22 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
                 if status == "present":
                     # Check if working on a holiday or weekend
                     if is_official_holiday:
-                        holiday_work_days += 1
+                        # التحقق من وجود موافقة على أجر العمل في العطلة
+                        if attendance.get("extra_pay_approved", False):
+                            holiday_work_days += 1
+                        else:
+                            working_days += 1  # يُحسب كيوم عمل عادي بدون أجر إضافي
                     elif is_weekly_off:
-                        weekend_work_days += 1
+                        # التحقق من وجود موافقة على أجر عمل نهاية الأسبوع
+                        if attendance.get("extra_pay_approved", False):
+                            weekend_work_days += 1
+                        else:
+                            working_days += 1  # يُحسب كيوم عمل عادي بدون أجر إضافي
                     else:
                         working_days += 1
-                    total_overtime_hours += overtime_hrs
+                    # أجر العمل الإضافي يحتاج موافقة أيضاً
+                    if attendance.get("overtime_approved", False):
+                        total_overtime_hours += overtime_hrs
                     
                 elif status in ["off", "weekend"]:
                     day_off += 1
