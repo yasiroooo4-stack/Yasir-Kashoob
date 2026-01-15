@@ -10,6 +10,7 @@ const resources = {
       "suppliers": "الموردين",
       "supplier_management": "إدارة الموردين",
       "employee_scheduling": "جدولة الموظفين",
+      "driver_schedule": "جدول السائقين",
       "milk_reception": "استلام الحليب",
       "customers": "العملاء",
       "sales": "المبيعات",
