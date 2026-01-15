@@ -207,6 +207,63 @@ const MilkReception = () => {
     });
   };
 
+  // استيراد من ملف Excel/CSV
+  const handleImportFile = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImportFile(file);
+      setImportResult(null);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast.error(language === "ar" ? "يرجى اختيار ملف" : "Please select a file");
+      return;
+    }
+
+    setImportLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+
+      const res = await axios.post(`${API}/milk-receptions/import`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setImportResult(res.data);
+      if (res.data.imported_count > 0) {
+        toast.success(
+          language === "ar"
+            ? `تم استيراد ${res.data.imported_count} سجل بنجاح`
+            : `Successfully imported ${res.data.imported_count} records`
+        );
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Import failed");
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const downloadTemplate = async () => {
+    try {
+      const res = await axios.get(`${API}/milk-receptions/import/template`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "milk_reception_template.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل تحميل القالب" : "Failed to download template");
+    }
+  };
+
   const todayReceptions = receptions.filter((r) =>
     r.reception_date?.startsWith(new Date().toISOString().split("T")[0])
   );
