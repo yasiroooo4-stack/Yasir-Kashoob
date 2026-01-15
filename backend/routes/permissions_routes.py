@@ -112,29 +112,13 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
     if not employee:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     
-    # الصلاحيات من الدور
+    # لا توجد صلاحيات تلقائية - فقط الصلاحيات الممنوحة يدوياً
     role_permissions = []
     role = employee.get("role", "employee")
     department = employee.get("department", "")
     position = employee.get("position", "")
     
-    # المدير العام له كل الصلاحيات
-    if "المدير العام" in position or role == "admin":
-        role_permissions = AVAILABLE_PERMISSIONS.copy()
-    # مدير القسم له صلاحيات قسمه + منح الصلاحيات
-    elif "مدير" in position:
-        role_permissions = DEFAULT_DEPARTMENT_PERMISSIONS.get(department, []).copy()
-        role_permissions.append("permissions_grant")
-    # المشرف له صلاحيات محدودة
-    elif "مشرف" in position:
-        dept_perms = DEFAULT_DEPARTMENT_PERMISSIONS.get(department, [])
-        # المشرف يحصل على صلاحيات العرض والإنشاء فقط (بدون الحذف والإعدادات)
-        role_permissions = [p for p in dept_perms if "view" in p or "create" in p]
-    else:
-        # الموظف العادي - صلاحيات محدودة جداً
-        role_permissions = [p for p in DEFAULT_DEPARTMENT_PERMISSIONS.get(department, []) if "view" in p]
-    
-    # الصلاحيات الممنوحة خصيصاً
+    # الصلاحيات الممنوحة خصيصاً من جدول user_permissions
     granted_permissions = await db.user_permissions.find(
         {"employee_id": employee_id, "is_active": True},
         {"_id": 0}
@@ -144,7 +128,7 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
     
     # DEBUG
     import logging
-    logging.info(f"Employee {employee_id}: DB grants = {granted_permissions}, granted_list = {granted_list}")
+    logging.info(f"Employee {employee_id}: DB grants = {len(granted_permissions)}, granted_list = {len(granted_list)}")
     
     # الصلاحيات المحظورة
     denied_permissions = employee.get("denied_permissions", [])
