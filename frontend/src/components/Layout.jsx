@@ -30,7 +30,6 @@ import {
   Image,
   PiggyBank,
   PackageSearch,
-  PackageOpen,
   CalendarClock,
   Landmark,
   DollarSign,
@@ -39,7 +38,6 @@ import {
   Video,
   Palette,
   Shield,
-  Truck,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
