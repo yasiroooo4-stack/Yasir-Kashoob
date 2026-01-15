@@ -1761,8 +1761,8 @@ async def import_milk_receptions(
                     "temperature": temp,
                     "density": density,
                     "acidity": acidity,
-                    "water_content": None,
-                    "is_accepted": True,
+                    "water_content": water_content,
+                    "is_accepted": is_accepted,
                     "notes": notes
                 },
                 "reception_date": reception_date,
@@ -1777,7 +1777,10 @@ async def import_milk_receptions(
             imported.append({
                 "supplier": supplier["name"],
                 "quantity": quantity,
+                "price": price,
                 "fat": fat,
+                "protein": protein,
+                "temperature": temp,
                 "date": reception_date[:10] if reception_date else ""
             })
             
@@ -1801,13 +1804,21 @@ async def download_import_template(current_user: dict = Depends(get_current_user
     """تحميل قالب استيراد بيانات استلام الحليب"""
     import pandas as pd
     
-    # إنشاء قالب
+    # إنشاء قالب مع جميع الحقول المطلوبة والاختيارية
     template_data = {
         "supplier_name": ["اسم المورد 1", "اسم المورد 2"],
         "quantity_liters": [100, 150],
+        "price_per_liter": [0.25, 0.25],
         "fat_percentage": [3.5, 4.0],
         "protein_percentage": [3.2, 3.3],
         "temperature": [4.0, 4.5],
+        "density": [1.030, 1.032],
+        "acidity": [0.16, 0.15],
+        "water_content": ["", ""],
+        "is_accepted": ["نعم", "نعم"],
+        "reception_date": ["2026-01-15", "2026-01-15"],
+        "notes": ["ملاحظة 1", ""]
+    }
         "price_per_liter": [0.25, 0.25],
         "reception_date": ["2026-01-15", "2026-01-15"],
         "notes": ["ملاحظة 1", ""]
