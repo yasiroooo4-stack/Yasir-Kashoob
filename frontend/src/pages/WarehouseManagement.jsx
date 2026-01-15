@@ -756,6 +756,10 @@ const WarehouseManagement = () => {
             <Settings className="w-4 h-4" />
             {t("المنتجات", "Products")}
           </TabsTrigger>
+          <TabsTrigger value="material-issue" className="flex items-center gap-1">
+            <ShoppingCart className="w-4 h-4" />
+            {t("صرف المواد", "Material Issue")}
+          </TabsTrigger>
         </TabsList>
 
         {/* Stock Tab */}
