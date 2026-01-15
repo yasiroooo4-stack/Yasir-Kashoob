@@ -185,6 +185,8 @@ const LetterRequestButton = ({ currentUser }) => {
         purpose: "",
         recipient: "",
         content: "",
+        leave_start_date: null,
+        leave_end_date: null,
       });
     } else if (currentEmployee) {
       // Keep current employee data for regular employees
@@ -197,6 +199,8 @@ const LetterRequestButton = ({ currentUser }) => {
         purpose: "",
         recipient: "",
         content: "",
+        leave_start_date: null,
+        leave_end_date: null,
       });
     }
   };
@@ -294,7 +298,7 @@ const LetterRequestButton = ({ currentUser }) => {
               <Label>{language === "ar" ? "نوع الرسالة" : "Letter Type"} *</Label>
               <Select
                 value={letterForm.letter_type}
-                onValueChange={(v) => setLetterForm({ ...letterForm, letter_type: v })}
+                onValueChange={(v) => setLetterForm({ ...letterForm, letter_type: v, leave_start_date: null, leave_end_date: null })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -308,6 +312,90 @@ const LetterRequestButton = ({ currentUser }) => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Leave Date Range - Only shown when letter_type is "leave_request" */}
+            {letterForm.letter_type === "leave_request" && (
+              <div className="space-y-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Label className="text-blue-700 dark:text-blue-300 font-semibold">
+                  {language === "ar" ? "فترة الإجازة" : "Leave Period"} *
+                </Label>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Start Date */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">
+                      {language === "ar" ? "من تاريخ" : "From Date"}
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !letterForm.leave_start_date && "text-muted-foreground"
+                          }`}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {letterForm.leave_start_date ? (
+                            format(letterForm.leave_start_date, "PPP", { locale: language === "ar" ? ar : enUS })
+                          ) : (
+                            <span>{language === "ar" ? "اختر التاريخ" : "Pick a date"}</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={letterForm.leave_start_date}
+                          onSelect={(date) => setLetterForm({ ...letterForm, leave_start_date: date })}
+                          initialFocus
+                          locale={language === "ar" ? ar : enUS}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">
+                      {language === "ar" ? "إلى تاريخ" : "To Date"}
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !letterForm.leave_end_date && "text-muted-foreground"
+                          }`}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {letterForm.leave_end_date ? (
+                            format(letterForm.leave_end_date, "PPP", { locale: language === "ar" ? ar : enUS })
+                          ) : (
+                            <span>{language === "ar" ? "اختر التاريخ" : "Pick a date"}</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={letterForm.leave_end_date}
+                          onSelect={(date) => setLetterForm({ ...letterForm, leave_end_date: date })}
+                          disabled={(date) => letterForm.leave_start_date && date < letterForm.leave_start_date}
+                          initialFocus
+                          locale={language === "ar" ? ar : enUS}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+                {letterForm.leave_start_date && letterForm.leave_end_date && (
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                    {language === "ar" ? "مدة الإجازة: " : "Leave Duration: "}
+                    {Math.ceil((letterForm.leave_end_date - letterForm.leave_start_date) / (1000 * 60 * 60 * 24)) + 1}
+                    {language === "ar" ? " يوم" : " days"}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Purpose */}
             <div className="space-y-2">
