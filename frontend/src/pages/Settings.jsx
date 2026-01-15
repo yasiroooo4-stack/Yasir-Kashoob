@@ -110,7 +110,7 @@ const THEMES = [
   },
 ];
 
-const Settings = () => {
+const Settings = ({ embedded = false }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { user } = useAuth();
