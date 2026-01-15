@@ -36,7 +36,6 @@ const LETTER_TYPES = [
   { id: "experience_letter", name: "شهادة خبرة", name_en: "Experience Letter" },
   { id: "mission_letter", name: "خطاب مهمة", name_en: "Mission Letter" },
   { id: "no_objection", name: "خطاب عدم ممانعة", name_en: "No Objection Letter" },
-  { id: "leave_request", name: "طلب إجازة", name_en: "Leave Request" },
 ];
 
 const LetterRequestButton = ({ currentUser }) => {
