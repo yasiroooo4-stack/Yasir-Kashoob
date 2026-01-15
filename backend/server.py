@@ -1699,15 +1699,29 @@ async def import_milk_receptions(
                 supplier = new_supplier
                 supplier_map[supplier_key] = supplier
             
-            # قراءة البيانات
+            # قراءة البيانات المطلوبة
             quantity = float(row.get('quantity_liters', 0))
+            price = float(row.get('price_per_liter', 0))
             fat = float(row.get('fat_percentage', 0))
-            protein = float(row.get('protein_percentage', 3.0)) if pd.notna(row.get('protein_percentage')) else 3.0
-            temp = float(row.get('temperature', 4.0)) if pd.notna(row.get('temperature')) else 4.0
-            density = float(row.get('density', 1.030)) if pd.notna(row.get('density')) else None
-            acidity = float(row.get('acidity', 0.16)) if pd.notna(row.get('acidity')) else None
-            price = float(row.get('price_per_liter', 0.25)) if pd.notna(row.get('price_per_liter')) else 0.25
+            protein = float(row.get('protein_percentage', 0))
+            temp = float(row.get('temperature', 0))
+            
+            # البيانات الاختيارية
+            density = float(row.get('density')) if pd.notna(row.get('density')) else None
+            acidity = float(row.get('acidity')) if pd.notna(row.get('acidity')) else None
+            water_content = float(row.get('water_content')) if pd.notna(row.get('water_content')) else None
             notes = str(row.get('notes', '')) if pd.notna(row.get('notes')) else ''
+            
+            # is_accepted - الافتراضي True
+            is_accepted = True
+            if 'is_accepted' in row and pd.notna(row.get('is_accepted')):
+                val = row.get('is_accepted')
+                if isinstance(val, bool):
+                    is_accepted = val
+                elif isinstance(val, str):
+                    is_accepted = val.lower() in ['true', 'yes', 'نعم', '1', 'مقبول']
+                elif isinstance(val, (int, float)):
+                    is_accepted = val == 1
             
             # التاريخ
             reception_date = None
@@ -1723,8 +1737,15 @@ async def import_milk_receptions(
             else:
                 reception_date = datetime.now(timezone.utc).isoformat()
             
+            # التحقق من البيانات المطلوبة
             if quantity <= 0:
                 skipped.append(f"صف {idx + 2}: الكمية صفر أو سالبة")
+                continue
+            if price <= 0:
+                errors.append(f"صف {idx + 2}: سعر اللتر غير صحيح")
+                continue
+            if fat <= 0:
+                errors.append(f"صف {idx + 2}: نسبة الدهون غير صحيحة")
                 continue
             
             # إنشاء سجل استلام الحليب
