@@ -60,6 +60,7 @@ import SupplierPortal from "./pages/SupplierPortal";
 import SupplierManagement from "./pages/SupplierManagement";
 import SystemSettings from "./pages/SystemSettings";
 import EmployeeScheduling from "./pages/EmployeeScheduling";
+import DriverSchedule from "./pages/DriverSchedule";
 import SupplierApp from "./pages/SupplierApp";
 import SalaryStructures from "./pages/SalaryStructures";
 import AdvancedReports from "./pages/AdvancedReports";
