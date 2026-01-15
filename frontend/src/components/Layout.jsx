@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth, useLanguage, API } from "../App";
 import axios from "axios";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   Users,
@@ -33,8 +34,12 @@ import {
   Landmark,
   DollarSign,
   Shield,
+  KeyRound,
+  UserCog,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
