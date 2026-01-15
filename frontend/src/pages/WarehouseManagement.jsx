@@ -1434,6 +1434,11 @@ const WarehouseManagement = () => {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Material Issue Tab */}
+        <TabsContent value="material-issue">
+          <MaterialIssue embedded={true} />
+        </TabsContent>
       </Tabs>
 
       {/* Warehouse Dialog */}
