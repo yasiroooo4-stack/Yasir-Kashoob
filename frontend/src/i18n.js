@@ -270,6 +270,7 @@ const resources = {
       "suppliers": "Suppliers",
       "supplier_management": "Supplier Management",
       "employee_scheduling": "Employee Scheduling",
+      "driver_schedule": "Driver Schedule",
       "milk_reception": "Milk Reception",
       "customers": "Customers",
       "sales": "Sales",
