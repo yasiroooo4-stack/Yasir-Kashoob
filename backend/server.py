@@ -1545,6 +1545,125 @@ async def get_milk_reception(reception_id: str, current_user: dict = Depends(get
     return reception
 
 
+@api_router.put("/milk-receptions/{reception_id}")
+async def update_milk_reception(
+    reception_id: str, 
+    reception_data: MilkReceptionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """تعديل استلام حليب - يتطلب صلاحية milk_reception_edit"""
+    
+    # التحقق من الصلاحية
+    user_permissions = await db.user_permissions.find_one(
+        {"user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    
+    has_permission = False
+    if current_user.get("role") == "admin":
+        has_permission = True
+    elif user_permissions:
+        granted = user_permissions.get("granted_permissions", [])
+        has_permission = "milk_reception_edit" in granted or "all" in granted
+    
+    if not has_permission:
+        raise HTTPException(
+            status_code=403, 
+            detail="ليس لديك صلاحية تعديل استلامات الحليب"
+        )
+    
+    # التحقق من وجود السجل
+    existing = await db.milk_receptions.find_one({"id": reception_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="سجل الاستلام غير موجود")
+    
+    # الحصول على بيانات المورد
+    supplier = await db.suppliers.find_one({"id": reception_data.supplier_id}, {"_id": 0})
+    
+    # تحديث السجل
+    update_data = reception_data.model_dump()
+    update_data["total_amount"] = reception_data.quantity_liters * reception_data.price_per_liter
+    update_data["supplier_name"] = supplier["name"] if supplier else existing.get("supplier_name")
+    update_data["supplier_code"] = supplier.get("code", supplier.get("supplier_code", "")) if supplier else ""
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["updated_by"] = current_user.get("id")
+    update_data["updated_by_name"] = current_user.get("full_name")
+    
+    await db.milk_receptions.update_one(
+        {"id": reception_id},
+        {"$set": update_data}
+    )
+    
+    # تسجيل النشاط
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_milk_reception",
+        entity_type="milk_reception",
+        entity_id=reception_id,
+        entity_name=update_data.get("supplier_name"),
+        details=f"تعديل استلام حليب: {update_data.get('supplier_name')} - {reception_data.quantity_liters} لتر"
+    )
+    
+    updated = await db.milk_receptions.find_one({"id": reception_id}, {"_id": 0})
+    return updated
+
+
+@api_router.delete("/milk-receptions/{reception_id}")
+async def delete_milk_reception(
+    reception_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حذف استلام حليب - يتطلب صلاحية milk_reception_delete"""
+    
+    # التحقق من الصلاحية
+    user_permissions = await db.user_permissions.find_one(
+        {"user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    
+    has_permission = False
+    if current_user.get("role") == "admin":
+        has_permission = True
+    elif user_permissions:
+        granted = user_permissions.get("granted_permissions", [])
+        has_permission = "milk_reception_delete" in granted or "all" in granted
+    
+    if not has_permission:
+        raise HTTPException(
+            status_code=403, 
+            detail="ليس لديك صلاحية حذف استلامات الحليب"
+        )
+    
+    # التحقق من وجود السجل
+    reception = await db.milk_receptions.find_one({"id": reception_id}, {"_id": 0})
+    if not reception:
+        raise HTTPException(status_code=404, detail="سجل الاستلام غير موجود")
+    
+    # التحقق من عدم وجود مدفوعات مرتبطة
+    if reception.get("is_paid"):
+        raise HTTPException(
+            status_code=400,
+            detail="لا يمكن حذف استلام تم دفعه. يرجى إلغاء الدفع أولاً"
+        )
+    
+    # حذف السجل
+    await db.milk_receptions.delete_one({"id": reception_id})
+    
+    # تسجيل النشاط
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_milk_reception",
+        entity_type="milk_reception",
+        entity_id=reception_id,
+        entity_name=reception.get("supplier_name"),
+        details=f"حذف استلام حليب: {reception.get('supplier_name')} - {reception.get('quantity_liters')} لتر"
+    )
+    
+    return {"message": "تم حذف سجل الاستلام بنجاح", "deleted_id": reception_id}
+
+
 @api_router.post("/milk-receptions/import")
 async def import_milk_receptions(
     file: UploadFile = File(...),
