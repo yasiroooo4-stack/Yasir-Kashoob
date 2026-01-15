@@ -60,7 +60,6 @@ import SupplierPortal from "./pages/SupplierPortal";
 import SupplierManagement from "./pages/SupplierManagement";
 import SystemSettings from "./pages/SystemSettings";
 import EmployeeScheduling from "./pages/EmployeeScheduling";
-import DriverSchedule from "./pages/DriverSchedule";
 import SupplierApp from "./pages/SupplierApp";
 import SalaryStructures from "./pages/SalaryStructures";
 import AdvancedReports from "./pages/AdvancedReports";
@@ -69,7 +68,6 @@ import CCTVSystem from "./pages/CCTVSystem";
 import Procurement from "./pages/Procurement";
 import PermissionsManagement from "./pages/PermissionsManagement";
 import WarehouseManagement from "./pages/WarehouseManagement";
-import MaterialIssue from "./pages/MaterialIssue";
 
 // Layout
 import Layout from "./components/Layout";
