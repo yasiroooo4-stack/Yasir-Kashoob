@@ -4712,8 +4712,17 @@ async def bulk_approve_extra_pay(
     current_user: dict = Depends(get_current_user)
 ):
     """الموافقة على أجر العمل الإضافي لعدة سجلات"""
+    # التحقق من الصلاحيات - يسمح للمدير أو مدير الموارد البشرية أو من لديه صلاحيات محددة
+    user_role = current_user.get("role", "")
     user_permissions = current_user.get("permissions", [])
-    if "all" not in user_permissions and "admin" not in user_permissions and "hr_full" not in user_permissions and "payroll_full" not in user_permissions:
+    has_permission = (
+        user_role in ["admin", "hr_manager"] or
+        "all" in user_permissions or 
+        "admin" in user_permissions or 
+        "hr_full" in user_permissions or 
+        "payroll_full" in user_permissions
+    )
+    if not has_permission:
         raise HTTPException(status_code=403, detail="ليس لديك صلاحية الموافقة على أجر العمل الإضافي")
     
     result = await db.hr_attendance.update_many(
