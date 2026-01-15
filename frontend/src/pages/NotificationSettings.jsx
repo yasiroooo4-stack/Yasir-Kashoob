@@ -55,7 +55,7 @@ import {
   Phone,
 } from "lucide-react";
 
-const NotificationSettings = () => {
+const NotificationSettings = ({ embedded = false }) => {
   const { language } = useLanguage();
   const t = (ar, en) => language === "ar" ? ar : en;
   const [activeTab, setActiveTab] = useState("sms");
