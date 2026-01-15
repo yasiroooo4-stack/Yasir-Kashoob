@@ -288,17 +288,27 @@ const MilkReception = () => {
             {language === "ar" ? "تسجيل استلام الحليب من الموردين" : "Record milk reception from suppliers"}
           </p>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setDialogOpen(true);
-          }}
-          className="gradient-primary text-white"
-          data-testid="add-reception-btn"
-        >
-          <Plus className="w-4 h-4 me-2" />
-          {t("add_reception")}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setImportDialogOpen(true)}
+            variant="outline"
+            data-testid="import-btn"
+          >
+            <Upload className="w-4 h-4 me-2" />
+            {language === "ar" ? "استيراد" : "Import"}
+          </Button>
+          <Button
+            onClick={() => {
+              resetForm();
+              setDialogOpen(true);
+            }}
+            className="gradient-primary text-white"
+            data-testid="add-reception-btn"
+          >
+            <Plus className="w-4 h-4 me-2" />
+            {t("add_reception")}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
