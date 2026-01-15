@@ -591,6 +591,12 @@ const Reports = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="advanced">
+          <Suspense fallback={<div className="flex justify-center p-8"><RefreshCw className="w-6 h-6 animate-spin" /></div>}>
+            <AdvancedReportsContent />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
   );
