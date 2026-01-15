@@ -1552,10 +1552,10 @@ async def import_milk_receptions(
 ):
     """
     استيراد بيانات استلام الحليب من ملف Excel أو CSV
-    الأعمدة المطلوبة: supplier_name, quantity_liters, price_per_liter, fat_percentage, protein_percentage, temperature
-    الأعمدة الاختيارية: reception_date, density, acidity, water_content, is_accepted, notes
+    يدعم ملفات Ekomilk من المراكز وملفات النظام القديم
     """
     import pandas as pd
+    import xlrd
     
     # قراءة الملف
     try:
@@ -1563,24 +1563,44 @@ async def import_milk_receptions(
         
         if file.filename.endswith('.csv'):
             df = pd.read_csv(io.BytesIO(content))
-        elif file.filename.endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(io.BytesIO(content))
+        elif file.filename.endswith('.xlsx'):
+            df = pd.read_excel(io.BytesIO(content), engine='openpyxl')
+        elif file.filename.endswith('.xls'):
+            # Old Excel format - use xlrd
+            df = pd.read_excel(io.BytesIO(content), engine='xlrd')
         else:
-            raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يرجى استخدام CSV أو Excel")
+            raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يرجى استخدام CSV أو Excel (.xls أو .xlsx)")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"خطأ في قراءة الملف: {str(e)}")
     
-    # الأعمدة المطلوبة - نفس حقول نموذج الإضافة
-    required_columns = ['supplier_name', 'quantity_liters', 'price_per_liter', 'fat_percentage', 'protein_percentage', 'temperature']
-    
-    # محاولة التعرف على أسماء الأعمدة بالعربية والإنجليزية
+    # محاولة التعرف على أسماء الأعمدة - دعم نظام Ekomilk والنظام القديم
     column_mapping = {
+        # === أعمدة نظام Ekomilk من المراكز ===
+        'm. code': 'supplier_code',
+        'm. name': 'supplier_name',
+        'qty(ltr.)': 'quantity_liters',
+        'fat %': 'fat_percentage',
+        'snf %': 'snf_percentage',
+        'clr': 'clr',
+        'rtpl': 'price_per_liter',
+        'amount (omr)': 'total_amount',
+        'water(%)': 'water_content',
+        'protein': 'protein_percentage',
+        'density': 'density',
+        'lactose': 'lactose',
+        'shift': 'shift',
+        'milk type': 'milk_type',
+        'date': 'reception_date',
+        
+        # === أعمدة النظام القديم بالعربية ===
         # المورد
         'اسم المورد': 'supplier_name',
         'المورد': 'supplier_name',
         'supplier': 'supplier_name',
         'name': 'supplier_name',
         'اسم': 'supplier_name',
+        'كود المورد': 'supplier_code',
+        'رقم المورد': 'supplier_code',
         # الكمية
         'الكمية': 'quantity_liters',
         'كمية الحليب': 'quantity_liters',
@@ -1635,24 +1655,40 @@ async def import_milk_receptions(
         # التاريخ
         'التاريخ': 'reception_date',
         'تاريخ': 'reception_date',
-        'date': 'reception_date',
         'reception_date': 'reception_date',
         # ملاحظات
         'ملاحظات': 'notes',
         'notes': 'notes',
         'ملاحظة': 'notes',
+        # نوع الحليب
+        'نوع الحليب': 'milk_type',
+        'milk_type': 'milk_type',
+        # المبلغ
+        'المبلغ': 'total_amount',
+        'الإجمالي': 'total_amount',
+        'amount': 'total_amount',
+        'total': 'total_amount',
     }
     
     # تحويل أسماء الأعمدة
     df.columns = df.columns.str.strip().str.lower()
     df.rename(columns={k.lower(): v for k, v in column_mapping.items()}, inplace=True)
     
-    # التحقق من الأعمدة المطلوبة
-    missing = [col for col in required_columns if col not in df.columns]
-    if missing:
+    # تحديد الأعمدة الموجودة
+    available_columns = df.columns.tolist()
+    print(f"Available columns after mapping: {available_columns}")
+    
+    # التحقق من وجود بيانات المورد والكمية على الأقل
+    if 'supplier_name' not in df.columns and 'supplier_code' not in df.columns:
         raise HTTPException(
             status_code=400, 
-            detail=f"الأعمدة التالية مطلوبة ولم يتم العثور عليها: {', '.join(missing)}. الأعمدة الموجودة: {', '.join(df.columns.tolist())}"
+            detail=f"لم يتم العثور على عمود المورد. الأعمدة الموجودة: {', '.join(available_columns)}"
+        )
+    
+    if 'quantity_liters' not in df.columns:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"لم يتم العثور على عمود الكمية. الأعمدة الموجودة: {', '.join(available_columns)}"
         )
     
     # جلب قائمة الموردين للمطابقة
