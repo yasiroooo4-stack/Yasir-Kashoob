@@ -56,7 +56,7 @@ import {
   Package,
 } from "lucide-react";
 
-const AdvancedReports = () => {
+const AdvancedReports = ({ embedded = false }) => {
   const { language } = useLanguage();
   const t = (ar, en) => language === "ar" ? ar : en;
   const [activeTab, setActiveTab] = useState("payroll-comparison");
