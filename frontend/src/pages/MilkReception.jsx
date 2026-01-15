@@ -581,13 +581,24 @@ const MilkReception = () => {
         </CardContent>
       </Card>
 
-      {/* Add Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Add/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) resetForm();
+      }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t("add_reception")}</DialogTitle>
+            <DialogTitle>
+              {editMode 
+                ? (language === "ar" ? "تعديل استلام حليب" : "Edit Milk Reception")
+                : t("add_reception")
+              }
+            </DialogTitle>
             <DialogDescription>
-              {language === "ar" ? "أدخل بيانات استلام الحليب" : "Enter milk reception details"}
+              {editMode
+                ? (language === "ar" ? "تعديل بيانات استلام الحليب" : "Edit milk reception details")
+                : (language === "ar" ? "أدخل بيانات استلام الحليب" : "Enter milk reception details")
+              }
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
