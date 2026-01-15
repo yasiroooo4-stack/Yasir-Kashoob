@@ -1824,34 +1824,40 @@ async def import_milk_receptions(
                 "id": str(uuid.uuid4()),
                 "supplier_id": supplier["id"],
                 "supplier_name": supplier["name"],
+                "supplier_code": supplier.get("code", ""),
                 "quantity_liters": quantity,
                 "price_per_liter": price,
+                "total_amount": total_amount,
+                "milk_type": milk_type,
+                "shift": shift,
                 "quality_test": {
                     "fat_percentage": fat,
                     "protein_percentage": protein,
                     "temperature": temp,
                     "density": density,
-                    "acidity": acidity,
+                    "snf_percentage": snf,
+                    "clr": clr,
+                    "lactose": lactose,
                     "water_content": water_content,
-                    "is_accepted": is_accepted,
+                    "is_accepted": True,
                     "notes": notes
                 },
                 "reception_date": reception_date,
-                "total_amount": quantity * price,
                 "is_paid": False,
                 "created_by": current_user.get("id"),
                 "imported": True,
+                "import_source": "ekomilk",
                 "import_date": datetime.now(timezone.utc).isoformat()
             }
             
             await db.milk_receptions.insert_one(reception)
             imported.append({
                 "supplier": supplier["name"],
+                "supplier_code": supplier.get("code", ""),
                 "quantity": quantity,
                 "price": price,
                 "fat": fat,
-                "protein": protein,
-                "temperature": temp,
+                "milk_type": milk_type,
                 "date": reception_date[:10] if reception_date else ""
             })
             
@@ -1860,13 +1866,15 @@ async def import_milk_receptions(
     
     return {
         "success": True,
-        "message": f"تم استيراد {len(imported)} سجل بنجاح",
+        "message": f"تم استيراد {len(imported)} سجل بنجاح" + (f" وإنشاء {len(new_suppliers_created)} مورد جديد" if new_suppliers_created else ""),
         "imported_count": len(imported),
         "errors_count": len(errors),
         "skipped_count": len(skipped),
+        "new_suppliers_count": len(new_suppliers_created),
         "imported": imported[:20],  # أول 20 سجل فقط
         "errors": errors[:10],  # أول 10 أخطاء
-        "skipped": skipped[:10]
+        "skipped": skipped[:10],
+        "new_suppliers": new_suppliers_created[:10] if new_suppliers_created else []
     }
 
 
