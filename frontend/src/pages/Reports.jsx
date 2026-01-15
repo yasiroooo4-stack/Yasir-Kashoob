@@ -593,8 +593,12 @@ const Reports = () => {
         </TabsContent>
 
         <TabsContent value="advanced">
-          <Suspense fallback={<div className="flex justify-center p-8"><RefreshCw className="w-6 h-6 animate-spin" /></div>}>
-            <AdvancedReportsContent />
+          <Suspense fallback={
+            <div className="flex justify-center items-center p-12">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          }>
+            <AdvancedReportsContent embedded={true} />
           </Suspense>
         </TabsContent>
       </Tabs>
