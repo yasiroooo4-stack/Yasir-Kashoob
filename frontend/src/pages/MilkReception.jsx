@@ -730,6 +730,134 @@ const MilkReception = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5" />
+              {language === "ar" ? "استيراد بيانات استلام الحليب" : "Import Milk Reception Data"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "ar"
+                ? "استيراد البيانات من ملف Excel أو CSV من النظام القديم"
+                : "Import data from Excel or CSV file from the old system"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Download Template */}
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">
+                    {language === "ar" ? "تحميل القالب" : "Download Template"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ar"
+                      ? "قم بتحميل قالب Excel لمعرفة تنسيق البيانات المطلوب"
+                      : "Download Excel template to see the required data format"}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Download className="w-4 h-4 me-2" />
+                  {language === "ar" ? "تحميل" : "Download"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Required Columns Info */}
+            <div className="p-4 border rounded-lg">
+              <p className="font-medium mb-2">
+                {language === "ar" ? "الأعمدة المطلوبة:" : "Required columns:"}
+              </p>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>• <code>supplier_name</code> - {language === "ar" ? "اسم المورد" : "Supplier name"}</li>
+                <li>• <code>quantity_liters</code> - {language === "ar" ? "كمية الحليب (لتر)" : "Milk quantity (liters)"}</li>
+                <li>• <code>fat_percentage</code> - {language === "ar" ? "نسبة الدهون" : "Fat percentage"}</li>
+              </ul>
+              <p className="font-medium mt-3 mb-2">
+                {language === "ar" ? "الأعمدة الاختيارية:" : "Optional columns:"}
+              </p>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>• <code>protein_percentage</code>, <code>temperature</code>, <code>price_per_liter</code></li>
+                <li>• <code>reception_date</code>, <code>notes</code></li>
+              </ul>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "اختر الملف" : "Select File"}</Label>
+              <Input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleImportFile}
+                className="cursor-pointer"
+              />
+              {importFile && (
+                <p className="text-sm text-muted-foreground">
+                  {language === "ar" ? "الملف المحدد:" : "Selected file:"} {importFile.name}
+                </p>
+              )}
+            </div>
+
+            {/* Import Result */}
+            {importResult && (
+              <div className={`p-4 rounded-lg ${importResult.imported_count > 0 ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"} border`}>
+                <p className="font-medium">
+                  {language === "ar" ? "نتيجة الاستيراد:" : "Import Result:"}
+                </p>
+                <ul className="text-sm mt-2 space-y-1">
+                  <li className="text-green-700">
+                    ✅ {language === "ar" ? `تم استيراد: ${importResult.imported_count} سجل` : `Imported: ${importResult.imported_count} records`}
+                  </li>
+                  {importResult.errors_count > 0 && (
+                    <li className="text-red-600">
+                      ❌ {language === "ar" ? `أخطاء: ${importResult.errors_count}` : `Errors: ${importResult.errors_count}`}
+                    </li>
+                  )}
+                  {importResult.skipped_count > 0 && (
+                    <li className="text-yellow-600">
+                      ⚠️ {language === "ar" ? `تم تخطي: ${importResult.skipped_count}` : `Skipped: ${importResult.skipped_count}`}
+                    </li>
+                  )}
+                </ul>
+                {importResult.errors?.length > 0 && (
+                  <div className="mt-2 text-xs text-red-600">
+                    <p className="font-medium">{language === "ar" ? "تفاصيل الأخطاء:" : "Error details:"}</p>
+                    {importResult.errors.slice(0, 5).map((err, i) => (
+                      <p key={i}>• {err}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setImportDialogOpen(false);
+              setImportFile(null);
+              setImportResult(null);
+            }}>
+              {language === "ar" ? "إغلاق" : "Close"}
+            </Button>
+            <Button 
+              onClick={handleImport} 
+              disabled={!importFile || importLoading}
+              className="gradient-primary text-white"
+            >
+              {importLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent me-2" />
+              ) : (
+                <Upload className="w-4 h-4 me-2" />
+              )}
+              {language === "ar" ? "استيراد" : "Import"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
