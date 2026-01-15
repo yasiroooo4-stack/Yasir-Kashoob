@@ -1881,11 +1881,12 @@ const HR = () => {
               <div className="flex flex-wrap gap-2 items-center">
                 <Button 
                   variant="outline" 
-                  onClick={fetchAttendance} 
+                  onClick={() => fetchAttendance(true)} 
                   className="gap-1"
+                  disabled={refreshingAttendance}
                   data-testid="refresh-attendance-btn"
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className={`w-4 h-4 ${refreshingAttendance ? 'animate-spin' : ''}`} />
                   {language === "ar" ? "تحديث" : "Refresh"}
                 </Button>
                 <Button onClick={() => setAttendanceDialogOpen(true)} className="gradient-primary text-white gap-1">
