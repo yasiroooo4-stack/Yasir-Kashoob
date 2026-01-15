@@ -281,6 +281,7 @@ const Reports = () => {
           <TabsTrigger value="finance"><DollarSign className="w-4 h-4 me-1" />{t("المالية", "Finance")}</TabsTrigger>
           <TabsTrigger value="payroll"><Wallet className="w-4 h-4 me-1" />{t("الرواتب", "Payroll")}</TabsTrigger>
           <TabsTrigger value="attendance"><Clock className="w-4 h-4 me-1" />{t("الحضور", "Attendance")}</TabsTrigger>
+          <TabsTrigger value="advanced"><PieChart className="w-4 h-4 me-1" />{t("متقدمة", "Advanced")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="suppliers">
