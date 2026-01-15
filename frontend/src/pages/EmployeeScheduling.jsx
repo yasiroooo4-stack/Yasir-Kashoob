@@ -52,6 +52,7 @@ import DriverSchedule from "./DriverSchedule";
 const EmployeeScheduling = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const [activeMainTab, setActiveMainTab] = useState("employees");
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
