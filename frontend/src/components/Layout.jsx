@@ -129,6 +129,67 @@ const Layout = () => {
     }
   };
 
+  // Open profile dialog and fill with current user data
+  const openProfileDialog = () => {
+    setProfileForm({
+      full_name: user?.full_name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+    });
+    setProfileDialogOpen(true);
+  };
+
+  // Save profile changes
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/user/profile`,
+        profileForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
+      setProfileDialogOpen(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ في تحديث الملف الشخصي" : "Error updating profile"));
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  // Save password changes
+  const handleSavePassword = async () => {
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error(language === "ar" ? "كلمات المرور غير متطابقة" : "Passwords do not match");
+      return;
+    }
+    if (passwordForm.new_password.length < 6) {
+      toast.error(language === "ar" ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API}/user/change-password`,
+        {
+          current_password: passwordForm.current_password,
+          new_password: passwordForm.new_password,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(language === "ar" ? "تم تغيير كلمة المرور بنجاح" : "Password changed successfully");
+      setPasswordDialogOpen(false);
+      setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "كلمة المرور الحالية غير صحيحة" : "Current password is incorrect"));
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   const navItems = [
     // لوحة التحكم
     { path: "/dashboard", icon: LayoutDashboard, label: "dashboard" },
