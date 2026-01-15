@@ -10692,6 +10692,19 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
                     unpaid_leave += 1
                 elif status == "otp":
                     otp_days += 1
+                elif status == "leave":
+                    # إجازة معتمدة - تُحسب كيوم حضور كامل بدون خصم
+                    leave_type = attendance.get("leave_type", "annual")
+                    if leave_type in ["annual", "سنوية", "اعتيادية"]:
+                        annual_leave += 1
+                    elif leave_type in ["sick", "مرضية"]:
+                        sick_leave += 1
+                    elif leave_type in ["emergency", "طارئة"]:
+                        emergency_leave += 1
+                    elif leave_type in ["unpaid", "بدون راتب"]:
+                        unpaid_leave += 1
+                    else:
+                        annual_leave += 1  # افتراضي: إجازة سنوية
             else:
                 # No attendance record - check if it's a holiday/weekend
                 if is_official_holiday:
