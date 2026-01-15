@@ -286,6 +286,8 @@ const MilkReception = () => {
   };
 
   const resetForm = () => {
+    setEditMode(false);
+    setEditingReception(null);
     setFormData({
       supplier_id: "",
       supplier_name: "",
@@ -302,6 +304,9 @@ const MilkReception = () => {
         notes: "",
       },
     });
+    setSupplierCode("");
+    setSupplierFound(null);
+    setMatchingSuppliers([]);
   };
 
   // استيراد من ملف Excel/CSV
