@@ -7722,6 +7722,8 @@ AVAILABLE_PERMISSIONS = [
     {"id": "dashboard", "name": "لوحة التحكم", "name_en": "Dashboard"},
     {"id": "suppliers", "name": "الموردين", "name_en": "Suppliers"},
     {"id": "milk_reception", "name": "استلام الحليب", "name_en": "Milk Reception"},
+    {"id": "milk_reception_edit", "name": "تعديل استلام الحليب", "name_en": "Edit Milk Reception"},
+    {"id": "milk_reception_delete", "name": "حذف استلام الحليب", "name_en": "Delete Milk Reception"},
     {"id": "customers", "name": "العملاء", "name_en": "Customers"},
     {"id": "sales", "name": "المبيعات", "name_en": "Sales"},
     {"id": "feed_purchases", "name": "مشتريات الأعلاف", "name_en": "Feed Purchases"},
