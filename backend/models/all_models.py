@@ -1915,6 +1915,55 @@ class DriverTask(DriverTaskBase):
     created_by: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+
+# ==================== جدول السائقين الشهري (Driver Schedule) ====================
+
+class DriverScheduleBase(BaseModel):
+    """جدول السائقين الشهري - كل صف يمثل رحلة/مهمة لسائق"""
+    model_config = ConfigDict(extra="ignore")
+    
+    # بيانات السائق
+    driver_id: str
+    driver_name: str
+    
+    # التاريخ والوقت
+    schedule_date: str  # YYYY-MM-DD
+    start_time: Optional[str] = None  # HH:MM
+    end_time: Optional[str] = None  # HH:MM
+    
+    # المواقع
+    collection_centers: List[str] = []  # مراكز التجميع (زيك، حجيف، غدو...)
+    customer_company: str  # شركة العميل
+    customer_id: Optional[str] = None
+    
+    # الشاحنة
+    truck_number: str  # رقم الشاحنة
+    truck_id: Optional[str] = None
+    
+    # كمية الحليب
+    expected_quantity: float = 0  # الكمية المتوقعة (لتر)
+    actual_quantity: Optional[float] = None  # الكمية الفعلية
+    
+    # الحالة والملاحظات
+    status: str = "scheduled"  # scheduled, in_progress, completed, cancelled, reassigned
+    notes: Optional[str] = None
+    
+    # في حالة إعادة التعيين بسبب غياب
+    original_driver_id: Optional[str] = None
+    original_driver_name: Optional[str] = None
+    reassignment_reason: Optional[str] = None
+
+
+class DriverSchedule(DriverScheduleBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+    updated_by: Optional[str] = None
+    updated_by_name: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+
+
 # ==================== سجل رصيد الإجازات (Leave Balance Log) ====================
 
 class LeaveBalanceLog(BaseModel):
