@@ -8,7 +8,6 @@
 - النظام المالي والخزينة
 - إدارة المستودعات المتكاملة
 - نظام التنبيهات الذكي
-- نظام الموافقة على البدلات الإضافية
 
 ## Tech Stack
 - **Frontend:** React + Vite + Tailwind CSS + Shadcn/UI
@@ -18,61 +17,48 @@
 
 ## الميزات المُنجزة
 
+### 15 يناير 2026 - الجزء الرابع
+
+#### تعديل وحذف استلامات الحليب مع الصلاحيات ✅
+
+**APIs جديدة:**
+```
+PUT    /api/milk-receptions/{id}  - تعديل استلام (يتطلب milk_reception_edit)
+DELETE /api/milk-receptions/{id}  - حذف استلام (يتطلب milk_reception_delete)
+```
+
+**الصلاحيات:**
+- `milk_reception_edit` - صلاحية تعديل استلامات الحليب
+- `milk_reception_delete` - صلاحية حذف استلامات الحليب
+- Admin يتجاوز فحص الصلاحيات
+
+**واجهة المستخدم:**
+- ✅ عمود "الإجراءات" في جدول الاستلامات
+- ✅ زر التعديل (أيقونة قلم أزرق)
+- ✅ زر الحذف (أيقونة سلة حمراء)
+- ✅ مودال تعديل مع البيانات المعبأة مسبقاً
+- ✅ مودال تأكيد الحذف
+
+**قيود:**
+- لا يمكن حذف استلام تم دفعه (`is_paid=true`)
+- الأزرار تظهر فقط للمستخدمين الذين لديهم الصلاحية
+
 ### 15 يناير 2026 - الجزء الثالث
 
 #### استيراد بيانات Ekomilk من المراكز ✅
-تم تحديث API `/api/milk-receptions/import` لدعم ملفات Ekomilk:
-
-**دعم الأعمدة الجديدة:**
-| عمود Ekomilk | الحقل الداخلي |
-|-------------|--------------|
-| M. Code | supplier_code |
-| M. Name | supplier_name |
-| Qty(Ltr.) | quantity_liters |
-| Fat % | fat_percentage |
-| RTPL | price_per_liter |
-| Amount (OMR) | total_amount |
-| Date | reception_date |
-| Shift | shift |
-| Milk Type | milk_type |
-| SNF % | snf_percentage |
-| CLR | clr |
-| Water(%) | water_content |
-| Protein | protein_percentage |
-| Density | density |
-| Lactose | lactose |
-
-**الميزات:**
-- ✅ دعم ملفات `.xls` القديمة باستخدام xlrd
-- ✅ دعم ملفات `.xlsx` و `.csv`
-- ✅ تحويل صيغة التاريخ `dd/mm/yyyy` → ISO
-- ✅ تحويل نوع الحليب (Camel → camel, Cow → cow)
-- ✅ إنشاء موردين جدد تلقائياً
-- ✅ حفظ كود المورد `M. Code`
-- ✅ نتيجة الاختبار: 1082 سجل، 187 مورد جديد، 0 أخطاء
+- دعم ملفات `.xls` القديمة
+- دعم أعمدة Ekomilk: `M. Code`, `M. Name`, `Qty(Ltr.)`, `Fat %`, `RTPL`, إلخ
+- إنشاء موردين جدد تلقائياً
+- نتيجة الاختبار: 1082 سجل، 187 مورد جديد
 
 #### تحسين منطق الإجازة في الرواتب ✅
-عند الموافقة على طلب إجازة:
-- ✅ تحديث سجلات الحضور من `absent` إلى `leave`
-- ✅ خصم أيام الإجازة من رصيد الموظف `leave_balance`
-- ✅ احتساب أيام الإجازة كأيام حضور مدفوعة (لا خصم من الراتب)
-
-**حالة `leave` في حساب الرواتب:**
-```python
-elif status == "leave":
-    leave_type = attendance.get("leave_type", "annual")
-    if leave_type in ["annual", "سنوية"]:
-        annual_leave += 1  # تُحسب ضمن total_pay_days
-    elif leave_type in ["sick", "مرضية"]:
-        sick_leave += 1
-    # ... إلخ
-```
+- حالة `leave` تُحتسب كيوم حضور مدفوع
+- تحديث سجلات الحضور من `absent` إلى `leave`
 
 ### 15 يناير 2026 - الجزء الثاني
 
 #### صفحة تسجيل الدخول الجديدة ✅
 - شعار Almorooj Dairy المتحرك
-- خلفية خضراء متدرجة
 
 #### إعدادات الحساب في Header ✅
 - تعديل الملف الشخصي
@@ -88,59 +74,41 @@ elif status == "leave":
 #### نظام الموافقة على البدلات الإضافية ✅
 - صفحة `/extra-pay-approvals`
 
-## API Endpoints المحدثة
+## API Endpoints
 
-### استيراد Ekomilk
+### استلام الحليب (محدث)
 ```
-POST /api/milk-receptions/import
-Content-Type: multipart/form-data
-
-Supports:
-- .xls (Ekomilk old format via xlrd)
-- .xlsx (modern Excel)
-- .csv
-
-Response:
-{
-  "success": true,
-  "message": "تم استيراد 1082 سجل بنجاح وإنشاء 187 مورد جديد",
-  "imported_count": 1082,
-  "new_suppliers_count": 187,
-  "errors_count": 0,
-  "skipped_count": 0
-}
+GET    /api/milk-receptions              - قائمة الاستلامات
+GET    /api/milk-receptions/{id}         - استلام محدد
+POST   /api/milk-receptions              - إنشاء استلام
+PUT    /api/milk-receptions/{id}         - تعديل استلام ⭐ جديد
+DELETE /api/milk-receptions/{id}         - حذف استلام ⭐ جديد
+POST   /api/milk-receptions/import       - استيراد من Excel/CSV
 ```
 
-### الموافقة على الإجازة (محدث)
+### الصلاحيات المتاحة
 ```
-PUT /api/hr/leave-requests/{request_id}/approve
-
-Effects:
-1. Updates leave request status to "approved"
-2. Updates attendance records: absent → leave
-3. Deducts days from employee leave_balance
-4. Creates leave_balance_log entry
+milk_reception_view     - عرض استلامات الحليب
+milk_reception_create   - إنشاء استلام حليب
+milk_reception_edit     - تعديل استلام حليب ⭐
+milk_reception_delete   - حذف استلام حليب ⭐
 ```
 
-## منطق حساب الرواتب
+## هيكل صفحة استلام الحليب
 
-### حالات الحضور وكيفية احتسابها:
-| الحالة | الوصف | يُحتسب ضمن |
-|--------|-------|-----------|
-| present | حضور عادي | working_days |
-| leave | إجازة معتمدة | annual_leave/sick_leave/etc |
-| absent | غياب | absent_days (يُخصم) |
-| sick_leave | إجازة مرضية | sick_leave (لا يُخصم) |
-| annual_leave | إجازة سنوية | annual_leave (لا يُخصم) |
-| off/weekend | يوم راحة | day_off (لا يُخصم) |
-
-### الصيغة:
 ```
-total_pay_days = working_days + day_off + sick_leave + annual_leave + 
-                 public_holiday + emergency_leave + ...
-gross_salary = daily_rate × total_pay_days
-absence_deduction = daily_rate × absent_days × ABSENCE_FACTOR
-net_salary = gross_salary - absence_deduction
+┌──────────────────────────────────────────────────────────────────┐
+│  [+ إضافة استلام]  [📤 استيراد]                                   │
+├──────────────────────────────────────────────────────────────────┤
+│ الإحصائيات: [إجمالي الكمية] [إجمالي المبلغ] [متوسط الدهون]      │
+├──────────────────────────────────────────────────────────────────┤
+│ جدول الاستلامات:                                                 │
+│ ┌─────┬──────┬─────┬────┬────┬────┬───────┬──────────┐           │
+│ │التاريخ│المورد│الكمية│السعر│الدهون│الحالة│الإجراءات│           │
+│ ├─────┼──────┼─────┼────┼────┼────┼───────┼──────────┤           │
+│ │     │      │     │    │    │مقبول│ ✏️ 🗑️ │           │
+│ └─────┴──────┴─────┴────┴────┴────┴───────┴──────────┘           │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ## المهام المعلقة
@@ -156,12 +124,12 @@ net_salary = gross_salary - absence_deduction
 
 ## بيانات الاختبار
 - Admin: `yasir` / `admin123`
-- ملف اختبار Ekomilk: `/tmp/milk_data.xls`
 
 ## نتائج الاختبارات
 - ✅ **100%** iteration_14.json - الموافقة على البدلات
 - ✅ **100%** iteration_15.json - دمج الصفحات
 - ✅ **100%** iteration_16.json - صفحة الدخول، إعدادات الحساب
 - ✅ **93%** iteration_17.json - استيراد Ekomilk، منطق الإجازة
+- ✅ **100%** iteration_18.json - تعديل وحذف استلامات الحليب
 
 ## آخر تحديث: 15 يناير 2026
