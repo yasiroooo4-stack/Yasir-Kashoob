@@ -5054,36 +5054,41 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
     
     # Calculate leave days
     leave_days = 0
+    attendance_updated = 0
+    attendance_created = 0
+    
     if start_date and end_date:
         try:
-            start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00")) if isinstance(start_date, str) else start_date
-            end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00")) if isinstance(end_date, str) else end_date
+            from datetime import date as date_type
             
-            # Ensure we have date objects
-            if hasattr(start_dt, 'date'):
-                start_dt = start_dt.date()
-            if hasattr(end_dt, 'date'):
-                end_dt = end_dt.date()
+            # Parse dates - handle both date strings and datetime strings
+            if isinstance(start_date, str):
+                # Remove time component if exists (e.g., "2026-01-12T00:00:00" -> "2026-01-12")
+                start_date_clean = start_date.split("T")[0].split(" ")[0]
+                start_dt = date_type.fromisoformat(start_date_clean)
+            else:
+                start_dt = start_date.date() if hasattr(start_date, 'date') else start_date
             
-            # Calculate days between dates
-            if isinstance(start_dt, datetime):
-                start_dt = start_dt.date()
-            if isinstance(end_dt, datetime):
-                end_dt = end_dt.date()
-                
+            if isinstance(end_date, str):
+                end_date_clean = end_date.split("T")[0].split(" ")[0]
+                end_dt = date_type.fromisoformat(end_date_clean)
+            else:
+                end_dt = end_date.date() if hasattr(end_date, 'date') else end_date
+            
             leave_days = (end_dt - start_dt).days + 1
             
             # Update attendance records for the leave period
             current_date = start_dt
             while current_date <= end_dt:
-                date_str = current_date.isoformat()
+                # Use YYYY-MM-DD format to match database records
+                date_str = current_date.strftime("%Y-%m-%d")
                 
-                # Update existing attendance record from "absent" to "leave"
+                # First, try to update existing absent record
                 update_result = await db.hr_attendance.update_one(
                     {
                         "employee_id": employee_id,
                         "date": date_str,
-                        "status": {"$in": ["absent", "غائب"]}
+                        "status": {"$in": ["absent", "غائب", "غياب"]}
                     },
                     {
                         "$set": {
@@ -5095,13 +5100,31 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
                     }
                 )
                 
-                # If no existing record, create one with leave status
-                if update_result.matched_count == 0:
+                if update_result.modified_count > 0:
+                    attendance_updated += 1
+                else:
+                    # Check if any record exists for this date
                     existing = await db.hr_attendance.find_one({
                         "employee_id": employee_id,
                         "date": date_str
                     })
-                    if not existing:
+                    
+                    if existing:
+                        # Update existing record (even if not absent)
+                        await db.hr_attendance.update_one(
+                            {"employee_id": employee_id, "date": date_str},
+                            {
+                                "$set": {
+                                    "status": "leave",
+                                    "leave_type": leave_type,
+                                    "leave_request_id": request_id,
+                                    "updated_at": datetime.now(timezone.utc).isoformat()
+                                }
+                            }
+                        )
+                        attendance_updated += 1
+                    else:
+                        # Create new leave record
                         await db.hr_attendance.insert_one({
                             "id": str(uuid4()),
                             "employee_id": employee_id,
@@ -5112,10 +5135,14 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
                             "leave_request_id": request_id,
                             "created_at": datetime.now(timezone.utc).isoformat()
                         })
+                        attendance_created += 1
                 
                 current_date = current_date + timedelta(days=1)
             
+            logging.info(f"Leave approved: {employee_id}, days={leave_days}, updated={attendance_updated}, created={attendance_created}")
+            
         except Exception as e:
+            logging.error(f"Error processing leave dates: {e}")
             print(f"Error processing leave dates: {e}")
     
     # Deduct from leave balance if it's annual leave
