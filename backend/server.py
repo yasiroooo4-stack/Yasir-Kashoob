@@ -5126,7 +5126,7 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
                     else:
                         # Create new leave record
                         await db.hr_attendance.insert_one({
-                            "id": str(uuid4()),
+                            "id": str(uuid.uuid4()),
                             "employee_id": employee_id,
                             "employee_name": request.get("employee_name"),
                             "date": date_str,
