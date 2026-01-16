@@ -17,6 +17,28 @@
 
 ## الميزات المُنجزة
 
+### 16 يناير 2026 - إصلاح خطأ طلب الإجازة
+
+#### إصلاح خطأ تقديم طلب الإجازة (P0) ✅
+**المشكلة:** عند تقديم طلب إجازة كان يظهر خطأ:
+```
+Error: Objects are not valid as a React child (found: object with keys {type, loc, msg, input, url})
+```
+
+**السبب:** 
+1. الـ Frontend كان يرسل `days_requested` لكن الـ Backend يتوقع `days_count`
+2. معالجة الأخطاء كانت تحاول عرض كائن خطأ Pydantic كنص
+
+**الحل:**
+1. تصحيح اسم الحقل من `days_requested` إلى `days_count`
+2. إزالة الحقول الزائدة (`notes`) من الطلب
+3. تحسين معالجة الأخطاء لعرض رسائل نصية واضحة
+
+**الملفات المُعدّلة:**
+- `/app/frontend/src/components/LeaveRequestButton.jsx`
+
+---
+
 ### 15 يناير 2026 - الجزء الخامس
 
 #### زر طلب إجازة جديد في Header ✅
