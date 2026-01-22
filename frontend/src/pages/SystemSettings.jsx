@@ -61,6 +61,7 @@ import {
   Warehouse,
   ClipboardList,
   ShoppingCart,
+  Wallet,
 } from "lucide-react";
 
 // Lazy load additional settings components
