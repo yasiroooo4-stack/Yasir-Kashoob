@@ -301,15 +301,31 @@ const SystemSettings = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
-          <TabsTrigger value="centers"><Building className="w-4 h-4 me-1" />{t("المراكز", "Centers")}</TabsTrigger>
-          <TabsTrigger value="prices"><DollarSign className="w-4 h-4 me-1" />{t("الأسعار", "Prices")}</TabsTrigger>
-          <TabsTrigger value="feeds"><Package className="w-4 h-4 me-1" />{t("الأعلاف", "Feeds")}</TabsTrigger>
-          <TabsTrigger value="alerts"><Bell className="w-4 h-4 me-1" />{t("التنبيهات", "Alerts")}</TabsTrigger>
-          <TabsTrigger value="locations"><MapPin className="w-4 h-4 me-1" />{t("المواقع المسموحة", "Allowed Locations")}</TabsTrigger>
-          <TabsTrigger value="appearance"><Palette className="w-4 h-4 me-1" />{t("المظهر", "Appearance")}</TabsTrigger>
-          <TabsTrigger value="notifications"><Bell className="w-4 h-4 me-1" />{t("الإشعارات", "Notifications")}</TabsTrigger>
-          <TabsTrigger value="cctv"><Video className="w-4 h-4 me-1" />{t("الكاميرات", "CCTV")}</TabsTrigger>
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1 max-w-4xl">
+          <TabsTrigger value="centers" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <Building className="w-4 h-4" /><span className="hidden sm:inline">{t("المراكز", "Centers")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="prices" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <DollarSign className="w-4 h-4" /><span className="hidden sm:inline">{t("الأسعار", "Prices")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="feeds" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <Package className="w-4 h-4" /><span className="hidden sm:inline">{t("الأعلاف", "Feeds")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="locations" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <MapPin className="w-4 h-4" /><span className="hidden sm:inline">{t("المواقع", "Locations")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <Bell className="w-4 h-4" /><span className="hidden sm:inline">{t("التنبيهات", "Alerts")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <Palette className="w-4 h-4" /><span className="hidden sm:inline">{t("المظهر", "Theme")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <Bell className="w-4 h-4" /><span className="hidden sm:inline">{t("الإشعارات", "Notif.")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="cctv" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+            <Video className="w-4 h-4" /><span className="hidden sm:inline">{t("الكاميرات", "CCTV")}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Centers Tab */}
