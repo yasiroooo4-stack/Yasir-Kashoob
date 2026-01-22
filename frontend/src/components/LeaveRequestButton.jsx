@@ -58,6 +58,10 @@ const LeaveRequestButton = () => {
     end_date: null,
     reason: "",
     notes: "",
+    substitute_employee_id: "",
+    substitute_employee_name: "",
+    delegate_permissions_to_id: "",
+    delegate_permissions_to_name: "",
   });
 
   useEffect(() => {
