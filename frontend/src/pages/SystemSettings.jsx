@@ -68,6 +68,219 @@ const AppearanceSettings = lazy(() => import("./Settings"));
 const NotificationSettings = lazy(() => import("./NotificationSettings"));
 const CCTVSystem = lazy(() => import("./CCTVSystem"));
 
+// Data Reset Settings Component - Admin Only
+const DataResetSettings = ({ language, t }) => {
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, type: "", name: "" });
+  const [confirmText, setConfirmText] = useState("");
+  const [resetting, setResetting] = useState(false);
+  
+  const token = localStorage.getItem("token");
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : {};
+  const isAdmin = user.role === "admin";
+  
+  const resetSections = [
+    { 
+      id: "attendance", 
+      name: t("الحضور", "Attendance"), 
+      nameAr: "الحضور",
+      icon: Calendar, 
+      color: "text-blue-600 bg-blue-100",
+      description: t("حذف جميع سجلات الحضور والانصراف", "Delete all attendance records"),
+      collection: "hr_attendance"
+    },
+    { 
+      id: "projects", 
+      name: t("المشاريع", "Projects"), 
+      nameAr: "المشاريع",
+      icon: ClipboardList, 
+      color: "text-purple-600 bg-purple-100",
+      description: t("حذف جميع المشاريع والمهام", "Delete all projects and tasks"),
+      collection: "projects"
+    },
+    { 
+      id: "inventory", 
+      name: t("المخزون", "Inventory"), 
+      nameAr: "المخزون",
+      icon: Package, 
+      color: "text-green-600 bg-green-100",
+      description: t("حذف جميع بيانات المخزون", "Delete all inventory data"),
+      collection: "inventory"
+    },
+    { 
+      id: "warehouse_movements", 
+      name: t("حركات المخازن", "Warehouse Movements"), 
+      nameAr: "حركات المخازن",
+      icon: Warehouse, 
+      color: "text-orange-600 bg-orange-100",
+      description: t("حذف جميع حركات المستودعات", "Delete all warehouse movements"),
+      collection: "warehouse_movements"
+    },
+    { 
+      id: "products", 
+      name: t("المنتجات", "Products"), 
+      nameAr: "المنتجات",
+      icon: ShoppingCart, 
+      color: "text-pink-600 bg-pink-100",
+      description: t("حذف جميع المنتجات", "Delete all products"),
+      collection: "products"
+    },
+  ];
+  
+  const handleReset = async () => {
+    if (confirmText !== confirmDialog.nameAr) {
+      toast.error(t("يرجى كتابة اسم القسم للتأكيد", "Please type the section name to confirm"));
+      return;
+    }
+    
+    setResetting(true);
+    try {
+      const res = await axios.post(
+        `${API}/admin/reset-data/${confirmDialog.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(t(`تم تصفير ${confirmDialog.name} بنجاح`, `${confirmDialog.name} reset successfully`));
+      setConfirmDialog({ open: false, type: "", name: "" });
+      setConfirmText("");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("فشل في التصفير", "Reset failed"));
+    } finally {
+      setResetting(false);
+    }
+  };
+  
+  if (!isAdmin) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="p-8 text-center">
+          <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-red-700 mb-2">
+            {t("غير مصرح", "Unauthorized")}
+          </h3>
+          <p className="text-red-600">
+            {t("هذه الصفحة متاحة لمدير النظام فقط", "This page is only available for system administrators")}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <>
+      <Card className="border-red-200">
+        <CardHeader className="bg-red-50 border-b border-red-200">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+              <Database className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <CardTitle className="text-red-700">{t("تصفير البيانات", "Data Reset")}</CardTitle>
+              <CardDescription className="text-red-600">
+                {t("حذف البيانات من الأقسام المحددة - للمدير فقط", "Delete data from selected sections - Admin only")}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-yellow-800">{t("تحذير مهم", "Important Warning")}</h4>
+                <p className="text-yellow-700 text-sm mt-1">
+                  {t(
+                    "تصفير البيانات عملية لا يمكن التراجع عنها. سيتم حذف جميع البيانات المحددة نهائياً.",
+                    "Data reset is irreversible. All selected data will be permanently deleted."
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {resetSections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <Card key={section.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg ${section.color} flex items-center justify-center`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold">{section.name}</h4>
+                        <p className="text-xs text-muted-foreground mt-1">{section.description}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="w-full mt-4"
+                      onClick={() => setConfirmDialog({ open: true, id: section.id, name: section.name, nameAr: section.nameAr })}
+                      data-testid={`reset-${section.id}-btn`}
+                    >
+                      <Trash2 className="w-4 h-4 me-2" />
+                      {t("تصفير", "Reset")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => { setConfirmDialog({ ...confirmDialog, open }); setConfirmText(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              {t("تأكيد التصفير", "Confirm Reset")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm">
+              {t(
+                `هل أنت متأكد من تصفير قسم "${confirmDialog.name}"؟ سيتم حذف جميع البيانات نهائياً.`,
+                `Are you sure you want to reset "${confirmDialog.name}"? All data will be permanently deleted.`
+              )}
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <Label className="text-red-700">
+                {t(`للتأكيد، اكتب "${confirmDialog.nameAr}"`, `To confirm, type "${confirmDialog.nameAr}"`)}
+              </Label>
+              <Input 
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={confirmDialog.nameAr}
+                className="mt-2"
+                data-testid="reset-confirm-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmDialog({ open: false, type: "", name: "" }); setConfirmText(""); }}>
+              {t("إلغاء", "Cancel")}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleReset}
+              disabled={confirmText !== confirmDialog.nameAr || resetting}
+              data-testid="reset-confirm-btn"
+            >
+              {resetting ? <RefreshCw className="w-4 h-4 me-2 animate-spin" /> : <Trash2 className="w-4 h-4 me-2" />}
+              {t("تصفير نهائي", "Permanently Reset")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 const SystemSettings = () => {
   const { language } = useLanguage();
   const t = (ar, en) => language === "ar" ? ar : en;
