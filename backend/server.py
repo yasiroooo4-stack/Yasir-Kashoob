@@ -5125,7 +5125,7 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
                         attendance_updated += 1
                     else:
                         # Create new leave record
-                        await db.hr_attendance.insert_one({
+                        new_record = {
                             "id": str(uuid.uuid4()),
                             "employee_id": employee_id,
                             "employee_name": request.get("employee_name"),
@@ -5134,7 +5134,9 @@ async def approve_leave_request(request_id: str, current_user: dict = Depends(ge
                             "leave_type": leave_type,
                             "leave_request_id": request_id,
                             "created_at": datetime.now(timezone.utc).isoformat()
-                        })
+                        }
+                        insert_result = await db.hr_attendance.insert_one(new_record)
+                        logging.info(f"Created attendance record: date={date_str}, inserted_id={insert_result.inserted_id}")
                         attendance_created += 1
                 
                 current_date = current_date + timedelta(days=1)
