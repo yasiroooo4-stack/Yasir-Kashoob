@@ -1168,11 +1168,15 @@ class PayrollRecord(BaseModel):
     position: Optional[str] = None
     work_location: Optional[str] = None
     nationality: Optional[str] = None
+    # Attendance counts
+    present_days: int = 0
     working_days: int = 0
     day_off: int = 0
+    weekly_off_days_count: int = 0
     sick_leave: int = 0
     compensation_leave: int = 0
     public_holiday: int = 0
+    official_holidays: int = 0
     annual_leave: int = 0
     emergency_leave: int = 0
     on_duty: int = 0
@@ -1181,7 +1185,9 @@ class PayrollRecord(BaseModel):
     accompanying_leave: int = 0
     unpaid_leave: int = 0
     absent_days: int = 0
+    leave_days: int = 0
     otp_days: int = 0
+    total_days: int = 0
     total_overtime_hours: float = 0.0
     basic_salary: float = 0.0
     daily_rate: float = 0.0
