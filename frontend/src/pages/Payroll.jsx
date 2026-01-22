@@ -1007,6 +1007,16 @@ const Payroll = () => {
                       <TableCell className="font-bold text-green-600">
                         {record.net_salary?.toFixed(3)}
                       </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setSelectedRecord(record); setDetailDialogOpen(true); }}
+                          data-testid={`view-detail-${record.id}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
