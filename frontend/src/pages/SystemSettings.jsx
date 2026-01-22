@@ -333,6 +333,9 @@ const SystemSettings = () => {
           <TabsTrigger value="cctv" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
             <Video className="w-4 h-4" /><span className="hidden sm:inline">{t("الكاميرات", "CCTV")}</span>
           </TabsTrigger>
+          <TabsTrigger value="reset" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 text-red-600 data-[state=active]:bg-red-100">
+            <Database className="w-4 h-4" /><span className="hidden sm:inline">{t("تصفير", "Reset")}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Centers Tab */}
