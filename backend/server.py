@@ -11147,7 +11147,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         
         while current_date <= end_date_dt:
             date_str = current_date.strftime("%Y-%m-%d")
-            day_of_week = current_date.weekday()  # 0=Monday, 6=Sunday
+            day_of_week = current_date.isoweekday()  # 1=Monday, 5=Friday, 6=Saturday, 7=Sunday
             
             is_official_holiday = date_str in holiday_dates
             is_weekly_off = day_of_week in employee_weekly_off_days
