@@ -5476,7 +5476,7 @@ async def set_default_weekly_off_days(
     current_user: dict = Depends(require_role(["admin", "hr_manager"]))
 ):
     """تعيين أيام الراحة الأسبوعية الافتراضية للموظفين الجدد"""
-    weekly_off_days = data.get("weekly_off_days", [4, 5])
+    weekly_off_days = data.get("weekly_off_days", [5, 6])
     
     await db.system_settings.update_one(
         {"key": "default_weekly_off_days"},
