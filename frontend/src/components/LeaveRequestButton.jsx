@@ -407,6 +407,62 @@ const LeaveRequestButton = () => {
               />
             </div>
 
+            {/* Substitute Employee (Optional) */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف البديل (اختياري)" : "Substitute Employee (Optional)"}</Label>
+              <Select
+                value={leaveForm.substitute_employee_id}
+                onValueChange={(employeeId) => {
+                  const employee = employees.find(e => e.id === employeeId);
+                  setLeaveForm(prev => ({
+                    ...prev,
+                    substitute_employee_id: employeeId,
+                    substitute_employee_name: employee?.name || "",
+                  }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر الموظف البديل" : "Select substitute"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{language === "ar" ? "-- لا يوجد --" : "-- None --"}</SelectItem>
+                  {employees.filter(e => e.id !== leaveForm.employee_id).map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name} - {emp.employee_code || emp.id.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Delegate Permissions To (Optional) */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "تحويل الصلاحيات إلى (اختياري)" : "Delegate Permissions To (Optional)"}</Label>
+              <Select
+                value={leaveForm.delegate_permissions_to_id}
+                onValueChange={(employeeId) => {
+                  const employee = employees.find(e => e.id === employeeId);
+                  setLeaveForm(prev => ({
+                    ...prev,
+                    delegate_permissions_to_id: employeeId,
+                    delegate_permissions_to_name: employee?.name || "",
+                  }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select employee"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{language === "ar" ? "-- لا يوجد --" : "-- None --"}</SelectItem>
+                  {employees.filter(e => e.id !== leaveForm.employee_id).map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name} - {emp.employee_code || emp.id.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 {language === "ar" ? "إلغاء" : "Cancel"}
