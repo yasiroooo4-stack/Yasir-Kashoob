@@ -555,6 +555,53 @@ async def create_employee_accounts(current_user: dict = Depends(require_role(["a
         "errors": errors
     }
 
+# Data Reset Endpoints - Admin Only
+@api_router.post("/admin/reset-data/{section_id}")
+async def reset_data_section(section_id: str, current_user: dict = Depends(require_role(["admin"]))):
+    """
+    تصفير بيانات قسم محدد - للمدير فقط
+    Reset data for a specific section - Admin only
+    """
+    # Map section IDs to collection names
+    section_collections = {
+        "attendance": ["hr_attendance"],
+        "projects": ["projects", "tasks"],
+        "inventory": ["inventory", "inventory_items"],
+        "warehouse_movements": ["warehouse_movements", "warehouse_transfers", "wms_material_consumptions"],
+        "products": ["products", "product_categories"],
+    }
+    
+    if section_id not in section_collections:
+        raise HTTPException(status_code=400, detail=f"قسم غير معروف: {section_id}")
+    
+    collections = section_collections[section_id]
+    deleted_counts = {}
+    total_deleted = 0
+    
+    for collection_name in collections:
+        try:
+            result = await db[collection_name].delete_many({})
+            deleted_counts[collection_name] = result.deleted_count
+            total_deleted += result.deleted_count
+        except Exception as e:
+            deleted_counts[collection_name] = f"Error: {str(e)}"
+    
+    # Log the action
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="reset_data",
+        entity_type=section_id,
+        details=f"تصفير بيانات {section_id}: حذف {total_deleted} سجل"
+    )
+    
+    return {
+        "message": f"تم تصفير {section_id} بنجاح",
+        "section": section_id,
+        "deleted_counts": deleted_counts,
+        "total_deleted": total_deleted
+    }
+
 # Password Reset Endpoints
 @api_router.post("/auth/forgot-password")
 async def forgot_password(email: str = Form(...)):
