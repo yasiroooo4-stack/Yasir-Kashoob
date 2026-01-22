@@ -5805,6 +5805,289 @@ async def delete_excuse_request(request_id: str, current_user: dict = Depends(ge
     
     return {"message": "Excuse request deleted successfully"}
 
+# ==================== HR - ADVANCE REQUESTS (طلبات السلف والمصاريف) ====================
+
+@api_router.post("/hr/advance-requests", response_model=AdvanceRequest)
+async def create_advance_request(request_data: AdvanceRequestCreate, current_user: dict = Depends(get_current_user)):
+    """إنشاء طلب سلفة أو مصاريف جديد"""
+    advance_request = AdvanceRequest(**request_data.model_dump())
+    await db.hr_advance_requests.insert_one(advance_request.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_advance_request",
+        entity_type="advance_request",
+        entity_id=advance_request.id,
+        entity_name=request_data.employee_name,
+        details=f"طلب سلفة: {request_data.employee_name} - {request_data.request_type} - {request_data.amount} ر.ع"
+    )
+    
+    return advance_request
+
+@api_router.get("/hr/advance-requests")
+async def get_advance_requests(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    request_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة طلبات السلف والمصاريف"""
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    if request_type:
+        query["request_type"] = request_type
+    
+    requests = await db.hr_advance_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return requests
+
+@api_router.get("/hr/advance-requests/{request_id}")
+async def get_advance_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل طلب سلفة محدد"""
+    request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="Advance request not found")
+    return request
+
+@api_router.put("/hr/advance-requests/{request_id}/hr-approve")
+async def hr_approve_advance_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """موافقة الموارد البشرية على طلب السلفة"""
+    advance_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    if not advance_request:
+        raise HTTPException(status_code=404, detail="Advance request not found")
+    
+    if advance_request.get("status") != "pending_hr":
+        raise HTTPException(status_code=400, detail="Request already processed by HR")
+    
+    await db.hr_advance_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "pending_finance",
+            "hr_approved_by": current_user["id"],
+            "hr_approved_by_name": current_user["full_name"],
+            "hr_approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="hr_approve_advance_request",
+        entity_type="advance_request",
+        entity_id=request_id,
+        entity_name=advance_request.get("employee_name"),
+        details=f"موافقة HR على سلفة: {advance_request.get('employee_name')} - {advance_request.get('amount')} ر.ع"
+    )
+    
+    updated_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.put("/hr/advance-requests/{request_id}/hr-reject")
+async def hr_reject_advance_request(request_id: str, reason: str = "", current_user: dict = Depends(get_current_user)):
+    """رفض الموارد البشرية لطلب السلفة"""
+    advance_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    if not advance_request:
+        raise HTTPException(status_code=404, detail="Advance request not found")
+    
+    if advance_request.get("status") != "pending_hr":
+        raise HTTPException(status_code=400, detail="Request already processed by HR")
+    
+    await db.hr_advance_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected_hr",
+            "hr_approved_by": current_user["id"],
+            "hr_approved_by_name": current_user["full_name"],
+            "hr_approved_at": datetime.now(timezone.utc).isoformat(),
+            "hr_rejection_reason": reason
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="hr_reject_advance_request",
+        entity_type="advance_request",
+        entity_id=request_id,
+        entity_name=advance_request.get("employee_name"),
+        details=f"رفض HR لسلفة: {advance_request.get('employee_name')} - {reason}"
+    )
+    
+    updated_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.put("/hr/advance-requests/{request_id}/finance-approve")
+async def finance_approve_advance_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """موافقة المالية على طلب السلفة"""
+    advance_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    if not advance_request:
+        raise HTTPException(status_code=404, detail="Advance request not found")
+    
+    if advance_request.get("status") != "pending_finance":
+        raise HTTPException(status_code=400, detail="Request not ready for finance approval")
+    
+    await db.hr_advance_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "finance_approved_by": current_user["id"],
+            "finance_approved_by_name": current_user["full_name"],
+            "finance_approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="finance_approve_advance_request",
+        entity_type="advance_request",
+        entity_id=request_id,
+        entity_name=advance_request.get("employee_name"),
+        details=f"موافقة المالية على سلفة: {advance_request.get('employee_name')} - {advance_request.get('amount')} ر.ع"
+    )
+    
+    updated_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.put("/hr/advance-requests/{request_id}/finance-reject")
+async def finance_reject_advance_request(request_id: str, reason: str = "", current_user: dict = Depends(get_current_user)):
+    """رفض المالية لطلب السلفة"""
+    advance_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    if not advance_request:
+        raise HTTPException(status_code=404, detail="Advance request not found")
+    
+    if advance_request.get("status") != "pending_finance":
+        raise HTTPException(status_code=400, detail="Request not ready for finance rejection")
+    
+    await db.hr_advance_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected_finance",
+            "finance_approved_by": current_user["id"],
+            "finance_approved_by_name": current_user["full_name"],
+            "finance_approved_at": datetime.now(timezone.utc).isoformat(),
+            "finance_rejection_reason": reason
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="finance_reject_advance_request",
+        entity_type="advance_request",
+        entity_id=request_id,
+        entity_name=advance_request.get("employee_name"),
+        details=f"رفض المالية لسلفة: {advance_request.get('employee_name')} - {reason}"
+    )
+    
+    updated_request = await db.hr_advance_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+# ==================== LOGIN TRACKING (تتبع تسجيل الدخول) ====================
+
+@api_router.post("/auth/track-login")
+async def track_login(
+    ip_address: str = None,
+    latitude: float = None,
+    longitude: float = None,
+    location_name: str = None,
+    user_agent: str = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """تسجيل معلومات الدخول"""
+    # Check if location is within allowed area
+    is_within_allowed = True
+    allowed_locations = await db.system_settings.find_one({"key": "allowed_login_locations"})
+    
+    if allowed_locations and latitude and longitude:
+        allowed_areas = allowed_locations.get("value", [])
+        if allowed_areas:
+            is_within_allowed = False
+            for area in allowed_areas:
+                # Simple distance check (within radius in km)
+                import math
+                area_lat = area.get("latitude", 0)
+                area_lon = area.get("longitude", 0)
+                radius = area.get("radius", 10)  # Default 10km radius
+                
+                # Haversine formula for distance
+                R = 6371  # Earth's radius in km
+                lat1 = math.radians(latitude)
+                lat2 = math.radians(area_lat)
+                dlat = math.radians(area_lat - latitude)
+                dlon = math.radians(area_lon - longitude)
+                
+                a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+                c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+                distance = R * c
+                
+                if distance <= radius:
+                    is_within_allowed = True
+                    break
+    
+    login_record = LoginRecord(
+        user_id=current_user["id"],
+        username=current_user["username"],
+        ip_address=ip_address,
+        latitude=latitude,
+        longitude=longitude,
+        location_name=location_name,
+        is_within_allowed_area=is_within_allowed,
+        user_agent=user_agent
+    )
+    
+    await db.login_records.insert_one(login_record.model_dump())
+    
+    return {
+        "success": True,
+        "is_within_allowed_area": is_within_allowed,
+        "message": "تم تسجيل الدخول" if is_within_allowed else "تم تسجيل الدخول من موقع غير مصرح"
+    }
+
+@api_router.get("/auth/login-records")
+async def get_login_records(
+    user_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """جلب سجلات تسجيل الدخول"""
+    query = {}
+    if user_id:
+        query["user_id"] = user_id
+    if start_date:
+        query["login_time"] = {"$gte": start_date}
+    if end_date:
+        if "login_time" in query:
+            query["login_time"]["$lte"] = end_date
+        else:
+            query["login_time"] = {"$lte": end_date}
+    
+    records = await db.login_records.find(query, {"_id": 0}).sort("login_time", -1).to_list(500)
+    return records
+
+@api_router.get("/system/allowed-login-locations")
+async def get_allowed_login_locations(current_user: dict = Depends(require_role(["admin"]))):
+    """جلب المواقع المسموح بتسجيل الدخول منها"""
+    settings = await db.system_settings.find_one({"key": "allowed_login_locations"})
+    return settings.get("value", []) if settings else []
+
+@api_router.post("/system/allowed-login-locations")
+async def set_allowed_login_locations(
+    locations: list,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تحديد المواقع المسموح بتسجيل الدخول منها"""
+    await db.system_settings.update_one(
+        {"key": "allowed_login_locations"},
+        {"$set": {"value": locations, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    return {"message": "تم تحديث المواقع المسموح بها"}
+
 # ==================== HR - SALARY HISTORY (سجل تغييرات الرواتب) ====================
 
 @api_router.get("/hr/salary-history")
