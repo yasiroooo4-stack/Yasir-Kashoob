@@ -814,6 +814,10 @@ class LeaveRequestBase(BaseModel):
     end_date: str
     reason: Optional[str] = None
     days_count: int
+    substitute_employee_id: Optional[str] = None
+    substitute_employee_name: Optional[str] = None
+    delegate_permissions_to_id: Optional[str] = None
+    delegate_permissions_to_name: Optional[str] = None
 
 class LeaveRequestCreate(LeaveRequestBase):
     pass
@@ -825,6 +829,48 @@ class LeaveRequest(LeaveRequestBase):
     approved_at: Optional[str] = None
     rejection_reason: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ==================== ADVANCE REQUEST MODELS ====================
+
+class AdvanceRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    request_type: str  # advance, expense, reimbursement
+    amount: float
+    reason: str
+    notes: Optional[str] = None
+
+class AdvanceRequestCreate(AdvanceRequestBase):
+    pass
+
+class AdvanceRequest(AdvanceRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending_hr"  # pending_hr, pending_finance, approved, rejected_hr, rejected_finance
+    hr_approved_by: Optional[str] = None
+    hr_approved_by_name: Optional[str] = None
+    hr_approved_at: Optional[str] = None
+    hr_rejection_reason: Optional[str] = None
+    finance_approved_by: Optional[str] = None
+    finance_approved_by_name: Optional[str] = None
+    finance_approved_at: Optional[str] = None
+    finance_rejection_reason: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ==================== LOGIN TRACKING MODELS ====================
+
+class LoginRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    ip_address: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_name: Optional[str] = None
+    is_within_allowed_area: bool = True
+    login_time: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    user_agent: Optional[str] = None
 
 # ==================== EXCUSE REQUEST MODELS ====================
 
