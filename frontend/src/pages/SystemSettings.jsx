@@ -887,6 +887,11 @@ const SystemSettings = () => {
         <TabsContent value="reset">
           <DataResetSettings language={language} t={t} />
         </TabsContent>
+
+        {/* Fingerprint Devices Tab */}
+        <TabsContent value="fingerprint">
+          <FingerprintDevicesSettings language={language} t={t} />
+        </TabsContent>
       </Tabs>
 
       {/* Center Dialog */}
