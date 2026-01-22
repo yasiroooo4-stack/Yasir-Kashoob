@@ -306,6 +306,7 @@ const SystemSettings = () => {
           <TabsTrigger value="prices"><DollarSign className="w-4 h-4 me-1" />{t("الأسعار", "Prices")}</TabsTrigger>
           <TabsTrigger value="feeds"><Package className="w-4 h-4 me-1" />{t("الأعلاف", "Feeds")}</TabsTrigger>
           <TabsTrigger value="alerts"><Bell className="w-4 h-4 me-1" />{t("التنبيهات", "Alerts")}</TabsTrigger>
+          <TabsTrigger value="locations"><MapPin className="w-4 h-4 me-1" />{t("المواقع المسموحة", "Allowed Locations")}</TabsTrigger>
           <TabsTrigger value="appearance"><Palette className="w-4 h-4 me-1" />{t("المظهر", "Appearance")}</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="w-4 h-4 me-1" />{t("الإشعارات", "Notifications")}</TabsTrigger>
           <TabsTrigger value="cctv"><Video className="w-4 h-4 me-1" />{t("الكاميرات", "CCTV")}</TabsTrigger>
