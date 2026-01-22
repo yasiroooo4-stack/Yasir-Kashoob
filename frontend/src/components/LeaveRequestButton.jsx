@@ -167,6 +167,10 @@ const LeaveRequestButton = () => {
         end_date: format(leaveForm.end_date, "yyyy-MM-dd"),
         reason: leaveForm.reason || "",
         days_count: calculateDays(),
+        substitute_employee_id: leaveForm.substitute_employee_id === "none" ? null : leaveForm.substitute_employee_id,
+        substitute_employee_name: leaveForm.substitute_employee_id === "none" ? null : leaveForm.substitute_employee_name,
+        delegate_permissions_to_id: leaveForm.delegate_permissions_to_id === "none" ? null : leaveForm.delegate_permissions_to_id,
+        delegate_permissions_to_name: leaveForm.delegate_permissions_to_id === "none" ? null : leaveForm.delegate_permissions_to_name,
       };
 
       await axios.post(`${API}/hr/leave-requests`, data, {
