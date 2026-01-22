@@ -485,6 +485,76 @@ async def change_password(password_data: PasswordChange, current_user: dict = De
     
     return {"message": "Password changed successfully"}
 
+@api_router.post("/admin/create-employee-accounts")
+async def create_employee_accounts(current_user: dict = Depends(require_role(["admin"]))):
+    """إنشاء حسابات مستخدمين لجميع الموظفين الذين ليس لديهم حسابات"""
+    employees = await db.hr_employees.find({}, {"_id": 0}).to_list(5000)
+    
+    created_count = 0
+    skipped_count = 0
+    errors = []
+    
+    for emp in employees:
+        employee_code = emp.get("employee_code", "")
+        emp_name = emp.get("name", "")
+        emp_id = emp.get("id", "")
+        
+        if not employee_code:
+            skipped_count += 1
+            continue
+        
+        # Check if user already exists
+        existing = await db.users.find_one({"$or": [
+            {"username": employee_code},
+            {"employee_id": emp_id}
+        ]})
+        
+        if existing:
+            skipped_count += 1
+            continue
+        
+        try:
+            # Create user account with default password "0000"
+            user = User(
+                username=employee_code,
+                email=f"{employee_code}@marooj.local",
+                full_name=emp_name,
+                role="employee",
+                department=emp.get("department", ""),
+                phone=emp.get("phone", ""),
+            )
+            user_dict = user.model_dump()
+            user_dict["password"] = hash_password("0000")
+            user_dict["password_hash"] = user_dict["password"]
+            user_dict["employee_id"] = emp_id
+            
+            await db.users.insert_one(user_dict)
+            
+            # Update employee with user_id
+            await db.hr_employees.update_one(
+                {"id": emp_id},
+                {"$set": {"user_id": user.id}}
+            )
+            
+            created_count += 1
+        except Exception as e:
+            errors.append(f"{employee_code}: {str(e)}")
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_employee_accounts",
+        entity_type="users",
+        details=f"إنشاء حسابات للموظفين: {created_count} تم إنشاؤه، {skipped_count} تم تخطيه"
+    )
+    
+    return {
+        "message": f"تم إنشاء {created_count} حساب بنجاح",
+        "created": created_count,
+        "skipped": skipped_count,
+        "errors": errors
+    }
+
 # Password Reset Endpoints
 @api_router.post("/auth/forgot-password")
 async def forgot_password(email: str = Form(...)):
