@@ -718,4 +718,328 @@ const SystemSettings = () => {
   );
 };
 
+// Allowed Locations Settings Component
+const AllowedLocationsSettings = ({ language, t }) => {
+  const [locations, setLocations] = useState([]);
+  const [loginRecords, setLoginRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [locationForm, setLocationForm] = useState({
+    name: "",
+    latitude: "",
+    longitude: "",
+    radius: 5,
+  });
+
+  useEffect(() => {
+    fetchLocations();
+    fetchLoginRecords();
+  }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/system/allowed-login-locations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLocations(res.data || []);
+    } catch (error) {
+      console.log("Error fetching locations");
+    }
+  };
+
+  const fetchLoginRecords = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/auth/login-records`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLoginRecords(res.data || []);
+    } catch (error) {
+      console.log("Error fetching login records");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddLocation = async () => {
+    if (!locationForm.name || !locationForm.latitude || !locationForm.longitude) {
+      toast.error(t("يرجى ملء جميع الحقول", "Please fill all fields"));
+      return;
+    }
+
+    const newLocations = [...locations, {
+      name: locationForm.name,
+      latitude: parseFloat(locationForm.latitude),
+      longitude: parseFloat(locationForm.longitude),
+      radius: parseFloat(locationForm.radius) || 5,
+    }];
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/system/allowed-login-locations`, newLocations, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(t("تمت إضافة الموقع", "Location added"));
+      setLocations(newLocations);
+      setDialogOpen(false);
+      setLocationForm({ name: "", latitude: "", longitude: "", radius: 5 });
+    } catch (error) {
+      toast.error(t("خطأ في حفظ الموقع", "Error saving location"));
+    }
+  };
+
+  const handleDeleteLocation = async (index) => {
+    const newLocations = locations.filter((_, i) => i !== index);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/system/allowed-login-locations`, newLocations, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(t("تم حذف الموقع", "Location deleted"));
+      setLocations(newLocations);
+    } catch (error) {
+      toast.error(t("خطأ في الحذف", "Error deleting"));
+    }
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationForm(prev => ({
+            ...prev,
+            latitude: position.coords.latitude.toFixed(6),
+            longitude: position.coords.longitude.toFixed(6),
+          }));
+          toast.success(t("تم تحديد موقعك الحالي", "Current location detected"));
+        },
+        (error) => {
+          toast.error(t("تعذر تحديد الموقع", "Could not get location"));
+        }
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Allowed Locations */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-blue-500" />
+              {t("المواقع المسموح بالدخول منها", "Allowed Login Locations")}
+            </CardTitle>
+            <CardDescription>
+              {t("حدد المواقع الجغرافية المسموح للموظفين بتسجيل الدخول منها", "Define geographic locations where employees can login")}
+            </CardDescription>
+          </div>
+          <Button onClick={() => setDialogOpen(true)} className="gradient-primary text-white">
+            <Plus className="w-4 h-4 me-2" />
+            {t("إضافة موقع", "Add Location")}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {locations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <MapPin className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>{t("لم يتم تحديد أي مواقع - الدخول مسموح من أي مكان", "No locations defined - Login allowed from anywhere")}</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("اسم الموقع", "Location Name")}</TableHead>
+                  <TableHead>{t("خط العرض", "Latitude")}</TableHead>
+                  <TableHead>{t("خط الطول", "Longitude")}</TableHead>
+                  <TableHead>{t("نصف القطر (كم)", "Radius (km)")}</TableHead>
+                  <TableHead>{t("الإجراءات", "Actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {locations.map((loc, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{loc.name}</TableCell>
+                    <TableCell className="font-mono text-sm">{loc.latitude}</TableCell>
+                    <TableCell className="font-mono text-sm">{loc.longitude}</TableCell>
+                    <TableCell>{loc.radius} km</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDeleteLocation(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Login Records */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              {t("سجل تسجيلات الدخول", "Login Records")}
+            </CardTitle>
+            <CardDescription>
+              {t("آخر 50 عملية تسجيل دخول مع تفاصيل الموقع", "Last 50 login attempts with location details")}
+            </CardDescription>
+          </div>
+          <Button variant="outline" onClick={fetchLoginRecords}>
+            <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
+            {t("تحديث", "Refresh")}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : loginRecords.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {t("لا توجد سجلات", "No records found")}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("المستخدم", "User")}</TableHead>
+                    <TableHead>{t("التاريخ والوقت", "Date & Time")}</TableHead>
+                    <TableHead>{t("الموقع", "Location")}</TableHead>
+                    <TableHead>{t("عنوان IP", "IP Address")}</TableHead>
+                    <TableHead>{t("الحالة", "Status")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loginRecords.slice(0, 50).map((record) => (
+                    <TableRow key={record.id} className={!record.is_within_allowed_area ? "bg-red-50" : ""}>
+                      <TableCell className="font-medium">{record.username}</TableCell>
+                      <TableCell>
+                        {new Date(record.login_time).toLocaleString(language === "ar" ? "ar-SA" : "en-US")}
+                      </TableCell>
+                      <TableCell>
+                        {record.latitude && record.longitude ? (
+                          <a
+                            href={`https://maps.google.com/?q=${record.latitude},${record.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline flex items-center gap-1"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {record.latitude?.toFixed(4)}, {record.longitude?.toFixed(4)}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">{t("غير متوفر", "N/A")}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{record.ip_address || "-"}</TableCell>
+                      <TableCell>
+                        {record.is_within_allowed_area ? (
+                          <Badge className="bg-green-100 text-green-700">
+                            <CheckCircle className="w-3 h-3 me-1" />
+                            {t("مصرح", "Allowed")}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-700">
+                            <AlertTriangle className="w-3 h-3 me-1" />
+                            {t("غير مصرح", "Unauthorized")}
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add Location Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-blue-500" />
+              {t("إضافة موقع مسموح", "Add Allowed Location")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("اسم الموقع", "Location Name")} *</Label>
+              <Input
+                value={locationForm.name}
+                onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
+                placeholder={t("مثال: المقر الرئيسي", "Example: Main Office")}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("خط العرض", "Latitude")} *</Label>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={locationForm.latitude}
+                  onChange={(e) => setLocationForm({ ...locationForm, latitude: e.target.value })}
+                  placeholder="23.5880"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("خط الطول", "Longitude")} *</Label>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={locationForm.longitude}
+                  onChange={(e) => setLocationForm({ ...locationForm, longitude: e.target.value })}
+                  placeholder="58.3829"
+                />
+              </div>
+            </div>
+
+            <Button variant="outline" onClick={getCurrentLocation} className="w-full">
+              <MapPin className="w-4 h-4 me-2" />
+              {t("استخدام موقعي الحالي", "Use My Current Location")}
+            </Button>
+
+            <div className="space-y-2">
+              <Label>{t("نصف القطر المسموح (كم)", "Allowed Radius (km)")}</Label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0.1"
+                value={locationForm.radius}
+                onChange={(e) => setLocationForm({ ...locationForm, radius: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                {t("المسافة المسموحة من مركز الموقع", "Allowed distance from location center")}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              {t("إلغاء", "Cancel")}
+            </Button>
+            <Button onClick={handleAddLocation} className="gradient-primary text-white">
+              <Save className="w-4 h-4 me-2" />
+              {t("حفظ", "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 export default SystemSettings;
