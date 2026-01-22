@@ -4049,7 +4049,7 @@ async def get_all_employees_work_schedules(current_user: dict = Depends(get_curr
         if "shift_type" not in emp:
             emp["shift_type"] = "morning"
         if "weekly_off_days" not in emp:
-            emp["weekly_off_days"] = [4, 5]
+            emp["weekly_off_days"] = [5, 6]
     
     return employees
 
