@@ -954,32 +954,32 @@ const CCTVSystem = ({ embedded = false }) => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="cameras" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1 gap-1">
+          <TabsTrigger value="cameras" className="flex items-center gap-1.5 text-sm py-2" data-testid="cameras-tab">
             <Video className="h-4 w-4" />
-            الكاميرات
+            <span className="hidden sm:inline">الكاميرات</span>
           </TabsTrigger>
-          <TabsTrigger value="events" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            الأحداث
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            التنبيهات
-            {alerts.length > 0 && (
-              <Badge variant="destructive" className="mr-1">{alerts.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="hikconnect" className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 text-white data-[state=active]:from-red-600 data-[state=active]:to-orange-600">
+          <TabsTrigger value="hikconnect" className="flex items-center gap-1.5 text-sm py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white data-[state=active]:from-red-600 data-[state=active]:to-orange-600" data-testid="hikconnect-tab">
             <Wifi className="h-4 w-4" />
-            Hik-Connect
+            <span className="hidden sm:inline">Hik-Connect</span>
             {hikConnectDevices.length > 0 && (
-              <Badge variant="secondary" className="mr-1 bg-white text-red-600">{hikConnectDevices.length}</Badge>
+              <Badge variant="secondary" className="mr-1 bg-white text-red-600 text-xs">{hikConnectDevices.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="detection" className="flex items-center gap-2">
+          <TabsTrigger value="events" className="flex items-center gap-1.5 text-sm py-2" data-testid="events-tab">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">الأحداث</span>
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="flex items-center gap-1.5 text-sm py-2" data-testid="alerts-tab">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">التنبيهات</span>
+            {alerts.length > 0 && (
+              <Badge variant="destructive" className="mr-1 text-xs">{alerts.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="detection" className="flex items-center gap-1.5 text-sm py-2" data-testid="detection-tab">
             <AlertTriangle className="h-4 w-4" />
-            كشف الأحداث
+            <span className="hidden sm:inline">الكشف</span>
           </TabsTrigger>
         </TabsList>
 
