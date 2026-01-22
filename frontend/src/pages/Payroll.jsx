@@ -1088,6 +1088,15 @@ const Payroll = () => {
                 <Building2 className="w-4 h-4" />
                 {language === "ar" ? "طباعة كشف الإدارة" : "Print Admin"}
               </Button>
+              <Button 
+                variant="outline" 
+                onClick={exportToCSV}
+                className="gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                data-testid="export-excel-btn"
+              >
+                <Download className="w-4 h-4" />
+                {language === "ar" ? "تصدير Excel" : "Export Excel"}
+              </Button>
             </>
           )}
           <Button onClick={() => setDialogOpen(true)} className="gradient-primary text-white">
