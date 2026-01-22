@@ -2513,22 +2513,18 @@ const HR = () => {
           </Card>
         </TabsContent>
 
-        {/* Holidays Tab - العطلات الرسمية */}
-        <TabsContent value="holidays">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-red-500" />
-                  {language === "ar" ? "العطلات الرسمية" : "Official Holidays"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar" ? "إدارة العطلات الرسمية وأيام الإجازة" : "Manage official holidays and off days"}
-                </CardDescription>
-              </div>
-              <Button
-                onClick={() => setHolidayDialogOpen(true)}
-                className="gradient-primary text-white"
+        {/* Extra Pay Approvals Tab */}
+        <TabsContent value="extra-pay">
+          <ExtraPayApprovals embedded={true} />
+        </TabsContent>
+
+        {/* Advance Requests Tab */}
+        <TabsContent value="advance-requests">
+          <AdvanceRequestsTab language={language} />
+        </TabsContent>
+
+        {/* Expenses Tab - المصاريف */}
+        <TabsContent value="expenses">
               >
                 <Plus className="w-4 h-4 me-2" />
                 {language === "ar" ? "إضافة عطلة" : "Add Holiday"}
