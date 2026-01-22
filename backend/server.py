@@ -606,6 +606,201 @@ async def reset_data_section(section_id: str, current_user: dict = Depends(requi
         "total_deleted": total_deleted
     }
 
+# ========== Fingerprint Devices Management ==========
+
+@api_router.get("/fingerprint/devices")
+async def get_fingerprint_devices(current_user: dict = Depends(get_current_user)):
+    """Get all fingerprint devices"""
+    devices = await db.fingerprint_devices.find({}, {"_id": 0}).to_list(100)
+    return devices
+
+@api_router.post("/fingerprint/devices")
+async def add_fingerprint_device(
+    device: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Add a new fingerprint device"""
+    device_data = {
+        "id": str(uuid.uuid4()),
+        "name": device.get("name", ""),
+        "ip": device.get("ip", ""),
+        "port": device.get("port", 4370),
+        "location": device.get("location", ""),
+        "is_online": False,
+        "last_sync": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user["id"]
+    }
+    
+    await db.fingerprint_devices.insert_one(device_data)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="add_fingerprint_device",
+        entity_type="fingerprint_device",
+        entity_id=device_data["id"],
+        details=f"إضافة جهاز بصمة: {device_data['name']} ({device_data['ip']})"
+    )
+    
+    return {**device_data, "_id": None}
+
+@api_router.put("/fingerprint/devices/{device_id}")
+async def update_fingerprint_device(
+    device_id: str,
+    device: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Update a fingerprint device"""
+    update_data = {
+        "name": device.get("name", ""),
+        "ip": device.get("ip", ""),
+        "port": device.get("port", 4370),
+        "location": device.get("location", ""),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.fingerprint_devices.update_one(
+        {"id": device_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    return {"message": "تم تحديث الجهاز"}
+
+@api_router.delete("/fingerprint/devices/{device_id}")
+async def delete_fingerprint_device(
+    device_id: str,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Delete a fingerprint device"""
+    result = await db.fingerprint_devices.delete_one({"id": device_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    return {"message": "تم حذف الجهاز"}
+
+@api_router.post("/fingerprint/devices/{device_id}/test")
+async def test_fingerprint_device(
+    device_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Test connection to a fingerprint device"""
+    device = await db.fingerprint_devices.find_one({"id": device_id}, {"_id": 0})
+    
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    # Try to connect to ZKTeco device
+    try:
+        # Note: In production, you would use pyzk library here
+        # For now, we simulate the connection test
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        result = sock.connect_ex((device["ip"], device.get("port", 4370)))
+        sock.close()
+        
+        if result == 0:
+            # Update device status
+            await db.fingerprint_devices.update_one(
+                {"id": device_id},
+                {"$set": {"is_online": True, "last_check": datetime.now(timezone.utc).isoformat()}}
+            )
+            return {"success": True, "message": "تم الاتصال بنجاح", "users_count": 0}
+        else:
+            await db.fingerprint_devices.update_one(
+                {"id": device_id},
+                {"$set": {"is_online": False, "last_check": datetime.now(timezone.utc).isoformat()}}
+            )
+            return {"success": False, "message": "لا يمكن الاتصال بالجهاز - تأكد من العنوان والمنفذ"}
+            
+    except Exception as e:
+        await db.fingerprint_devices.update_one(
+            {"id": device_id},
+            {"$set": {"is_online": False, "last_check": datetime.now(timezone.utc).isoformat()}}
+        )
+        return {"success": False, "message": f"فشل الاتصال: {str(e)}"}
+
+@api_router.get("/fingerprint/sync-settings")
+async def get_fingerprint_sync_settings(current_user: dict = Depends(get_current_user)):
+    """Get fingerprint sync settings"""
+    settings = await db.system_settings.find_one({"key": "fingerprint_sync"}, {"_id": 0})
+    
+    if not settings:
+        return {
+            "auto_sync": False,
+            "sync_interval": 5,
+            "last_sync": None,
+            "api_url": ""
+        }
+    
+    return settings.get("value", {})
+
+@api_router.put("/fingerprint/sync-settings")
+async def update_fingerprint_sync_settings(
+    settings: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """Update fingerprint sync settings"""
+    await db.system_settings.update_one(
+        {"key": "fingerprint_sync"},
+        {"$set": {"key": "fingerprint_sync", "value": settings}},
+        upsert=True
+    )
+    
+    return {"message": "تم حفظ الإعدادات"}
+
+@api_router.post("/fingerprint/sync")
+async def sync_fingerprint_attendance(current_user: dict = Depends(get_current_user)):
+    """
+    Sync attendance data from all fingerprint devices
+    Note: In production, this would use pyzk library to fetch data from ZKTeco devices
+    """
+    devices = await db.fingerprint_devices.find({}, {"_id": 0}).to_list(100)
+    
+    if not devices:
+        return {"success": False, "message": "لا توجد أجهزة مسجلة"}
+    
+    total_records = 0
+    errors = []
+    
+    for device in devices:
+        try:
+            # Note: In production, connect to device and fetch attendance
+            # For now, we just log the attempt
+            await db.fingerprint_devices.update_one(
+                {"id": device["id"]},
+                {"$set": {"last_sync": datetime.now(timezone.utc).isoformat()}}
+            )
+        except Exception as e:
+            errors.append(f"{device['name']}: {str(e)}")
+    
+    # Update sync settings with last sync time
+    await db.system_settings.update_one(
+        {"key": "fingerprint_sync"},
+        {"$set": {"value.last_sync": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="fingerprint_sync",
+        entity_type="attendance",
+        details=f"مزامنة بيانات الحضور من {len(devices)} جهاز"
+    )
+    
+    return {
+        "success": len(errors) == 0,
+        "message": f"تمت المزامنة من {len(devices) - len(errors)} جهاز",
+        "records_count": total_records,
+        "errors": errors if errors else None
+    }
+
 # Password Reset Endpoints
 @api_router.post("/auth/forgot-password")
 async def forgot_password(email: str = Form(...)):
