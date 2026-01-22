@@ -323,6 +323,433 @@ const DataResetSettings = ({ language, t }) => {
   );
 };
 
+// Fingerprint Devices Settings Component
+const FingerprintDevicesSettings = ({ language, t }) => {
+  const [devices, setDevices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingDevice, setEditingDevice] = useState(null);
+  const [syncSettings, setSyncSettings] = useState({
+    auto_sync: false,
+    sync_interval: 5,
+    last_sync: null,
+    api_url: "",
+  });
+  const [testingDevice, setTestingDevice] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [logs, setLogs] = useState([]);
+  
+  const [deviceForm, setDeviceForm] = useState({
+    name: "",
+    ip: "",
+    port: "4370",
+    location: "",
+  });
+  
+  const token = localStorage.getItem("token");
+  
+  useEffect(() => {
+    fetchDevices();
+    fetchSyncSettings();
+  }, []);
+  
+  const fetchDevices = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/fingerprint/devices`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDevices(res.data || []);
+    } catch (error) {
+      // Initialize with empty if endpoint doesn't exist
+      setDevices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchSyncSettings = async () => {
+    try {
+      const res = await axios.get(`${API}/fingerprint/sync-settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) {
+        setSyncSettings(res.data);
+      }
+    } catch (error) {
+      // Use defaults
+    }
+  };
+  
+  const addLog = (message, type = "info") => {
+    const timestamp = new Date().toLocaleTimeString('ar-SA');
+    setLogs(prev => [{timestamp, message, type}, ...prev.slice(0, 49)]);
+  };
+  
+  const handleSaveDevice = async () => {
+    if (!deviceForm.name || !deviceForm.ip) {
+      toast.error(t("يرجى ملء الحقول المطلوبة", "Please fill required fields"));
+      return;
+    }
+    
+    try {
+      const payload = {
+        ...deviceForm,
+        port: parseInt(deviceForm.port) || 4370,
+      };
+      
+      if (editingDevice) {
+        await axios.put(`${API}/fingerprint/devices/${editingDevice.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(t("تم تحديث الجهاز", "Device updated"));
+        addLog(`تم تحديث جهاز: ${deviceForm.name}`, "success");
+      } else {
+        await axios.post(`${API}/fingerprint/devices`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success(t("تم إضافة الجهاز", "Device added"));
+        addLog(`تم إضافة جهاز جديد: ${deviceForm.name}`, "success");
+      }
+      
+      setDialogOpen(false);
+      setEditingDevice(null);
+      setDeviceForm({ name: "", ip: "", port: "4370", location: "" });
+      fetchDevices();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("حدث خطأ", "An error occurred"));
+      addLog(`فشل حفظ الجهاز: ${error.message}`, "error");
+    }
+  };
+  
+  const handleDeleteDevice = async (device) => {
+    if (!window.confirm(t(`هل تريد حذف جهاز "${device.name}"؟`, `Delete device "${device.name}"?`))) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API}/fingerprint/devices/${device.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(t("تم حذف الجهاز", "Device deleted"));
+      addLog(`تم حذف جهاز: ${device.name}`, "success");
+      fetchDevices();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("حدث خطأ", "An error occurred"));
+    }
+  };
+  
+  const handleTestConnection = async (device) => {
+    setTestingDevice(device.id);
+    addLog(`جاري اختبار الاتصال بـ ${device.ip}:${device.port}...`, "info");
+    
+    try {
+      const res = await axios.post(`${API}/fingerprint/devices/${device.id}/test`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.data.success) {
+        toast.success(t("تم الاتصال بنجاح", "Connection successful"));
+        addLog(`✓ تم الاتصال بـ ${device.name} - ${res.data.users_count || 0} مستخدم`, "success");
+      } else {
+        toast.error(res.data.message || t("فشل الاتصال", "Connection failed"));
+        addLog(`✗ فشل الاتصال: ${res.data.message}`, "error");
+      }
+    } catch (error) {
+      toast.error(t("فشل الاتصال - تأكد من العنوان والمنفذ", "Connection failed - verify address and port"));
+      addLog(`✗ فشل الاتصال: لا يمكن الاتصال بالجهاز - تأكد من العنوان والمنفذ`, "error");
+    } finally {
+      setTestingDevice(null);
+    }
+  };
+  
+  const handleSyncNow = async () => {
+    if (devices.length === 0) {
+      toast.error(t("لا توجد أجهزة للمزامنة", "No devices to sync"));
+      return;
+    }
+    
+    setSyncing(true);
+    addLog("جاري بدء المزامنة...", "info");
+    
+    try {
+      const res = await axios.post(`${API}/fingerprint/sync`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.data.success) {
+        toast.success(t(`تم مزامنة ${res.data.records_count || 0} سجل`, `Synced ${res.data.records_count || 0} records`));
+        addLog(`✓ تمت المزامنة بنجاح - ${res.data.records_count || 0} سجل`, "success");
+        setSyncSettings(prev => ({...prev, last_sync: new Date().toISOString()}));
+      } else {
+        toast.error(res.data.message || t("فشلت المزامنة", "Sync failed"));
+        addLog(`✗ فشلت المزامنة: ${res.data.message}`, "error");
+      }
+    } catch (error) {
+      toast.error(t("فشلت المزامنة", "Sync failed"));
+      addLog(`✗ فشلت المزامنة: ${error.message}`, "error");
+    } finally {
+      setSyncing(false);
+    }
+  };
+  
+  const handleSaveSettings = async () => {
+    try {
+      await axios.put(`${API}/fingerprint/sync-settings`, syncSettings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(t("تم حفظ الإعدادات", "Settings saved"));
+      addLog("تم حفظ إعدادات المزامنة", "success");
+    } catch (error) {
+      toast.error(t("فشل حفظ الإعدادات", "Failed to save settings"));
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      {/* Sync Settings Card */}
+      <Card className="border-indigo-200">
+        <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <Settings2 className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <CardTitle className="text-indigo-800">{t("إعدادات المزامنة", "Sync Settings")}</CardTitle>
+                <CardDescription>{t("إعدادات مزامنة بيانات الحضور", "Attendance data sync settings")}</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handleSyncNow} 
+                disabled={syncing || devices.length === 0}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {syncing ? <RefreshCw className="w-4 h-4 me-2 animate-spin" /> : <Play className="w-4 h-4 me-2" />}
+                {t("مزامنة الآن", "Sync Now")}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="flex items-center gap-3">
+              <input 
+                type="checkbox" 
+                id="auto_sync"
+                checked={syncSettings.auto_sync}
+                onChange={(e) => setSyncSettings({...syncSettings, auto_sync: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="auto_sync">{t("مزامنة تلقائية", "Auto Sync")}</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label>{t("كل", "Every")}</Label>
+              <Input 
+                type="number" 
+                value={syncSettings.sync_interval}
+                onChange={(e) => setSyncSettings({...syncSettings, sync_interval: parseInt(e.target.value) || 5})}
+                className="w-20"
+                min="1"
+              />
+              <Label>{t("دقيقة", "minutes")}</Label>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {syncSettings.last_sync && (
+                <span>{t("آخر مزامنة:", "Last sync:")} {new Date(syncSettings.last_sync).toLocaleString('ar-SA')}</span>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={handleSaveSettings}>
+              <Save className="w-4 h-4 me-2" />
+              {t("حفظ الإعدادات", "Save Settings")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Devices Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+              <Fingerprint className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <CardTitle>{t("أجهزة البصمة", "Fingerprint Devices")}</CardTitle>
+              <CardDescription>{t("إدارة أجهزة ZKTeco للحضور", "Manage ZKTeco attendance devices")}</CardDescription>
+            </div>
+          </div>
+          <Badge variant="secondary" className="text-lg px-3">{devices.length}</Badge>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <RefreshCw className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : devices.length === 0 ? (
+            <div className="text-center p-8 text-muted-foreground">
+              <Fingerprint className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>{t("لا توجد أجهزة مسجلة", "No devices registered")}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {devices.map((device) => (
+                <div key={device.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:border-indigo-300 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${device.is_online ? 'bg-green-100' : 'bg-gray-200'}`}>
+                      {device.is_online ? <Wifi className="w-5 h-5 text-green-600" /> : <WifiOff className="w-5 h-5 text-gray-400" />}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{device.name}</p>
+                      <p className="text-sm text-muted-foreground">{device.ip}:{device.port}</p>
+                      {device.location && <p className="text-xs text-muted-foreground">{device.location}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleTestConnection(device)}
+                      disabled={testingDevice === device.id}
+                    >
+                      {testingDevice === device.id ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wifi className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => {
+                        setEditingDevice(device);
+                        setDeviceForm({
+                          name: device.name,
+                          ip: device.ip,
+                          port: String(device.port || 4370),
+                          location: device.location || "",
+                        });
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDeleteDevice(device)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <Button 
+            className="mt-4 w-full" 
+            variant="outline"
+            onClick={() => {
+              setEditingDevice(null);
+              setDeviceForm({ name: "", ip: "", port: "4370", location: "" });
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="w-4 h-4 me-2" />
+            {t("إضافة جهاز", "Add Device")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Operation Log Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-sm">{t("سجل العمليات", "Operation Log")}</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => setLogs([])}>
+            <Trash2 className="w-4 h-4 me-1" />
+            {t("مسح", "Clear")}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-gray-900 text-gray-100 rounded-lg p-3 h-48 overflow-y-auto font-mono text-xs">
+            {logs.length === 0 ? (
+              <p className="text-gray-500">{t("لا توجد سجلات", "No logs")}</p>
+            ) : (
+              logs.map((log, idx) => (
+                <div key={idx} className={`py-1 ${log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-green-400' : 'text-gray-300'}`}>
+                  <span className="text-gray-500">[{log.timestamp}]</span> {log.message}
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Device Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Fingerprint className="w-5 h-5" />
+              {editingDevice ? t("تعديل الجهاز", "Edit Device") : t("إضافة جهاز جديد", "Add New Device")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("اسم الجهاز", "Device Name")} *</Label>
+              <Input 
+                value={deviceForm.name}
+                onChange={(e) => setDeviceForm({...deviceForm, name: e.target.value})}
+                placeholder={t("مثال: مكتب الرئيسي", "e.g., Main Office")}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("عنوان IP", "IP Address")} *</Label>
+                <Input 
+                  value={deviceForm.ip}
+                  onChange={(e) => setDeviceForm({...deviceForm, ip: e.target.value})}
+                  placeholder="192.168.1.100"
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("المنفذ", "Port")}</Label>
+                <Input 
+                  value={deviceForm.port}
+                  onChange={(e) => setDeviceForm({...deviceForm, port: e.target.value})}
+                  placeholder="4370"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("الموقع", "Location")}</Label>
+              <Input 
+                value={deviceForm.location}
+                onChange={(e) => setDeviceForm({...deviceForm, location: e.target.value})}
+                placeholder={t("مثال: المبنى الرئيسي", "e.g., Main Building")}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              {t("إلغاء", "Cancel")}
+            </Button>
+            <Button onClick={handleSaveDevice} className="bg-indigo-600 hover:bg-indigo-700">
+              <Save className="w-4 h-4 me-2" />
+              {t("حفظ", "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 const SystemSettings = () => {
   const { language } = useLanguage();
   const t = (ar, en) => language === "ar" ? ar : en;
