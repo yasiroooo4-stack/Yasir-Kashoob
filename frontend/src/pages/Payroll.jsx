@@ -653,6 +653,131 @@ const Payroll = () => {
     return 0;
   };
 
+  // Export payroll to Excel
+  const exportToExcel = async () => {
+    if (!currentPeriod || payrollRecords.length === 0) {
+      toast.error(language === "ar" ? "لا توجد سجلات للتصدير" : "No records to export");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API}/api/hr/payroll/periods/${selectedPeriod}/export-excel`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
+        }
+      );
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `payroll_${currentPeriod.period_name || 'report'}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(language === "ar" ? "تم تصدير الملف بنجاح" : "File exported successfully");
+    } catch (error) {
+      // Fallback: Create CSV manually
+      exportToCSV();
+    }
+  };
+
+  // Export payroll to CSV (fallback)
+  const exportToCSV = () => {
+    if (!currentPeriod || payrollRecords.length === 0) {
+      toast.error(language === "ar" ? "لا توجد سجلات للتصدير" : "No records to export");
+      return;
+    }
+
+    // CSV Headers
+    const headers = [
+      "الكود",
+      "الاسم",
+      "القسم",
+      "الموقع",
+      "أيام الحضور",
+      "أيام الغياب",
+      "إجازة أسبوعية",
+      "عطلات رسمية",
+      "إجازة سنوية",
+      "إجازة مرضية",
+      "ساعات إضافية",
+      "الراتب الأساسي",
+      "البدلات",
+      "أجر العمل الإضافي",
+      "إجمالي الراتب",
+      "الخصومات",
+      "صافي الراتب"
+    ];
+
+    // Create rows
+    const rows = payrollRecords.map(record => [
+      record.employee_code || "",
+      record.employee_name || "",
+      record.department || "",
+      record.work_location || "",
+      record.working_days || 0,
+      record.absent_days || 0,
+      record.day_off || 0,
+      record.public_holiday || 0,
+      record.annual_leave || 0,
+      record.sick_leave || 0,
+      record.total_overtime_hours?.toFixed(1) || 0,
+      record.basic_salary?.toFixed(3) || 0,
+      record.total_allowances?.toFixed(3) || 0,
+      record.overtime_pay?.toFixed(3) || 0,
+      record.gross_salary?.toFixed(3) || 0,
+      record.deductions?.toFixed(3) || 0,
+      record.net_salary?.toFixed(3) || 0
+    ]);
+
+    // Add totals row
+    const totals = [
+      "",
+      `إجمالي (${payrollRecords.length} موظف)`,
+      "",
+      "",
+      payrollRecords.reduce((sum, r) => sum + (r.working_days || 0), 0),
+      payrollRecords.reduce((sum, r) => sum + (r.absent_days || 0), 0),
+      payrollRecords.reduce((sum, r) => sum + (r.day_off || 0), 0),
+      payrollRecords.reduce((sum, r) => sum + (r.public_holiday || 0), 0),
+      payrollRecords.reduce((sum, r) => sum + (r.annual_leave || 0), 0),
+      payrollRecords.reduce((sum, r) => sum + (r.sick_leave || 0), 0),
+      payrollRecords.reduce((sum, r) => sum + (r.total_overtime_hours || 0), 0).toFixed(1),
+      payrollRecords.reduce((sum, r) => sum + (r.basic_salary || 0), 0).toFixed(3),
+      payrollRecords.reduce((sum, r) => sum + (r.total_allowances || 0), 0).toFixed(3),
+      payrollRecords.reduce((sum, r) => sum + (r.overtime_pay || 0), 0).toFixed(3),
+      payrollRecords.reduce((sum, r) => sum + (r.gross_salary || 0), 0).toFixed(3),
+      payrollRecords.reduce((sum, r) => sum + (r.deductions || 0), 0).toFixed(3),
+      payrollRecords.reduce((sum, r) => sum + (r.net_salary || 0), 0).toFixed(3)
+    ];
+    rows.push(totals);
+
+    // Convert to CSV string with BOM for Arabic support
+    const BOM = "\uFEFF";
+    const csvContent = BOM + [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(","))
+      .join("\n");
+
+    // Create download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `كشف_رواتب_${currentPeriod.period_name || "تقرير"}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    toast.success(language === "ar" ? "تم تصدير الملف بنجاح" : "File exported successfully");
+  };
+
   // Print payroll report by location type
   const handlePrintPayroll = (type) => {
     if (!currentPeriod || payrollRecords.length === 0) {
