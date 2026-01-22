@@ -5242,4 +5242,197 @@ const HR = () => {
   );
 };
 
+// Advance Requests Tab Component
+const AdvanceRequestsTab = ({ language }) => {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/hr/advance-requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRequests(res.data || []);
+    } catch (error) {
+      toast.error(language === "ar" ? "خطأ في جلب البيانات" : "Error fetching data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHRApprove = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/hr/advance-requests/${id}/hr-approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تمت موافقة الموارد البشرية" : "HR approval successful");
+      fetchRequests();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ" : "Error"));
+    }
+  };
+
+  const handleHRReject = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/hr/advance-requests/${id}/hr-reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تم الرفض" : "Rejected");
+      fetchRequests();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ" : "Error"));
+    }
+  };
+
+  const handleFinanceApprove = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/hr/advance-requests/${id}/finance-approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تمت موافقة المالية" : "Finance approval successful");
+      fetchRequests();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ" : "Error"));
+    }
+  };
+
+  const handleFinanceReject = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/hr/advance-requests/${id}/finance-reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تم الرفض" : "Rejected");
+      fetchRequests();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ" : "Error"));
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      pending_hr: { label: language === "ar" ? "بانتظار HR" : "Pending HR", color: "bg-yellow-100 text-yellow-700" },
+      pending_finance: { label: language === "ar" ? "بانتظار المالية" : "Pending Finance", color: "bg-blue-100 text-blue-700" },
+      approved: { label: language === "ar" ? "موافق عليه" : "Approved", color: "bg-green-100 text-green-700" },
+      rejected_hr: { label: language === "ar" ? "مرفوض HR" : "Rejected HR", color: "bg-red-100 text-red-700" },
+      rejected_finance: { label: language === "ar" ? "مرفوض المالية" : "Rejected Finance", color: "bg-red-100 text-red-700" },
+    };
+    const config = statusConfig[status] || { label: status, color: "bg-gray-100" };
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const filteredRequests = requests.filter(r => 
+    filterStatus === "all" || r.status === filterStatus
+  );
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-purple-500" />
+            {language === "ar" ? "طلبات السلف والمصاريف" : "Advance & Expense Requests"}
+          </CardTitle>
+          <CardDescription>
+            {language === "ar" ? "إدارة طلبات السلف والمصاريف - موافقة HR ثم المالية" : "Manage advance requests - HR then Finance approval"}
+          </CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{language === "ar" ? "الكل" : "All"}</SelectItem>
+              <SelectItem value="pending_hr">{language === "ar" ? "بانتظار HR" : "Pending HR"}</SelectItem>
+              <SelectItem value="pending_finance">{language === "ar" ? "بانتظار المالية" : "Pending Finance"}</SelectItem>
+              <SelectItem value="approved">{language === "ar" ? "موافق عليه" : "Approved"}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={fetchRequests} variant="outline">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-center py-8">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {language === "ar" ? "لا توجد طلبات" : "No requests found"}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                <TableHead>{language === "ar" ? "النوع" : "Type"}</TableHead>
+                <TableHead>{language === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                <TableHead>{language === "ar" ? "السبب" : "Reason"}</TableHead>
+                <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRequests.map((req) => (
+                <TableRow key={req.id}>
+                  <TableCell className="font-medium">{req.employee_name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {req.request_type === "advance" ? (language === "ar" ? "سلفة" : "Advance") :
+                       req.request_type === "expense" ? (language === "ar" ? "مصروفات" : "Expense") :
+                       language === "ar" ? "استرداد" : "Reimbursement"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono">{req.amount?.toFixed(3)} ر.ع</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{req.reason}</TableCell>
+                  <TableCell>{getStatusBadge(req.status)}</TableCell>
+                  <TableCell>{req.created_at?.slice(0, 10)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {req.status === "pending_hr" && (
+                        <>
+                          <Button size="sm" variant="outline" className="h-8 text-green-600" onClick={() => handleHRApprove(req.id)}>
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8 text-red-600" onClick={() => handleHRReject(req.id)}>
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                      {req.status === "pending_finance" && (
+                        <>
+                          <Button size="sm" variant="outline" className="h-8 text-green-600" onClick={() => handleFinanceApprove(req.id)}>
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8 text-red-600" onClick={() => handleFinanceReject(req.id)}>
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default HR;
