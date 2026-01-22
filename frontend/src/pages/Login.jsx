@@ -68,9 +68,37 @@ const Login = () => {
 
     const result = await login(formData.username, formData.password);
 
-    setLoading(false);
     if (result.success) {
+      // Track login with location
+      try {
+        const token = localStorage.getItem("token");
+        const trackResponse = await axios.post(`${API}/auth/track-login`, null, {
+          params: {
+            latitude: userLocation?.latitude,
+            longitude: userLocation?.longitude,
+            location_name: null,
+            ip_address: null, // Will be captured by backend
+            user_agent: navigator.userAgent,
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!trackResponse.data.is_within_allowed_area) {
+          // Location is outside allowed area
+          toast.warning(
+            language === "ar" 
+              ? "⚠️ تم تسجيل الدخول من موقع غير مصرح - تم إبلاغ المسؤول" 
+              : "⚠️ Login from unauthorized location - Admin notified"
+          );
+        }
+      } catch (trackError) {
+        console.log("Login tracking error:", trackError);
+      }
+
+      setLoading(false);
       navigate("/dashboard");
+    } else {
+      setLoading(false);
     }
   };
 
