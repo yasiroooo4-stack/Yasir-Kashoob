@@ -561,6 +561,11 @@ const SystemSettings = () => {
           </Card>
         </TabsContent>
 
+        {/* Allowed Locations Tab */}
+        <TabsContent value="locations">
+          <AllowedLocationsSettings language={language} t={t} />
+        </TabsContent>
+
         {/* Appearance Settings Tab */}
         <TabsContent value="appearance">
           <Suspense fallback={
