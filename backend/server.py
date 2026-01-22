@@ -5430,7 +5430,7 @@ async def check_if_holiday(date: str, current_user: dict = Depends(get_current_u
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         day_of_week = date_obj.weekday()
         # Friday = 4, Saturday = 5
-        is_weekend = day_of_week in [4, 5]
+        is_weekend = day_of_week in [5, 6]
         return {"is_holiday": is_weekend, "is_weekend": is_weekend, "day_of_week": day_of_week}
     except:
         return {"is_holiday": False}
