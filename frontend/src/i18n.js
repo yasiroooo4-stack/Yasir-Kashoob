@@ -243,6 +243,16 @@ const resources = {
       "cctv_system": "نظام الكاميرات",
       "extra_pay_approvals": "الموافقة على البدلات",
       "appearance_settings": "إعدادات المظهر",
+      "advance_requests": "طلبات السلف والمصاريف",
+      "substitute_employee": "الموظف البديل",
+      "delegate_permissions": "تحويل الصلاحيات",
+      "pending_hr_approval": "بانتظار موافقة الموارد البشرية",
+      "pending_finance_approval": "بانتظار موافقة المالية",
+      "edit_employee_table": "تعديل جدول الموظفين",
+      "edit_driver_table": "تعديل جدول السائقين",
+      "register_task": "تسجيل مهمة",
+      "login_tracking": "تتبع تسجيل الدخول",
+      "allowed_locations": "المواقع المسموح بها",
       
       // Analysis
       "analysis": "التحليل الذكي",
