@@ -4235,7 +4235,7 @@ async def bulk_set_weekly_off_days(
     current_user: dict = Depends(require_role(["admin"]))
 ):
     """تحديث أيام الإجازة الأسبوعية لجميع الموظفين الذين لا يملكونها"""
-    weekly_off_days = data.get("weekly_off_days", [4, 5])  # Default: Friday & Saturday
+    weekly_off_days = data.get("weekly_off_days", [5, 6])  # Default: Friday & Saturday
     
     # Update all employees who don't have weekly_off_days set
     result = await db.hr_employees.update_many(
