@@ -802,80 +802,79 @@ const CCTVSystem = ({ embedded = false }) => {
 
   return (
     <div className={embedded ? "" : "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100"} data-testid="cctv-system">
-      <div className={embedded ? "space-y-6" : "bg-white rounded-xl shadow-xl p-6 m-4 space-y-6 border border-slate-200"}>
+      <div className={embedded ? "space-y-4" : "bg-white rounded-xl shadow-xl p-4 sm:p-6 m-2 sm:m-4 space-y-4 border border-slate-200"}>
         {!embedded && (
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">نظام الكاميرات CCTV</h1>
-              <p className="text-slate-600">Hikvision Integration</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">نظام الكاميرات CCTV</h1>
+              <p className="text-slate-600 text-sm">Hikvision Integration</p>
             </div>
-          <div className="flex gap-2">
-            <Button 
-              variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
-              onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
-              data-testid="hikvision-connect-btn"
-            >
-              {hikvisionConfig.is_connected ? (
-                <>
-                  <WifiOff className="h-4 w-4 ml-2" />
-                  قطع الاتصال
-                </>
-              ) : (
-                <>
-                  <Wifi className="h-4 w-4 ml-2" />
-                  تسجيل دخول Hikvision
-                </>
-              )}
-            </Button>
-            <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
-              <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
-              فحص الكاميرات
-            </Button>
-            <Button variant="outline" onClick={() => setShowSettings(true)}>
-              <Settings className="h-4 w-4 ml-2" />
-              الإعدادات
-            </Button>
-            <Button onClick={() => setShowAddCamera(true)}>
-              <Plus className="h-4 w-4 ml-2" />
-              إضافة كاميرا
-            </Button>
-          </div>
-        </div>
-        )}
-        
-        {/* Header for embedded mode */}
-        {embedded && (
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
+                size="sm"
                 variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
                 onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
                 data-testid="hikvision-connect-btn"
               >
                 {hikvisionConfig.is_connected ? (
                   <>
-                    <WifiOff className="h-4 w-4 ml-2" />
-                    قطع الاتصال
+                    <WifiOff className="h-4 w-4 ml-1.5" />
+                    <span className="hidden sm:inline">قطع الاتصال</span>
+                    <span className="sm:hidden">قطع</span>
                   </>
                 ) : (
                   <>
-                    <Wifi className="h-4 w-4 ml-2" />
-                    تسجيل دخول Hikvision
+                    <Wifi className="h-4 w-4 ml-1.5" />
+                    <span className="hidden sm:inline">تسجيل دخول</span>
+                    <span className="sm:hidden">اتصال</span>
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
-                <RefreshCw className={`h-4 w-4 ml-2 ${checkingStatus ? 'animate-spin' : ''}`} />
-                فحص
+              <Button size="sm" variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
+                <RefreshCw className={`h-4 w-4 ${checkingStatus ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline mr-1.5">فحص</span>
               </Button>
-              <Button variant="outline" onClick={() => setShowSettings(true)}>
-                <Settings className="h-4 w-4 ml-2" />
+              <Button size="sm" variant="outline" onClick={() => setShowSettings(true)}>
+                <Settings className="h-4 w-4" />
               </Button>
-              <Button onClick={() => setShowAddCamera(true)}>
-                <Plus className="h-4 w-4 ml-2" />
-                كاميرا
+              <Button size="sm" onClick={() => setShowAddCamera(true)}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline mr-1.5">كاميرا</span>
               </Button>
             </div>
+          </div>
+        )}
+        
+        {/* Header for embedded mode */}
+        {embedded && (
+          <div className="flex flex-wrap justify-end gap-2 mb-2">
+            <Button 
+              size="sm"
+              variant={hikvisionConfig.is_connected ? "destructive" : "default"} 
+              onClick={() => hikvisionConfig.is_connected ? handleHikvisionDisconnect() : setShowHikvisionLogin(true)}
+              data-testid="hikvision-connect-btn"
+            >
+              {hikvisionConfig.is_connected ? (
+                <>
+                  <WifiOff className="h-4 w-4 ml-1" />
+                  قطع
+                </>
+              ) : (
+                <>
+                  <Wifi className="h-4 w-4 ml-1" />
+                  اتصال
+                </>
+              )}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleCheckAllCameras} disabled={checkingStatus}>
+              <RefreshCw className={`h-4 w-4 ${checkingStatus ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setShowSettings(true)}>
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button size="sm" onClick={() => setShowAddCamera(true)}>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         )}
 
