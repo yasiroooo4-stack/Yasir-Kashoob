@@ -309,6 +309,284 @@ const Payroll = () => {
     return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
   };
 
+  // Export individual payroll report to PDF
+  const exportDetailToPDF = (record) => {
+    if (!record || !currentPeriod) {
+      toast.error(language === "ar" ? "لا توجد بيانات للتصدير" : "No data to export");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>تقرير راتب - ${record.employee_name}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          @page { size: A4; margin: 15mm; }
+          body { 
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
+            padding: 20px;
+            background: white;
+            color: #1a1a1a;
+            line-height: 1.6;
+          }
+          .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 25px;
+          }
+          .header h1 { font-size: 22px; margin-bottom: 5px; }
+          .header .subtitle { font-size: 14px; opacity: 0.9; }
+          .employee-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #bfdbfe;
+          }
+          .employee-info h2 { 
+            font-size: 20px; 
+            color: #1e40af;
+            margin-bottom: 10px;
+          }
+          .employee-info .meta { 
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #3b82f6;
+          }
+          .section {
+            margin-bottom: 20px;
+          }
+          .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+          }
+          .stat-card {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+          }
+          .stat-card.green { background: #dcfce7; border: 1px solid #86efac; }
+          .stat-card.red { background: #fee2e2; border: 1px solid #fca5a5; }
+          .stat-card.purple { background: #f3e8ff; border: 1px solid #d8b4fe; }
+          .stat-card.amber { background: #fef3c7; border: 1px solid #fcd34d; }
+          .stat-card.blue { background: #dbeafe; border: 1px solid #93c5fd; }
+          .stat-card.orange { background: #ffedd5; border: 1px solid #fdba74; }
+          .stat-card.pink { background: #fce7f3; border: 1px solid #f9a8d4; }
+          .stat-card .value { 
+            font-size: 28px; 
+            font-weight: bold; 
+            margin-bottom: 5px;
+          }
+          .stat-card.green .value { color: #15803d; }
+          .stat-card.red .value { color: #dc2626; }
+          .stat-card.purple .value { color: #7c3aed; }
+          .stat-card.amber .value { color: #d97706; }
+          .stat-card.blue .value { color: #2563eb; }
+          .stat-card.orange .value { color: #ea580c; }
+          .stat-card.pink .value { color: #db2777; }
+          .stat-card .label { font-size: 12px; color: #6b7280; }
+          .leave-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+          }
+          .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          .salary-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          .salary-table tr:nth-child(even) { background: #f9fafb; }
+          .salary-table .label { font-weight: 500; color: #374151; }
+          .salary-table .value { 
+            text-align: left; 
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+          }
+          .salary-table .positive { color: #16a34a; }
+          .salary-table .negative { color: #dc2626; }
+          .salary-table .gross-row { background: #dcfce7 !important; }
+          .salary-table .deduction-row { background: #fee2e2 !important; }
+          .salary-table .net-row { 
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+          }
+          .salary-table .net-row .value {
+            font-size: 20px;
+            color: #15803d;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #9ca3af;
+          }
+          .signature-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+          }
+          .signature-box {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid #374151;
+          }
+          .signature-box .title { font-weight: bold; font-size: 12px; }
+          .signature-box .name { font-size: 11px; color: #6b7280; margin-top: 5px; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🏢 شركة مروج لتجارة الحليب</h1>
+          <div class="subtitle">تقرير الراتب التفصيلي</div>
+        </div>
+        
+        <div class="employee-info">
+          <h2>${record.employee_name}</h2>
+          <div class="meta">
+            <span>📋 الكود: ${record.employee_code || '-'}</span>
+            <span>🏬 القسم: ${record.department || '-'}</span>
+            <span>📍 الموقع: ${record.work_location || 'غير محدد'}</span>
+            <span>💼 المنصب: ${record.position || '-'}</span>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">📅 ملخص الحضور</div>
+          <div class="stats-grid">
+            <div class="stat-card green">
+              <div class="value">${record.working_days || 0}</div>
+              <div class="label">أيام الحضور</div>
+            </div>
+            <div class="stat-card red">
+              <div class="value">${record.absent_days || 0}</div>
+              <div class="label">أيام الغياب</div>
+            </div>
+            <div class="stat-card purple">
+              <div class="value">${record.day_off || 0}</div>
+              <div class="label">إجازة أسبوعية</div>
+            </div>
+            <div class="stat-card amber">
+              <div class="value">${record.public_holiday || 0}</div>
+              <div class="label">عطلات رسمية</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">🗓️ تفاصيل الإجازات</div>
+          <div class="leave-grid">
+            <div class="stat-card blue">
+              <div class="value">${record.annual_leave || 0}</div>
+              <div class="label">إجازة سنوية</div>
+            </div>
+            <div class="stat-card orange">
+              <div class="value">${record.sick_leave || 0}</div>
+              <div class="label">إجازة مرضية</div>
+            </div>
+            <div class="stat-card pink">
+              <div class="value">${record.emergency_leave || 0}</div>
+              <div class="label">إجازة طارئة</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">💰 تفاصيل الراتب</div>
+          <table class="salary-table">
+            <tr>
+              <td class="label">الراتب الأساسي</td>
+              <td class="value">${(record.basic_salary || 0).toFixed(3)} ر.ع</td>
+            </tr>
+            <tr>
+              <td class="label">البدلات</td>
+              <td class="value positive">+${(record.total_allowances || 0).toFixed(3)} ر.ع</td>
+            </tr>
+            ${record.total_overtime_hours > 0 ? `
+            <tr>
+              <td class="label">أجر العمل الإضافي (${record.total_overtime_hours?.toFixed(1)} ساعة)</td>
+              <td class="value positive">+${(record.overtime_pay || 0).toFixed(3)} ر.ع</td>
+            </tr>
+            ` : ''}
+            <tr class="gross-row">
+              <td class="label"><strong>إجمالي الراتب</strong></td>
+              <td class="value"><strong>${(record.gross_salary || 0).toFixed(3)} ر.ع</strong></td>
+            </tr>
+            <tr class="deduction-row">
+              <td class="label">الخصومات ${record.absent_days > 0 ? `(${record.absent_days} يوم غياب)` : ''}</td>
+              <td class="value negative">-${(record.deductions || 0).toFixed(3)} ر.ع</td>
+            </tr>
+            <tr class="net-row">
+              <td class="label"><strong>صافي الراتب</strong></td>
+              <td class="value">${(record.net_salary || 0).toFixed(3)} ر.ع</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="signature-section">
+          <div class="signature-box">
+            <div class="title">الموظف</div>
+            <div class="name">${record.employee_name}</div>
+          </div>
+          <div class="signature-box">
+            <div class="title">الموارد البشرية</div>
+            <div class="name">______________</div>
+          </div>
+          <div class="signature-box">
+            <div class="title">المدير المالي</div>
+            <div class="name">______________</div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <span>الفترة: ${currentPeriod.period_name} (${currentPeriod.start_date} → ${currentPeriod.end_date})</span>
+          <span>تاريخ الطباعة: ${new Date().toLocaleString('ar-SA')}</span>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const currentPeriod = periods.find(p => p.id === selectedPeriod);
   
   const summary = {
