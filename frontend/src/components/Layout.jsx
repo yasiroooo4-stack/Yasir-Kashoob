@@ -217,6 +217,8 @@ const Layout = () => {
     
     // الموارد البشرية (تم دمج البدلات الإضافية هنا)
     { path: "/hr", icon: Building2, label: "hr", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
+    { path: "/employee-scheduling", icon: CalendarClock, label: "employee_scheduling", roles: ["admin", "hr_manager"], departments: ["hr", "admin", "it"] },
+    { path: "/driver-schedule", icon: Car, label: "driver_schedule", roles: ["admin", "hr_manager"], departments: ["hr", "operations", "admin", "it"] },
     { path: "/payroll", icon: Calculator, label: "payroll", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     { path: "/salary-structures", icon: DollarSign, label: "salary_structures", roles: ["admin", "hr_manager"], departments: ["hr", "finance", "admin", "it"] },
     
