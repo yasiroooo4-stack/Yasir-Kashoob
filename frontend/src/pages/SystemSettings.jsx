@@ -591,6 +591,9 @@ const SystemSettings = () => {
           <TabsTrigger value="reset" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 text-red-600 data-[state=active]:bg-red-100">
             <Database className="w-4 h-4" /><span className="hidden sm:inline">{t("تصفير", "Reset")}</span>
           </TabsTrigger>
+          <TabsTrigger value="fingerprint" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 text-indigo-600 data-[state=active]:bg-indigo-100">
+            <Fingerprint className="w-4 h-4" /><span className="hidden sm:inline">{t("البصمة", "Fingerprint")}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Centers Tab */}
