@@ -255,6 +255,42 @@ const Login = () => {
                   )}
                 </Button>
 
+                {/* Location Status */}
+                <div className={`flex items-center justify-center gap-2 p-2 rounded-lg text-sm ${
+                  locationStatus === "success" ? "bg-green-50 text-green-700" :
+                  locationStatus === "loading" ? "bg-blue-50 text-blue-700" :
+                  locationStatus === "error" ? "bg-yellow-50 text-yellow-700" :
+                  "bg-gray-50 text-gray-500"
+                }`}>
+                  {locationStatus === "loading" && (
+                    <>
+                      <MapPin className="w-4 h-4 animate-pulse" />
+                      {language === "ar" ? "جاري تحديد الموقع..." : "Getting location..."}
+                    </>
+                  )}
+                  {locationStatus === "success" && (
+                    <>
+                      <MapPin className="w-4 h-4" />
+                      {language === "ar" ? "تم تحديد الموقع" : "Location detected"}
+                    </>
+                  )}
+                  {locationStatus === "error" && (
+                    <>
+                      <AlertTriangle className="w-4 h-4" />
+                      {language === "ar" ? "لم يتم تحديد الموقع" : "Location not available"}
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        size="sm" 
+                        onClick={requestLocation}
+                        className="p-0 h-auto text-yellow-700 underline"
+                      >
+                        {language === "ar" ? "إعادة المحاولة" : "Retry"}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
                 {/* Forgot Password Link */}
                 <div className="text-center pt-4">
                   <Link
