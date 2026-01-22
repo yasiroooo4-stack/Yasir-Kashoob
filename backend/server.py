@@ -7182,7 +7182,7 @@ async def export_attendance_excel(
     else:
         # Group attendance by employee and add summary - REMOVE DUPLICATE DATES
         from collections import defaultdict
-        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [4, 5]})
+        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [5, 6]})
         
         # If filtering by employee_id, add that employee even if no attendance records
         if employee_id:
@@ -7191,7 +7191,7 @@ async def export_attendance_excel(
                 employee_data[employee_id]["name"] = emp_info.get('name', '')
                 employee_data[employee_id]["code"] = emp_info.get('employee_code', '')
                 employee_data[employee_id]["fingerprint"] = emp_info.get('fingerprint_id', '')
-                employee_data[employee_id]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
+                employee_data[employee_id]["weekly_off_days"] = emp_info.get('weekly_off_days', [5, 6])
         
         for record in attendance:
             emp_id = record.get('employee_id', '')
@@ -7204,7 +7204,7 @@ async def export_attendance_excel(
                 employee_data[key]["name"] = emp_info.get('name', emp_name)
                 employee_data[key]["code"] = emp_info.get('employee_code', '')
                 employee_data[key]["fingerprint"] = emp_info.get('fingerprint_id', '')
-                employee_data[key]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
+                employee_data[key]["weekly_off_days"] = emp_info.get('weekly_off_days', [5, 6])
             else:
                 key = emp_id or emp_name
                 employee_data[key]["name"] = emp_name
@@ -7221,7 +7221,7 @@ async def export_attendance_excel(
             records = emp_info["records"]  # Dict of date -> record
             present_dates = set(records.keys())
             days_count = len(records)
-            weekly_off_days = emp_info.get("weekly_off_days", [4, 5])
+            weekly_off_days = emp_info.get("weekly_off_days", [5, 6])
             
             emp_name = emp_info["name"] or "Unknown"
             emp_code = emp_info["code"] or "-"
