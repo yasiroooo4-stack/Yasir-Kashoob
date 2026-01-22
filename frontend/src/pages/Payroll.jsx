@@ -964,6 +964,7 @@ const Payroll = () => {
                     <TableHead>{language === "ar" ? "الراتب الإجمالي" : "Total Salary"}</TableHead>
                     <TableHead>{language === "ar" ? "الخصومات" : "Deductions"}</TableHead>
                     <TableHead>{language === "ar" ? "الصافي" : "Net"}</TableHead>
+                    <TableHead className="text-center">{language === "ar" ? "التفاصيل" : "Details"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
