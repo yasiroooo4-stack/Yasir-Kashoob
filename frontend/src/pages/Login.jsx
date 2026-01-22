@@ -21,11 +21,42 @@ const Login = () => {
   
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle, loading, success, error, blocked
+  const [userLocation, setUserLocation] = useState(null);
   
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
+
+  // Get user location on component mount
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
+  const requestLocation = () => {
+    setLocationStatus("loading");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          });
+          setLocationStatus("success");
+        },
+        (error) => {
+          console.log("Location error:", error);
+          setLocationStatus("error");
+          // Don't block login, just warn
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setLocationStatus("error");
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
