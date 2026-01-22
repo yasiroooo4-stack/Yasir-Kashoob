@@ -1238,6 +1238,169 @@ const Payroll = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Employee Payroll Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={language === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              {language === "ar" ? "تقرير الراتب التفصيلي" : "Detailed Payroll Report"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedRecord && (
+            <div className="space-y-6">
+              {/* Employee Info */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-bold text-lg text-blue-900">{selectedRecord.employee_name}</h3>
+                    <p className="text-sm text-blue-700">
+                      {language === "ar" ? "الكود" : "Code"}: {selectedRecord.employee_code || "-"}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="bg-white">
+                    {selectedRecord.work_location || (language === "ar" ? "غير محدد" : "Not specified")}
+                  </Badge>
+                </div>
+                <p className="text-sm text-blue-600 mt-1">
+                  {selectedRecord.position || "-"} • {selectedRecord.department || "-"}
+                </p>
+              </div>
+              
+              {/* Attendance Summary */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {language === "ar" ? "ملخص الحضور" : "Attendance Summary"}
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-green-50 p-3 rounded-lg border border-green-200 text-center">
+                    <p className="text-2xl font-bold text-green-700">{selectedRecord.working_days || 0}</p>
+                    <p className="text-xs text-green-600">{language === "ar" ? "أيام الحضور" : "Present Days"}</p>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-lg border border-red-200 text-center">
+                    <p className="text-2xl font-bold text-red-700">{selectedRecord.absent_days || 0}</p>
+                    <p className="text-xs text-red-600">{language === "ar" ? "أيام الغياب" : "Absent Days"}</p>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 text-center">
+                    <p className="text-2xl font-bold text-purple-700">{selectedRecord.day_off || 0}</p>
+                    <p className="text-xs text-purple-600">{language === "ar" ? "إجازة أسبوعية" : "Weekly Off"}</p>
+                  </div>
+                  <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-center">
+                    <p className="text-2xl font-bold text-amber-700">{selectedRecord.public_holiday || 0}</p>
+                    <p className="text-xs text-amber-600">{language === "ar" ? "عطلات رسمية" : "Public Holiday"}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Leave Details */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  {language === "ar" ? "تفاصيل الإجازات" : "Leave Details"}
+                </h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 text-center">
+                    <p className="text-xl font-bold text-blue-700">{selectedRecord.annual_leave || 0}</p>
+                    <p className="text-xs text-blue-600">{language === "ar" ? "إجازة سنوية" : "Annual Leave"}</p>
+                  </div>
+                  <div className="bg-orange-50 p-3 rounded-lg border border-orange-200 text-center">
+                    <p className="text-xl font-bold text-orange-700">{selectedRecord.sick_leave || 0}</p>
+                    <p className="text-xs text-orange-600">{language === "ar" ? "إجازة مرضية" : "Sick Leave"}</p>
+                  </div>
+                  <div className="bg-pink-50 p-3 rounded-lg border border-pink-200 text-center">
+                    <p className="text-xl font-bold text-pink-700">{selectedRecord.emergency_leave || 0}</p>
+                    <p className="text-xs text-pink-600">{language === "ar" ? "إجازة طارئة" : "Emergency"}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Salary Breakdown */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  {language === "ar" ? "تفاصيل الراتب" : "Salary Breakdown"}
+                </h4>
+                <div className="bg-gray-50 rounded-lg border overflow-hidden">
+                  <table className="w-full text-sm">
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="p-2 font-medium">{language === "ar" ? "الراتب الأساسي" : "Basic Salary"}</td>
+                        <td className="p-2 text-end font-mono">{(selectedRecord.basic_salary || 0).toFixed(3)} ر.ع</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="p-2 font-medium">{language === "ar" ? "البدلات" : "Allowances"}</td>
+                        <td className="p-2 text-end font-mono text-green-600">+{(selectedRecord.total_allowances || 0).toFixed(3)} ر.ع</td>
+                      </tr>
+                      {selectedRecord.total_overtime_hours > 0 && (
+                        <tr className="border-b bg-amber-50">
+                          <td className="p-2 font-medium">
+                            {language === "ar" ? "أجر العمل الإضافي" : "Overtime Pay"}
+                            <span className="text-xs text-muted-foreground block">
+                              ({selectedRecord.total_overtime_hours?.toFixed(1)} {language === "ar" ? "ساعة" : "hours"})
+                            </span>
+                          </td>
+                          <td className="p-2 text-end font-mono text-amber-600">+{(selectedRecord.overtime_pay || 0).toFixed(3)} ر.ع</td>
+                        </tr>
+                      )}
+                      <tr className="border-b bg-green-50">
+                        <td className="p-2 font-bold">{language === "ar" ? "إجمالي الراتب" : "Gross Salary"}</td>
+                        <td className="p-2 text-end font-mono font-bold">{(selectedRecord.gross_salary || 0).toFixed(3)} ر.ع</td>
+                      </tr>
+                      <tr className="border-b bg-red-50">
+                        <td className="p-2 font-medium text-red-700">
+                          {language === "ar" ? "الخصومات" : "Deductions"}
+                          {selectedRecord.absent_days > 0 && (
+                            <span className="text-xs block">
+                              ({selectedRecord.absent_days} {language === "ar" ? "يوم غياب" : "absent days"})
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2 text-end font-mono text-red-600">-{(selectedRecord.deductions || 0).toFixed(3)} ر.ع</td>
+                      </tr>
+                      <tr className="bg-gradient-to-r from-green-100 to-emerald-100">
+                        <td className="p-3 font-bold text-green-800">{language === "ar" ? "صافي الراتب" : "Net Salary"}</td>
+                        <td className="p-3 text-end font-mono font-bold text-xl text-green-700">{(selectedRecord.net_salary || 0).toFixed(3)} ر.ع</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Period Info */}
+              {currentPeriod && (
+                <div className="text-xs text-muted-foreground border-t pt-3">
+                  <p>
+                    {language === "ar" ? "الفترة" : "Period"}: {currentPeriod.period_name} 
+                    ({currentPeriod.start_date} → {currentPeriod.end_date})
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
+              {language === "ar" ? "إغلاق" : "Close"}
+            </Button>
+            <Button 
+              onClick={() => {
+                // Print individual report
+                const printContent = document.querySelector('[data-dialog-content]');
+                if (printContent) {
+                  window.print();
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Printer className="w-4 h-4 me-2" />
+              {language === "ar" ? "طباعة" : "Print"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
