@@ -1660,22 +1660,17 @@ const Payroll = () => {
             </div>
           )}
           
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
               {language === "ar" ? "إغلاق" : "Close"}
             </Button>
             <Button 
-              onClick={() => {
-                // Print individual report
-                const printContent = document.querySelector('[data-dialog-content]');
-                if (printContent) {
-                  window.print();
-                }
-              }}
-              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => exportDetailToPDF(selectedRecord)}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="export-pdf-btn"
             >
-              <Printer className="w-4 h-4 me-2" />
-              {language === "ar" ? "طباعة" : "Print"}
+              <FileDown className="w-4 h-4 me-2" />
+              {language === "ar" ? "تصدير PDF" : "Export PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>
