@@ -71,6 +71,8 @@ from models.all_models import (
     ExcuseRequestBase, ExcuseRequestCreate, ExcuseRequest,
     # Expense models
     ExpenseRequestBase, ExpenseRequestCreate, ExpenseRequest,
+    # Advance request models
+    AdvanceRequestBase, AdvanceRequestCreate, AdvanceRequest, LoginRecord,
     # Car contract models
     CarContractBase, CarContractCreate, CarContract,
     # Official letter models
