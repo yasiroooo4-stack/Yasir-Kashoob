@@ -54,6 +54,13 @@ import {
   CheckCircle,
   Palette,
   Video,
+  Database,
+  Shield,
+  Users,
+  Calendar,
+  Warehouse,
+  ClipboardList,
+  ShoppingCart,
 } from "lucide-react";
 
 // Lazy load additional settings components
