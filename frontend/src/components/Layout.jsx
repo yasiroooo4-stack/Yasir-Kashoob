@@ -412,6 +412,9 @@ const Layout = () => {
             {/* Excuse Request Button */}
             <ExcuseRequestButton currentUser={user} />
 
+            {/* Advance Request Button */}
+            <AdvanceRequestButton />
+
             {/* Leave Request Button */}
             <LeaveRequestButton />
 
