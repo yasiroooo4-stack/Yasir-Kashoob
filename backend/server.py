@@ -566,9 +566,13 @@ async def reset_data_section(section_id: str, current_user: dict = Depends(requi
     section_collections = {
         "attendance": ["hr_attendance"],
         "projects": ["projects", "tasks"],
-        "inventory": ["inventory", "inventory_items"],
+        "inventory": ["inventory", "inventory_items", "inventory_solutions"],
         "warehouse_movements": ["warehouse_movements", "warehouse_transfers", "wms_material_consumptions"],
         "products": ["products", "product_categories"],
+        "messages": ["messages", "notifications"],
+        "advances": ["hr_advance_requests"],
+        "leaves": ["hr_leave_requests"],
+        "warehouse_management": ["warehouses", "warehouse_stock", "warehouse_items"],
     }
     
     if section_id not in section_collections:
