@@ -68,6 +68,10 @@ const Payroll = () => {
   const [calculating, setCalculating] = useState(false);
   const [bankAccounts, setBankAccounts] = useState([]);
   
+  // Employee Detail Report
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  
   // معامل خصم الغياب
   const [absenceDeductionFactor, setAbsenceDeductionFactor] = useState(1.0);
   const [absenceFactorLoading, setAbsenceFactorLoading] = useState(false);
