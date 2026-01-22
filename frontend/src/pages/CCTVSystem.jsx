@@ -900,51 +900,59 @@ const CCTVSystem = ({ embedded = false }) => {
 
       {/* Dashboard Stats */}
       {dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600">إجمالي الكاميرات</p>
-                  <p className="text-2xl font-bold text-blue-700">{dashboard.cameras?.total || 0}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                 </div>
-                <Camera className="h-10 w-10 text-blue-500" />
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-700">{dashboard.cameras?.total || 0}</p>
+                  <p className="text-xs sm:text-sm text-blue-600">إجمالي الكاميرات</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-600">متصلة</p>
-                  <p className="text-2xl font-bold text-green-700">{dashboard.cameras?.online || 0}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <Wifi className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                 </div>
-                <Wifi className="h-10 w-10 text-green-500" />
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-green-700">{dashboard.cameras?.online || 0}</p>
+                  <p className="text-xs sm:text-sm text-green-600">متصلة</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">غير متصلة</p>
-                  <p className="text-2xl font-bold text-red-600">{dashboard.cameras?.offline || 0}</p>
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-red-500/20 flex items-center justify-center">
+                  <WifiOff className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                 </div>
-                <WifiOff className="h-10 w-10 text-red-500" />
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-red-700">{dashboard.cameras?.offline || 0}</p>
+                  <p className="text-xs sm:text-sm text-red-600">غير متصلة</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">تنبيهات نشطة</p>
-                  <p className="text-2xl font-bold text-orange-600">{dashboard.alerts?.unresolved || 0}</p>
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                  <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
                 </div>
-                <Bell className="h-10 w-10 text-orange-500" />
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-700">{dashboard.alerts?.unresolved || 0}</p>
+                  <p className="text-xs sm:text-sm text-orange-600">تنبيهات نشطة</p>
+                </div>
               </div>
             </CardContent>
           </Card>
