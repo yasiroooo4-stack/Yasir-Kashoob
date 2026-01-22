@@ -476,6 +476,11 @@ function App() {
                     <EmployeeScheduling />
                   </ProtectedRoute>
                 } />
+                <Route path="driver-schedule" element={
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "operations", "admin", "it"]}>
+                    <DriverSchedule />
+                  </ProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
