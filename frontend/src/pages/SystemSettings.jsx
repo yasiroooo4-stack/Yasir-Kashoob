@@ -104,7 +104,7 @@ const DataResetSettings = ({ language, t }) => {
       nameAr: "المخزون",
       icon: Package, 
       color: "text-green-600 bg-green-100",
-      description: t("حذف جميع بيانات المخزون", "Delete all inventory data"),
+      description: t("حذف جميع بيانات المخزون والمحاليل", "Delete all inventory data and solutions"),
       collection: "inventory"
     },
     { 
@@ -113,7 +113,7 @@ const DataResetSettings = ({ language, t }) => {
       nameAr: "حركات المخازن",
       icon: Warehouse, 
       color: "text-orange-600 bg-orange-100",
-      description: t("حذف جميع حركات المستودعات", "Delete all warehouse movements"),
+      description: t("حذف جميع حركات المستودعات والتحويلات", "Delete all warehouse movements and transfers"),
       collection: "warehouse_movements"
     },
     { 
@@ -124,6 +124,42 @@ const DataResetSettings = ({ language, t }) => {
       color: "text-pink-600 bg-pink-100",
       description: t("حذف جميع المنتجات", "Delete all products"),
       collection: "products"
+    },
+    { 
+      id: "messages", 
+      name: t("الرسائل", "Messages"), 
+      nameAr: "الرسائل",
+      icon: Bell, 
+      color: "text-indigo-600 bg-indigo-100",
+      description: t("حذف جميع الرسائل والإشعارات", "Delete all messages and notifications"),
+      collection: "messages"
+    },
+    { 
+      id: "advances", 
+      name: t("السلف والمصاريف", "Advances & Expenses"), 
+      nameAr: "السلف والمصاريف",
+      icon: Wallet, 
+      color: "text-cyan-600 bg-cyan-100",
+      description: t("حذف جميع طلبات السلف والمصاريف", "Delete all advance and expense requests"),
+      collection: "hr_advance_requests"
+    },
+    { 
+      id: "leaves", 
+      name: t("الإجازات", "Leaves"), 
+      nameAr: "الإجازات",
+      icon: Calendar, 
+      color: "text-teal-600 bg-teal-100",
+      description: t("حذف جميع طلبات الإجازات", "Delete all leave requests"),
+      collection: "hr_leave_requests"
+    },
+    { 
+      id: "warehouse_management", 
+      name: t("إدارة المخازن", "Warehouse Management"), 
+      nameAr: "إدارة المخازن",
+      icon: Warehouse, 
+      color: "text-amber-600 bg-amber-100",
+      description: t("حذف بيانات إدارة المخازن الشاملة", "Delete all warehouse management data"),
+      collection: "warehouses"
     },
   ];
   
