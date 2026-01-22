@@ -1554,9 +1554,13 @@ const HR = () => {
             <AlertTriangle className="w-5 h-5 text-orange-500" />
             <span>{language === "ar" ? "الأعذار" : "Excuses"}</span>
           </TabsTrigger>
-          <TabsTrigger value="holidays" className="gap-2 px-4 py-3 text-base font-medium">
-            <Calendar className="w-5 h-5 text-red-500" />
-            <span>{language === "ar" ? "العطلات" : "Holidays"}</span>
+          <TabsTrigger value="extra-pay" className="gap-2 px-4 py-3 text-base font-medium">
+            <Gift className="w-5 h-5 text-green-500" />
+            <span>{language === "ar" ? "البدلات الإضافية" : "Extra Pay"}</span>
+          </TabsTrigger>
+          <TabsTrigger value="advance-requests" className="gap-2 px-4 py-3 text-base font-medium">
+            <Wallet className="w-5 h-5 text-purple-500" />
+            <span>{language === "ar" ? "السلف والمصاريف" : "Advances"}</span>
           </TabsTrigger>
           <TabsTrigger value="expenses" className="gap-2 px-4 py-3 text-base font-medium">
             <Wallet className="w-5 h-5" />
@@ -1570,17 +1574,9 @@ const HR = () => {
             <FileText className="w-5 h-5" />
             <span>{language === "ar" ? "الرسائل" : "Letters"}</span>
           </TabsTrigger>
-          <TabsTrigger value="shifts" className="gap-2 px-4 py-3 text-base font-medium">
-            <Clock className="w-5 h-5" />
-            <span>{language === "ar" ? "الورديات" : "Shifts"}</span>
-          </TabsTrigger>
-          <TabsTrigger value="overtime" className="gap-2 px-4 py-3 text-base font-medium">
-            <Clock className="w-5 h-5" />
-            <span>{language === "ar" ? "الإضافي" : "Overtime"}</span>
-          </TabsTrigger>
           <TabsTrigger value="loans" className="gap-2 px-4 py-3 text-base font-medium">
             <Wallet className="w-5 h-5" />
-            <span>{language === "ar" ? "السلف" : "Loans"}</span>
+            <span>{language === "ar" ? "القروض" : "Loans"}</span>
           </TabsTrigger>
           <TabsTrigger value="documents" className="gap-2 px-4 py-3 text-base font-medium">
             <FileText className="w-5 h-5" />
