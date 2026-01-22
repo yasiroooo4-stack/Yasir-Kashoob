@@ -624,6 +624,11 @@ const SystemSettings = () => {
             <CCTVSystem embedded={true} />
           </Suspense>
         </TabsContent>
+
+        {/* Data Reset Tab - Admin Only */}
+        <TabsContent value="reset">
+          <DataResetSettings language={language} t={t} />
+        </TabsContent>
       </Tabs>
 
       {/* Center Dialog */}
