@@ -882,9 +882,10 @@ async def download_fingerprint_program():
     program_files = [
         "/app/fingerprint_sync/sync_manager_gui.py",
         "/app/fingerprint_sync/network_sync.py",
-        "/app/fingerprint_sync/device_connector.py",
+        "/app/fingerprint_sync/sync_agent.py",
         "/app/fingerprint_sync/README.md",
-        "/app/fingerprint_sync/requirements.txt"
+        "/app/fingerprint_sync/requirements.txt",
+        "/app/fingerprint_sync/config_sample.json"
     ]
     
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
@@ -897,7 +898,7 @@ async def download_fingerprint_program():
             except Exception as e:
                 print(f"Error adding {file_path}: {e}")
         
-        # Add a config template
+        # Add a config template ini file
         config_template = """# إعدادات مزامنة البصمة
 # Fingerprint Sync Configuration
 
