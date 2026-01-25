@@ -108,7 +108,7 @@ const SupplierManagement = () => {
   const fetchFeedRequests = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/api/admin/supplier-feed-requests`, { headers });
+      const res = await axios.get(`${API}/admin/supplier-feed-requests`, { headers });
       setFeedRequests(res.data || []);
     } catch (error) {
       console.error("Error fetching feed requests:", error);
@@ -120,7 +120,7 @@ const SupplierManagement = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API}/api/admin/supplier-messages`, { headers });
+      const res = await axios.get(`${API}/admin/supplier-messages`, { headers });
       setMessages(res.data || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
