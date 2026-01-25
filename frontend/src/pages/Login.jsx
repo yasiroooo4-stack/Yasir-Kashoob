@@ -104,6 +104,11 @@ const Login = () => {
     }
   };
 
+  // Get user location on component mount
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
