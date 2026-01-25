@@ -250,6 +250,231 @@ const FeedPurchases = () => {
     }
   };
 
+  // Export Feed Report to PDF
+  const handleExportReportPDF = () => {
+    if (!feedReport) {
+      toast.error(language === "ar" ? "لا توجد بيانات للتصدير" : "No data to export");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    const printDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    const logoUrl = 'https://customer-assets.emergentagent.com/job_milk-erp-1/artifacts/ciylod8k_image.png';
+
+    // Build supplier rows
+    let supplierRows = '';
+    feedReport.by_supplier?.forEach((item, idx) => {
+      supplierRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${idx + 1}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${item.supplier_name}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.purchase_count}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.total_quantity?.toLocaleString()}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${item.total_amount?.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+
+    // Build feed type rows
+    let feedTypeRows = '';
+    feedReport.by_feed_type?.forEach((item, idx) => {
+      feedTypeRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${idx + 1}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${item.feed_type_name}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${item.company_name || '-'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.purchase_count}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.total_quantity?.toLocaleString()}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${item.total_amount?.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <title>تقرير مشتريات الأعلاف - Feed Purchases Report</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { 
+            font-family: Arial, 'Tahoma', sans-serif; 
+            padding: 20px;
+            font-size: 12px;
+            line-height: 1.5;
+            direction: rtl;
+          }
+          
+          .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+          .logo { width: 80px; height: 80px; }
+          .logo img { width: 100%; height: 100%; object-fit: contain; }
+          .company-info { text-align: center; flex: 1; }
+          .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+          .company-sub { font-size: 14px; color: #333; }
+          .report-date { text-align: left; font-size: 11px; color: #666; }
+          
+          .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border-radius: 8px;
+          }
+          
+          .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+          }
+          .summary-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+          }
+          .card-blue { background: #eff6ff; border: 1px solid #3b82f6; }
+          .card-amber { background: #fffbeb; border: 1px solid #f59e0b; }
+          .card-green { background: #f0fdf4; border: 1px solid #22c55e; }
+          .card-purple { background: #faf5ff; border: 1px solid #a855f7; }
+          .card-label { font-size: 11px; color: #666; margin-bottom: 5px; }
+          .card-value { font-size: 20px; font-weight: bold; }
+          .card-blue .card-value { color: #2563eb; }
+          .card-amber .card-value { color: #d97706; }
+          .card-green .card-value { color: #16a34a; }
+          .card-purple .card-value { color: #9333ea; }
+          
+          .section { margin-bottom: 25px; }
+          .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border-right: 4px solid #3b82f6;
+            margin-bottom: 10px;
+          }
+          
+          table { width: 100%; border-collapse: collapse; }
+          th { 
+            background: #1f2937; 
+            color: white; 
+            padding: 10px 8px; 
+            text-align: center;
+            font-size: 11px;
+          }
+          td { font-size: 11px; }
+          tr:nth-child(even) { background: #f9fafb; }
+          
+          .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+          }
+          
+          @media print { 
+            body { padding: 0; }
+            .summary-cards { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="${logoUrl}" alt="Logo" />
+          </div>
+          <div class="company-info">
+            <div class="company-name">شركة المروج للألبان</div>
+            <div class="company-sub">AL MOROOJ DAIRY CO SAOC</div>
+          </div>
+          <div class="report-date">
+            <div>تاريخ الطباعة: ${printDate}</div>
+            <div>Print Date: ${printDate}</div>
+          </div>
+        </div>
+        
+        <div class="title">تقرير مشتريات الأعلاف - Feed Purchases Report</div>
+        
+        <div class="summary-cards">
+          <div class="summary-card card-blue">
+            <div class="card-label">إجمالي المشتريات</div>
+            <div class="card-value">${feedReport.summary?.total_purchases || 0}</div>
+          </div>
+          <div class="summary-card card-amber">
+            <div class="card-label">إجمالي المبلغ (ر.ع)</div>
+            <div class="card-value">${feedReport.summary?.total_amount?.toLocaleString() || 0}</div>
+          </div>
+          <div class="summary-card card-green">
+            <div class="card-label">إجمالي الكمية</div>
+            <div class="card-value">${feedReport.summary?.total_quantity?.toLocaleString() || 0}</div>
+          </div>
+          <div class="summary-card card-purple">
+            <div class="card-label">متوسط الفاتورة (ر.ع)</div>
+            <div class="card-value">${feedReport.summary?.average_purchase_amount?.toFixed(2) || 0}</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">📊 حسب المورد - By Supplier</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 35%;">المورد / Supplier</th>
+                <th style="width: 15%;">عدد المشتريات</th>
+                <th style="width: 20%;">الكمية</th>
+                <th style="width: 25%;">المبلغ (ر.ع)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${supplierRows || '<tr><td colspan="5" style="text-align: center; padding: 20px;">لا توجد بيانات</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">🌾 حسب نوع العلف - By Feed Type</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 25%;">نوع العلف / Feed Type</th>
+                <th style="width: 20%;">الشركة / Company</th>
+                <th style="width: 12%;">عدد المشتريات</th>
+                <th style="width: 18%;">الكمية</th>
+                <th style="width: 20%;">المبلغ (ر.ع)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${feedTypeRows || '<tr><td colspan="6" style="text-align: center; padding: 20px;">لا توجد بيانات</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="footer">
+          <div>شركة المروج للألبان - Al Morooj Dairy Co. SAOC</div>
+          <div>تم إنشاء هذا التقرير بتاريخ ${new Date().toLocaleString('ar-OM')}</div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
+  };
+
   // Print feed purchase invoice - 3 pages format
   const handlePrintInvoice = async (purchase) => {
     // Get all feed types for the table
