@@ -43,6 +43,36 @@ const ProjectMilestones = ({ project, onUpdate }) => {
     file_url: "",
     description: ""
   });
+  
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  // Handle file upload
+  const handleFileUpload = async (file) => {
+    if (!file) return null;
+    
+    setUploadingFile(true);
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const response = await axios.post(`${API}/hr/upload-file`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      
+      return response.data.file_url;
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast.error(txt("فشل في رفع الملف", "Failed to upload file"));
+      return null;
+    } finally {
+      setUploadingFile(false);
+    }
+  };
 
   // Predefined milestone templates
   const milestoneTemplates = [
