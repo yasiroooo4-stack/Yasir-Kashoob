@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "../contexts/LanguageContext";
 import {
   Calculator,
   DollarSign,
@@ -54,6 +56,8 @@ import { Textarea } from "../components/ui/textarea";
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const SalaryStructures = () => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState("structures");
   const [employees, setEmployees] = useState([]);
   const [structures, setStructures] = useState([]);
