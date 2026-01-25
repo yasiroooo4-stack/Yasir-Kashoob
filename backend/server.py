@@ -1285,13 +1285,20 @@ async def supplier_portal_login(login_data: SupplierLoginRequest):
         if input_hash == portal_password:
             password_valid = True
     
-    # Then check old password_hash if set
+    # Check default password "0000" if password not changed yet
+    if not password_valid and not password_changed and login_data.password == "0000":
+        password_valid = True
+    
+    # Then check old password_hash if set (bcrypt)
     if not password_valid and stored_password_hash:
-        if verify_password(login_data.password, stored_password_hash):
-            password_valid = True
+        try:
+            if verify_password(login_data.password, stored_password_hash):
+                password_valid = True
+        except Exception:
+            pass  # bcrypt verification might fail on non-bcrypt hashes
     
     # Finally check legacy default (phone last 4 digits)
-    if not password_valid and not stored_password_hash and not portal_password:
+    if not password_valid and not password_changed:
         phone = supplier.get("phone", "")
         default_password = phone[-4:] if len(phone) >= 4 else "1234"
         if login_data.password == default_password:
