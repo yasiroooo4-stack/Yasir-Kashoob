@@ -276,7 +276,11 @@ const HR = () => {
     end_date: "",
     reason: "",
     days_count: 0,
+    attachment_url: "",
   });
+  
+  const [leaveAttachmentFile, setLeaveAttachmentFile] = useState(null);
+  const [uploadingLeaveAttachment, setUploadingLeaveAttachment] = useState(false);
   
   const [expenseForm, setExpenseForm] = useState({
     employee_id: "",
