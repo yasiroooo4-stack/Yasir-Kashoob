@@ -1097,6 +1097,11 @@ const SystemSettings = () => {
           </Suspense>
         </TabsContent>
 
+        {/* Fingerprint Sync Tab */}
+        <TabsContent value="fingerprint">
+          <FingerprintSyncSettings language={language} t={t} />
+        </TabsContent>
+
         {/* Data Reset Tab - Admin Only */}
         <TabsContent value="reset">
           <DataResetSettings language={language} t={t} />
