@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Globe, Eye, EyeOff, MapPin, AlertTriangle } from "lucide-react";
+import { Globe, Eye, EyeOff, MapPin, AlertTriangle, ShieldAlert, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -23,6 +23,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [locationStatus, setLocationStatus] = useState("idle"); // idle, loading, success, error, blocked
   const [userLocation, setUserLocation] = useState(null);
+  const [locationBlocked, setLocationBlocked] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
   
   const [formData, setFormData] = useState({
     username: "",
@@ -33,6 +35,41 @@ const Login = () => {
   useEffect(() => {
     requestLocation();
   }, []);
+
+  // Check location against geofence
+  const checkLocationAllowed = async (latitude, longitude) => {
+    try {
+      const params = new URLSearchParams();
+      if (latitude) params.append("latitude", latitude);
+      if (longitude) params.append("longitude", longitude);
+      
+      const response = await axios.post(`${API}/auth/check-location?${params}`);
+      const data = response.data;
+      
+      if (!data.allowed) {
+        setLocationBlocked(true);
+        setLocationStatus("blocked");
+        if (data.reason === "location_required") {
+          setLocationMessage(language === "ar" ? "يجب تفعيل الموقع للدخول" : "Location required for login");
+        } else if (data.reason === "outside_allowed_area") {
+          setLocationMessage(language === "ar" ? "أنت خارج نطاق المواقع المسموح بها" : "You are outside allowed locations");
+        }
+        return false;
+      } else {
+        setLocationBlocked(false);
+        if (data.warning) {
+          setLocationMessage(language === "ar" ? "⚠️ أنت خارج المواقع المحددة (وضع المراقبة)" : "⚠️ Outside defined locations (monitoring mode)");
+        } else if (data.location_name) {
+          setLocationMessage(language === "ar" ? `✓ ${data.location_name}` : `✓ ${data.location_name}`);
+        }
+        return true;
+      }
+    } catch (error) {
+      // If check fails, allow login (fail open)
+      console.log("Location check error:", error);
+      return true;
+    }
+  };
 
   const requestLocation = () => {
     setLocationStatus("loading");
