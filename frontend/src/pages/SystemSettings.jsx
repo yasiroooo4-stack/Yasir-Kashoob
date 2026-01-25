@@ -1232,6 +1232,11 @@ const AllowedLocationsSettings = ({ language, t }) => {
   const [loginRecords, setLoginRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [geofenceSettings, setGeofenceSettings] = useState({
+    enabled: false,
+    block_unauthorized: false,
+    allow_without_location: true,
+  });
   const [locationForm, setLocationForm] = useState({
     name: "",
     latitude: "",
@@ -1242,7 +1247,37 @@ const AllowedLocationsSettings = ({ language, t }) => {
   useEffect(() => {
     fetchLocations();
     fetchLoginRecords();
+    fetchGeofenceSettings();
   }, []);
+
+  const fetchGeofenceSettings = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/system/geofence-settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGeofenceSettings(res.data || {
+        enabled: false,
+        block_unauthorized: false,
+        allow_without_location: true,
+      });
+    } catch (error) {
+      console.log("Error fetching geofence settings");
+    }
+  };
+
+  const saveGeofenceSettings = async (newSettings) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/system/geofence-settings`, newSettings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGeofenceSettings(newSettings);
+      toast.success(t("تم حفظ الإعدادات", "Settings saved"));
+    } catch (error) {
+      toast.error(t("خطأ في حفظ الإعدادات", "Error saving settings"));
+    }
+  };
 
   const fetchLocations = async () => {
     try {
