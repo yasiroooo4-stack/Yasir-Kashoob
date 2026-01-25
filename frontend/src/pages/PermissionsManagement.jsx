@@ -292,6 +292,7 @@ const PermissionsManagement = () => {
       warehouse_issue_feed: t("صرف الأعلاف", "Issue Feed"),
       warehouse_issue_supplies: t("صرف اللوازم", "Issue Supplies"),
       warehouse_issue_all: t("صرف جميع المواد", "Issue All Materials"),
+      warehouse_approve_issue: t("الموافقة على طلبات الصرف", "Approve Issue Requests"),
       warehouse_add_solution: t("إضافة محلول", "Add Solution"),
       warehouse_edit_solution: t("تعديل محلول", "Edit Solution"),
       warehouse_record_consumption: t("تسجيل استهلاك", "Record Consumption"),
