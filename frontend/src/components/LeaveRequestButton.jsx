@@ -498,12 +498,55 @@ const LeaveRequestButton = () => {
               </Select>
             </div>
 
+            {/* Attachment */}
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "إرفاق مستند (اختياري)" : "Attach Document (Optional)"}</Label>
+              <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  id="leave-file-upload"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setAttachmentFile(file);
+                    }
+                  }}
+                />
+                <label 
+                  htmlFor="leave-file-upload" 
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  {attachmentFile ? (
+                    <>
+                      <FileText className="w-6 h-6 text-green-600" />
+                      <span className="text-sm font-medium text-green-600">{attachmentFile.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {(attachmentFile.size / 1024).toFixed(1)} KB
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {language === "ar" ? "اضغط لاختيار ملف" : "Click to select file"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        PDF, DOC, JPG, PNG
+                      </span>
+                    </>
+                  )}
+                </label>
+              </div>
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 {language === "ar" ? "إلغاء" : "Cancel"}
               </Button>
-              <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
-                {loading ? (
+              <Button type="submit" disabled={loading || uploadingAttachment} className="bg-green-600 hover:bg-green-700">
+                {loading || uploadingAttachment ? (
                   <>{language === "ar" ? "جاري الإرسال..." : "Submitting..."}</>
                 ) : (
                   <>
