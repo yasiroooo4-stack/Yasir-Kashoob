@@ -818,6 +818,7 @@ class LeaveRequestBase(BaseModel):
     substitute_employee_name: Optional[str] = None
     delegate_permissions_to_id: Optional[str] = None
     delegate_permissions_to_name: Optional[str] = None
+    attachment_url: Optional[str] = None  # رابط المستند المرفق
 
 class LeaveRequestCreate(LeaveRequestBase):
     pass
