@@ -525,26 +525,28 @@ const ProjectMilestones = ({ project, onUpdate }) => {
       </Dialog>
 
       {/* Add Attachment Dialog */}
-      <Dialog open={attachmentDialogOpen} onOpenChange={setAttachmentDialogOpen}>
+      <Dialog open={attachmentDialogOpen} onOpenChange={(open) => {
+        setAttachmentDialogOpen(open);
+        if (!open) setSelectedFile(null);
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{txt("إرفاق ملف للمرحلة", "Attach File to Milestone")}</DialogTitle>
+            <DialogTitle>{txt("إرفاق مستند للمرحلة", "Attach Document to Milestone")}</DialogTitle>
             <DialogDescription>
               {selectedMilestone?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>{txt("اسم الملف", "File Name")} *</Label>
+              <Label>{txt("اسم المستند", "Document Name")}</Label>
               <Input 
                 value={attachmentForm.file_name} 
                 onChange={(e) => setAttachmentForm({...attachmentForm, file_name: e.target.value})} 
                 placeholder={txt("مثال: فاتورة المقاول", "e.g., Contractor Invoice")}
-                required
               />
             </div>
             <div className="space-y-2">
-              <Label>{txt("نوع الملف", "File Type")}</Label>
+              <Label>{txt("نوع المستند", "Document Type")}</Label>
               <Select value={attachmentForm.file_type} onValueChange={(v) => setAttachmentForm({...attachmentForm, file_type: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -557,13 +559,48 @@ const ProjectMilestones = ({ project, onUpdate }) => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{txt("رابط الملف", "File URL")} *</Label>
-              <Input 
-                value={attachmentForm.file_url} 
-                onChange={(e) => setAttachmentForm({...attachmentForm, file_url: e.target.value})} 
-                placeholder="https://..."
-                required
-              />
+              <Label>{txt("إرفاق مستند", "Attach Document")} *</Label>
+              <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
+                <input
+                  type="file"
+                  id="milestone-file-upload"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      if (!attachmentForm.file_name) {
+                        setAttachmentForm({...attachmentForm, file_name: file.name});
+                      }
+                    }
+                  }}
+                />
+                <label 
+                  htmlFor="milestone-file-upload" 
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  {selectedFile ? (
+                    <>
+                      <FileText className="w-8 h-8 text-green-600" />
+                      <span className="text-sm font-medium text-green-600">{selectedFile.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {(selectedFile.size / 1024).toFixed(1)} KB
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {txt("اضغط لاختيار ملف أو اسحب الملف هنا", "Click to select or drag file here")}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        PDF, DOC, XLS, JPG, PNG
+                      </span>
+                    </>
+                  )}
+                </label>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{txt("وصف", "Description")}</Label>
@@ -571,6 +608,7 @@ const ProjectMilestones = ({ project, onUpdate }) => {
                 value={attachmentForm.description} 
                 onChange={(e) => setAttachmentForm({...attachmentForm, description: e.target.value})} 
                 rows={2}
+                placeholder={txt("وصف اختياري للمستند", "Optional description")}
               />
             </div>
           </div>
@@ -578,8 +616,19 @@ const ProjectMilestones = ({ project, onUpdate }) => {
             <Button variant="outline" onClick={() => setAttachmentDialogOpen(false)}>
               {txt("إلغاء", "Cancel")}
             </Button>
-            <Button onClick={handleAddAttachment} className="gradient-primary text-white">
-              {txt("إرفاق", "Attach")}
+            <Button 
+              onClick={handleAddAttachment} 
+              className="gradient-primary text-white"
+              disabled={uploadingFile || !selectedFile}
+            >
+              {uploadingFile ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent me-2"></div>
+                  {txt("جاري الرفع...", "Uploading...")}
+                </>
+              ) : (
+                txt("إرفاق", "Attach")
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
