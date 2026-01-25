@@ -735,7 +735,7 @@ const SupplierPortal = () => {
                     ) : (
                       milkReceptions.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell>{new Date(r.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}</TableCell>
+                          <TableCell>{new Date(r.reception_date || r.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
                               {language === "ar" ? r.milk_type_ar : r.milk_type_en}
