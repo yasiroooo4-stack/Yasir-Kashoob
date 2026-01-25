@@ -71,7 +71,8 @@ const MESSAGE_TYPES = [
 ];
 
 const SupplierPortal = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [language, setLanguage] = useState(localStorage.getItem("supplier_language") || "ar");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [supplierCode, setSupplierCode] = useState("");
   const [password, setPassword] = useState("");
@@ -79,6 +80,28 @@ const SupplierPortal = () => {
   const [supplier, setSupplier] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Language toggle
+  const toggleLanguage = () => {
+    const newLang = language === "ar" ? "en" : "ar";
+    setLanguage(newLang);
+    localStorage.setItem("supplier_language", newLang);
+    i18n.changeLanguage(newLang);
+    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = newLang;
+  };
+  
+  // Initialize language on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("supplier_language") || "ar";
+    setLanguage(savedLang);
+    i18n.changeLanguage(savedLang);
+    document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = savedLang;
+  }, [i18n]);
+  
+  // Helper function for translations
+  const txt = (ar, en) => language === "ar" ? ar : en;
   
   // Recovery states
   const [showRecovery, setShowRecovery] = useState(false);
