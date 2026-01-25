@@ -695,12 +695,34 @@ const HR = () => {
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/hr/leave-requests`, leaveForm);
+      let attachmentUrl = leaveForm.attachment_url;
+      
+      // Upload file if selected
+      if (leaveAttachmentFile) {
+        setUploadingLeaveAttachment(true);
+        const formData = new FormData();
+        formData.append("file", leaveAttachmentFile);
+        
+        const uploadRes = await axios.post(`${API}/hr/upload-file`, formData, {
+          headers: { 
+            ...headers,
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        attachmentUrl = uploadRes.data.file_url;
+        setUploadingLeaveAttachment(false);
+      }
+      
+      await axios.post(`${API}/hr/leave-requests`, {
+        ...leaveForm,
+        attachment_url: attachmentUrl
+      }, { headers });
       toast.success(t("success"));
       setLeaveDialogOpen(false);
       resetLeaveForm();
       fetchData();
     } catch (error) {
+      setUploadingLeaveAttachment(false);
       toast.error(error.response?.data?.detail || t("error"));
     }
   };
