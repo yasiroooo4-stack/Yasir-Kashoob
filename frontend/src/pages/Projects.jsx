@@ -29,6 +29,7 @@ const Projects = () => {
   const [tasks, setTasks] = useState([]);
   const [dashboard, setDashboard] = useState({});
   const [selectedProject, setSelectedProject] = useState(null);
+  const [contracts, setContracts] = useState([]);
   
   // Dialog states
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
@@ -45,6 +46,19 @@ const Projects = () => {
     project_id: "", project_name: "", task_name: "", description: "",
     assigned_to_name: "", start_date: "", due_date: "", priority: "medium", estimated_hours: 0
   });
+
+  // Fetch contracts when project is selected
+  const fetchProjectContracts = async (projectId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/projects/${projectId}/contracts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setContracts(response.data || []);
+    } catch (error) {
+      console.error("Error fetching contracts:", error);
+    }
+  };
 
   useEffect(() => {
     fetchAllData();
