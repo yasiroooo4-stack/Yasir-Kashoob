@@ -783,12 +783,12 @@ const SupplierPortal = () => {
           <TabsContent value="messages">
             <Card>
               <CardHeader>
-                <CardTitle>الرسائل والاستفسارات</CardTitle>
+                <CardTitle>{txt("الرسائل والاستفسارات", "Messages & Inquiries")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {messages.length === 0 ? (
-                    <p className="text-center py-8 text-muted-foreground">لا توجد رسائل</p>
+                    <p className="text-center py-8 text-muted-foreground">{txt("لا توجد رسائل", "No messages")}</p>
                   ) : (
                     messages.map((m) => (
                       <Card key={m.id} className="p-4">
@@ -796,7 +796,7 @@ const SupplierPortal = () => {
                           <div>
                             <h4 className="font-medium">{m.subject}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {MESSAGE_TYPES.find(t => t.id === m.message_type)?.name} • {new Date(m.created_at).toLocaleDateString("ar-SA")}
+                              {MESSAGE_TYPES.find(t => t.id === m.message_type)?.name} • {new Date(m.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}
                             </p>
                           </div>
                           {getStatusBadge(m.status)}
@@ -804,7 +804,7 @@ const SupplierPortal = () => {
                         <p className="text-sm mb-2">{m.message}</p>
                         {m.reply && (
                           <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                            <p className="text-sm font-medium text-green-700 dark:text-green-300">رد الإدارة:</p>
+                            <p className="text-sm font-medium text-green-700 dark:text-green-300">{txt("رد الإدارة:", "Admin Reply:")}</p>
                             <p className="text-sm">{m.reply}</p>
                           </div>
                         )}
@@ -822,14 +822,14 @@ const SupplierPortal = () => {
       <Dialog open={feedDialogOpen} onOpenChange={setFeedDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>طلب تحويل رصيد إلى أعلاف</DialogTitle>
+            <DialogTitle>{txt("طلب تحويل رصيد إلى أعلاف", "Request Balance to Feed")}</DialogTitle>
             <DialogDescription>
-              رصيدك الحالي: {(supplier?.balance || 0).toLocaleString()} ريال
+              {txt("رصيدك الحالي:", "Your current balance:")} {(supplier?.balance || 0).toLocaleString()} {txt("ريال", "OMR")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFeedRequest} className="space-y-4">
             <div className="space-y-2">
-              <Label>نوع العلف *</Label>
+              <Label>{txt("نوع العلف *", "Feed Type *")}</Label>
               <Select
                 value={feedForm.feed_type}
                 onValueChange={(v) => {
@@ -841,19 +841,19 @@ const SupplierPortal = () => {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="اختر نوع العلف" />
+                  <SelectValue placeholder={txt("اختر نوع العلف", "Select feed type")} />
                 </SelectTrigger>
                 <SelectContent>
                   {FEED_TYPES.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.name} - {f.price} ريال/كجم
+                      {f.name} - {f.price} {txt("ريال/كجم", "OMR/kg")}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>الكمية (كجم) *</Label>
+              <Label>{txt("الكمية (كجم) *", "Quantity (kg) *")}</Label>
               <Input
                 type="number"
                 value={feedForm.quantity}
@@ -865,11 +865,11 @@ const SupplierPortal = () => {
                     amount_to_deduct: calculateFeedAmount(feedForm.feed_type, qty).toString()
                   });
                 }}
-                placeholder="أدخل الكمية"
+                placeholder={txt("أدخل الكمية", "Enter quantity")}
               />
             </div>
             <div className="space-y-2">
-              <Label>المبلغ المطلوب خصمه (ريال) *</Label>
+              <Label>{txt("المبلغ المطلوب خصمه (ريال) *", "Amount to Deduct (OMR) *")}</Label>
               <Input
                 type="number"
                 value={feedForm.amount_to_deduct}
