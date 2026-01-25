@@ -520,7 +520,7 @@ const SupplierPortal = () => {
                       }}
                       className="w-full gradient-primary text-white"
                     >
-                      العودة لتسجيل الدخول
+                      {txt("العودة لتسجيل الدخول", "Back to Login")}
                     </Button>
                   </div>
                 )}
@@ -535,7 +535,7 @@ const SupplierPortal = () => {
                       setRecoveryPhone("");
                     }}
                   >
-                    العودة لتسجيل الدخول
+                    {txt("العودة لتسجيل الدخول", "Back to Login")}
                   </Button>
                 )}
               </div>
@@ -559,13 +559,16 @@ const SupplierPortal = () => {
               </div>
               <div>
                 <h1 className="font-bold text-lg">{supplier?.name}</h1>
-                <p className="text-sm text-muted-foreground">كود: {supplier?.code}</p>
+                <p className="text-sm text-muted-foreground">{txt("كود:", "Code:")} {supplier?.code}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={toggleLanguage} title={txt("تغيير اللغة", "Change Language")}>
+                <Globe className="w-4 h-4" />
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setChangePasswordDialogOpen(true)}>
                 <Settings className="w-4 h-4 me-1" />
-                <span className="hidden sm:inline">تغيير كلمة المرور</span>
+                <span className="hidden sm:inline">{txt("تغيير كلمة المرور", "Change Password")}</span>
               </Button>
               <Button variant="outline" onClick={handleLogout}>
                 خروج
