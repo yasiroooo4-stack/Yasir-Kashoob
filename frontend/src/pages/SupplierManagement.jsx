@@ -131,7 +131,7 @@ const SupplierManagement = () => {
   const handleApproveRequest = async (requestId) => {
     try {
       setLoading(true);
-      await axios.put(`${API}/api/admin/supplier-feed-requests/${requestId}/approve`, {}, { headers });
+      await axios.put(`${API}/admin/supplier-feed-requests/${requestId}/approve`, {}, { headers });
       toast.success(t("تمت الموافقة على الطلب وخصم المبلغ من رصيد المورد", "Request approved and amount deducted from supplier balance"));
       setApproveDialogOpen(false);
       setSelectedRequest(null);
@@ -158,7 +158,7 @@ const SupplierManagement = () => {
     try {
       setLoading(true);
       await axios.put(
-        `${API}/api/admin/supplier-feed-requests/${selectedRequest.id}/reject?reason=${encodeURIComponent(rejectReason)}`,
+        `${API}/admin/supplier-feed-requests/${selectedRequest.id}/reject?reason=${encodeURIComponent(rejectReason)}`,
         {},
         { headers }
       );
@@ -179,7 +179,7 @@ const SupplierManagement = () => {
     try {
       setLoading(true);
       await axios.put(
-        `${API}/api/admin/supplier-messages/${selectedMessage.id}/reply?reply=${encodeURIComponent(replyText)}`,
+        `${API}/admin/supplier-messages/${selectedMessage.id}/reply?reply=${encodeURIComponent(replyText)}`,
         {},
         { headers }
       );
