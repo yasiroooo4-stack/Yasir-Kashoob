@@ -171,18 +171,34 @@ const FingerprintSyncSettings = ({ language, t }) => {
               <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
-                  <p>{t("قم بتحميل وتشغيل البرنامج", "Download and run the program")}</p>
+                  <div>
+                    <p className="font-medium">{t("قم بتحميل وفك ضغط البرنامج", "Download and extract the program")}</p>
+                  </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
-                  <p>{t("أضف أجهزة البصمة (IP وPort)", "Add fingerprint devices (IP and Port)")}</p>
+                  <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-medium">{t("ثبّت المتطلبات (مرة واحدة فقط)", "Install requirements (once only)")}</p>
+                    <code className="block mt-1 bg-gray-800 text-green-400 px-2 py-1 rounded text-xs font-mono">
+                      pip install requests pyzk
+                    </code>
+                  </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
-                  <p>{t("أدخل بيانات تسجيل الدخول للنظام", "Enter system login credentials")}</p>
+                  <div>
+                    <p className="font-medium">{t("شغّل البرنامج", "Run the program")}</p>
+                    <code className="block mt-1 bg-gray-800 text-green-400 px-2 py-1 rounded text-xs font-mono">
+                      python sync_manager_gui.py
+                    </code>
+                  </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">4</div>
+                  <p>{t("أضف أجهزة البصمة (IP وPort) وأدخل بيانات تسجيل الدخول", "Add devices (IP and Port) and enter login credentials")}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold flex-shrink-0">5</div>
                   <p>{t("اضغط على 'مزامنة الآن' أو فعّل المزامنة التلقائية", "Click 'Sync Now' or enable auto-sync")}</p>
                 </div>
               </div>
