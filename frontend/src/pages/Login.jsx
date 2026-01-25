@@ -106,7 +106,43 @@ const Login = () => {
 
   // Get user location on component mount
   useEffect(() => {
-    requestLocation();
+    // Check and get location after initial render
+    const getLocation = async () => {
+      setLocationStatus("loading");
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const loc = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+            };
+            setUserLocation(loc);
+            
+            // Check if location is allowed
+            const allowed = await checkLocationAllowed(loc.latitude, loc.longitude);
+            if (allowed) {
+              setLocationStatus("success");
+            }
+          },
+          async () => {
+            // Check if login without location is allowed
+            const allowed = await checkLocationAllowed(null, null);
+            if (allowed) {
+              setLocationStatus("error");
+            }
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } else {
+        const allowed = await checkLocationAllowed(null, null);
+        if (allowed) {
+          setLocationStatus("error");
+        }
+      }
+    };
+    getLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = (e) => {
