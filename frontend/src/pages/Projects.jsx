@@ -328,11 +328,15 @@ const Projects = () => {
                     </TableRow>
                   ) : (
                     projects.map((project) => (
-                      <TableRow key={project.id} className="cursor-pointer hover:bg-muted/50" onClick={() => {
-                        setSelectedProject(project);
-                        fetchProjectTasks(project.id);
-                        setActiveTab("tasks");
-                      }}>
+                      <TableRow 
+                        key={project.id} 
+                        className={`cursor-pointer hover:bg-muted/50 ${selectedProject?.id === project.id ? "bg-primary/10" : ""}`}
+                        onClick={() => {
+                          setSelectedProject(project);
+                          fetchProjectTasks(project.id);
+                          fetchProjectContracts(project.id);
+                        }}
+                      >
                         <TableCell className="font-mono">{project.project_code}</TableCell>
                         <TableCell className="font-medium">{project.name}</TableCell>
                         <TableCell>{project.project_type}</TableCell>
@@ -348,14 +352,32 @@ const Projects = () => {
                           <Badge className={getStatusBadge(project.status)}>{project.status}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedItem(project);
-                            setProjectForm(project);
-                            setProjectDialogOpen(true);
-                          }}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedItem(project);
+                              setProjectForm(project);
+                              setProjectDialogOpen(true);
+                            }}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProject(project);
+                              fetchProjectContracts(project.id);
+                              setActiveTab("contracts");
+                            }} title={language === "ar" ? "العقود" : "Contracts"}>
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProject(project);
+                              fetchProjectContracts(project.id);
+                              setActiveTab("invoices");
+                            }} title={language === "ar" ? "الفواتير" : "Invoices"}>
+                              <Receipt className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
