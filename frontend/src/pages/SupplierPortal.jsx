@@ -376,14 +376,27 @@ const SupplierPortal = () => {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        {/* Language Toggle Button */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed top-4 right-4 rounded-full"
+          onClick={toggleLanguage}
+          data-testid="language-toggle"
+        >
+          <Globe className="w-5 h-5" />
+        </Button>
+        
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
               <Milk className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl">بوابة الموردين</CardTitle>
+            <CardTitle className="text-2xl">{txt("بوابة الموردين", "Supplier Portal")}</CardTitle>
             <CardDescription>
-              {showRecovery ? "استرجاع كلمة المرور" : "أدخل بيانات الدخول الخاصة بك"}
+              {showRecovery 
+                ? txt("استرجاع كلمة المرور", "Password Recovery") 
+                : txt("أدخل بيانات الدخول الخاصة بك", "Enter your login credentials")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -393,13 +406,13 @@ const SupplierPortal = () => {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <User className="w-4 h-4" />
-                    كود المورد
+                    {txt("كود المورد", "Supplier Code")}
                   </Label>
                   <Input
                     type="text"
                     value={supplierCode}
                     onChange={(e) => setSupplierCode(e.target.value)}
-                    placeholder="مثال: 1108"
+                    placeholder={txt("مثال: 1108", "e.g. 1108")}
                     className="text-center text-lg"
                     autoFocus
                   />
@@ -407,14 +420,14 @@ const SupplierPortal = () => {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Lock className="w-4 h-4" />
-                    كلمة المرور
+                    {txt("كلمة المرور", "Password")}
                   </Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="أدخل كلمة المرور"
+                      placeholder={txt("أدخل كلمة المرور", "Enter password")}
                       className="text-center text-lg pe-10"
                     />
                     <button
@@ -426,7 +439,7 @@ const SupplierPortal = () => {
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    كلمة المرور الافتراضية: <span className="font-bold">0000</span>
+                    {txt("كلمة المرور الافتراضية:", "Default password:")} <span className="font-bold">0000</span>
                   </p>
                 </div>
                 <Button type="submit" className="w-full gradient-primary text-white" disabled={loading}>
