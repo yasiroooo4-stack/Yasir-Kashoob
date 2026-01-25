@@ -878,25 +878,25 @@ const SupplierPortal = () => {
               />
               {feedForm.feed_type && feedForm.quantity && (
                 <p className="text-xs text-muted-foreground">
-                  {FEED_TYPES.find(f => f.id === feedForm.feed_type)?.price} ريال × {feedForm.quantity} كجم = {feedForm.amount_to_deduct} ريال
+                  {FEED_TYPES.find(f => f.id === feedForm.feed_type)?.price} {txt("ريال", "OMR")} × {feedForm.quantity} {txt("كجم", "kg")} = {feedForm.amount_to_deduct} {txt("ريال", "OMR")}
                 </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label>ملاحظات</Label>
+              <Label>{txt("ملاحظات", "Notes")}</Label>
               <Textarea
                 value={feedForm.notes}
                 onChange={(e) => setFeedForm({ ...feedForm, notes: e.target.value })}
-                placeholder="أي ملاحظات إضافية..."
+                placeholder={txt("أي ملاحظات إضافية...", "Any additional notes...")}
               />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setFeedDialogOpen(false)}>
-                إلغاء
+                {txt("إلغاء", "Cancel")}
               </Button>
               <Button type="submit" className="gradient-primary text-white" disabled={loading}>
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 me-2" />}
-                إرسال الطلب
+                {txt("إرسال الطلب", "Send Request")}
               </Button>
             </DialogFooter>
           </form>
@@ -907,11 +907,11 @@ const SupplierPortal = () => {
       <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>إرسال رسالة</DialogTitle>
+            <DialogTitle>{txt("إرسال رسالة", "Send Message")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSendMessage} className="space-y-4">
             <div className="space-y-2">
-              <Label>نوع الرسالة</Label>
+              <Label>{txt("نوع الرسالة", "Message Type")}</Label>
               <Select
                 value={messageForm.message_type}
                 onValueChange={(v) => setMessageForm({ ...messageForm, message_type: v })}
@@ -927,29 +927,29 @@ const SupplierPortal = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>الموضوع *</Label>
+              <Label>{txt("الموضوع *", "Subject *")}</Label>
               <Input
                 value={messageForm.subject}
                 onChange={(e) => setMessageForm({ ...messageForm, subject: e.target.value })}
-                placeholder="عنوان الرسالة"
+                placeholder={txt("عنوان الرسالة", "Message title")}
               />
             </div>
             <div className="space-y-2">
-              <Label>الرسالة *</Label>
+              <Label>{txt("الرسالة *", "Message *")}</Label>
               <Textarea
                 value={messageForm.message}
                 onChange={(e) => setMessageForm({ ...messageForm, message: e.target.value })}
-                placeholder="اكتب رسالتك هنا..."
+                placeholder={txt("اكتب رسالتك هنا...", "Write your message here...")}
                 rows={4}
               />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setMessageDialogOpen(false)}>
-                إلغاء
+                {txt("إلغاء", "Cancel")}
               </Button>
               <Button type="submit" className="gradient-primary text-white" disabled={loading}>
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 me-2" />}
-                إرسال
+                {txt("إرسال", "Send")}
               </Button>
             </DialogFooter>
           </form>
@@ -962,12 +962,12 @@ const SupplierPortal = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Key className="w-5 h-5" />
-              تغيير كلمة المرور
+              {txt("تغيير كلمة المرور", "Change Password")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="space-y-2">
-              <Label>كلمة المرور الحالية</Label>
+              <Label>{txt("كلمة المرور الحالية", "Current Password")}</Label>
               <Input
                 type="password"
                 value={currentPassword}
