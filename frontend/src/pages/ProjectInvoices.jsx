@@ -177,200 +177,135 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
   };
 
   const generatePDF = async (invoice) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Add company logo
-    try {
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.src = COMPANY_LOGO;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        setTimeout(resolve, 3000); // Timeout after 3 seconds
-      });
-      // Logo on right side
-      doc.addImage(img, "PNG", pageWidth - 55, 8, 45, 45);
-    } catch (e) {
-      console.log("Could not load logo:", e);
-    }
-
-    // Company Header - Left side
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Al Morooj Dairy Company SAOC", 15, 18);
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("Commercial Registration Number: 2017520 / 1249988", 15, 25);
-    doc.text("P.O. Box: 298 / 1385, Postal Code: 211", 15, 31);
-    doc.text("VAT Number: OM1100007713 / OM1100091687", 15, 37);
-    doc.text("Salalah, Sultanate of Oman", 15, 43);
-    
-    // Separator line
-    doc.setDrawColor(200, 180, 130); // Gold/beige color like logo
-    doc.setLineWidth(1);
-    doc.line(15, 52, pageWidth - 15, 52);
-    
-    // Invoice title
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(139, 119, 42); // Gold color
-    doc.text("INVOICE", pageWidth / 2, 65, { align: "center" });
-    doc.setTextColor(0, 0, 0); // Reset to black
-    
-    // Invoice details box
-    doc.setFillColor(245, 245, 240);
-    doc.rect(15, 72, pageWidth - 30, 35, "F");
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    
-    let y = 82;
-    const leftCol = 20;
-    const rightCol = pageWidth / 2 + 5;
-    
-    // Left column - Invoice info
-    doc.setFont("helvetica", "bold");
-    doc.text("Invoice Number:", leftCol, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(invoice.invoice_number || "-", leftCol + 35, y);
-    
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Date:", leftCol, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(new Date(invoice.created_at).toLocaleDateString(), leftCol + 35, y);
-    
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Status:", leftCol, y);
-    doc.setFont("helvetica", "normal");
-    const statusText = invoice.status === "paid" ? "PAID" : invoice.status === "approved_ready_to_pay" ? "APPROVED" : "PENDING";
-    doc.setTextColor(invoice.status === "paid" ? 0 : 139, invoice.status === "paid" ? 128 : 119, invoice.status === "paid" ? 0 : 42);
-    doc.text(statusText, leftCol + 35, y);
-    doc.setTextColor(0, 0, 0);
-    
-    // Right column - Project info
-    y = 82;
-    doc.setFont("helvetica", "bold");
-    doc.text("Project:", rightCol, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(invoice.project_name || "-", rightCol + 25, y);
-    
-    y += 7;
-    if (invoice.milestone_name) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Phase:", rightCol, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(invoice.milestone_name, rightCol + 25, y);
-      y += 7;
-    }
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("Type:", rightCol, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(invoice.invoice_type === "milestone" ? "Milestone" : "Partial Payment", rightCol + 25, y);
-    
-    // Description section
-    y = 115;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Description:", leftCol, y);
-    doc.setFont("helvetica", "normal");
-    y += 7;
-    const descLines = doc.splitTextToSize(invoice.description || "-", pageWidth - 40);
-    doc.text(descLines, leftCol, y);
-    y += descLines.length * 5 + 15;
-    
-    // Amount box with gold accent
-    doc.setFillColor(250, 248, 240);
-    doc.setDrawColor(200, 180, 130);
-    doc.setLineWidth(0.5);
-    doc.rect(15, y, pageWidth - 30, 25, "FD");
-    
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Total Amount:", leftCol, y + 10);
-    doc.setFontSize(16);
-    doc.setTextColor(139, 119, 42); // Gold color
-    doc.text(`${invoice.amount?.toFixed(3)} OMR`, pageWidth - 20, y + 10, { align: "right" });
-    doc.setTextColor(0, 0, 0);
-    
-    // Approval status section
-    y += 35;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Approval Status:", leftCol, y);
-    y += 8;
+    // Create HTML content with proper Arabic support
+    const statusText = invoice.status === "paid" ? "مدفوعة" : invoice.status === "approved_ready_to_pay" ? "جاهزة للصرف" : "معلقة";
+    const statusColor = invoice.status === "paid" ? "#059669" : invoice.status === "approved_ready_to_pay" ? "#8B772A" : "#D97706";
     
     const approvals = [
-      { name: "Project Manager", approved: invoice.project_manager_approval, by: invoice.project_manager_name, date: invoice.project_manager_date },
-      { name: "Finance", approved: invoice.finance_approval, by: invoice.finance_name, date: invoice.finance_date },
-      { name: "General Manager", approved: invoice.gm_approval, by: invoice.gm_name, date: invoice.gm_date }
+      { name: "مسؤول المشاريع", nameEn: "Project Manager", approved: invoice.project_manager_approval, by: invoice.project_manager_name, date: invoice.project_manager_date },
+      { name: "المالية", nameEn: "Finance", approved: invoice.finance_approval, by: invoice.finance_name, date: invoice.finance_date },
+      { name: "المدير العام", nameEn: "General Manager", approved: invoice.gm_approval, by: invoice.gm_name, date: invoice.gm_date }
     ];
     
-    approvals.forEach(app => {
-      doc.setFont("helvetica", "normal");
-      const checkMark = app.approved ? "✓" : "○";
-      doc.setTextColor(app.approved ? 0 : 150, app.approved ? 128 : 150, app.approved ? 0 : 150);
-      doc.text(checkMark, leftCol, y);
-      doc.setTextColor(0, 0, 0);
-      doc.text(` ${app.name}: `, leftCol + 5, y);
-      
-      if (app.approved) {
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(0, 128, 0);
-        doc.text("Approved", leftCol + 45, y);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(100, 100, 100);
-        doc.text(` by ${app.by || "-"} (${app.date ? new Date(app.date).toLocaleDateString() : "-"})`, leftCol + 68, y);
-      } else {
-        doc.setTextColor(150, 150, 150);
-        doc.text("Pending", leftCol + 45, y);
-      }
-      doc.setTextColor(0, 0, 0);
-      y += 7;
-    });
+    const htmlContent = `
+      <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; padding: 20px; max-width: 210mm; margin: 0 auto; background: white;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+          <div style="flex: 1; text-align: right;">
+            <h1 style="margin: 0; font-size: 18px; color: #333;">شركة المروج للألبان ش.م.ع.م</h1>
+            <p style="margin: 3px 0; font-size: 11px; color: #555;">Al Morooj Dairy Company SAOC</p>
+            <p style="margin: 3px 0; font-size: 10px; color: #666;">رقم السجل التجاري: 2017520 / 1249988</p>
+            <p style="margin: 3px 0; font-size: 10px; color: #666;">صندوق بريد: 298 / 1385، الرمز البريدي: 211</p>
+            <p style="margin: 3px 0; font-size: 10px; color: #666;">الرقم الضريبي: OM1100007713 / OM1100091687</p>
+            <p style="margin: 3px 0; font-size: 10px; color: #666;">صلالة، سلطنة عمان</p>
+          </div>
+          <div style="width: 80px; height: 80px;">
+            <img src="${COMPANY_LOGO}" style="width: 80px; height: 80px; object-fit: contain;" crossorigin="anonymous" />
+          </div>
+        </div>
+        
+        <!-- Separator -->
+        <div style="border-bottom: 2px solid #C8B482; margin: 15px 0;"></div>
+        
+        <!-- Invoice Title -->
+        <h2 style="text-align: center; color: #8B772A; font-size: 24px; margin: 15px 0;">فاتورة / INVOICE</h2>
+        
+        <!-- Invoice Details Box -->
+        <div style="background: #F5F5F0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 200px;">
+              <p style="margin: 5px 0;"><strong>رقم الفاتورة:</strong> ${invoice.invoice_number || "-"}</p>
+              <p style="margin: 5px 0;"><strong>التاريخ:</strong> ${new Date(invoice.created_at).toLocaleDateString("ar-SA")}</p>
+              <p style="margin: 5px 0;"><strong>الحالة:</strong> <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></p>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <p style="margin: 5px 0;"><strong>المشروع:</strong> ${invoice.project_name || "-"}</p>
+              ${invoice.milestone_name ? `<p style="margin: 5px 0;"><strong>المرحلة:</strong> ${invoice.milestone_name}</p>` : ""}
+              <p style="margin: 5px 0;"><strong>النوع:</strong> ${invoice.invoice_type === "milestone" ? "مرحلة" : "دفعة جزئية"}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div style="margin-bottom: 15px;">
+          <p style="font-weight: bold; margin-bottom: 5px;">الوصف:</p>
+          <p style="background: #FAFAFA; padding: 10px; border-radius: 5px; margin: 0;">${invoice.description || "-"}</p>
+        </div>
+        
+        <!-- Amount Box -->
+        <div style="background: #FAF8F0; border: 1px solid #C8B482; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: bold; font-size: 14px;">إجمالي المبلغ:</span>
+          <span style="font-size: 20px; font-weight: bold; color: #8B772A;">${invoice.amount?.toFixed(3)} ر.ع</span>
+        </div>
+        
+        <!-- Approval Status -->
+        <div style="margin-bottom: 15px;">
+          <p style="font-weight: bold; margin-bottom: 10px;">حالة الموافقات:</p>
+          <div style="background: #F9FAFB; padding: 15px; border-radius: 8px;">
+            ${approvals.map((app, idx) => `
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: ${idx < 2 ? "10px" : "0"};">
+                <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${app.approved ? "#D1FAE5" : "#F3F4F6"}; color: ${app.approved ? "#059669" : "#9CA3AF"}; font-weight: bold;">
+                  ${app.approved ? "✓" : (idx + 1)}
+                </div>
+                <div style="flex: 1;">
+                  <span style="font-weight: 600;">${app.name} (${app.nameEn})</span>
+                  ${app.approved 
+                    ? `<span style="color: #059669; margin-right: 10px;">- تمت الموافقة بواسطة ${app.by || "-"} (${app.date ? new Date(app.date).toLocaleDateString("ar-SA") : "-"})</span>` 
+                    : `<span style="color: #9CA3AF; margin-right: 10px;">- في الانتظار</span>`
+                  }
+                </div>
+              </div>
+            `).join("")}
+            
+            ${invoice.is_paid ? `
+              <div style="border-top: 1px solid #E5E7EB; margin-top: 10px; padding-top: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #D1FAE5; color: #059669; font-weight: bold;">✓</div>
+                  <div>
+                    <span style="font-weight: 600; color: #059669;">تم الصرف</span>
+                    <span style="color: #6B7280; margin-right: 10px;">- بواسطة ${invoice.paid_by || "-"} (${invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString("ar-SA") : "-"})</span>
+                    ${invoice.payment_reference ? `<span style="color: #6B7280;">- المرجع: ${invoice.payment_reference}</span>` : ""}
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="border-top: 1px solid #C8B482; padding-top: 15px; margin-top: 20px; text-align: center;">
+          <p style="margin: 3px 0; font-size: 9px; color: #6B7280;">شركة المروج للألبان ش.م.ع.م | صلالة، سلطنة عمان</p>
+          <p style="margin: 3px 0; font-size: 9px; color: #6B7280;">الرقم الضريبي: OM1100007713 / OM1100091687 | السجل التجاري: 2017520 / 1249988</p>
+          <p style="margin: 3px 0; font-size: 8px; color: #9CA3AF;">تم الإنشاء في ${new Date().toLocaleString("ar-SA")}</p>
+        </div>
+      </div>
+    `;
     
-    // Payment info section
-    if (invoice.is_paid) {
-      y += 8;
-      doc.setFillColor(240, 255, 240); // Light green background
-      doc.rect(15, y - 3, pageWidth - 30, 25, "F");
-      
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 100, 0);
-      doc.text("PAYMENT COMPLETED", leftCol, y + 5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Paid on: ${invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString() : "-"}`, leftCol, y + 12);
-      doc.text(`Paid by: ${invoice.paid_by || "-"}`, rightCol, y + 12);
-      if (invoice.payment_reference) {
-        doc.text(`Reference: ${invoice.payment_reference}`, leftCol, y + 19);
-      }
+    // Create a temporary container
+    const container = document.createElement("div");
+    container.innerHTML = htmlContent;
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    document.body.appendChild(container);
+    
+    // Generate PDF
+    const options = {
+      margin: 10,
+      filename: `Invoice_${invoice.invoice_number || invoice.id}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    };
+    
+    try {
+      await html2pdf().set(options).from(container.firstChild).save();
+      toast.success(language === "ar" ? "تم تحميل الفاتورة" : "Invoice downloaded");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error(language === "ar" ? "حدث خطأ أثناء إنشاء الفاتورة" : "Error generating invoice");
+    } finally {
+      document.body.removeChild(container);
     }
-    
-    // Footer with company info
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    // Footer separator
-    doc.setDrawColor(200, 180, 130);
-    doc.setLineWidth(0.5);
-    doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
-    
-    // Footer text
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Al Morooj Dairy Company SAOC | Salalah, Sultanate of Oman", pageWidth / 2, pageHeight - 18, { align: "center" });
-    doc.text("VAT: OM1100007713 / OM1100091687 | CR: 2017520 / 1249988", pageWidth / 2, pageHeight - 13, { align: "center" });
-    doc.setFontSize(7);
-    doc.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 7, { align: "center" });
-    
-    // Save
-    doc.save(`Invoice_${invoice.invoice_number || invoice.id}.pdf`);
-    toast.success(language === "ar" ? "تم تحميل الفاتورة" : "Invoice downloaded");
   };
 
   if (!project) {
