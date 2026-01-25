@@ -1720,15 +1720,16 @@ async def get_supplier_milk_receptions(
     query = {"supplier_id": supplier["id"]}
     
     if month and year:
-        # Filter by month and year
-        start_date = f"{year}-{month:02d}-01"
+        # Filter by month and year using reception_date
+        from datetime import datetime
+        start_date = datetime(year, month, 1)
         if month == 12:
-            end_date = f"{year + 1}-01-01"
+            end_date = datetime(year + 1, 1, 1)
         else:
-            end_date = f"{year}-{month + 1:02d}-01"
-        query["date"] = {"$gte": start_date, "$lt": end_date}
+            end_date = datetime(year, month + 1, 1)
+        query["reception_date"] = {"$gte": start_date.isoformat(), "$lt": end_date.isoformat()}
     
-    receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("date", -1).to_list(100)
+    receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("reception_date", -1).to_list(100)
     
     # Add milk_type and center_name to each reception
     # Milk type translations
