@@ -2049,6 +2049,21 @@ async def get_milk_reception(reception_id: str, current_user: dict = Depends(get
     return reception
 
 
+@api_router.get("/milk-receptions/supplier/{supplier_id}")
+async def get_supplier_milk_receptions(
+    supplier_id: str,
+    limit: int = 30,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب توريدات الحليب لمورد معين"""
+    receptions = await db.milk_receptions.find(
+        {"supplier_id": supplier_id},
+        {"_id": 0}
+    ).sort("reception_date", -1).limit(limit).to_list(limit)
+    
+    return receptions
+
+
 @api_router.put("/milk-receptions/{reception_id}")
 async def update_milk_reception(
     reception_id: str, 
