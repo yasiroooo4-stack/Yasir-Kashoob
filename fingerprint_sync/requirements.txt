@@ -1,0 +1,5 @@
+# متطلبات برنامج مزامنة البصمة
+# Fingerprint Sync Requirements
+
+requests>=2.28.0
+pyzk>=0.9
