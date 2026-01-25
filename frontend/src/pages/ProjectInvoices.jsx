@@ -180,74 +180,98 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Add logo
+    // Add company logo
     try {
       const img = new Image();
       img.crossOrigin = "Anonymous";
       img.src = COMPANY_LOGO;
-      await new Promise((resolve) => {
+      await new Promise((resolve, reject) => {
         img.onload = resolve;
-        img.onerror = resolve;
+        img.onerror = reject;
+        setTimeout(resolve, 3000); // Timeout after 3 seconds
       });
-      doc.addImage(img, "PNG", pageWidth - 50, 10, 40, 40);
+      // Logo on right side
+      doc.addImage(img, "PNG", pageWidth - 55, 8, 45, 45);
     } catch (e) {
-      console.log("Could not load logo");
+      console.log("Could not load logo:", e);
     }
 
-    // Header
-    doc.setFontSize(20);
+    // Company Header - Left side
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Al Morooj Dairy", 20, 25);
-    doc.setFontSize(10);
+    doc.text("Al Morooj Dairy Company SAOC", 15, 18);
+    
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Salalah, Oman", 20, 32);
+    doc.text("Commercial Registration Number: 2017520 / 1249988", 15, 25);
+    doc.text("P.O. Box: 298 / 1385, Postal Code: 211", 15, 31);
+    doc.text("VAT Number: OM1100007713 / OM1100091687", 15, 37);
+    doc.text("Salalah, Sultanate of Oman", 15, 43);
+    
+    // Separator line
+    doc.setDrawColor(200, 180, 130); // Gold/beige color like logo
+    doc.setLineWidth(1);
+    doc.line(15, 52, pageWidth - 15, 52);
     
     // Invoice title
-    doc.setFontSize(24);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("INVOICE", pageWidth / 2, 60, { align: "center" });
+    doc.setTextColor(139, 119, 42); // Gold color
+    doc.text("INVOICE", pageWidth / 2, 65, { align: "center" });
+    doc.setTextColor(0, 0, 0); // Reset to black
     
-    // Invoice details
-    doc.setFontSize(11);
+    // Invoice details box
+    doc.setFillColor(245, 245, 240);
+    doc.rect(15, 72, pageWidth - 30, 35, "F");
+    
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     
-    let y = 80;
+    let y = 82;
     const leftCol = 20;
-    const rightCol = pageWidth / 2 + 10;
+    const rightCol = pageWidth / 2 + 5;
     
-    // Left column
+    // Left column - Invoice info
     doc.setFont("helvetica", "bold");
     doc.text("Invoice Number:", leftCol, y);
     doc.setFont("helvetica", "normal");
-    doc.text(invoice.invoice_number || "-", leftCol + 40, y);
+    doc.text(invoice.invoice_number || "-", leftCol + 35, y);
     
-    y += 8;
+    y += 7;
     doc.setFont("helvetica", "bold");
     doc.text("Date:", leftCol, y);
     doc.setFont("helvetica", "normal");
-    doc.text(new Date(invoice.created_at).toLocaleDateString(), leftCol + 40, y);
+    doc.text(new Date(invoice.created_at).toLocaleDateString(), leftCol + 35, y);
     
-    y += 8;
+    y += 7;
     doc.setFont("helvetica", "bold");
     doc.text("Status:", leftCol, y);
     doc.setFont("helvetica", "normal");
-    doc.text(invoice.status === "paid" ? "PAID" : "UNPAID", leftCol + 40, y);
+    const statusText = invoice.status === "paid" ? "PAID" : invoice.status === "approved_ready_to_pay" ? "APPROVED" : "PENDING";
+    doc.setTextColor(invoice.status === "paid" ? 0 : 139, invoice.status === "paid" ? 128 : 119, invoice.status === "paid" ? 0 : 42);
+    doc.text(statusText, leftCol + 35, y);
+    doc.setTextColor(0, 0, 0);
     
-    // Right column
-    y = 80;
+    // Right column - Project info
+    y = 82;
     doc.setFont("helvetica", "bold");
     doc.text("Project:", rightCol, y);
     doc.setFont("helvetica", "normal");
     doc.text(invoice.project_name || "-", rightCol + 25, y);
     
-    y += 8;
+    y += 7;
     if (invoice.milestone_name) {
       doc.setFont("helvetica", "bold");
       doc.text("Phase:", rightCol, y);
       doc.setFont("helvetica", "normal");
       doc.text(invoice.milestone_name, rightCol + 25, y);
-      y += 8;
+      y += 7;
     }
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("Type:", rightCol, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(invoice.invoice_type === "milestone" ? "Milestone" : "Partial Payment", rightCol + 25, y);
     
     // Separator line
     doc.setDrawColor(200, 200, 200);
