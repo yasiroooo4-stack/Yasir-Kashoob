@@ -163,6 +163,24 @@ const LeaveRequestButton = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      
+      // Upload attachment if selected
+      let attachmentUrl = leaveForm.attachment_url;
+      if (attachmentFile) {
+        setUploadingAttachment(true);
+        const formData = new FormData();
+        formData.append("file", attachmentFile);
+        
+        const uploadRes = await axios.post(`${API}/hr/upload-file`, formData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        attachmentUrl = uploadRes.data.file_url;
+        setUploadingAttachment(false);
+      }
+      
       const data = {
         employee_id: leaveForm.employee_id,
         employee_name: leaveForm.employee_name,
@@ -175,6 +193,7 @@ const LeaveRequestButton = () => {
         substitute_employee_name: leaveForm.substitute_employee_id === "none" ? null : leaveForm.substitute_employee_name,
         delegate_permissions_to_id: leaveForm.delegate_permissions_to_id === "none" ? null : leaveForm.delegate_permissions_to_id,
         delegate_permissions_to_name: leaveForm.delegate_permissions_to_id === "none" ? null : leaveForm.delegate_permissions_to_name,
+        attachment_url: attachmentUrl,
       };
 
       await axios.post(`${API}/hr/leave-requests`, data, {
@@ -185,6 +204,7 @@ const LeaveRequestButton = () => {
       setDialogOpen(false);
       resetForm();
     } catch (error) {
+      setUploadingAttachment(false);
       // Handle error properly - ensure we get a string message
       let errorMessage = language === "ar" ? "حدث خطأ" : "An error occurred";
       if (error.response?.data?.detail) {
