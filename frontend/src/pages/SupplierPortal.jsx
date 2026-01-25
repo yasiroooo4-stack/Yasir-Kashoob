@@ -571,7 +571,7 @@ const SupplierPortal = () => {
                 <span className="hidden sm:inline">{txt("تغيير كلمة المرور", "Change Password")}</span>
               </Button>
               <Button variant="outline" onClick={handleLogout}>
-                خروج
+                {txt("خروج", "Logout")}
               </Button>
             </div>
           </div>
