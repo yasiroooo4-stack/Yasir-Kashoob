@@ -3564,12 +3564,60 @@ const HR = () => {
                 onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
               />
             </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "إرفاق مستند" : "Attach Document"}</Label>
+              <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors">
+                <input
+                  type="file"
+                  id="leave-attachment-upload"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setLeaveAttachmentFile(file);
+                    }
+                  }}
+                />
+                <label 
+                  htmlFor="leave-attachment-upload" 
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  {leaveAttachmentFile ? (
+                    <>
+                      <FileText className="w-6 h-6 text-green-600" />
+                      <span className="text-sm font-medium text-green-600">{leaveAttachmentFile.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {(leaveAttachmentFile.size / 1024).toFixed(1)} KB
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {language === "ar" ? "اضغط لاختيار ملف (اختياري)" : "Click to select file (optional)"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        PDF, DOC, JPG, PNG
+                      </span>
+                    </>
+                  )}
+                </label>
+              </div>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setLeaveDialogOpen(false)}>
                 {t("cancel")}
               </Button>
-              <Button type="submit" className="gradient-primary text-white">
-                {t("save")}
+              <Button type="submit" className="gradient-primary text-white" disabled={uploadingLeaveAttachment}>
+                {uploadingLeaveAttachment ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent me-2"></div>
+                    {language === "ar" ? "جاري الرفع..." : "Uploading..."}
+                  </>
+                ) : (
+                  t("save")
+                )}
               </Button>
             </DialogFooter>
           </form>
