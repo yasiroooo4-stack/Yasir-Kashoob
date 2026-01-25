@@ -150,14 +150,32 @@ const ProjectMilestones = ({ project, onUpdate }) => {
 
   const handleAddAttachment = async () => {
     if (!selectedMilestone) return;
+    if (!selectedFile && !attachmentForm.file_url) {
+      toast.error(txt("الرجاء اختيار ملف", "Please select a file"));
+      return;
+    }
+    
     try {
+      let fileUrl = attachmentForm.file_url;
+      
+      // Upload file if selected
+      if (selectedFile) {
+        fileUrl = await handleFileUpload(selectedFile);
+        if (!fileUrl) return;
+      }
+      
       const token = localStorage.getItem("token");
-      await axios.post(`${API}/projects/milestones/${selectedMilestone.id}/attachments`, attachmentForm, {
+      await axios.post(`${API}/projects/milestones/${selectedMilestone.id}/attachments`, {
+        ...attachmentForm,
+        file_url: fileUrl,
+        file_name: attachmentForm.file_name || selectedFile?.name || "مستند"
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success(txt("تم إضافة المرفق بنجاح", "Attachment added successfully"));
       setAttachmentDialogOpen(false);
       setAttachmentForm({ file_name: "", file_type: "invoice", file_url: "", description: "" });
+      setSelectedFile(null);
       fetchMilestones();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Error");
