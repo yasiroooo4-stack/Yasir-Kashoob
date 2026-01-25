@@ -1528,6 +1528,81 @@ class ProjectMilestone(ProjectMilestoneBase):
     notes: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ==================== PROJECT CONTRACT & INVOICE MODELS ====================
+
+class ProjectContractBase(BaseModel):
+    """نموذج عقد المشروع"""
+    model_config = ConfigDict(extra="ignore")
+    project_id: str
+    project_name: str
+    contractor_name: str  # اسم المقاول/المورد
+    contractor_phone: Optional[str] = None
+    contractor_email: Optional[str] = None
+    contract_value: float  # قيمة العقد
+    currency: str = "OMR"
+    start_date: str  # تاريخ البداية
+    end_date: str  # تاريخ النهاية
+    payment_terms: str  # شروط الدفع
+    payment_schedule: Optional[str] = None  # جدول الدفعات
+    scope_of_work: Optional[str] = None  # نطاق العمل
+    terms_and_conditions: Optional[str] = None  # الشروط والأحكام
+    attachments: List[str] = []  # مرفقات
+
+class ProjectContractCreate(ProjectContractBase):
+    pass
+
+class ProjectContract(ProjectContractBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    contract_number: Optional[str] = None  # رقم العقد
+    status: str = "draft"  # draft, active, completed, cancelled
+    total_paid: float = 0.0  # إجمالي المدفوع
+    remaining_amount: float = 0.0  # المبلغ المتبقي
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ProjectInvoiceBase(BaseModel):
+    """نموذج فاتورة المشروع"""
+    model_config = ConfigDict(extra="ignore")
+    project_id: str
+    project_name: str
+    contract_id: Optional[str] = None  # معرف العقد
+    invoice_type: str = "milestone"  # milestone (مرحلة) أو partial (دفعة جزئية)
+    milestone_name: Optional[str] = None  # اسم المرحلة
+    description: str  # وصف الفاتورة
+    amount: float  # المبلغ
+    currency: str = "OMR"
+    due_date: Optional[str] = None  # تاريخ الاستحقاق
+    notes: Optional[str] = None
+
+class ProjectInvoiceCreate(ProjectInvoiceBase):
+    pass
+
+class ProjectInvoice(ProjectInvoiceBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    invoice_number: Optional[str] = None  # رقم الفاتورة
+    status: str = "pending_project_manager"  # حالة الفاتورة
+    # مراحل الموافقة
+    project_manager_approval: bool = False
+    project_manager_name: Optional[str] = None
+    project_manager_date: Optional[str] = None
+    project_manager_notes: Optional[str] = None
+    finance_approval: bool = False
+    finance_name: Optional[str] = None
+    finance_date: Optional[str] = None
+    finance_notes: Optional[str] = None
+    gm_approval: bool = False  # موافقة المدير العام
+    gm_name: Optional[str] = None
+    gm_date: Optional[str] = None
+    gm_notes: Optional[str] = None
+    # معلومات الصرف
+    is_paid: bool = False
+    paid_date: Optional[str] = None
+    paid_by: Optional[str] = None
+    payment_reference: Optional[str] = None
+    # تتبع
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # ==================== OPERATIONS MODULE MODELS ====================
 
 class DailyOperationBase(BaseModel):
