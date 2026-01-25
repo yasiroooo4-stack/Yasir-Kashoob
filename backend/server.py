@@ -10717,6 +10717,242 @@ async def get_projects_dashboard(current_user: dict = Depends(get_current_user))
         "total_actual_cost": total_actual_cost
     }
 
+# ==================== PROJECT CONTRACTS ====================
+
+@api_router.post("/projects/contracts")
+async def create_project_contract(contract_data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء عقد مشروع جديد"""
+    from models.all_models import ProjectContract
+    
+    # Generate contract number
+    count = await db.project_contracts.count_documents({})
+    contract_number = f"CNT-{datetime.now().year}-{count + 1:04d}"
+    
+    contract = ProjectContract(
+        **contract_data,
+        contract_number=contract_number,
+        remaining_amount=contract_data.get("contract_value", 0),
+        created_by=current_user["id"]
+    )
+    
+    await db.project_contracts.insert_one(contract.model_dump())
+    
+    return {**contract.model_dump(), "_id": None}
+
+@api_router.get("/projects/{project_id}/contracts")
+async def get_project_contracts(project_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب عقود المشروع"""
+    contracts = await db.project_contracts.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return contracts
+
+@api_router.get("/projects/contracts/{contract_id}")
+async def get_contract(contract_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل عقد"""
+    contract = await db.project_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    return contract
+
+@api_router.put("/projects/contracts/{contract_id}")
+async def update_contract(contract_id: str, contract_data: dict, current_user: dict = Depends(get_current_user)):
+    """تحديث عقد"""
+    await db.project_contracts.update_one(
+        {"id": contract_id},
+        {"$set": contract_data}
+    )
+    contract = await db.project_contracts.find_one({"id": contract_id}, {"_id": 0})
+    return contract
+
+# ==================== PROJECT INVOICES ====================
+
+@api_router.post("/projects/invoices")
+async def create_project_invoice(invoice_data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء فاتورة مشروع جديدة"""
+    from models.all_models import ProjectInvoice
+    
+    # Generate invoice number
+    count = await db.project_invoices.count_documents({})
+    invoice_number = f"INV-{datetime.now().year}-{count + 1:04d}"
+    
+    invoice = ProjectInvoice(
+        **invoice_data,
+        invoice_number=invoice_number,
+        status="pending_project_manager",
+        created_by=current_user["id"]
+    )
+    
+    await db.project_invoices.insert_one(invoice.model_dump())
+    
+    return {**invoice.model_dump(), "_id": None}
+
+@api_router.get("/projects/{project_id}/invoices")
+async def get_project_invoices(project_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب فواتير المشروع"""
+    invoices = await db.project_invoices.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return invoices
+
+@api_router.get("/projects/invoices/pending")
+async def get_pending_invoices(
+    approval_stage: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب الفواتير المعلقة حسب مرحلة الموافقة"""
+    query = {}
+    if approval_stage:
+        query["status"] = approval_stage
+    
+    invoices = await db.project_invoices.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return invoices
+
+@api_router.get("/projects/invoices/{invoice_id}")
+async def get_invoice(invoice_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل فاتورة"""
+    invoice = await db.project_invoices.find_one({"id": invoice_id}, {"_id": 0})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="الفاتورة غير موجودة")
+    return invoice
+
+@api_router.put("/projects/invoices/{invoice_id}/approve/project-manager")
+async def approve_invoice_project_manager(
+    invoice_id: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """موافقة مسؤول المشاريع على الفاتورة"""
+    invoice = await db.project_invoices.find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="الفاتورة غير موجودة")
+    
+    await db.project_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "project_manager_approval": True,
+            "project_manager_name": current_user["full_name"],
+            "project_manager_date": datetime.now(timezone.utc).isoformat(),
+            "project_manager_notes": notes,
+            "status": "pending_finance"
+        }}
+    )
+    
+    return {"message": "تمت موافقة مسؤول المشاريع بنجاح"}
+
+@api_router.put("/projects/invoices/{invoice_id}/approve/finance")
+async def approve_invoice_finance(
+    invoice_id: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """موافقة المالية على الفاتورة"""
+    invoice = await db.project_invoices.find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="الفاتورة غير موجودة")
+    
+    if not invoice.get("project_manager_approval"):
+        raise HTTPException(status_code=400, detail="يجب موافقة مسؤول المشاريع أولاً")
+    
+    await db.project_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "finance_approval": True,
+            "finance_name": current_user["full_name"],
+            "finance_date": datetime.now(timezone.utc).isoformat(),
+            "finance_notes": notes,
+            "status": "pending_gm"
+        }}
+    )
+    
+    return {"message": "تمت موافقة المالية بنجاح"}
+
+@api_router.put("/projects/invoices/{invoice_id}/approve/gm")
+async def approve_invoice_gm(
+    invoice_id: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """موافقة المدير العام على الفاتورة"""
+    invoice = await db.project_invoices.find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="الفاتورة غير موجودة")
+    
+    if not invoice.get("finance_approval"):
+        raise HTTPException(status_code=400, detail="يجب موافقة المالية أولاً")
+    
+    await db.project_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "gm_approval": True,
+            "gm_name": current_user["full_name"],
+            "gm_date": datetime.now(timezone.utc).isoformat(),
+            "gm_notes": notes,
+            "status": "approved_ready_to_pay"
+        }}
+    )
+    
+    return {"message": "تمت موافقة المدير العام - الفاتورة جاهزة للصرف"}
+
+@api_router.put("/projects/invoices/{invoice_id}/reject")
+async def reject_invoice(
+    invoice_id: str,
+    reason: str,
+    rejected_by: str = "project_manager",  # project_manager, finance, gm
+    current_user: dict = Depends(get_current_user)
+):
+    """رفض الفاتورة"""
+    await db.project_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "status": "rejected",
+            f"{rejected_by}_notes": f"مرفوض: {reason}"
+        }}
+    )
+    
+    return {"message": "تم رفض الفاتورة"}
+
+@api_router.put("/projects/invoices/{invoice_id}/pay")
+async def pay_invoice(
+    invoice_id: str,
+    payment_reference: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """صرف الفاتورة"""
+    invoice = await db.project_invoices.find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="الفاتورة غير موجودة")
+    
+    if invoice.get("status") != "approved_ready_to_pay":
+        raise HTTPException(status_code=400, detail="الفاتورة غير جاهزة للصرف - يجب الحصول على جميع الموافقات")
+    
+    await db.project_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "is_paid": True,
+            "paid_date": datetime.now(timezone.utc).isoformat(),
+            "paid_by": current_user["full_name"],
+            "payment_reference": payment_reference,
+            "status": "paid"
+        }}
+    )
+    
+    # Update contract remaining amount if linked to contract
+    if invoice.get("contract_id"):
+        contract = await db.project_contracts.find_one({"id": invoice["contract_id"]})
+        if contract:
+            new_total_paid = contract.get("total_paid", 0) + invoice.get("amount", 0)
+            new_remaining = contract.get("contract_value", 0) - new_total_paid
+            await db.project_contracts.update_one(
+                {"id": invoice["contract_id"]},
+                {"$set": {
+                    "total_paid": new_total_paid,
+                    "remaining_amount": new_remaining
+                }}
+            )
+    
+    return {"message": "تم صرف الفاتورة بنجاح"}
+
 # ==================== OPERATIONS MODULE ROUTES ====================
 # REFACTORED: Operations routes moved to routes/operations_routes.py
 # ================================================================
