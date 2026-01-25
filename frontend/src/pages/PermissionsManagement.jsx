@@ -283,6 +283,23 @@ const PermissionsManagement = () => {
       warehouse_consumption_record: t("تسجيل استهلاك", "Record Consumption"),
       warehouse_reports: t("تقارير المخازن", "Warehouse Reports"),
       warehouse_export: t("تصدير بيانات المخازن", "Export Warehouse Data"),
+      // صرف المواد من المخازن
+      warehouse_issue_cleaning: t("صرف مواد التنظيف", "Issue Cleaning Materials"),
+      warehouse_issue_ppe: t("صرف معدات الوقاية", "Issue PPE"),
+      warehouse_issue_equipment: t("صرف المعدات", "Issue Equipment"),
+      warehouse_issue_lab: t("صرف مواد المختبر", "Issue Lab Materials"),
+      warehouse_issue_maintenance: t("صرف مواد الصيانة", "Issue Maintenance"),
+      warehouse_issue_feed: t("صرف الأعلاف", "Issue Feed"),
+      warehouse_issue_supplies: t("صرف اللوازم", "Issue Supplies"),
+      warehouse_issue_all: t("صرف جميع المواد", "Issue All Materials"),
+      warehouse_add_solution: t("إضافة محلول", "Add Solution"),
+      warehouse_edit_solution: t("تعديل محلول", "Edit Solution"),
+      warehouse_record_consumption: t("تسجيل استهلاك", "Record Consumption"),
+      // جدولة الموظفين والسائقين
+      employee_scheduling: t("جدولة الموظفين", "Employee Scheduling"),
+      driver_scheduling: t("جدولة السائقين", "Driver Scheduling"),
+      employees_edit: t("تعديل جدول الموظفين", "Edit Employee Table"),
+      drivers_edit: t("تعديل جدول السائقين", "Edit Driver Table"),
     };
     return labels[permission] || permission;
   };
