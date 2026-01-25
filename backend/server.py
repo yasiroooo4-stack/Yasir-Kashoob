@@ -801,6 +801,135 @@ async def sync_fingerprint_attendance(current_user: dict = Depends(get_current_u
         "errors": errors if errors else None
     }
 
+@api_router.get("/fingerprint/sync-logs")
+async def get_fingerprint_sync_logs(current_user: dict = Depends(get_current_user)):
+    """Get fingerprint sync logs"""
+    logs = await db.fingerprint_sync_logs.find(
+        {},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(50).to_list(50)
+    
+    return logs
+
+@api_router.get("/fingerprint/sync-stats")
+async def get_fingerprint_sync_stats(current_user: dict = Depends(get_current_user)):
+    """Get fingerprint sync statistics"""
+    # Count devices
+    total_devices = await db.zkteco_devices.count_documents({})
+    active_devices = await db.zkteco_devices.count_documents({"is_active": True})
+    
+    # Get last sync time
+    last_log = await db.fingerprint_sync_logs.find_one(
+        {"success": True},
+        {"_id": 0},
+        sort=[("timestamp", -1)]
+    )
+    last_sync = last_log.get("timestamp") if last_log else None
+    
+    # Count total records synced (approximate from logs)
+    pipeline = [
+        {"$group": {
+            "_id": None,
+            "total_imported": {"$sum": "$imported"},
+            "total_updated": {"$sum": "$updated"}
+        }}
+    ]
+    stats_result = await db.fingerprint_sync_logs.aggregate(pipeline).to_list(1)
+    
+    total_records = 0
+    if stats_result:
+        total_records = stats_result[0].get("total_imported", 0) + stats_result[0].get("total_updated", 0)
+    
+    return {
+        "total_devices": total_devices,
+        "active_devices": active_devices,
+        "last_sync": last_sync,
+        "total_records_synced": total_records
+    }
+
+@api_router.post("/fingerprint/log-sync")
+async def log_fingerprint_sync(
+    log_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Log a sync operation from the desktop app"""
+    log_entry = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "user_id": current_user["id"],
+        "user_name": current_user["full_name"],
+        "device_ip": log_data.get("device_ip"),
+        "device_name": log_data.get("device_name"),
+        "imported": log_data.get("imported", 0),
+        "updated": log_data.get("updated", 0),
+        "errors": log_data.get("errors", []),
+        "success": log_data.get("success", True)
+    }
+    
+    await db.fingerprint_sync_logs.insert_one(log_entry)
+    
+    return {"message": "تم تسجيل المزامنة", "log_id": log_entry["id"]}
+
+@api_router.get("/fingerprint/download-program")
+async def download_fingerprint_program():
+    """Download the fingerprint sync program"""
+    import zipfile
+    from io import BytesIO
+    
+    # Create a zip file containing the sync program
+    zip_buffer = BytesIO()
+    
+    program_files = [
+        "/app/fingerprint_sync/sync_manager_gui.py",
+        "/app/fingerprint_sync/network_sync.py",
+        "/app/fingerprint_sync/device_connector.py",
+        "/app/fingerprint_sync/README.md",
+        "/app/fingerprint_sync/requirements.txt"
+    ]
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for file_path in program_files:
+            try:
+                import os
+                if os.path.exists(file_path):
+                    arcname = os.path.basename(file_path)
+                    zip_file.write(file_path, arcname)
+            except Exception as e:
+                print(f"Error adding {file_path}: {e}")
+        
+        # Add a config template
+        config_template = """# إعدادات مزامنة البصمة
+# Fingerprint Sync Configuration
+
+[API]
+url = https://farmmanage-5.preview.emergentagent.com
+username = 
+password = 
+
+[Devices]
+# أضف أجهزة البصمة هنا
+# Add fingerprint devices here
+# device1_ip = 192.168.1.100
+# device1_port = 4370
+# device1_name = المبنى الرئيسي
+
+[Sync]
+auto_sync = false
+interval_minutes = 30
+"""
+        zip_file.writestr("config_template.ini", config_template)
+    
+    zip_buffer.seek(0)
+    
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": "attachment; filename=fingerprint_sync_program.zip"
+        }
+    )
+
 # Password Reset Endpoints
 @api_router.post("/auth/forgot-password")
 async def forgot_password(email: str = Form(...)):
