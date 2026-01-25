@@ -1367,6 +1367,89 @@ const AllowedLocationsSettings = ({ language, t }) => {
 
   return (
     <div className="space-y-6">
+      {/* Geofence Settings Card */}
+      <Card className="border-blue-200">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <CardTitle className="text-blue-800">{t("إعدادات تحديد الموقع الجغرافي", "Geofencing Settings")}</CardTitle>
+              <CardDescription>{t("تحكم في تسجيل الدخول بناءً على الموقع الجغرافي", "Control login based on geographic location")}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          {/* Enable Geofencing */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <Label className="text-base font-medium">{t("تفعيل تحديد الموقع", "Enable Geofencing")}</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("تتبع موقع المستخدم عند تسجيل الدخول", "Track user location on login")}
+              </p>
+            </div>
+            <Switch
+              checked={geofenceSettings.enabled}
+              onCheckedChange={(checked) => saveGeofenceSettings({ ...geofenceSettings, enabled: checked })}
+            />
+          </div>
+
+          {geofenceSettings.enabled && (
+            <>
+              {/* Block Unauthorized */}
+              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                <div>
+                  <Label className="text-base font-medium text-red-800">{t("منع الدخول من مواقع غير مصرحة", "Block Unauthorized Locations")}</Label>
+                  <p className="text-sm text-red-600 mt-1">
+                    {t("⚠️ تحذير: سيتم رفض تسجيل الدخول من خارج المواقع المحددة", "⚠️ Warning: Login will be rejected from outside defined locations")}
+                  </p>
+                </div>
+                <Switch
+                  checked={geofenceSettings.block_unauthorized}
+                  onCheckedChange={(checked) => saveGeofenceSettings({ ...geofenceSettings, block_unauthorized: checked })}
+                />
+              </div>
+
+              {/* Allow Without Location */}
+              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div>
+                  <Label className="text-base font-medium text-yellow-800">{t("السماح بالدخول بدون موقع", "Allow Login Without Location")}</Label>
+                  <p className="text-sm text-yellow-600 mt-1">
+                    {t("السماح للمستخدمين الذين رفضوا مشاركة موقعهم بالدخول", "Allow users who declined location sharing to login")}
+                  </p>
+                </div>
+                <Switch
+                  checked={geofenceSettings.allow_without_location}
+                  onCheckedChange={(checked) => saveGeofenceSettings({ ...geofenceSettings, allow_without_location: checked })}
+                />
+              </div>
+
+              {/* Status Summary */}
+              <div className={`p-4 rounded-lg ${geofenceSettings.block_unauthorized ? 'bg-red-100 border border-red-300' : 'bg-green-100 border border-green-300'}`}>
+                <div className="flex items-center gap-2">
+                  {geofenceSettings.block_unauthorized ? (
+                    <>
+                      <Shield className="w-5 h-5 text-red-600" />
+                      <span className="font-medium text-red-800">
+                        {t("وضع الحماية: مفعّل - سيتم منع الدخول من المواقع غير المصرحة", "Protection Mode: ON - Unauthorized locations will be blocked")}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="w-5 h-5 text-green-600" />
+                      <span className="font-medium text-green-800">
+                        {t("وضع المراقبة: سيتم تسجيل جميع محاولات الدخول دون منعها", "Monitoring Mode: All login attempts logged but not blocked")}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Allowed Locations */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
