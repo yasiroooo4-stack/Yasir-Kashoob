@@ -273,37 +273,37 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
     doc.setFont("helvetica", "normal");
     doc.text(invoice.invoice_type === "milestone" ? "Milestone" : "Partial Payment", rightCol + 25, y);
     
-    // Separator line
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, 110, pageWidth - 20, 110);
-    
-    // Description
-    y = 125;
+    // Description section
+    y = 115;
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.text("Description:", leftCol, y);
     doc.setFont("helvetica", "normal");
-    y += 8;
+    y += 7;
     const descLines = doc.splitTextToSize(invoice.description || "-", pageWidth - 40);
     doc.text(descLines, leftCol, y);
-    y += descLines.length * 6 + 10;
+    y += descLines.length * 5 + 15;
     
-    // Amount box
-    doc.setFillColor(240, 240, 240);
-    doc.rect(20, y, pageWidth - 40, 30, "F");
+    // Amount box with gold accent
+    doc.setFillColor(250, 248, 240);
+    doc.setDrawColor(200, 180, 130);
+    doc.setLineWidth(0.5);
+    doc.rect(15, y, pageWidth - 30, 25, "FD");
     
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("Total Amount:", leftCol + 10, y + 12);
-    doc.setFontSize(18);
-    doc.text(`${invoice.amount?.toFixed(3)} OMR`, pageWidth - 30, y + 12, { align: "right" });
+    doc.text("Total Amount:", leftCol, y + 10);
+    doc.setFontSize(16);
+    doc.setTextColor(139, 119, 42); // Gold color
+    doc.text(`${invoice.amount?.toFixed(3)} OMR`, pageWidth - 20, y + 10, { align: "right" });
+    doc.setTextColor(0, 0, 0);
     
-    // Approval status
-    y += 45;
+    // Approval status section
+    y += 35;
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.text("Approval Status:", leftCol, y);
     y += 8;
-    doc.setFont("helvetica", "normal");
     
     const approvals = [
       { name: "Project Manager", approved: invoice.project_manager_approval, by: invoice.project_manager_name, date: invoice.project_manager_date },
@@ -312,10 +312,26 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
     ];
     
     approvals.forEach(app => {
-      const status = app.approved ? "Approved" : "Pending";
-      const details = app.approved ? ` by ${app.by || "-"} on ${app.date ? new Date(app.date).toLocaleDateString() : "-"}` : "";
-      doc.text(`- ${app.name}: ${status}${details}`, leftCol, y);
-      y += 6;
+      doc.setFont("helvetica", "normal");
+      const checkMark = app.approved ? "✓" : "○";
+      doc.setTextColor(app.approved ? 0 : 150, app.approved ? 128 : 150, app.approved ? 0 : 150);
+      doc.text(checkMark, leftCol, y);
+      doc.setTextColor(0, 0, 0);
+      doc.text(` ${app.name}: `, leftCol + 5, y);
+      
+      if (app.approved) {
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 128, 0);
+        doc.text("Approved", leftCol + 45, y);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        doc.text(` by ${app.by || "-"} (${app.date ? new Date(app.date).toLocaleDateString() : "-"})`, leftCol + 68, y);
+      } else {
+        doc.setTextColor(150, 150, 150);
+        doc.text("Pending", leftCol + 45, y);
+      }
+      doc.setTextColor(0, 0, 0);
+      y += 7;
     });
     
     // Payment info
