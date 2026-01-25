@@ -334,26 +334,39 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
       y += 7;
     });
     
-    // Payment info
+    // Payment info section
     if (invoice.is_paid) {
-      y += 10;
-      doc.setFont("helvetica", "bold");
-      doc.text("Payment Information:", leftCol, y);
       y += 8;
+      doc.setFillColor(240, 255, 240); // Light green background
+      doc.rect(15, y - 3, pageWidth - 30, 25, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 100, 0);
+      doc.text("PAYMENT COMPLETED", leftCol, y + 5);
       doc.setFont("helvetica", "normal");
-      doc.text(`Paid on: ${invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString() : "-"}`, leftCol, y);
-      y += 6;
-      doc.text(`Paid by: ${invoice.paid_by || "-"}`, leftCol, y);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Paid on: ${invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString() : "-"}`, leftCol, y + 12);
+      doc.text(`Paid by: ${invoice.paid_by || "-"}`, rightCol, y + 12);
       if (invoice.payment_reference) {
-        y += 6;
-        doc.text(`Reference: ${invoice.payment_reference}`, leftCol, y);
+        doc.text(`Reference: ${invoice.payment_reference}`, leftCol, y + 19);
       }
     }
     
-    // Footer
-    doc.setFontSize(9);
-    doc.setTextColor(128, 128, 128);
-    doc.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+    // Footer with company info
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Footer separator
+    doc.setDrawColor(200, 180, 130);
+    doc.setLineWidth(0.5);
+    doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
+    
+    // Footer text
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Al Morooj Dairy Company SAOC | Salalah, Sultanate of Oman", pageWidth / 2, pageHeight - 18, { align: "center" });
+    doc.text("VAT: OM1100007713 / OM1100091687 | CR: 2017520 / 1249988", pageWidth / 2, pageHeight - 13, { align: "center" });
+    doc.setFontSize(7);
+    doc.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 7, { align: "center" });
     
     // Save
     doc.save(`Invoice_${invoice.invoice_number || invoice.id}.pdf`);
