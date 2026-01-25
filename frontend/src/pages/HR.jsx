@@ -714,7 +714,9 @@ const HR = () => {
       end_date: "",
       reason: "",
       days_count: 0,
+      attachment_url: "",
     });
+    setLeaveAttachmentFile(null);
   };
 
   const handleLeaveAction = async (requestId, action) => {
