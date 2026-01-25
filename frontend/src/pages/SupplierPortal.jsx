@@ -50,6 +50,7 @@ import {
   EyeOff,
   Lock,
   Settings,
+  Globe,
 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
