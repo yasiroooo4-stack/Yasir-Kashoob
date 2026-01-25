@@ -271,7 +271,7 @@ const Projects = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="projects" className="gap-2">
             <FolderKanban className="w-4 h-4" />
             {language === "ar" ? "المشاريع" : "Projects"}
@@ -279,6 +279,14 @@ const Projects = () => {
           <TabsTrigger value="tasks" className="gap-2">
             <ListTodo className="w-4 h-4" />
             {language === "ar" ? "المهام" : "Tasks"}
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="gap-2">
+            <FileText className="w-4 h-4" />
+            {language === "ar" ? "العقود" : "Contracts"}
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="gap-2">
+            <Receipt className="w-4 h-4" />
+            {language === "ar" ? "الفواتير" : "Invoices"}
           </TabsTrigger>
         </TabsList>
 
