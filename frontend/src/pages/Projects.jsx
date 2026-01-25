@@ -14,9 +14,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
 import { Progress } from "../components/ui/progress";
-import { FolderKanban, ListTodo, Users, Flag, Plus, Pencil, CheckCircle, Clock, FileText, Receipt } from "lucide-react";
+import { FolderKanban, ListTodo, Users, Flag, Plus, Pencil, CheckCircle, Clock, FileText, Receipt, Milestone } from "lucide-react";
 import ProjectContracts from "./ProjectContracts";
 import ProjectInvoices from "./ProjectInvoices";
+import ProjectMilestones from "./ProjectMilestones";
 
 const Projects = () => {
   const { t } = useTranslation();
