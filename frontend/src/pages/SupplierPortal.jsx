@@ -587,7 +587,7 @@ const SupplierPortal = () => {
                 <Wallet className="w-10 h-10 opacity-80" />
                 <div>
                   <p className="text-3xl font-bold">{(supplier?.balance || 0).toLocaleString()}</p>
-                  <p className="text-sm opacity-80">الرصيد الحالي (ريال)</p>
+                  <p className="text-sm opacity-80">{txt("الرصيد الحالي (ريال)", "Current Balance (OMR)")}</p>
                 </div>
               </div>
             </CardContent>
@@ -599,7 +599,7 @@ const SupplierPortal = () => {
                 <Milk className="w-10 h-10 opacity-80" />
                 <div>
                   <p className="text-3xl font-bold">{(supplier?.total_supplied || 0).toLocaleString()}</p>
-                  <p className="text-sm opacity-80">إجمالي الكمية (لتر)</p>
+                  <p className="text-sm opacity-80">{txt("إجمالي الكمية (لتر)", "Total Quantity (L)")}</p>
                 </div>
               </div>
             </CardContent>
@@ -611,7 +611,7 @@ const SupplierPortal = () => {
                 <Package className="w-10 h-10 opacity-80" />
                 <div>
                   <p className="text-3xl font-bold">{feedRequests.filter(r => r.status === 'pending').length}</p>
-                  <p className="text-sm opacity-80">طلبات أعلاف قيد الانتظار</p>
+                  <p className="text-sm opacity-80">{txt("طلبات أعلاف قيد الانتظار", "Pending Feed Requests")}</p>
                 </div>
               </div>
             </CardContent>
@@ -623,7 +623,7 @@ const SupplierPortal = () => {
                 <History className="w-10 h-10 opacity-80" />
                 <div>
                   <p className="text-3xl font-bold">{supplier?.summary?.count || 0}</p>
-                  <p className="text-sm opacity-80">توريدات هذا الشهر</p>
+                  <p className="text-sm opacity-80">{txt("توريدات هذا الشهر", "This Month Deliveries")}</p>
                 </div>
               </div>
             </CardContent>
@@ -634,15 +634,15 @@ const SupplierPortal = () => {
         <div className="flex flex-wrap gap-3 mb-6">
           <Button onClick={() => setFeedDialogOpen(true)} className="gradient-primary text-white">
             <ArrowLeftRight className="w-4 h-4 me-2" />
-            طلب تحويل رصيد إلى أعلاف
+            {txt("طلب تحويل رصيد إلى أعلاف", "Request Balance to Feed")}
           </Button>
           <Button variant="outline" onClick={() => setMessageDialogOpen(true)}>
             <MessageSquare className="w-4 h-4 me-2" />
-            إرسال رسالة
+            {txt("إرسال رسالة", "Send Message")}
           </Button>
           <Button variant="outline" onClick={() => fetchData()}>
             <RefreshCw className="w-4 h-4 me-2" />
-            تحديث البيانات
+            {txt("تحديث البيانات", "Refresh Data")}
           </Button>
         </div>
 
@@ -651,15 +651,15 @@ const SupplierPortal = () => {
           <TabsList className="mb-4">
             <TabsTrigger value="overview" className="gap-2">
               <Milk className="w-4 h-4" />
-              سجل التوريدات
+              {txt("سجل التوريدات", "Delivery Log")}
             </TabsTrigger>
             <TabsTrigger value="feed" className="gap-2">
               <Package className="w-4 h-4" />
-              طلبات الأعلاف
+              {txt("طلبات الأعلاف", "Feed Requests")}
             </TabsTrigger>
             <TabsTrigger value="messages" className="gap-2">
               <MessageSquare className="w-4 h-4" />
-              الرسائل
+              {txt("الرسائل", "Messages")}
             </TabsTrigger>
           </TabsList>
 
@@ -668,7 +668,7 @@ const SupplierPortal = () => {
             <Card>
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <CardTitle>سجل توريدات الحليب</CardTitle>
+                  <CardTitle>{txt("سجل توريدات الحليب", "Milk Delivery Log")}</CardTitle>
                   <div className="flex gap-2">
                     <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
                       <SelectTrigger className="w-32">
@@ -676,7 +676,7 @@ const SupplierPortal = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-                          <SelectItem key={m} value={m.toString()}>شهر {m}</SelectItem>
+                          <SelectItem key={m} value={m.toString()}>{txt(`شهر ${m}`, `Month ${m}`)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
