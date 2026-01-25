@@ -373,6 +373,9 @@ const SupplierPortal = () => {
   };
 
   // Login Screen
+  // Al Morooj Dairy Logo URL
+  const logoUrl = "https://customer-assets.emergentagent.com/job_farmmanage-5/artifacts/3wl2krpz_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%AC%20%D9%84%D9%84%D8%A7%D9%84%D8%A8%D8%A7%D9%86.png";
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -389,9 +392,11 @@ const SupplierPortal = () => {
         
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
-              <Milk className="w-8 h-8 text-white" />
-            </div>
+            <img 
+              src={logoUrl} 
+              alt="Al Morooj Dairy Logo" 
+              className="w-24 h-24 mx-auto mb-4 object-contain"
+            />
             <CardTitle className="text-2xl">{txt("بوابة الموردين", "Supplier Portal")}</CardTitle>
             <CardDescription>
               {showRecovery 
