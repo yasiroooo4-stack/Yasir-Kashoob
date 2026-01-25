@@ -62,6 +62,11 @@ import {
   ClipboardList,
   ShoppingCart,
   Wallet,
+  Fingerprint,
+  Download,
+  Clock,
+  Monitor,
+  Activity,
 } from "lucide-react";
 
 // Lazy load additional settings components
