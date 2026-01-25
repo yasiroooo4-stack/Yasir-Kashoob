@@ -237,7 +237,10 @@ const LeaveRequestButton = () => {
       substitute_employee_name: "",
       delegate_permissions_to_id: "",
       delegate_permissions_to_name: "",
+      attachment_url: "",
     });
+    setAttachmentFile(null);
+  };
     setLeaveBalance(null);
   };
 
