@@ -6589,6 +6589,100 @@ async def set_allowed_login_locations(
     )
     return {"message": "تم تحديث المواقع المسموح بها"}
 
+@api_router.get("/system/geofence-settings")
+async def get_geofence_settings(current_user: dict = Depends(require_role(["admin"]))):
+    """جلب إعدادات تحديد الموقع الجغرافي"""
+    settings = await db.system_settings.find_one({"key": "geofence_settings"})
+    if settings:
+        return settings.get("value", {})
+    return {
+        "enabled": False,
+        "block_unauthorized": False,
+        "allow_without_location": True
+    }
+
+@api_router.post("/system/geofence-settings")
+async def set_geofence_settings(
+    settings: dict,
+    current_user: dict = Depends(require_role(["admin"]))
+):
+    """تحديث إعدادات تحديد الموقع الجغرافي"""
+    await db.system_settings.update_one(
+        {"key": "geofence_settings"},
+        {"$set": {"value": settings, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="update_geofence_settings",
+        entity_type="system_settings",
+        details=f"Geofencing: {'enabled' if settings.get('enabled') else 'disabled'}, Block: {settings.get('block_unauthorized')}"
+    )
+    
+    return {"message": "تم تحديث إعدادات تحديد الموقع"}
+
+@api_router.post("/auth/check-location")
+async def check_login_location(
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None
+):
+    """التحقق من صلاحية الموقع قبل تسجيل الدخول"""
+    # Get geofence settings
+    geofence_settings = await db.system_settings.find_one({"key": "geofence_settings"})
+    settings = geofence_settings.get("value", {}) if geofence_settings else {}
+    
+    # If geofencing is disabled, allow login
+    if not settings.get("enabled", False):
+        return {"allowed": True, "reason": "geofencing_disabled"}
+    
+    # If no location provided
+    if latitude is None or longitude is None:
+        if settings.get("allow_without_location", True):
+            return {"allowed": True, "reason": "no_location_allowed"}
+        else:
+            return {"allowed": False, "reason": "location_required"}
+    
+    # Check against allowed locations
+    allowed_locations = await db.system_settings.find_one({"key": "allowed_login_locations"})
+    if not allowed_locations or not allowed_locations.get("value"):
+        # No locations defined - allow all
+        return {"allowed": True, "reason": "no_locations_defined"}
+    
+    allowed_areas = allowed_locations.get("value", [])
+    
+    import math
+    for area in allowed_areas:
+        area_lat = area.get("latitude", 0)
+        area_lon = area.get("longitude", 0)
+        radius = area.get("radius", 10)  # Default 10km radius
+        
+        # Haversine formula for distance
+        R = 6371  # Earth's radius in km
+        lat1 = math.radians(latitude)
+        lat2 = math.radians(area_lat)
+        dlat = math.radians(area_lat - latitude)
+        dlon = math.radians(area_lon - longitude)
+        
+        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        distance = R * c
+        
+        if distance <= radius:
+            return {
+                "allowed": True, 
+                "reason": "within_allowed_area",
+                "location_name": area.get("name"),
+                "distance_km": round(distance, 2)
+            }
+    
+    # Location is outside all allowed areas
+    if settings.get("block_unauthorized", False):
+        return {"allowed": False, "reason": "outside_allowed_area"}
+    else:
+        return {"allowed": True, "reason": "monitoring_mode", "warning": True}
+
 # ==================== HR - SALARY HISTORY (سجل تغييرات الرواتب) ====================
 
 @api_router.get("/hr/salary-history")
