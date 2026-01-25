@@ -1,110 +1,108 @@
 <analysis>**original_problem_statement:**
-The user is building a comprehensive ERP system for their dairy farm. The initial scope included bug fixes and core HR features. The project has since evolved to include a hierarchical Warehouse Management System, a material consumption workflow, a driver scheduling system, data import capabilities, complex permission management, a supplier-facing portal, geofencing for logins, and integration with a desktop fingerprint scanner application.
+The user is building a comprehensive ERP system for a dairy farm. Initially focused on HR, Warehouse Management, and a Supplier Portal, the scope has significantly expanded. This session's primary focus shifted to a user-driven request to build a new, complex Projects module from scratch. This new module required creating project contracts, multi-stage invoices with a three-tier approval workflow (Project Manager, Finance, GM), and a PDF generation feature for these invoices.
+
+Further requests included:
+- Adding the ability to attach files (invoices, documents) to different stages (milestones) of a project.
+- Adding a file attachment option to the employee leave request form.
+- Adding the company logo and full business details to the generated project invoice PDF.
+- Investigating and fixing the data flow between the Supplier Portal and the admin-side Supplier Management page.
+- Implementing and verifying data reset functions for the Warehouse and Projects modules.
+- Providing guidance on obtaining a permanent domain and options for self-hosting the application to reduce costs.
 
 **PRODUCT REQUIREMENTS (based on user requests during this session):**
-1.  **Bug (P0 - DONE):** The login for the supplier portal failed for suppliers with a default password.
-2.  **Bug (P0 - DONE):** The Arabic translation for the  permission was not appearing in the Grant Permissions modal.
-3.  **Bug (P0 - DONE):** The supplier's name was not appearing correctly on the Feed Purchases page when their code was entered.
-4.  **Bug (P0 - DONE):** The English translation on the supplier portal dashboard was incomplete.
-5.  **Bug (P0 - DONE):** The  library was missing from the  for the fingerprint sync program.
-6.  **Feature (P0 - DONE):** Implement full English/Arabic internationalization (i18n) for the supplier portal.
-7.  **Feature (P0 - DONE):** Add the company logo to the supplier portal login page and header.
-8.  **Feature (P0 - DONE):** Implement a geofencing system to restrict user logins to authorized geographical locations, complete with admin settings.
-9.  **Feature (P0 - DONE):** Integrate the user-provided desktop fingerprint sync application () by creating a download page in System Settings with instructions and the necessary backend APIs to receive data.
-10. **Feature (P0 - DONE):** Overhaul the Feed Purchases PDF export to a multi-page format based on a user-provided document, including fetching and displaying the supplier's milk reception history.
-11. **Feature (P0 - DONE):** Add a dedicated Export PDF button to the reports tab on the Feed Purchases page.
-12. **Feature (P1 - IN PROGRESS):** Translate center names on the main dashboard to English (e.g., Thumrait, Taqah).
-13. **Feature (P1 - NOT STARTED):** Add Milk Type and Center Location to the milk delivery log in the supplier portal.
+1.  **Feature (P0 - DONE):** Add Milk Type and Center Location to the supplier portal's milk delivery log.
+2.  **Bugfix (P0 - DONE):** Verify and fix the Data Reset function for Warehouse Management.
+3.  **Feature (P0 - User Driven - DONE):** Create a new Projects module with contracts, invoices, and a multi-level approval workflow.
+4.  **Feature (P0 - User Driven - DONE):** Implement PDF generation for project invoices, including the company logo and full business details.
+5.  **Feature (P0 - User Driven - DONE):** Add a Project Milestones feature with the ability to attach invoices/documents to each stage.
+6.  **Feature (P0 - User Driven - DONE):** Add a file attachment field to the employee leave request form.
+7.  **Bugfix (P0 - User Driven - DONE):** Fix the broken data link between the supplier portal and the admin-side Supplier Management page.
+8.  **Task (P0 - User Driven - DONE):** Reset all data for the Warehouse and Projects modules.
+9.  **Documentation (P0 - User Driven - DONE):** Create a detailed guide () on how to self-host the application.
+10. **Task (P1 - NOT STARTED):** Improve the employee filtering on the Extra Pay page.
 
 **User's preferred language**: العربية (Arabic)
 
 **what currently exists?**
-The ERP system now includes several newly completed features and bug fixes. The Supplier Portal is fully functional with bilingual (Arabic/English) support, a working login, a dashboard, and the company logo. A comprehensive Geofencing feature has been implemented, allowing admins to define allowed login locations and block unauthorized access from the frontend. The integration for the user's desktop fingerprint sync application is complete from the web app's side; a new Fingerprint tab in System Settings provides the download link, setup instructions, and sync status, supported by the necessary backend APIs. The PDF export for Feed Purchases has been significantly enhanced to a custom three-page format. Several bugs related to translations and data fetching have been resolved.
+The ERP system is a full-stack application with modules for HR, Warehouse, Suppliers, and now a comprehensive Projects module.
+-   **Projects Module:** A brand new, fully functional module allows for the creation of projects, contracts, and invoices. It features a three-tier approval workflow (Project Manager -> Finance -> GM) for invoice payments, which has been implemented and tested. Invoices can be printed to a custom PDF format that includes the company logo and full business details. The module also supports breaking down projects into Milestones, to which documents and invoices can be attached directly via file upload.
+-   **Supplier Portal & Management:** The portal is functional, allowing suppliers to view their delivery history (now with milk type and center location). The broken link to the admin-side Supplier Management page has been fixed, and data (feed requests, messages) now flows correctly between the two.
+-   **Data Management:** The data reset functions for both the Warehouse and Projects modules have been implemented, tested, and used, ensuring administrators can clear transactional data.
+-   **File Uploads:** A generic file upload capability has been integrated into both the new Project Milestones feature and the existing employee Leave Request form.
+-   **Documentation:** A detailed  file exists in the root directory, providing the user with instructions for deploying the application on their own infrastructure.
 
 **Last working item**:
--   **Last item agent was working:** The agent was implementing a two-part user request: 1) Translating the collection center names on the main dashboard, and 2) Adding milk type and center location to the supplier portal's milk delivery log. The agent successfully completed the first part by adding an  field to the  in the database and updating the dashboard UI to display it when the language is set to English. The second part of the request was not started.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** Y (for the database and UI changes related to center name translation)
--   **Which testing method agent to use?** both. The frontend agent should verify that the main dashboard correctly displays translated center names. For the next task, it needs to inspect the supplier portal's milk delivery log to plan the required UI and backend changes. The backend agent will be needed to modify the API that serves milk reception data.
+-   **Last item agent was working:** The agent finished updating the project invoice PDF generation logic to include the company's logo and full business details (Commercial Registration, VAT, Address, etc.).
+-   **Status:** USER VERIFICATION PENDING
+-   **Agent Testing Done:** Y (Agent triggered the download and received a success message, but did not visually inspect the downloaded file.)
+-   **Which testing method agent to use?** Manual testing by the user is required. The next agent should instruct the user to log in, navigate to the Projects -> Invoices tab, click the Print button for an invoice, and visually inspect the downloaded PDF file to confirm the changes are correct.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Payroll for non-administrative staff is likely still inaccurate. (P1)
--   **Issue 2:** The Data Reset function for إدارة المخازن (Warehouse Management) has a pending fix that needs verification. (P1)
+-   **Issue 1:** Payroll for non-administrative staff is likely still inaccurate. (P2)
+-   **Issue 2:** Re-evaluate and implement filtering for the employee list on the Extra Pay page. (P1)
 
 **Issues Detail:**
 -   **Issue 1:**
-    -   **Description:** While the main payroll bug was fixed, many non-administrative employees still show high numbers of absent days. This is because their variable weekly work schedules have not been configured in the system.
-    -   **Attempted fixes:** None. The UI to edit individual schedules exists, but the bulk data update has not been performed.
-    -   **Next debug checklist:**
-        1.  Collaborate with the user to determine the correct weekly off days for the center staff employees.
-        2.  Use the Employee Scheduling page or a backend script to update the  for all affected employees.
-        3.  Recalculate payroll and verify the absence count is corrected.
-    -   **Why fix this issue and what will be achieved with the fix?** This is critical for ensuring accurate payroll for the majority of the workforce.
-    -   **Status:** NOT STARTED
+    -   **Description:** Many non-administrative employees show high numbers of absent days due to unconfigured variable weekly work schedules. The user has stated that HR will handle this manually each month.
+    -   **Next debug checklist:** Confirm with the user if this automated task is still desired or if it should be removed from the backlog entirely, given their plan for manual adjustments.
+    -   **Why fix this issue and what will be achieved with the fix?** Would provide accurate, automated payroll calculations, reducing manual work for HR.
+    -   **Status:** BLOCKED (Pending user decision)
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** Requires user input for employee schedules.
 -   **Issue 2:**
-    -   **Description:** The Data Reset for إدارة المخازن was reported as not working. The previous agent implemented a fix by correcting collection names in  but never verified it.
-    -   **Attempted fixes:** The backend code was changed to target  and  collections.
+    -   **Description:** The Extra Pay approvals page () needs better employee filtering options beyond the current basic search. The original request from the handoff was not addressed as new, higher-priority tasks emerged.
     -   **Next debug checklist:**
-        1.  Use  or the backend testing agent to test the  endpoint.
-        2.  The test should add dummy data to the  and  collections, call the endpoint, and verify that both collections are empty.
-    -   **Why fix this issue and what will be achieved with the fix?** Ensures administrators can properly reset warehouse data.
-    -   **Status:** TESTING PENDING
+        1.  Ask the user what specific filters they need (e.g., filter by department, job title, center location).
+        2.  View  to identify where to add the new filter components.
+        3.  Update the  function and the corresponding backend API (if necessary) to handle the new filter parameters.
+    -   **Why fix this issue and what will be achieved with the fix?** Will make it easier for managers to find and approve extra pay requests for specific groups of employees.
+    -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** backend
-    -   **Blocked on other issue:** none
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1:** Complete the supplier portal enhancement. (P0)
-    -   **Where to resume:**
-        1.  Modify the API endpoint that serves the supplier's milk delivery history (likely ) to include Milk Type and Center Name for each reception record.
-        2.  Update the  frontend component to add new columns to the Milk Delivery Log table for this new data.
-    -   **What will be achieved with this?** The supplier will have more detailed information about their deliveries directly in the portal.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** None
+-   None. The last active task is pending user verification.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **(P1)** Re-evaluate and implement filtering for the employee list on the Extra Pay page.
+    -   **(P1)** Implement the improved filtering on the Extra Pay page as detailed in .
 -   **Future Tasks:**
-    -   **(P2)** Refactor the monolithic  into smaller, route-specific files under a  directory.
+    -   **(P2)** Refactor the monolithic  into smaller, route-specific files under a  directory. This technical debt is increasing with each new feature.
 
 **Completed work in this session**
--   **Feature:** Implemented a complete Geofencing system to control logins by location.
--   **Feature:** Integrated the user's desktop fingerprint sync program with a new UI in System Settings and supporting backend APIs.
--   **Feature:** Overhauled the Feed Purchases PDF export to a custom 3-page template.
--   **Feature:** Added a language switcher and full English/Arabic translations to the Supplier Portal.
--   **Feature:** Added the company logo to the Supplier Portal login page and header.
--   **Feature:** Translated collection center names on the main dashboard by extending the database schema.
--   **Bugfix:** Corrected the Supplier Portal login logic for default passwords.
--   **Bugfix:** Fixed missing translations for permissions in the Grant Permissions modal.
--   **Bugfix:** Resolved an issue where supplier names were not appearing correctly on the Feed Purchases page.
-
-**Earlier issues found/mentioned but not fixed**
--   None that aren't already listed in the pending/upcoming sections.
+-   **Feature:** Created a comprehensive Projects module from scratch, including DB models, backend APIs, and frontend components for projects, contracts, invoices, and milestones.
+-   **Feature:** Implemented a 3-tier approval workflow (Project Manager -> Finance -> GM) for project invoices.
+-   **Feature:** Added company logo and full business details to the project invoice PDF.
+-   **Feature:** Integrated file upload functionality for Project Milestones and Leave Requests.
+-   **Feature:** Completed the supplier portal enhancement by adding Milk Type and Center Location to the delivery log.
+-   **Bugfix:** Verified and fixed the Data Reset function for Warehouse Management, ensuring it clears all related collections.
+-   **Bugfix:** Fixed a critical API routing issue () in the Supplier Management page, restoring the link with the supplier portal.
+-   **Task:** Successfully reset all data for the Warehouse and Projects modules as per user request.
+-   **Documentation:** Created  to explain self-hosting and custom domain options.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Refactoring of the monolithic  file.
--   **Recurrence count:** 14
--   **Status:** IN PROGRESS
+-   **Recurrence count:** 15
+-   **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Manual DB Migration:** Adding an  field to existing documents in the  collection using a script.
--   **Advanced I18n:** Full internationalization of a React component () using a custom hook and context.
--   **Dynamic Multi-Page PDF:** Using  and  to generate a complex, multi-page PDF by fetching data from multiple backend endpoints.
--   **File Serving from API:** Creating a zip archive of multiple files in memory on the backend (FastAPI) and serving it for download.
--   **Client-Side Geolocation:** Using  to get user coordinates and validate them against backend settings before allowing a login attempt.
+-   **Full-Module Development:** Built the entire Projects module, including backend models (), dozens of FastAPI endpoints (), and multiple new React components with state management.
+-   **Dynamic PDF Generation:** Used  to create a complex invoice PDF, programmatically adding a base64 encoded image (logo), multi-line text for company info, and dynamic content based on invoice data.
+-   **File Uploads:** Implemented an end-to-end file upload feature using  on the frontend and storing files in a persistent  directory on the backend.
+-   **Component-Based Architecture:** Refactored the  page into a tabbed container holding separate, purpose-built components for milestones, contracts, and invoices.
+-   **Complex State Management:** Managed interconnected state across multiple components (e.g., selecting a project in  to load data in ).
+-   **Advanced Debugging:** Successfully diagnosed and fixed a subtle API routing bug (double  prefix) and located misplaced UI code ( vs. ).
 
 **key DB schema**
--   **collection_centers:** Added  to store English names. Documents were successfully updated.
--   **system_settings:** Contains a new  object with keys like , , etc.
+-   **ProjectContract (New):** 
+-   **ProjectInvoice (New):** 
+-   **ProjectMilestone (Modified):** Added fields for , , and .
+-   **LeaveRequestBase (Modified):** Added .
 
 **All files of reference**
 -   
@@ -114,44 +112,43 @@ The ERP system now includes several newly completed features and bug fixes. The 
 -   
 -   
 -   
+-   
+-   
 
 **Areas that need refactoring**:
--   ** (CRITICAL):** This file continues to grow and urgently needs to be broken down into smaller, route-specific modules.
--   **:** The complex PDF generation logic could be extracted into a separate helper/hook to improve readability.
--   **:** This component is now over 1000 lines and should be broken down into smaller sub-components (e.g., for the login form, dashboard view, different tabs).
+-   ** (CRITICAL):** This file has grown substantially with the addition of the entire Projects module and is now over 11,000 lines long. It is a major source of technical debt and urgently needs to be broken down into a  directory structure.
+-   **:** The  function is very large and complex. It should be extracted into a dedicated utility file () to improve component readability.
+-   **:** This component contains a large, complex form. It could be broken down further to separate the UI from the data submission logic (e.g., a custom hook ).
 
 **key api endpoints**
--   **GET **: (New) Fetches geofencing configuration.
--   **POST **: (New) Updates geofencing configuration.
--   **POST **: (New) Validates a user's lat/long coordinates.
--   **GET **: (New) Serves the fingerprint sync desktop application as a zip file.
--   **GET **: (New) Provides statistics on fingerprint device syncs.
--   **GET **: (New) Fetches milk reception history for a specific supplier.
--   **GET **: (Modified) Now returns the  field if it exists.
--   **POST **: (Tested) The endpoint for the fingerprint sync program to push data.
+-   **Project Contracts:** , , 
+-   **Project Invoices:** , , 
+-   **Invoice Approvals:**  (where role is , , or )
+-   **Project Milestones:** , , 
+-   **File Upload:**  (existing but now used by new features)
+-   **Admin Data Reset:**  (New)
 
 **Critical Info for New Agent**
 -   **Language:** The user communicates exclusively in **Arabic (العربية)**. All agent responses **must** be in Arabic.
--   **Immediate Task:** The highest priority is to continue the last user request by adding Milk Type and Center Location to the milk delivery log in the supplier portal. This will require both backend API and frontend UI changes.
--   **Payroll Inaccuracy:** A large group of non-administrative employees has incorrect payroll calculations due to unconfigured work schedules. This is a critical pending task that requires user input.
--   **Refactoring:** The  file is a major source of technical debt. While not a direct user request, any opportunity to modularize parts of it during other tasks should be considered.
+-   **Current Focus:** The user has shifted focus from bug fixes to rapid feature development, specifically building out the new Projects module. They are also exploring deployment and cost-saving options.
+-   **Next Task:** After the user verifies the invoice PDF, the next task is to implement the improved employee filtering on the Extra Pay page, which was deferred. You will need to clarify the filtering requirements with the user.
+-   **On-hold Task:** The payroll inaccuracy issue is on hold. The user has indicated a manual workaround. Confirm with them if this task should be closed or kept in the backlog.
 
 **documents and test reports created in this job**
--   
--   
--   
+-    (Updated)
+-    (Created)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests translation for center names on the dashboard and to add milk type/center location to the supplier portal delivery log. **Status: Partially Done (Translations done, portal log pending).**
-2.  **User:** Requests adding the company logo to the supplier login and points out missing translations. **Status: Done.**
-3.  **User:** Reports an issue with finding a supplier by code in Feed Purchases. **Status: Done.**
-4.  **User:** Reports that the English translation in the supplier portal is incomplete. **Status: Done.**
-5.  **User:** Asks for a language switcher on the supplier portal login page. **Status: Done.**
-6.  **User:** Asks to add a PDF export button to the Reports tab in Feed Purchases. **Status: Done.**
-7.  **User:** Provides a  file as a template for a new 3-page PDF format for Feed Purchases. **Status: Done.**
-8.  **User:** Reports that the  library is missing from the fingerprint sync program requirements. **Status: Done.**
-9.  **User:** Asks to update the fingerprint sync program with a new version provided in a  file. **Status: Done.**
-10. **User:** Reports that the  permission is still untranslated. **Status: Done.**
+1.  **User:** Asks for data in the Projects and Warehouse modules to be reset. **Status: Done.**
+2.  **User:** Asks to add file attachment capabilities to project milestones. **Status: Done.**
+3.  **User:** Asks to rename the milestone attachment link to Attach Document and add a similar attachment field to the Leave Request form. **Status: Done.**
+4.  **User:** Reports an issue with the Project Invoice PDF not containing the company logo or details and provides the correct information. **Status: Done, pending user verification.**
+5.  **User:** Asks if the link between the supplier portal and supplier management page works. **Status: Investigated, bug found and fixed, and functionality verified.**
+6.  **User:** Asks to reset all warehouse data again after seeing some remaining items. **Status: Done, with a more thorough deletion script.**
+7.  **User:** Asks for an explanation on how to get a free domain and host the application on their own hardware. **Status: Done, a detailed guide was created.**
+8.  **User:** Confirms requirements for the new Project Contract and Invoice feature. **Status: Done.**
+9.  **User:** Asks if a permanent, custom domain is possible for the application. **Status: Answered.**
+10. **User:** Asks for the addition of project invoices and contracts with a multi-level approval workflow. **Status: Done.**
 
 **Project Health Check:**
 -   **Broken:** None
@@ -160,17 +157,17 @@ The ERP system now includes several newly completed features and bug fixes. The 
 **3rd Party Integrations**
 -    / : Used for client-side PDF generation.
 -   : Used for client-side Excel generation.
--   : A dependency for the user's desktop fingerprint sync application.
+-   : A dependency for the user's separate desktop fingerprint sync application.
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None.
+-   **Test files created:** None. The agent performed extensive manual testing via  scripts and  verification.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   **Admin:**  / 
--   **Supplier:** code , password 
+-   **Supplier:** code , password  (or code  for a supplier with milk reception data)
 
 **What agent forgot to execute**
--   The agent did not start the second part of the user's most recent request: to add milk type and center location to the milk delivery log in the supplier portal.</analysis>
+-   The agent did not address the pending task to improve filtering on the Extra Pay page. This was not forgotten but rather superseded by the user's new, higher-priority requests for the Projects module. It is the next logical task to address.</analysis>

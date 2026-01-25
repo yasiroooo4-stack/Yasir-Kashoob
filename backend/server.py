@@ -352,7 +352,7 @@ async def send_email(to_email: str, subject: str, html_content: str):
 
 async def send_password_reset_email(email: str, token: str, full_name: str):
     """Send password reset email"""
-    reset_link = f"{os.environ.get('FRONTEND_URL', 'https://dairy-farm-erp-3.preview.emergentagent.com')}/reset-password?token={token}"
+    reset_link = f"{os.environ.get('FRONTEND_URL', 'https://milkmaster-6.preview.emergentagent.com')}/reset-password?token={token}"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -903,7 +903,7 @@ async def download_fingerprint_program():
 # Fingerprint Sync Configuration
 
 [API]
-url = https://dairy-farm-erp-3.preview.emergentagent.com
+url = https://milkmaster-6.preview.emergentagent.com
 username = 
 password = 
 

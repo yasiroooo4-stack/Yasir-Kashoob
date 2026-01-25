@@ -20,7 +20,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://dairy-farm-erp-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://milkmaster-6.preview.emergentagent.com/api"
 
 # Test credentials (as specified in review request)
 TEST_USERNAME = "yasir"
