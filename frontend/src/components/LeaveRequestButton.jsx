@@ -62,7 +62,11 @@ const LeaveRequestButton = () => {
     substitute_employee_name: "",
     delegate_permissions_to_id: "",
     delegate_permissions_to_name: "",
+    attachment_url: "",
   });
+  
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   useEffect(() => {
     if (dialogOpen) {
