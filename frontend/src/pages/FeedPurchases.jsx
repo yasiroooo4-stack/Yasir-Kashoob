@@ -250,7 +250,7 @@ const FeedPurchases = () => {
     }
   };
 
-  // Print feed purchase invoice
+  // Print feed purchase invoice - 3 pages format
   const handlePrintInvoice = async (purchase) => {
     // Get all feed types for the table
     const feedTypesData = feedTypes || [];
@@ -260,12 +260,56 @@ const FeedPurchases = () => {
     // Use the uploaded logo URL directly
     const logoUrl = 'https://customer-assets.emergentagent.com/job_milk-erp-1/artifacts/ciylod8k_image.png';
     
-    // Build feed types rows
-    let feedTypesRows = '';
+    // Get supplier code from the supplier object or use supplier_id
+    const supplierCode = purchase.supplier_code || purchase.supplier_id?.slice(0,4) || '0000';
+    const farmerId = purchase.farmer_id || purchase.supplier_phone || '0000000';
+    
+    // Fetch milk deliveries for this supplier
+    let milkDeliveries = [];
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/milk-receptions/supplier/${purchase.supplier_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 30 } // Last 30 deliveries
+      });
+      milkDeliveries = response.data || [];
+    } catch (err) {
+      console.log('Could not fetch milk deliveries:', err);
+    }
+    
+    // Build feed types rows for Page 1 (with prices)
+    let feedTypesRowsPage1 = '';
     let slNo = 1;
+    let totalAmount = 0;
     feedTypesData.forEach(ft => {
       const qty = ft.id === purchase.feed_type_id ? purchase.quantity : 0;
-      feedTypesRows += `
+      const price = ft.price_per_unit || 0;
+      const itemTotal = qty * price;
+      totalAmount += itemTotal;
+      feedTypesRowsPage1 += `
+        <tr>
+          <td class="sl-col">${slNo}</td>
+          <td class="product-col">${ft.name}</td>
+          <td class="weight-col">${ft.kg_per_unit || 40}</td>
+          <td class="price-col">${price.toFixed(3)}</td>
+          <td class="qty-col" style="font-weight: ${qty > 0 ? 'bold' : 'normal'};">${qty}</td>
+          <td class="total-col">${itemTotal.toFixed(3)}</td>
+        </tr>
+      `;
+      slNo++;
+    });
+    
+    // If purchase has total_amount, use it
+    if (purchase.total_amount) {
+      totalAmount = purchase.total_amount;
+    }
+
+    // Build feed types rows for Page 2 (without prices)
+    let feedTypesRowsPage2 = '';
+    slNo = 1;
+    feedTypesData.forEach(ft => {
+      const qty = ft.id === purchase.feed_type_id ? purchase.quantity : 0;
+      feedTypesRowsPage2 += `
         <tr>
           <td class="sl-col">${slNo}</td>
           <td class="product-col">${ft.name}</td>
@@ -278,12 +322,56 @@ const FeedPurchases = () => {
 
     // If no feed types, show just the purchased item
     if (feedTypesData.length === 0) {
-      feedTypesRows = `
+      const price = purchase.price_per_unit || 0;
+      feedTypesRowsPage1 = `
+        <tr>
+          <td class="sl-col">1</td>
+          <td class="product-col">${purchase.feed_type_name}</td>
+          <td class="weight-col">40</td>
+          <td class="price-col">${price.toFixed(3)}</td>
+          <td class="qty-col" style="font-weight: bold;">${purchase.quantity}</td>
+          <td class="total-col">${(purchase.quantity * price).toFixed(3)}</td>
+        </tr>
+      `;
+      feedTypesRowsPage2 = `
         <tr>
           <td class="sl-col">1</td>
           <td class="product-col">${purchase.feed_type_name}</td>
           <td class="weight-col">40</td>
           <td class="qty-col" style="font-weight: bold;">${purchase.quantity}</td>
+        </tr>
+      `;
+    }
+    
+    // Build milk deliveries rows for Page 3
+    let milkDeliveriesRows = '';
+    let totalMilkQty = 0;
+    let totalMilkAmount = 0;
+    milkDeliveries.forEach((delivery, idx) => {
+      const deliveryDate = new Date(delivery.reception_date).toLocaleDateString('en-GB').replace(/\//g, '-');
+      const milkQty = delivery.total_liters || delivery.quantity || 0;
+      const rate = delivery.price_per_liter || 0.250;
+      const amount = delivery.total_amount || (milkQty * rate);
+      totalMilkQty += milkQty;
+      totalMilkAmount += amount;
+      milkDeliveriesRows += `
+        <tr>
+          <td style="text-align: center; padding: 5px;">${idx + 1}</td>
+          <td style="text-align: center; padding: 5px;">${deliveryDate}</td>
+          <td style="text-align: center; padding: 5px;">${supplierCode}</td>
+          <td style="text-align: left; padding: 5px;">${purchase.supplier_name}</td>
+          <td style="text-align: center; padding: 5px;">${milkQty.toFixed(2)}</td>
+          <td style="text-align: center; padding: 5px;">${rate.toFixed(3)}</td>
+          <td style="text-align: center; padding: 5px;">${amount.toFixed(3)}</td>
+        </tr>
+      `;
+    });
+    
+    // If no milk deliveries
+    if (milkDeliveries.length === 0) {
+      milkDeliveriesRows = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 20px; color: #666;">لا توجد توريدات حليب مسجلة لهذا المورد</td>
         </tr>
       `;
     }
@@ -295,28 +383,38 @@ const FeedPurchases = () => {
         <meta charset="UTF-8">
         <title>PURCHASE REQUEST - ${purchase.invoice_number || purchase.id.slice(0,8)}</title>
         <style>
-          @page { size: A4; margin: 15mm; }
+          @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { 
             font-family: Arial, 'Tahoma', sans-serif; 
-            padding: 20px;
-            max-width: 210mm;
-            margin: 0 auto;
             font-size: 11px;
             line-height: 1.4;
+          }
+          
+          .page {
+            padding: 15px;
+            max-width: 210mm;
+            margin: 0 auto;
             border: 1px solid #3b82f6;
+            page-break-after: always;
+            min-height: 270mm;
+          }
+          .page:last-child {
+            page-break-after: auto;
           }
           
           /* Header Section */
           .header {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
           }
           .logo {
-            width: 85px;
-            height: 85px;
-            margin-right: 20px;
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
             flex-shrink: 0;
           }
           .logo img {
@@ -326,43 +424,50 @@ const FeedPurchases = () => {
           }
           .company-info {
             flex: 1;
-            text-align: center;
+          }
+          .company-header {
+            display: flex;
+            justify-content: space-between;
+          }
+          .company-left, .company-right {
+            font-size: 9px;
           }
           .company-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 3px;
+            text-align: center;
+            margin: 5px 0;
           }
           .company-details {
-            font-size: 10px;
-            color: #333;
-          }
-          .company-details div {
-            margin: 2px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
           }
           
           /* Title */
           .title {
             text-align: center;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            margin: 15px 0;
-            padding-bottom: 8px;
-            border-bottom: 2px double #000;
+            margin: 10px 0;
+            padding: 5px;
+            background: #f0f0f0;
           }
           
           /* Farmer Info Section */
           .farmer-section {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 10px 0;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
           }
           .farmer-left {
-            font-size: 11px;
+            font-size: 10px;
           }
           .farmer-left div {
-            margin: 4px 0;
+            margin: 3px 0;
           }
           .farmer-name {
             color: #2563eb;
@@ -374,49 +479,59 @@ const FeedPurchases = () => {
           .ref-number {
             color: #db2777;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
           }
           .ref-date {
             color: #db2777;
-            font-size: 11px;
+            font-size: 10px;
           }
           
           /* Table */
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
+            margin: 8px 0;
           }
           th, td {
             border: 1px solid #000;
-            padding: 8px 5px;
-          }
-          th {
-            background: #f3f4f6;
-            font-weight: bold;
+            padding: 6px 4px;
             font-size: 10px;
           }
-          .sl-col { width: 8%; text-align: center; }
-          .product-col { width: 52%; text-align: left; padding-left: 10px; }
-          .weight-col { width: 20%; text-align: center; }
-          .qty-col { width: 20%; text-align: center; }
+          th {
+            background: #e5e5e5;
+            font-weight: bold;
+          }
+          .sl-col { width: 6%; text-align: center; }
+          .product-col { width: 35%; text-align: left; padding-left: 8px; }
+          .weight-col { width: 12%; text-align: center; }
+          .price-col { width: 12%; text-align: center; }
+          .qty-col { width: 12%; text-align: center; }
+          .total-col { width: 15%; text-align: center; }
+          
+          .total-row {
+            font-weight: bold;
+            background: #f0f0f0;
+          }
           
           /* Remarks */
           .remarks {
-            margin-top: 20px;
-            font-size: 10px;
+            margin-top: 15px;
+            font-size: 9px;
+            border: 1px solid #ddd;
+            padding: 10px;
           }
           .remarks-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
+            font-weight: bold;
           }
           .remarks-content {
             display: flex;
           }
           .remarks-en {
             flex: 1;
-            padding-right: 20px;
+            padding-right: 15px;
           }
           .remarks-ar {
             flex: 1;
@@ -424,114 +539,315 @@ const FeedPurchases = () => {
             direction: rtl;
           }
           .remarks ol {
-            margin-left: 15px;
+            margin-left: 12px;
           }
           .remarks li {
-            margin: 5px 0;
+            margin: 3px 0;
           }
           
           /* Signature */
           .signature-section {
-            margin-top: 40px;
+            margin-top: 30px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
           }
           .signature-line {
-            width: 200px;
+            width: 180px;
             border-top: 1px solid #000;
-            margin-top: 40px;
+            margin-top: 30px;
             padding-top: 5px;
           }
           .signature-label {
-            font-size: 10px;
+            font-size: 9px;
           }
-          .signature-label-ar {
-            font-size: 10px;
-            direction: rtl;
+          
+          /* Page 3 - Milk Records */
+          .milk-title {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 8px;
+            background: #3b82f6;
+            color: white;
+          }
+          
+          .summary-box {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            margin-top: 15px;
+          }
+          .summary-item {
+            text-align: center;
+          }
+          .summary-label {
+            font-size: 9px;
+            color: #666;
+          }
+          .summary-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2563eb;
           }
           
           @media print { 
-            body { 
-              padding: 10px; 
-              border: 1px solid #3b82f6;
-            }
+            body { padding: 0; }
+            .page { border: 1px solid #3b82f6; }
           }
         </style>
       </head>
       <body>
-        <!-- Header with Logo and Company Info -->
-        <div class="header">
-          <div class="logo">
-            <img src="${logoUrl}" alt="Al Morooj Dairy Logo" />
+        <!-- PAGE 1: Full Purchase Request with Prices -->
+        <div class="page">
+          <div class="header">
+            <div class="logo">
+              <img src="${logoUrl}" alt="Al Morooj Dairy Logo" />
+            </div>
+            <div class="company-info">
+              <div class="company-header">
+                <div class="company-left">
+                  <div>DHOFAR FOODS AND INVESTMENTS (SAOG)</div>
+                </div>
+                <div class="company-right">
+                  <div>شركة ظفار للأغذية والاستثمار (ش.م.ع.ع)</div>
+                </div>
+              </div>
+              <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
+              <div class="company-name" style="font-size: 12px;">شركة المروج للألبان</div>
+              <div class="company-details">
+                <div>CR NO: 1249988 | P.O BOX: 1385, PC-211</div>
+                <div>VAT: OM1100091687</div>
+                <div>SALALAH, SULTANATE OF OMAN</div>
+              </div>
+            </div>
           </div>
-          <div class="company-info">
-            <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
-            <div class="company-details">
-              <div>CR NO: 1249988</div>
-              <div>P.O BOX: 1385,PC-211</div>
-              <div>VAT: OM1100091687</div>
-              <div>SALALAH, SULTANATE OF OMAN</div>
+          
+          <div class="title">PURCHASE REQUEST / طلب شراء</div>
+          
+          <div class="farmer-section">
+            <div class="farmer-left">
+              <div><strong>Farmer Name / اسم المربي:</strong> <span class="farmer-name">${purchase.supplier_name}</span></div>
+              <div><strong>Farmer Code / كود المربي:</strong> ${supplierCode}</div>
+              <div><strong>Farmer ID / رقم الهوية:</strong> ${farmerId}</div>
+            </div>
+            <div class="farmer-right">
+              <div><strong>PR Ref:</strong> <span class="ref-number">AMDC/DFI/${purchase.invoice_number || 'H025-' + purchase.id.slice(0,4)}</span></div>
+              <div><strong>PR Date:</strong> <span class="ref-date">${printDate}</span></div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="sl-col">SL</th>
+                <th class="product-col">اسم المنتج / Product</th>
+                <th class="weight-col">الوزن / Weight</th>
+                <th class="price-col">السعر / Price</th>
+                <th class="qty-col">الكمية / Qty</th>
+                <th class="total-col">المبلغ / Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${feedTypesRowsPage1}
+              <tr class="total-row">
+                <td colspan="5" style="text-align: right; padding-right: 10px;">الإجمالي / Total</td>
+                <td class="total-col">${totalAmount.toFixed(3)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="remarks">
+            <div class="remarks-header">
+              <span>Remark:</span>
+              <span>ملاحظة:</span>
+            </div>
+            <div class="remarks-content">
+              <div class="remarks-en">
+                <ol>
+                  <li>The customer are agreed to transfer the full feeds as per the purchase request signed</li>
+                  <li>All the farmer should bring the ID copy. Without ID proof, feeds will not issue</li>
+                </ol>
+              </div>
+              <div class="remarks-ar">
+                <div>1- أنا العميل الموقع أدناه موافق على ضمن الكمية الموضحة في طلب الشراء بالكامل</div>
+                <div>2- على جميع المربين إحضار نسخة من البطاقة الشخصية، بدون البطاقة لن يتم صرف الأعلاف</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="signature-section">
+            <div class="signature-line">
+              <div class="signature-label">توقيع العميل / Customer Signature</div>
             </div>
           </div>
         </div>
-        
-        <!-- Title -->
-        <div class="title">PURCHASE REQUEST</div>
-        
-        <!-- Farmer Information -->
-        <div class="farmer-section">
-          <div class="farmer-left">
-            <div><strong>Farmer Name</strong> <span class="farmer-name">${purchase.supplier_name}</span></div>
-            <div><strong>Farmer Code</strong> ${purchase.supplier_id?.slice(0,4) || '0000'}</div>
-            <div><strong>Farmer ID</strong> ${purchase.supplier_phone || '0000000'}</div>
+
+        <!-- PAGE 2: Purchase Request without Prices -->
+        <div class="page">
+          <div class="header">
+            <div class="logo">
+              <img src="${logoUrl}" alt="Al Morooj Dairy Logo" />
+            </div>
+            <div class="company-info">
+              <div class="company-header">
+                <div class="company-left">
+                  <div>DHOFAR FOODS AND INVESTMENTS (SAOG)</div>
+                </div>
+                <div class="company-right">
+                  <div>شركة ظفار للأغذية والاستثمار (ش.م.ع.ع)</div>
+                </div>
+              </div>
+              <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
+              <div class="company-name" style="font-size: 12px;">شركة المروج للألبان</div>
+              <div class="company-details">
+                <div>CR NO: 1249988 | P.O BOX: 1385, PC-211</div>
+                <div>VAT: OM1100091687</div>
+                <div>SALALAH, SULTANATE OF OMAN</div>
+              </div>
+            </div>
           </div>
-          <div class="farmer-right">
-            <div class="ref-number">IDC/DFI/${purchase.invoice_number || 'H025-' + purchase.id.slice(0,4)}</div>
-            <div class="ref-date">${printDate}</div>
+          
+          <div class="title">PURCHASE REQUEST / طلب شراء</div>
+          
+          <div class="farmer-section">
+            <div class="farmer-left">
+              <div><strong>Farmer Name / اسم المربي:</strong> <span class="farmer-name">${purchase.supplier_name}</span></div>
+              <div><strong>Farmer Code / كود المربي:</strong> ${supplierCode}</div>
+              <div><strong>Farmer ID / رقم الهوية:</strong> ${farmerId}</div>
+            </div>
+            <div class="farmer-right">
+              <div><strong>PR Ref:</strong> <span class="ref-number">AMDC/DFI/${purchase.invoice_number || 'H025-' + purchase.id.slice(0,4)}</span></div>
+              <div><strong>PR Date:</strong> <span class="ref-date">${printDate}</span></div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="sl-col">SL</th>
+                <th class="product-col">اسم المنتج / Product</th>
+                <th class="weight-col">الوزن بالكيلوا / Weight</th>
+                <th class="qty-col">الكمية / Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${feedTypesRowsPage2}
+            </tbody>
+          </table>
+
+          <div class="remarks">
+            <div class="remarks-header">
+              <span>Remark:</span>
+              <span>ملاحظة:</span>
+            </div>
+            <div class="remarks-content">
+              <div class="remarks-en">
+                <ol>
+                  <li>The customer are agreed to transfer the full feeds as per the purchase request signed</li>
+                  <li>All the farmer should bring the ID copy. Without ID proof, feeds will not issue</li>
+                </ol>
+              </div>
+              <div class="remarks-ar">
+                <div>1- أنا العميل الموقع أدناه موافق على ضمن الكمية الموضحة في طلب الشراء بالكامل</div>
+                <div>2- على جميع المربين إحضار نسخة من البطاقة الشخصية، بدون البطاقة لن يتم صرف الأعلاف</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="signature-section">
+            <div class="signature-line">
+              <div class="signature-label">توقيع العميل / Customer Signature</div>
+            </div>
           </div>
         </div>
 
-        <!-- Products Table -->
-        <table>
-          <thead>
-            <tr>
-              <th class="sl-col">SL</th>
-              <th class="product-col">Product / اسم المنتج</th>
-              <th class="weight-col">Weight / الوزن بالكيلوا</th>
-              <th class="qty-col">Quantity / الكمية</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${feedTypesRows}
-          </tbody>
-        </table>
-
-        <!-- Remarks Section -->
-        <div class="remarks">
-          <div class="remarks-header">
-            <span><strong>Remark:</strong></span>
-            <span style="direction: rtl;"><strong>ملاحظة:</strong></span>
-          </div>
-          <div class="remarks-content">
-            <div class="remarks-en">
-              <ol>
-                <li>The customer are agreed to transfer the full feeds as per the purchase request signed</li>
-                <li>All the farmer should bring the ID copy. Without ID proof, feeds will not issue</li>
-              </ol>
+        <!-- PAGE 3: Milk Delivery Records -->
+        <div class="page">
+          <div class="header">
+            <div class="logo">
+              <img src="${logoUrl}" alt="Al Morooj Dairy Logo" />
             </div>
-            <div class="remarks-ar">
-              <div>1- أنا العميل أوافق على ضمن الكمية الموضحة في طلب الشراء بالكامل</div>
-              <div style="margin-top: 5px;">2- على جميع المربين احضار نسخة من البطاقة الشخصية ، بدون البطاقة الشخصية لن يتم صرف الأعلاف</div>
+            <div class="company-info">
+              <div class="company-header">
+                <div class="company-left">
+                  <div>DHOFAR FOODS AND INVESTMENTS (SAOG)</div>
+                </div>
+                <div class="company-right">
+                  <div>شركة ظفار للأغذية والاستثمار (ش.م.ع.ع)</div>
+                </div>
+              </div>
+              <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
+              <div class="company-name" style="font-size: 12px;">شركة المروج للألبان</div>
+              <div class="company-details">
+                <div>Tel: 23228484 | email: info@almoroojdairy.com</div>
+                <div>SALALAH, SULTANATE OF OMAN</div>
+              </div>
             </div>
           </div>
-        </div>
+          
+          <div class="milk-title">سجل توريدات الحليب - COW MILK RECORDS</div>
+          
+          <div class="farmer-section">
+            <div class="farmer-left">
+              <div><strong>Farmer Name / اسم المربي:</strong> <span class="farmer-name">${purchase.supplier_name}</span></div>
+              <div><strong>Farmer Code / كود المربي:</strong> ${supplierCode}</div>
+            </div>
+            <div class="farmer-right">
+              <div><strong>تاريخ الطباعة:</strong> ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}</div>
+            </div>
+          </div>
 
-        <!-- Signature Section -->
-        <div class="signature-section">
-          <div class="signature-line">
-            <div class="signature-label-ar">توقيع العميل</div>
-            <div class="signature-label">Customer Signature</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">Sl</th>
+                <th style="width: 12%;">Date / التاريخ</th>
+                <th style="width: 12%;">Farmer Code</th>
+                <th style="width: 25%;">Farmer Name / اسم المربي</th>
+                <th style="width: 12%;">Milk Qty / الكمية</th>
+                <th style="width: 12%;">Rate / السعر</th>
+                <th style="width: 15%;">Amount / المبلغ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${milkDeliveriesRows}
+              ${milkDeliveries.length > 0 ? `
+              <tr class="total-row">
+                <td colspan="4" style="text-align: right; padding-right: 10px; font-weight: bold;">Total / الإجمالي</td>
+                <td style="text-align: center; font-weight: bold;">${totalMilkQty.toFixed(2)}</td>
+                <td></td>
+                <td style="text-align: center; font-weight: bold;">${totalMilkAmount.toFixed(3)}</td>
+              </tr>
+              ` : ''}
+            </tbody>
+          </table>
+
+          <div class="summary-box">
+            <div class="summary-item">
+              <div class="summary-label">إجمالي كمية الحليب</div>
+              <div class="summary-value">${totalMilkQty.toFixed(2)} L</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">إجمالي مبلغ الحليب</div>
+              <div class="summary-value">${totalMilkAmount.toFixed(3)} OMR</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">إجمالي مشتريات الأعلاف</div>
+              <div class="summary-value">${totalAmount.toFixed(3)} OMR</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">صافي الرصيد</div>
+              <div class="summary-value" style="color: ${totalMilkAmount - totalAmount >= 0 ? '#16a34a' : '#dc2626'};">${(totalMilkAmount - totalAmount).toFixed(3)} OMR</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; font-size: 9px; color: #666; text-align: center;">
+            <div>Al Morooj Dairy Co. SAOC</div>
+            <div>Generated on ${new Date().toLocaleString('en-GB')}</div>
           </div>
         </div>
       </body>
