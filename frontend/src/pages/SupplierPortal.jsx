@@ -448,7 +448,7 @@ const SupplierPortal = () => {
                   ) : (
                     <LogIn className="w-4 h-4 me-2" />
                   )}
-                  دخول
+                  {txt("دخول", "Login")}
                 </Button>
                 <Button
                   type="button"
@@ -460,7 +460,7 @@ const SupplierPortal = () => {
                   }}
                 >
                   <Key className="w-4 h-4 me-2" />
-                  نسيت كلمة المرور؟
+                  {txt("نسيت كلمة المرور؟", "Forgot password?")}
                 </Button>
               </form>
             ) : (
@@ -471,43 +471,43 @@ const SupplierPortal = () => {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        كود المورد
+                        {txt("كود المورد", "Supplier Code")}
                       </Label>
                       <Input
                         type="text"
                         value={recoveryCode}
                         onChange={(e) => setRecoveryCode(e.target.value)}
-                        placeholder="أدخل كود المورد"
+                        placeholder={txt("أدخل كود المورد", "Enter supplier code")}
                         className="text-center"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Phone className="w-4 h-4" />
-                        رقم الهاتف المسجل
+                        {txt("رقم الهاتف المسجل", "Registered Phone")}
                       </Label>
                       <Input
                         type="tel"
                         value={recoveryPhone}
                         onChange={(e) => setRecoveryPhone(e.target.value)}
-                        placeholder="أدخل رقم هاتفك المسجل"
+                        placeholder={txt("أدخل رقم هاتفك المسجل", "Enter your registered phone")}
                         className="text-center"
                         dir="ltr"
                       />
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : null}
-                      استرجاع كلمة المرور
+                      {txt("استرجاع كلمة المرور", "Recover Password")}
                     </Button>
                   </form>
                 ) : (
                   <div className="text-center space-y-4">
                     <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">كلمة المرور الجديدة:</p>
+                      <p className="text-sm text-muted-foreground mb-2">{txt("كلمة المرور الجديدة:", "New Password:")}</p>
                       <p className="text-3xl font-bold text-green-600">{recoveredPassword}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة
+                      {txt("يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة", "You can now login with the new password")}
                     </p>
                     <Button
                       onClick={() => {
