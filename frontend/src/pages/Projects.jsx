@@ -491,6 +491,23 @@ const Projects = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Contracts Tab */}
+        <TabsContent value="contracts">
+          <ProjectContracts 
+            project={selectedProject} 
+            onUpdate={fetchAllData}
+          />
+        </TabsContent>
+
+        {/* Invoices Tab */}
+        <TabsContent value="invoices">
+          <ProjectInvoices 
+            project={selectedProject}
+            contracts={contracts}
+            onUpdate={fetchAllData}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Project Dialog */}
