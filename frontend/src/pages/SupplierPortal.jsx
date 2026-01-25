@@ -697,35 +697,35 @@ const SupplierPortal = () => {
                 {/* Summary */}
                 <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-muted rounded-lg">
                   <div>
-                    <p className="text-sm text-muted-foreground">إجمالي الكمية</p>
-                    <p className="text-xl font-bold">{(supplier?.summary?.total_quantity || 0).toLocaleString()} لتر</p>
+                    <p className="text-sm text-muted-foreground">{txt("إجمالي الكمية", "Total Quantity")}</p>
+                    <p className="text-xl font-bold">{(supplier?.summary?.total_quantity || 0).toLocaleString()} {txt("لتر", "L")}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">إجمالي المبلغ</p>
-                    <p className="text-xl font-bold">{(supplier?.summary?.total_amount || 0).toLocaleString()} ريال</p>
+                    <p className="text-sm text-muted-foreground">{txt("إجمالي المبلغ", "Total Amount")}</p>
+                    <p className="text-xl font-bold">{(supplier?.summary?.total_amount || 0).toLocaleString()} {txt("ريال", "OMR")}</p>
                   </div>
                 </div>
                 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>الكمية (لتر)</TableHead>
-                      <TableHead>السعر/لتر</TableHead>
-                      <TableHead>المبلغ</TableHead>
+                      <TableHead>{txt("التاريخ", "Date")}</TableHead>
+                      <TableHead>{txt("الكمية (لتر)", "Quantity (L)")}</TableHead>
+                      <TableHead>{txt("السعر/لتر", "Price/L")}</TableHead>
+                      <TableHead>{txt("المبلغ", "Amount")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {milkReceptions.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                          لا توجد توريدات في هذه الفترة
+                          {txt("لا توجد توريدات في هذه الفترة", "No deliveries in this period")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       milkReceptions.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell>{new Date(r.date).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell>{new Date(r.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}</TableCell>
                           <TableCell>{r.quantity_liters?.toLocaleString()}</TableCell>
                           <TableCell>{r.price_per_liter}</TableCell>
                           <TableCell className="font-medium">{r.total_amount?.toLocaleString()}</TableCell>
@@ -742,33 +742,33 @@ const SupplierPortal = () => {
           <TabsContent value="feed">
             <Card>
               <CardHeader>
-                <CardTitle>طلبات تحويل الرصيد إلى أعلاف</CardTitle>
+                <CardTitle>{txt("طلبات تحويل الرصيد إلى أعلاف", "Balance to Feed Requests")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>نوع العلف</TableHead>
-                      <TableHead>الكمية</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                      <TableHead>الحالة</TableHead>
+                      <TableHead>{txt("التاريخ", "Date")}</TableHead>
+                      <TableHead>{txt("نوع العلف", "Feed Type")}</TableHead>
+                      <TableHead>{txt("الكمية", "Quantity")}</TableHead>
+                      <TableHead>{txt("المبلغ", "Amount")}</TableHead>
+                      <TableHead>{txt("الحالة", "Status")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {feedRequests.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                          لا توجد طلبات أعلاف
+                          {txt("لا توجد طلبات أعلاف", "No feed requests")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       feedRequests.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell>{new Date(r.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell>{new Date(r.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}</TableCell>
                           <TableCell>{FEED_TYPES.find(f => f.id === r.feed_type)?.name || r.feed_type}</TableCell>
                           <TableCell>{r.quantity}</TableCell>
-                          <TableCell>{r.amount_to_deduct?.toLocaleString()} ريال</TableCell>
+                          <TableCell>{r.amount_to_deduct?.toLocaleString()} {txt("ريال", "OMR")}</TableCell>
                           <TableCell>{getStatusBadge(r.status)}</TableCell>
                         </TableRow>
                       ))
