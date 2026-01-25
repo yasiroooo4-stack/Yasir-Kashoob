@@ -1509,24 +1509,48 @@ class ProjectTeamMember(ProjectTeamMemberBase):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class ProjectMilestoneBase(BaseModel):
+    """نموذج مرحلة المشروع"""
     model_config = ConfigDict(extra="ignore")
     project_id: str
     project_name: str
-    name: str
+    name: str  # اسم المرحلة (مثل: الحفر، الأساس، البناء)
     description: Optional[str] = None
     due_date: str
-    deliverables: Optional[str] = None
-    payment_amount: Optional[float] = None
+    deliverables: Optional[str] = None  # المخرجات المتوقعة
+    payment_amount: Optional[float] = None  # مبلغ الدفعة
+    order: int = 1  # ترتيب المرحلة
 
 class ProjectMilestoneCreate(ProjectMilestoneBase):
     pass
 
 class ProjectMilestone(ProjectMilestoneBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    status: str = "pending"
+    status: str = "pending"  # pending, in_progress, completed
+    start_date: Optional[str] = None
     achieved_date: Optional[str] = None
+    completion_percentage: int = 0
     notes: Optional[str] = None
+    # بيانات الفاتورة المرتبطة
+    invoice_id: Optional[str] = None
+    invoice_number: Optional[str] = None
+    invoice_amount: Optional[float] = None
+    invoice_status: Optional[str] = None  # pending, approved, paid
+    # المرفقات
+    attachments: List[str] = []  # قائمة روابط المرفقات
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# نموذج مرفق المرحلة
+class MilestoneAttachment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    milestone_id: str
+    file_name: str
+    file_type: str  # invoice, document, image, contract
+    file_url: str
+    file_size: Optional[int] = None
+    description: Optional[str] = None
+    uploaded_by: Optional[str] = None
+    uploaded_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # ==================== PROJECT CONTRACT & INVOICE MODELS ====================
 
