@@ -497,6 +497,14 @@ const Projects = () => {
           </Card>
         </TabsContent>
 
+        {/* Milestones Tab */}
+        <TabsContent value="milestones">
+          <ProjectMilestones 
+            project={selectedProject}
+            onUpdate={fetchAllData}
+          />
+        </TabsContent>
+
         {/* Contracts Tab */}
         <TabsContent value="contracts">
           <ProjectContracts 
