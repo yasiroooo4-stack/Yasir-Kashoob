@@ -272,7 +272,7 @@ const Projects = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="projects" className="gap-2">
             <FolderKanban className="w-4 h-4" />
             {language === "ar" ? "المشاريع" : "Projects"}
