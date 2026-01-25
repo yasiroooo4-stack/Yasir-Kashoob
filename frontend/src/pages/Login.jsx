@@ -31,11 +31,6 @@ const Login = () => {
     password: "",
   });
 
-  // Get user location on component mount
-  useEffect(() => {
-    requestLocation();
-  }, []);
-
   // Check location against geofence
   const checkLocationAllowed = async (latitude, longitude) => {
     try {
