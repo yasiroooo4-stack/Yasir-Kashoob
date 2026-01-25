@@ -75,23 +75,37 @@ const Login = () => {
     setLocationStatus("loading");
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
+        async (position) => {
+          const loc = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
-          });
-          setLocationStatus("success");
+          };
+          setUserLocation(loc);
+          
+          // Check if location is allowed
+          const allowed = await checkLocationAllowed(loc.latitude, loc.longitude);
+          if (allowed) {
+            setLocationStatus("success");
+          }
         },
-        (error) => {
+        async (error) => {
           console.log("Location error:", error);
-          setLocationStatus("error");
-          // Don't block login, just warn
+          // Check if login without location is allowed
+          const allowed = await checkLocationAllowed(null, null);
+          if (allowed) {
+            setLocationStatus("error");
+          }
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      setLocationStatus("error");
+      // Check if login without location is allowed
+      checkLocationAllowed(null, null).then(allowed => {
+        if (allowed) {
+          setLocationStatus("error");
+        }
+      });
     }
   };
 
@@ -101,6 +115,17 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if location is blocked
+    if (locationBlocked) {
+      toast.error(
+        language === "ar"
+          ? "لا يمكن تسجيل الدخول من هذا الموقع"
+          : "Login not allowed from this location"
+      );
+      return;
+    }
+    
     setLoading(true);
 
     const result = await login(formData.username, formData.password);
@@ -113,7 +138,7 @@ const Login = () => {
           params: {
             latitude: userLocation?.latitude,
             longitude: userLocation?.longitude,
-            location_name: null,
+            location_name: locationMessage || null,
             ip_address: null, // Will be captured by backend
             user_agent: navigator.userAgent,
           },
