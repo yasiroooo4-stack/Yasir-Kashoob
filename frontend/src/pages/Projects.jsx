@@ -281,6 +281,10 @@ const Projects = () => {
             <ListTodo className="w-4 h-4" />
             {language === "ar" ? "المهام" : "Tasks"}
           </TabsTrigger>
+          <TabsTrigger value="milestones" className="gap-2">
+            <Flag className="w-4 h-4" />
+            {language === "ar" ? "المراحل" : "Milestones"}
+          </TabsTrigger>
           <TabsTrigger value="contracts" className="gap-2">
             <FileText className="w-4 h-4" />
             {language === "ar" ? "العقود" : "Contracts"}
