@@ -972,34 +972,34 @@ const SupplierPortal = () => {
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="أدخل كلمة المرور الحالية"
+                placeholder={txt("أدخل كلمة المرور الحالية", "Enter current password")}
               />
             </div>
             <div className="space-y-2">
-              <Label>كلمة المرور الجديدة</Label>
+              <Label>{txt("كلمة المرور الجديدة", "New Password")}</Label>
               <Input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="أدخل كلمة المرور الجديدة (4 أحرف على الأقل)"
+                placeholder={txt("أدخل كلمة المرور الجديدة (4 أحرف على الأقل)", "Enter new password (min 4 chars)")}
               />
             </div>
             <div className="space-y-2">
-              <Label>تأكيد كلمة المرور الجديدة</Label>
+              <Label>{txt("تأكيد كلمة المرور الجديدة", "Confirm New Password")}</Label>
               <Input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="أعد إدخال كلمة المرور الجديدة"
+                placeholder={txt("أعد إدخال كلمة المرور الجديدة", "Re-enter new password")}
               />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setChangePasswordDialogOpen(false)}>
-                إلغاء
+                {txt("إلغاء", "Cancel")}
               </Button>
               <Button type="submit" className="gradient-primary text-white" disabled={loading}>
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-                تغيير كلمة المرور
+                {txt("تغيير كلمة المرور", "Change Password")}
               </Button>
             </DialogFooter>
           </form>
