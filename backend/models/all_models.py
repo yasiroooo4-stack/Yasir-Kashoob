@@ -1220,6 +1220,7 @@ class PayrollRecord(BaseModel):
 class CollectionCenterBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: str
+    name_en: Optional[str] = None
     code: str
     address: Optional[str] = None
     phone: Optional[str] = None
