@@ -154,13 +154,20 @@ const FeedPurchases = () => {
     setSelectedSupplierBalance(0);
     
     if (code.length >= 2) {
-      // Search for supplier by supplier_code or id
-      const supplier = suppliers.find((s) => 
-        (s.supplier_code && s.supplier_code.toLowerCase().includes(code.toLowerCase())) ||
-        s.id?.toLowerCase().includes(code.toLowerCase())
+      // Search for supplier by supplier_code (exact match first, then partial)
+      let supplier = suppliers.find((s) => 
+        s.supplier_code && s.supplier_code === code
       );
       
-      if (supplier && supplier.balance > 0) {
+      // If no exact match, try partial match
+      if (!supplier) {
+        supplier = suppliers.find((s) => 
+          (s.supplier_code && s.supplier_code.toLowerCase().includes(code.toLowerCase())) ||
+          s.id?.toLowerCase().includes(code.toLowerCase())
+        );
+      }
+      
+      if (supplier) {
         setPurchaseForm({
           ...purchaseForm,
           supplier_code: code,
