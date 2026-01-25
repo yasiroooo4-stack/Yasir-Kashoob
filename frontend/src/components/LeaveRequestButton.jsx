@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Plus, Upload, FileText } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
