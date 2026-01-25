@@ -240,7 +240,6 @@ const LeaveRequestButton = () => {
       attachment_url: "",
     });
     setAttachmentFile(null);
-  };
     setLeaveBalance(null);
   };
 
