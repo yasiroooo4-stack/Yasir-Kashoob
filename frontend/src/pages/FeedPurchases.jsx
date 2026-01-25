@@ -1778,6 +1778,18 @@ const FeedPurchases = () => {
           {/* Reports Tab */}
           {activeTab === "reports" && feedReport && (
             <div className="space-y-6">
+              {/* Export Button */}
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleExportReportPDF}
+                  className="gap-2 bg-red-600 hover:bg-red-700"
+                  data-testid="export-report-pdf"
+                >
+                  <FileText className="w-4 h-4" />
+                  {language === "ar" ? "تصدير PDF" : "Export PDF"}
+                </Button>
+              </div>
+
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
