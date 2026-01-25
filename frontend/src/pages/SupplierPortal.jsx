@@ -718,6 +718,8 @@ const SupplierPortal = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{txt("التاريخ", "Date")}</TableHead>
+                      <TableHead>{txt("نوع الحليب", "Milk Type")}</TableHead>
+                      <TableHead>{txt("المركز", "Center")}</TableHead>
                       <TableHead>{txt("الكمية (لتر)", "Quantity (L)")}</TableHead>
                       <TableHead>{txt("السعر/لتر", "Price/L")}</TableHead>
                       <TableHead>{txt("المبلغ", "Amount")}</TableHead>
@@ -726,7 +728,7 @@ const SupplierPortal = () => {
                   <TableBody>
                     {milkReceptions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           {txt("لا توجد توريدات في هذه الفترة", "No deliveries in this period")}
                         </TableCell>
                       </TableRow>
@@ -734,6 +736,12 @@ const SupplierPortal = () => {
                       milkReceptions.map((r) => (
                         <TableRow key={r.id}>
                           <TableCell>{new Date(r.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {language === "ar" ? r.milk_type_ar : r.milk_type_en}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{language === "ar" ? r.center_name : r.center_name_en}</TableCell>
                           <TableCell>{r.quantity_liters?.toLocaleString()}</TableCell>
                           <TableCell>{r.price_per_liter}</TableCell>
                           <TableCell className="font-medium">{r.total_amount?.toLocaleString()}</TableCell>

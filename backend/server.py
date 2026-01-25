@@ -1730,6 +1730,29 @@ async def get_supplier_milk_receptions(
     
     receptions = await db.milk_receptions.find(query, {"_id": 0}).sort("date", -1).to_list(100)
     
+    # Add milk_type and center_name to each reception
+    # Milk type translations
+    milk_type_map = {
+        "cow": {"ar": "بقري", "en": "Cow"},
+        "camel": {"ar": "إبل", "en": "Camel"},
+        "goat": {"ar": "ماعز", "en": "Goat"},
+        "sheep": {"ar": "غنم", "en": "Sheep"},
+    }
+    
+    # Get supplier's center info
+    supplier_center_name = supplier.get("center_name", "")
+    supplier_center_name_en = supplier.get("center", "")  # English center name is stored in 'center' field
+    
+    for reception in receptions:
+        # Add milk type with translations
+        milk_type = reception.get("milk_type", "cow")
+        reception["milk_type_ar"] = milk_type_map.get(milk_type, {}).get("ar", milk_type)
+        reception["milk_type_en"] = milk_type_map.get(milk_type, {}).get("en", milk_type)
+        
+        # Add center name (from supplier)
+        reception["center_name"] = supplier_center_name
+        reception["center_name_en"] = supplier_center_name_en
+    
     # Calculate totals
     total_quantity = sum(r.get("quantity_liters", 0) for r in receptions)
     total_amount = sum(r.get("total_amount", 0) for r in receptions)
@@ -1739,7 +1762,11 @@ async def get_supplier_milk_receptions(
             "name": supplier.get("name"),
             "code": supplier.get("supplier_code"),
             "balance": supplier.get("balance", 0),
-            "total_supplied": supplier.get("total_supplied", 0)
+            "total_supplied": supplier.get("total_supplied", 0),
+            "center_name": supplier_center_name,
+            "center_name_en": supplier_center_name_en,
+            "milk_type": supplier.get("milk_type", "cow"),
+            "milk_type_ar": supplier.get("milk_type_ar", "بقري")
         },
         "receptions": receptions,
         "summary": {
