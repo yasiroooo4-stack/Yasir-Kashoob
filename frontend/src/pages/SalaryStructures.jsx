@@ -304,8 +304,8 @@ const SalaryStructures = () => {
     <div className="space-y-6 p-6" data-testid="salary-structures-page">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">هيكل الرواتب والبدلات</h1>
-          <p className="text-gray-600">إدارة الرواتب الأساسية والبدلات والعطل الرسمية</p>
+          <h1 className="text-2xl font-bold text-gray-900">{language === "ar" ? "هيكل الرواتب والبدلات" : "Salary & Allowances Structure"}</h1>
+          <p className="text-gray-600">{language === "ar" ? "إدارة الرواتب الأساسية والبدلات والعطل الرسمية" : "Manage base salaries, allowances and public holidays"}</p>
         </div>
       </div>
 
@@ -318,7 +318,7 @@ const SalaryStructures = () => {
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">إجمالي الموظفين</p>
+                <p className="text-sm text-gray-500">{language === "ar" ? "إجمالي الموظفين" : "Total Employees"}</p>
                 <p className="text-2xl font-bold">{employees.length}</p>
               </div>
             </div>
@@ -332,7 +332,7 @@ const SalaryStructures = () => {
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">هياكل محددة</p>
+                <p className="text-sm text-gray-500">{language === "ar" ? "هياكل محددة" : "Defined Structures"}</p>
                 <p className="text-2xl font-bold">{structures.length}</p>
               </div>
             </div>
@@ -346,9 +346,9 @@ const SalaryStructures = () => {
                 <Calculator className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">إجمالي الرواتب</p>
+                <p className="text-sm text-gray-500">{language === "ar" ? "إجمالي الرواتب" : "Total Salaries"}</p>
                 <p className="text-2xl font-bold">
-                  {structures.reduce((sum, s) => sum + (s.total_salary || 0), 0).toLocaleString()} ر.ع
+                  {structures.reduce((sum, s) => sum + (s.total_salary || 0), 0).toLocaleString()} {language === "ar" ? "ر.ع" : "OMR"}
                 </p>
               </div>
             </div>
@@ -362,7 +362,7 @@ const SalaryStructures = () => {
                 <Calendar className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">العطل الرسمية</p>
+                <p className="text-sm text-gray-500">{language === "ar" ? "العطل الرسمية" : "Public Holidays"}</p>
                 <p className="text-2xl font-bold">{holidays.length}</p>
               </div>
             </div>
@@ -375,11 +375,11 @@ const SalaryStructures = () => {
         <TabsList>
           <TabsTrigger value="structures" data-testid="structures-tab">
             <DollarSign className="w-4 h-4 me-2" />
-            هيكل الرواتب
+            {language === "ar" ? "هيكل الرواتب" : "Salary Structure"}
           </TabsTrigger>
           <TabsTrigger value="holidays" data-testid="holidays-tab">
             <Calendar className="w-4 h-4 me-2" />
-            العطل الرسمية
+            {language === "ar" ? "العطل الرسمية" : "Public Holidays"}
           </TabsTrigger>
         </TabsList>
 
