@@ -1612,6 +1612,55 @@ async def get_supplier_milk_receptions(
         }
     }
 
+# Supplier Portal - Get data by supplier ID (for portal use)
+@api_router.get("/supplier-portal/data/{supplier_id}")
+async def get_supplier_portal_data_by_id(supplier_id: str):
+    """جلب بيانات المورد مع سجلات الحليب"""
+    supplier = await db.suppliers.find_one({"id": supplier_id}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="المورد غير موجود")
+    
+    # Get milk receptions for last 30 days
+    from datetime import datetime, timedelta
+    thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    receptions = await db.milk_receptions.find(
+        {"supplier_id": supplier_id, "date": {"$gte": thirty_days_ago}},
+        {"_id": 0}
+    ).sort("date", -1).to_list(100)
+    
+    # Transform data for display
+    reception_list = []
+    for r in receptions:
+        reception_list.append({
+            "id": r.get("id"),
+            "date": r.get("date"),
+            "center": r.get("center_name") or r.get("center"),
+            "collection_point": r.get("center_name") or r.get("center"),
+            "milk_type": r.get("milk_type", "cow"),
+            "quantity": r.get("quantity_liters", 0),
+            "price_per_liter": r.get("price_per_liter", 0),
+            "unit_price": r.get("price_per_liter", 0),
+            "total_value": r.get("total_amount", 0),
+            "created_at": r.get("created_at"),
+        })
+    
+    # Calculate summary
+    total_quantity = sum(r.get("quantity", 0) for r in reception_list)
+    total_value = sum(r.get("total_value", 0) for r in reception_list)
+    avg_price = total_value / total_quantity if total_quantity > 0 else 0
+    
+    return {
+        "supplier": supplier,
+        "receptions": reception_list,
+        "summary": {
+            "total_quantity": total_quantity,
+            "total_value": total_value,
+            "avg_price": avg_price,
+            "reception_count": len(reception_list)
+        }
+    }
+
 # Supplier Portal - Request feed (تحويل رصيد إلى أعلاف)
 @api_router.post("/supplier-portal/feed-requests")
 async def create_supplier_feed_request(request_data: SupplierFeedRequestCreate):
