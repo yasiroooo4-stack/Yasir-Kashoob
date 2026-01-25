@@ -321,6 +321,7 @@ const Login = () => {
                 <div className={`flex items-center justify-center gap-2 p-2 rounded-lg text-sm ${
                   locationStatus === "success" ? "bg-green-50 text-green-700" :
                   locationStatus === "loading" ? "bg-blue-50 text-blue-700" :
+                  locationStatus === "blocked" ? "bg-red-50 text-red-700" :
                   locationStatus === "error" ? "bg-yellow-50 text-yellow-700" :
                   "bg-gray-50 text-gray-500"
                 }`}>
@@ -332,14 +333,20 @@ const Login = () => {
                   )}
                   {locationStatus === "success" && (
                     <>
-                      <MapPin className="w-4 h-4" />
-                      {language === "ar" ? "تم تحديد الموقع" : "Location detected"}
+                      <ShieldCheck className="w-4 h-4" />
+                      {locationMessage || (language === "ar" ? "تم تحديد الموقع" : "Location detected")}
+                    </>
+                  )}
+                  {locationStatus === "blocked" && (
+                    <>
+                      <ShieldAlert className="w-4 h-4" />
+                      {locationMessage || (language === "ar" ? "الموقع غير مصرح" : "Location not authorized")}
                     </>
                   )}
                   {locationStatus === "error" && (
                     <>
                       <AlertTriangle className="w-4 h-4" />
-                      {language === "ar" ? "لم يتم تحديد الموقع" : "Location not available"}
+                      {locationMessage || (language === "ar" ? "لم يتم تحديد الموقع" : "Location not available")}
                       <Button 
                         type="button" 
                         variant="link" 
@@ -352,6 +359,21 @@ const Login = () => {
                     </>
                   )}
                 </div>
+
+                {/* Blocked Location Warning */}
+                {locationBlocked && (
+                  <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800 text-sm">
+                    <div className="flex items-center gap-2 font-medium">
+                      <ShieldAlert className="w-5 h-5" />
+                      {language === "ar" ? "تسجيل الدخول غير مسموح" : "Login Not Allowed"}
+                    </div>
+                    <p className="mt-1 text-xs">
+                      {language === "ar" 
+                        ? "أنت خارج نطاق المواقع المسموح بها. يرجى التواصل مع المسؤول."
+                        : "You are outside the allowed locations. Please contact admin."}
+                    </p>
+                  </div>
+                )}
 
                 {/* Forgot Password Link */}
                 <div className="text-center pt-4">
