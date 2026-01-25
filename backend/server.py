@@ -8447,6 +8447,7 @@ AVAILABLE_PERMISSIONS = [
     {"id": "warehouse_issue_feed", "name": "صرف الأعلاف", "name_en": "Issue Feed"},
     {"id": "warehouse_issue_supplies", "name": "صرف اللوازم", "name_en": "Issue Supplies"},
     {"id": "warehouse_issue_all", "name": "صرف جميع المواد", "name_en": "Issue All Materials"},
+    {"id": "warehouse_approve_issue", "name": "الموافقة على طلبات الصرف", "name_en": "Approve Issue Requests"},
     # Legal permissions
     {"id": "legal", "name": "القسم القانوني", "name_en": "Legal"},
     {"id": "contracts", "name": "العقود القانونية", "name_en": "Legal Contracts"},
