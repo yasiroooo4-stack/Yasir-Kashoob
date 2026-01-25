@@ -10953,6 +10953,188 @@ async def pay_invoice(
     
     return {"message": "تم صرف الفاتورة بنجاح"}
 
+# ==================== PROJECT MILESTONES (مراحل المشروع) ====================
+
+@api_router.post("/projects/{project_id}/milestones")
+async def create_project_milestone(
+    project_id: str,
+    milestone_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """إنشاء مرحلة جديدة للمشروع"""
+    from models.all_models import ProjectMilestone
+    
+    project = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="المشروع غير موجود")
+    
+    # Get max order
+    max_order = await db.project_milestones.find_one(
+        {"project_id": project_id},
+        sort=[("order", -1)]
+    )
+    next_order = (max_order.get("order", 0) if max_order else 0) + 1
+    
+    milestone = ProjectMilestone(
+        **milestone_data,
+        project_id=project_id,
+        project_name=project.get("name"),
+        order=next_order
+    )
+    
+    await db.project_milestones.insert_one(milestone.model_dump())
+    
+    return {**milestone.model_dump(), "_id": None}
+
+@api_router.get("/projects/{project_id}/milestones")
+async def get_project_milestones(
+    project_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب مراحل المشروع"""
+    milestones = await db.project_milestones.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("order", 1).to_list(100)
+    return milestones
+
+@api_router.put("/projects/milestones/{milestone_id}")
+async def update_milestone(
+    milestone_id: str,
+    update_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """تحديث مرحلة"""
+    await db.project_milestones.update_one(
+        {"id": milestone_id},
+        {"$set": update_data}
+    )
+    milestone = await db.project_milestones.find_one({"id": milestone_id}, {"_id": 0})
+    return milestone
+
+@api_router.put("/projects/milestones/{milestone_id}/status")
+async def update_milestone_status(
+    milestone_id: str,
+    status: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """تحديث حالة المرحلة"""
+    update_data = {"status": status}
+    
+    if status == "in_progress":
+        update_data["start_date"] = datetime.now(timezone.utc).isoformat()
+    elif status == "completed":
+        update_data["achieved_date"] = datetime.now(timezone.utc).isoformat()
+        update_data["completion_percentage"] = 100
+    
+    if notes:
+        update_data["notes"] = notes
+    
+    await db.project_milestones.update_one(
+        {"id": milestone_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "تم تحديث حالة المرحلة"}
+
+@api_router.post("/projects/milestones/{milestone_id}/invoice")
+async def create_milestone_invoice(
+    milestone_id: str,
+    invoice_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """إنشاء فاتورة مرتبطة بمرحلة"""
+    from models.all_models import ProjectInvoice
+    
+    milestone = await db.project_milestones.find_one({"id": milestone_id}, {"_id": 0})
+    if not milestone:
+        raise HTTPException(status_code=404, detail="المرحلة غير موجودة")
+    
+    # Generate invoice number
+    count = await db.project_invoices.count_documents({})
+    invoice_number = f"INV-{datetime.now().year}-{count + 1:04d}"
+    
+    invoice = ProjectInvoice(
+        project_id=milestone["project_id"],
+        project_name=milestone["project_name"],
+        invoice_type="milestone",
+        milestone_name=milestone["name"],
+        description=invoice_data.get("description", f"فاتورة مرحلة: {milestone['name']}"),
+        amount=invoice_data.get("amount", milestone.get("payment_amount", 0)),
+        invoice_number=invoice_number,
+        status="pending_project_manager",
+        created_by=current_user["id"]
+    )
+    
+    await db.project_invoices.insert_one(invoice.model_dump())
+    
+    # Link invoice to milestone
+    await db.project_milestones.update_one(
+        {"id": milestone_id},
+        {"$set": {
+            "invoice_id": invoice.id,
+            "invoice_number": invoice_number,
+            "invoice_amount": invoice.amount,
+            "invoice_status": "pending_project_manager"
+        }}
+    )
+    
+    return {**invoice.model_dump(), "_id": None}
+
+@api_router.post("/projects/milestones/{milestone_id}/attachments")
+async def add_milestone_attachment(
+    milestone_id: str,
+    attachment_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """إضافة مرفق للمرحلة"""
+    from models.all_models import MilestoneAttachment
+    
+    milestone = await db.project_milestones.find_one({"id": milestone_id})
+    if not milestone:
+        raise HTTPException(status_code=404, detail="المرحلة غير موجودة")
+    
+    attachment = MilestoneAttachment(
+        milestone_id=milestone_id,
+        file_name=attachment_data.get("file_name"),
+        file_type=attachment_data.get("file_type", "document"),
+        file_url=attachment_data.get("file_url"),
+        file_size=attachment_data.get("file_size"),
+        description=attachment_data.get("description"),
+        uploaded_by=current_user["full_name"]
+    )
+    
+    await db.milestone_attachments.insert_one(attachment.model_dump())
+    
+    # Update milestone attachments list
+    await db.project_milestones.update_one(
+        {"id": milestone_id},
+        {"$push": {"attachments": attachment.file_url}}
+    )
+    
+    return {**attachment.model_dump(), "_id": None}
+
+@api_router.get("/projects/milestones/{milestone_id}/attachments")
+async def get_milestone_attachments(
+    milestone_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب مرفقات المرحلة"""
+    attachments = await db.milestone_attachments.find(
+        {"milestone_id": milestone_id}, {"_id": 0}
+    ).sort("uploaded_at", -1).to_list(100)
+    return attachments
+
+@api_router.delete("/projects/milestones/{milestone_id}")
+async def delete_milestone(
+    milestone_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حذف مرحلة"""
+    await db.project_milestones.delete_one({"id": milestone_id})
+    await db.milestone_attachments.delete_many({"milestone_id": milestone_id})
+    return {"message": "تم حذف المرحلة"}
+
 # ==================== OPERATIONS MODULE ROUTES ====================
 # REFACTORED: Operations routes moved to routes/operations_routes.py
 # ================================================================
