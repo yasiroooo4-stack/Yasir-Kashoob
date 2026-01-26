@@ -13285,7 +13285,9 @@ async def get_user_settings(current_user: dict = Depends(get_current_user)):
             "background_id": "bg1",
             "background_url": default_bg["url"],
             "theme": "light",
-            "sidebar_collapsed": False
+            "sidebar_collapsed": False,
+            "app_theme": "default",
+            "dark_mode": False
         }
     return settings
 
@@ -13307,6 +13309,8 @@ async def update_user_settings(settings: UserAppearanceSettings, current_user: d
         "background_url": background_url,
         "theme": settings.theme,
         "sidebar_collapsed": settings.sidebar_collapsed,
+        "app_theme": settings.app_theme,
+        "dark_mode": settings.dark_mode,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
