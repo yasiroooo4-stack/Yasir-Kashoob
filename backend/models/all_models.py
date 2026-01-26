@@ -2278,6 +2278,31 @@ AVAILABLE_PERMISSIONS = [
     "warehouse_issue_feed",     # صرف من مخزن الأعلاف
     "warehouse_issue_equipment", # صرف من مخزن المعدات وقطع الغيار
     "warehouse_issue_supplies", # صرف من مخزن مستلزمات الموردين
+    "warehouse_issue_all",      # صرف من جميع المخازن
+    "warehouse_approve_issue",  # الموافقة على طلبات الصرف
+    
+    # بوابة الموردين
+    "supplier_portal_view",     # عرض بوابة الموردين
+    "supplier_portal_messages", # رسائل الموردين
+    "supplier_portal_feed_requests", # طلبات الأعلاف
+    
+    # التسويق
+    "marketing_view",           # عرض التسويق
+    "marketing_create",         # إنشاء حملة تسويقية
+    "marketing_edit",           # تعديل حملة تسويقية
+    "marketing_reports",        # تقارير التسويق
+    
+    # المالية
+    "finance_view",             # عرض المالية
+    "finance_transactions",     # المعاملات المالية
+    "finance_reports",          # التقارير المالية
+    "finance_approve",          # الموافقة على المعاملات المالية
+    
+    # الموافقات العامة
+    "approvals_view",           # عرض الموافقات
+    "approvals_hr",             # موافقات الموارد البشرية
+    "approvals_finance",        # موافقات المالية
+    "approvals_gm",             # موافقات المدير العام
     "warehouse_issue_all",      # صرف من جميع المخازن (للمشرفين)
     "warehouse_approve_issue",  # الموافقة على طلبات الصرف
 ]
