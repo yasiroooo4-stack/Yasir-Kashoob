@@ -455,10 +455,11 @@ async def login(credentials: UserLogin):
         ).to_list(100)
         user_permissions = [g["permission"] for g in granted_permissions]
         
-        # Also get department and legacy permissions from hr_employees
+        # Also get department, position and legacy permissions from hr_employees
         if employee:
             user_permissions.extend(employee.get("permissions", []))
             user["department"] = employee.get("department")
+            user["position"] = employee.get("position")  # إضافة المنصب
         
         # Update the employee_id for the response
         employee_id = actual_employee_id
