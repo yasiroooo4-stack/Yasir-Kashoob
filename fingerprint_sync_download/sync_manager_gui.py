@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://milkmaster-6.preview.emergentagent.com',
+            'api_url': 'https://farmeasy-system.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,
