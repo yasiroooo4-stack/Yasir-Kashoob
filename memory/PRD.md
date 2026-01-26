@@ -499,6 +499,33 @@ POST   /api/milk-receptions/import       - استيراد
 
 ---
 
+#### 3. إصلاح عدم ظهور صفحات المبيعات والمشتريات للموظفين (P0) ✅
+**المشكلة:** الموظف Salim (EMP202119) لديه صلاحيات المبيعات والمشتريات لكن الصفحات لا تعمل
+
+**السبب:**
+- الـ `ProtectedRoute` في App.js كان يستخدم `allowedDepartments` فقط
+- الصلاحيات (`allowedPermissions`) لم تكن مُعرّفة للصفحات الرئيسية
+- الموظف في قسم `purchasing` لكن الصفحات تتطلب `sales` أو `procurement`
+
+**الحل:**
+1. إضافة `allowedPermissions` لجميع الـ Routes المحمية في `App.js`:
+   - `/sales` → `sales_view`, `sales_create`, `sales_edit`
+   - `/procurement` → `purchases_view`, `purchases_create`, `purchases_edit`, `purchases_approve`
+   - `/feed-purchases` → `purchases_view`, `purchases_create`, `purchases_edit`
+   - وباقي الصفحات الأخرى...
+
+2. إضافة `purchasing` لقائمة الأقسام المسموحة لصفحة `/procurement`
+
+**الملفات المُعدّلة:**
+- `/app/frontend/src/App.js` - إضافة `allowedPermissions` للـ Routes
+- `/app/frontend/src/components/Layout.jsx` - إضافة `purchasing` للمشتريات
+
+**نتائج الاختبار:**
+- ✅ الموظف EMP202119 يستطيع الوصول لصفحة المبيعات
+- ✅ الموظف EMP202119 يستطيع الوصول لصفحة المشتريات
+
+---
+
 ## نتائج الاختبارات
 - ✅ **100%** iteration_20.json - نظام الصلاحيات المركزي
 - ✅ **100%** iteration_21.json - إصلاح الصلاحيات والثيم (8/8 backend, 100% frontend)
