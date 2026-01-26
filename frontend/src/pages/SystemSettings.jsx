@@ -785,14 +785,21 @@ const SystemSettings = () => {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Settings className="w-7 h-7" />
-            {t("إعدادات النظام", "System Settings")}
+            {isAdmin ? t("إعدادات النظام", "System Settings") : t("المظهر", "Appearance")}
           </h1>
-          <p className="text-muted-foreground">{t("إدارة المراكز والأسعار والأعلاف والتنبيهات", "Manage centers, prices, feeds, and alerts")}</p>
+          <p className="text-muted-foreground">
+            {isAdmin 
+              ? t("إدارة المراكز والأسعار والأعلاف والتنبيهات", "Manage centers, prices, feeds, and alerts")
+              : t("تخصيص مظهر التطبيق", "Customize app appearance")
+            }
+          </p>
         </div>
-        <Button onClick={fetchAllData} variant="outline" disabled={loading}>
-          <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
-          {t("تحديث", "Refresh")}
-        </Button>
+        {isAdmin && (
+          <Button onClick={fetchAllData} variant="outline" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 me-2 ${loading ? "animate-spin" : ""}`} />
+            {t("تحديث", "Refresh")}
+          </Button>
+        )}
       </div>
 
       {/* Tabs */}
