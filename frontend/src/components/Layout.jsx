@@ -253,21 +253,22 @@ const Layout = () => {
     // Check user permissions for specific pages
     const userPermissions = user?.permissions || [];
     const pathToPermission = {
-      '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_payroll_view'],
+      '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_payroll_view', 'hr_employee_schedule_view', 'hr_driver_schedule_view', 'hr_letters_view', 'hr_extra_pay_view', 'hr_documents_view'],
       '/payroll': ['hr', 'hr_payroll_view', 'hr_payroll_edit'],
       '/reports': ['reports', 'reports_view', 'reports_operational', 'reports_financial'],
       '/finance': ['finance', 'treasury_view', 'treasury_transactions'],
       '/treasury': ['finance', 'treasury_view', 'treasury_transactions'],
       '/suppliers': ['suppliers', 'suppliers_view', 'suppliers_create', 'suppliers_edit'],
       '/milk-reception': ['milk_reception', 'milk_reception_view', 'milk_reception_create', 'milk_reception_edit'],
-      '/legal': ['legal', 'legal_view', 'legal_create'],
+      '/legal': ['legal', 'legal_view', 'legal_create', 'legal_contracts_view', 'legal_cases_view'],
       '/projects': ['projects', 'projects_view', 'projects_create', 'projects_edit'],
       '/operations': ['operations', 'operations_view', 'operations_edit'],
       '/marketing': ['marketing', 'marketing_view', 'marketing_create'],
       '/analysis': ['analysis', 'analysis_view'],
-      '/warehouse': ['warehouse', 'warehouse_view', 'inventory_view', 'inventory_edit'],
+      '/warehouse': ['warehouse', 'warehouse_view', 'inventory_view', 'inventory_edit', 'warehouse_products_view', 'warehouse_stock_receive', 'warehouse_stock_issue'],
       '/customers': ['customers', 'customers_view', 'customers_create'],
       '/sales': ['sales', 'sales_view', 'sales_create'],
+      '/driver-schedule': ['hr_driver_schedule_view', 'hr_driver_schedule_edit', 'operations', 'operations_view'],
     };
     
     // If user has specific permission for this path, allow access
