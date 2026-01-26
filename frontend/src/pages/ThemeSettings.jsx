@@ -235,25 +235,32 @@ const ThemeSettings = ({ embedded = false }) => {
         <CardTitle className="flex items-center gap-2">
           <Palette className="w-5 h-5" />
           {language === "ar" ? "المظهر والألوان" : "Appearance & Colors"}
+          {saving && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
         </CardTitle>
         <CardDescription>
-          {language === "ar" ? "تخصيص مظهر التطبيق" : "Customize the app appearance"}
+          {language === "ar" ? "تخصيص مظهر التطبيق (يُحفظ تلقائياً لحسابك)" : "Customize the app appearance (auto-saved to your account)"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Dark Mode Toggle */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-slate-100 dark:bg-slate-800">
-          <div className="flex items-center gap-3">
-            {darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            <div>
-              <Label className="text-base">{language === "ar" ? "الوضع الداكن" : "Dark Mode"}</Label>
-              <p className="text-sm text-muted-foreground">
-                {language === "ar" ? "تفعيل الوضع الداكن للواجهة" : "Enable dark mode interface"}
-              </p>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-          <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-        </div>
+        ) : (
+          <>
+            {/* Dark Mode Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-lg bg-slate-100 dark:bg-slate-800">
+              <div className="flex items-center gap-3">
+                {darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                <div>
+                  <Label className="text-base">{language === "ar" ? "الوضع الداكن" : "Dark Mode"}</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ar" ? "تفعيل الوضع الداكن للواجهة" : "Enable dark mode interface"}
+                  </p>
+                </div>
+              </div>
+              <Switch checked={darkMode} onCheckedChange={toggleDarkMode} disabled={saving} />
+            </div>
 
         {/* Theme Selection */}
         <div>
