@@ -47,12 +47,28 @@ const Dashboard = () => {
     if (hasDashboardPermission) {
       fetchDashboardData();
     } else {
-      // Load user's background
-      const savedBg = localStorage.getItem("user_background");
-      if (savedBg) {
-        setBackgroundUrl(savedBg);
-      }
-      setLoading(false);
+      // Load user's background from server or localStorage
+      const fetchBackground = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (token) {
+            const res = await axios.get(`${API}/user/settings`, { 
+              headers: { Authorization: `Bearer ${token}` } 
+            });
+            if (res.data?.background_url) {
+              setBackgroundUrl(res.data.background_url);
+            }
+          }
+        } catch (error) {
+          // Try localStorage as fallback
+          const savedBg = localStorage.getItem("user_background");
+          if (savedBg) {
+            setBackgroundUrl(savedBg);
+          }
+        }
+        setLoading(false);
+      };
+      fetchBackground();
     }
   }, [hasDashboardPermission]);
 
