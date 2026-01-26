@@ -328,11 +328,13 @@ const PermissionsManagement = () => {
 
   const getCategoryIcon = (category) => {
     const icons = {
+      "لوحة التحكم": Home,
+      "التحليلات": TrendingUp,
+      "التقارير": FileText,
       "استلام الحليب": Milk,
       "الموردين": Users,
       "العملاء": User,
       "المبيعات": DollarSign,
-      "التقارير": FileText,
       "الموارد البشرية": UserCog,
       "المخزون": Package,
       "الخزينة": DollarSign,
