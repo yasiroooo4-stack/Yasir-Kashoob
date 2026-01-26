@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { API, useLanguage } from "../App";
+import { API, useLanguage, useAuth } from "../App";
 import {
   Card,
   CardContent,
