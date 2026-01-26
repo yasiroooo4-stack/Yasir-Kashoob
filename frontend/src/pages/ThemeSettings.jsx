@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { useLanguage } from "../App";
+import { useState, useEffect, useContext } from "react";
+import axios from "axios";
+import { API, useLanguage, AuthContext } from "../App";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
-import { Palette, Sun, Moon, Sparkles } from "lucide-react";
+import { Palette, Sun, Moon, Sparkles, Loader2 } from "lucide-react";
 
 // Theme configurations
 const THEMES = [
