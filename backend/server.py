@@ -422,6 +422,29 @@ async def login(credentials: UserLogin):
     if not user or not password_field or not verify_password(credentials.password, password_field):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Get user permissions from user_permissions table
+    user_permissions = []
+    employee_id = user.get("employee_id")
+    
+    if employee_id:
+        granted_permissions = await db.user_permissions.find(
+            {"employee_id": employee_id, "is_active": True},
+            {"_id": 0, "permission": 1}
+        ).to_list(100)
+        user_permissions = [g["permission"] for g in granted_permissions]
+        
+        # Also get department from hr_employees
+        employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0, "permissions": 1, "department": 1})
+        if employee:
+            user_permissions.extend(employee.get("permissions", []))
+            user["department"] = employee.get("department")
+    
+    # Also include permissions stored directly on user
+    user_permissions.extend(user.get("permissions", []))
+    
+    # Remove duplicates
+    user_permissions = list(set(user_permissions))
+    
     token = create_access_token({"sub": user["id"], "role": user["role"]})
     
     # Log login activity
@@ -444,7 +467,8 @@ async def login(credentials: UserLogin):
             "phone": user.get("phone"), 
             "avatar_url": user.get("avatar_url"), 
             "department": user.get("department"),
-            "permissions": user.get("permissions", [])
+            "employee_id": employee_id,
+            "permissions": user_permissions
         }
     )
 
