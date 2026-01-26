@@ -234,7 +234,7 @@ const Layout = () => {
     { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
     
     // إعدادات النظام (تم دمج إعدادات المظهر والإشعارات والكاميرات هنا)
-    { path: "/system-settings", icon: Settings, label: "system_settings", roles: ["admin"], departments: ["admin", "it"] },
+    { path: "/system-settings", icon: Settings, label: "system_settings" },
     { path: "/permissions", icon: Shield, label: "permissions_management", roles: ["admin"], departments: ["admin", "it", "الإدارة العامة", "تقنية المعلومات"] },
   ];
 
