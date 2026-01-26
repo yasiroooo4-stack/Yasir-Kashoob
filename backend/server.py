@@ -425,25 +425,49 @@ async def login(credentials: UserLogin):
     # Get user permissions from user_permissions table
     user_permissions = []
     employee_id = user.get("employee_id")
+    employee = None
     
+    # Try to find employee by employee_id (could be UUID or employee_code)
     if employee_id:
+        # First try to find by id (UUID)
+        employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+        
+        # If not found, try by employee_code
+        if not employee:
+            employee = await db.hr_employees.find_one({"employee_code": employee_id}, {"_id": 0})
+        
+        # If still not found, try by username matching employee_code
+        if not employee:
+            employee = await db.hr_employees.find_one({"employee_code": credentials.username}, {"_id": 0})
+    
+    # If no employee_id in user, try to find by username as employee_code
+    if not employee:
+        employee = await db.hr_employees.find_one({"employee_code": credentials.username}, {"_id": 0})
+    
+    # Now get the correct employee_id for permissions lookup
+    actual_employee_id = employee.get("id") if employee else None
+    
+    if actual_employee_id:
+        # Get permissions from user_permissions table using the actual employee UUID
         granted_permissions = await db.user_permissions.find(
-            {"employee_id": employee_id, "is_active": True},
+            {"employee_id": actual_employee_id, "is_active": True},
             {"_id": 0, "permission": 1}
         ).to_list(100)
         user_permissions = [g["permission"] for g in granted_permissions]
         
-        # Also get department from hr_employees
-        employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0, "permissions": 1, "department": 1})
+        # Also get department and legacy permissions from hr_employees
         if employee:
             user_permissions.extend(employee.get("permissions", []))
             user["department"] = employee.get("department")
+        
+        # Update the employee_id for the response
+        employee_id = actual_employee_id
     
     # Also include permissions stored directly on user
     user_permissions.extend(user.get("permissions", []))
     
-    # Remove duplicates
-    user_permissions = list(set(user_permissions))
+    # Remove duplicates and None values
+    user_permissions = list(set(filter(None, user_permissions)))
     
     token = create_access_token({"sub": user["id"], "role": user["role"]})
     
