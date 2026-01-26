@@ -256,8 +256,8 @@ const Layout = () => {
       '/dashboard': ['dashboard_view', 'dashboard_stats'],
       '/analysis': ['analysis_view', 'analysis_reports', 'analysis_export'],
       '/reports': ['reports', 'reports_view', 'reports_operational', 'reports_financial', 'reports_export'],
-      '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_payroll_view', 'hr_employee_schedule_view', 'hr_driver_schedule_view', 'hr_letters_view', 'hr_extra_pay_view', 'hr_documents_view'],
-      '/payroll': ['hr', 'hr_payroll_view', 'hr_payroll_edit'],
+      '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_payroll_view', 'hr_employee_schedule_view', 'hr_letters_view', 'hr_extra_pay_view', 'hr_documents_view'],
+      '/payroll': ['hr_payroll_view', 'hr_payroll_edit', 'hr_payroll_approve_hr', 'hr_payroll_approve_finance', 'hr_payroll_approve_gm'],
       '/finance': ['finance', 'treasury_view', 'treasury_transactions'],
       '/treasury': ['finance', 'treasury_view', 'treasury_transactions'],
       '/suppliers': ['suppliers', 'suppliers_view', 'suppliers_create', 'suppliers_edit'],
@@ -269,13 +269,26 @@ const Layout = () => {
       '/warehouse': ['warehouse', 'warehouse_view', 'inventory_view', 'inventory_edit', 'warehouse_products_view', 'warehouse_stock_receive', 'warehouse_stock_issue'],
       '/customers': ['customers', 'customers_view', 'customers_create'],
       '/sales': ['sales', 'sales_view', 'sales_create'],
-      '/driver-schedule': ['hr_driver_schedule_view', 'hr_driver_schedule_edit', 'operations', 'operations_view'],
+      '/driver-schedule': ['hr_driver_schedule_view', 'hr_driver_schedule_edit'],
+      '/employee-schedule': ['hr_employee_schedule_view', 'hr_employee_schedule_edit'],
+      '/system-settings': [], // متاح للجميع (المظهر فقط)
     };
+    
+    // Pages that are always available for all authenticated users
+    const alwaysAvailablePages = ['/system-settings'];
+    if (alwaysAvailablePages.includes(item.path)) {
+      return true;
+    }
     
     // If user has specific permission for this path, allow access
     const requiredPermissions = pathToPermission[item.path] || [];
     if (requiredPermissions.length > 0 && requiredPermissions.some(perm => userPermissions.includes(perm))) {
       return true;
+    }
+    
+    // If path has permission requirements but user doesn't have them, deny access
+    if (requiredPermissions.length > 0) {
+      return false;
     }
     
     // Check role access
@@ -288,7 +301,12 @@ const Layout = () => {
       return false;
     }
     
-    return true;
+    // For regular employees without explicit permissions, deny access to protected pages
+    if (user?.role === 'employee') {
+      return false;
+    }
+    
+    return false;
   });
 
   const handleLogout = () => {
