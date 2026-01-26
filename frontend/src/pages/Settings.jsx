@@ -263,10 +263,25 @@ const Settings = ({ embedded = false }) => {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API}/auth/profile`, profileData);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error(language === "ar" ? "يرجى تسجيل الدخول مرة أخرى" : "Please login again");
+        return;
+      }
+      
+      await axios.put(`${API}/auth/profile`, profileData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success(t("success"));
     } catch (error) {
-      toast.error(error.response?.data?.detail || t("error"));
+      console.error("Profile update error:", error);
+      if (error.response?.status === 404) {
+        toast.error(language === "ar" ? "لم يتم العثور على المستخدم، يرجى تسجيل الدخول مرة أخرى" : "User not found, please login again");
+      } else if (error.response?.status === 401) {
+        toast.error(language === "ar" ? "انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى" : "Session expired, please login again");
+      } else {
+        toast.error(error.response?.data?.detail || t("error"));
+      }
     }
   };
 
