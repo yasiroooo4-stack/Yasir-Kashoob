@@ -124,6 +124,7 @@ async def register(user_data: UserCreate):
 
 @router.post("/auth/login", response_model=Token)
 async def login(credentials: UserLogin):
+    import logging
     user = await db.users.find_one({"username": credentials.username}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
@@ -137,12 +138,15 @@ async def login(credentials: UserLogin):
     # Get user permissions from user_permissions table
     user_permissions = []
     employee_id = user.get("employee_id")
+    logging.info(f"Login: user={credentials.username}, employee_id={employee_id}")
+    
     if employee_id:
         granted_permissions = await db.user_permissions.find(
             {"employee_id": employee_id, "is_active": True},
             {"_id": 0, "permission": 1}
         ).to_list(100)
         user_permissions = [g["permission"] for g in granted_permissions]
+        logging.info(f"Login: granted_permissions count={len(granted_permissions)}, permissions={user_permissions}")
     
     # Also get permissions from hr_employees if linked
     if employee_id:
@@ -154,6 +158,7 @@ async def login(credentials: UserLogin):
     
     # Remove duplicates
     user_permissions = list(set(user_permissions))
+    logging.info(f"Login: final permissions={user_permissions}")
     
     # Log login activity
     await log_activity(
