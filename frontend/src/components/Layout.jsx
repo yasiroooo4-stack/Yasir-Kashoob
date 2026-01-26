@@ -265,7 +265,7 @@ const Layout = () => {
     
     // المشتريات والمخازن
     { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
-    { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "finance", "admin", "it"] },
+    { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "purchasing", "finance", "admin", "it"] },
     { path: "/warehouse", icon: Package, label: "warehouse_management", departments: ["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"] },
     
     // المالية
