@@ -412,12 +412,12 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="hr" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]} allowedPermissions={["hr", "hr_employees_view", "hr_attendance_view", "hr_leaves_view"]}>
                     <HR />
                   </ProtectedRoute>
                 } />
                 <Route path="legal" element={
-                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["legal", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["legal", "admin", "it"]} allowedPermissions={["legal", "legal_view", "legal_contracts_view", "legal_cases_view"]}>
                     <Legal />
                   </ProtectedRoute>
                 } />
