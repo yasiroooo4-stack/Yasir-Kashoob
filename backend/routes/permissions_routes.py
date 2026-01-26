@@ -243,6 +243,74 @@ async def revoke_permission(grant_id: str, current_user: dict = Depends(get_curr
     return {"message": "تم إلغاء الصلاحية بنجاح"}
 
 
+@router.post("/sync")
+async def sync_permissions(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """مزامنة صلاحيات الموظف من صفحة الموارد البشرية"""
+    employee_id = data.get("employee_id")
+    new_permissions = data.get("permissions", [])
+    
+    # التحقق من صلاحية المستخدم
+    user_perms = await get_user_permissions_helper(current_user["id"])
+    if "permissions_grant" not in user_perms and current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية تعديل الصلاحيات")
+    
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # الحصول على الصلاحيات الممنوحة الحالية
+    current_grants = await db.user_permissions.find(
+        {"employee_id": employee_id, "is_active": True},
+        {"_id": 0}
+    ).to_list(100)
+    current_permissions = [g["permission"] for g in current_grants]
+    
+    # تحديد الصلاحيات التي يجب إضافتها والتي يجب إلغاؤها
+    permissions_to_add = [p for p in new_permissions if p not in current_permissions]
+    permissions_to_remove = [p for p in current_permissions if p not in new_permissions]
+    
+    # إضافة الصلاحيات الجديدة
+    import uuid
+    for permission in permissions_to_add:
+        grant = UserPermissionGrant(
+            id=str(uuid.uuid4()),
+            employee_id=employee_id,
+            employee_name=employee.get("name"),
+            permission=permission,
+            granted_by=current_user["id"],
+            granted_by_name=current_user.get("full_name", ""),
+            granted_at=datetime.now(timezone.utc),
+            is_active=True
+        )
+        await db.user_permissions.insert_one(grant.model_dump())
+    
+    # إلغاء الصلاحيات المحذوفة
+    for permission in permissions_to_remove:
+        await db.user_permissions.update_many(
+            {"employee_id": employee_id, "permission": permission, "is_active": True},
+            {"$set": {"is_active": False}}
+        )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", ""),
+        action="sync_permissions",
+        entity_type="permission",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"مزامنة صلاحيات الموظف: +{len(permissions_to_add)} / -{len(permissions_to_remove)}"
+    )
+    
+    return {
+        "message": "تم مزامنة الصلاحيات بنجاح",
+        "added": permissions_to_add,
+        "removed": permissions_to_remove
+    }
+
+
 @router.post("/deny/{employee_id}")
 async def deny_permission(
     employee_id: str,
