@@ -175,9 +175,13 @@ const PermissionsManagement = () => {
       await axios.delete(`${API}/permissions/revoke/${grantId}`, { headers });
       toast.success(t("تم إلغاء الصلاحية", "Permission revoked"));
       
-      // Refresh employee permissions
+      // Refresh employee permissions for both dialogs
       if (viewingEmployee) {
         const perms = await fetchEmployeePermissions(viewingEmployee.id);
+        setEmployeePermissions(perms);
+      }
+      if (selectedEmployee) {
+        const perms = await fetchEmployeePermissions(selectedEmployee.id);
         setEmployeePermissions(perms);
       }
     } catch (error) {
