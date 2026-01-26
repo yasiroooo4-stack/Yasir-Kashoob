@@ -645,8 +645,8 @@ const PermissionsManagement = () => {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-green-500" />
-              {t("منح صلاحيات", "Grant Permissions")}
+              <Settings className="w-5 h-5 text-primary" />
+              {t("إدارة صلاحيات الموظف", "Manage Employee Permissions")}
             </DialogTitle>
             <DialogDescription>
               {selectedEmployee && (
@@ -657,25 +657,56 @@ const PermissionsManagement = () => {
 
           {employeePermissions && (
             <div className="space-y-4">
-              {/* Current Permissions */}
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium mb-2">{t("الصلاحيات الحالية:", "Current Permissions:")}</p>
-                <div className="flex flex-wrap gap-1">
-                  {employeePermissions.all_permissions?.slice(0, 10).map((perm) => (
-                    <Badge key={perm} variant="secondary" className="text-xs">
-                      {getPermissionLabel(perm)}
-                    </Badge>
-                  ))}
-                  {employeePermissions.all_permissions?.length > 10 && (
-                    <Badge variant="outline">+{employeePermissions.all_permissions.length - 10}</Badge>
-                  )}
+              {/* Current Granted Permissions - Can be removed */}
+              {employeePermissions.permission_grants?.length > 0 && (
+                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <p className="text-sm font-medium mb-2 text-green-700 dark:text-green-300">
+                    {t("الصلاحيات الممنوحة (قابلة للإلغاء):", "Granted Permissions (Can be revoked):")}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {employeePermissions.permission_grants.map((grant) => (
+                      <Badge 
+                        key={grant.id} 
+                        variant="secondary" 
+                        className="text-xs bg-green-100 dark:bg-green-900 flex items-center gap-1 pe-1"
+                      >
+                        {getPermissionLabel(grant.permission)}
+                        <button
+                          onClick={() => handleRevokePermission(grant.id, grant.permission)}
+                          className="ms-1 p-0.5 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                          title={t("إلغاء الصلاحية", "Revoke permission")}
+                        >
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Role-based permissions - Cannot be removed */}
+              {employeePermissions.role_permissions?.length > 0 && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <p className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-300">
+                    {t("صلاحيات الدور (تلقائية - لا يمكن إلغاؤها):", "Role Permissions (Automatic - Cannot be revoked):")}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {employeePermissions.role_permissions.slice(0, 10).map((perm) => (
+                      <Badge key={perm} variant="outline" className="text-xs opacity-70">
+                        {getPermissionLabel(perm)}
+                      </Badge>
+                    ))}
+                    {employeePermissions.role_permissions.length > 10 && (
+                      <Badge variant="outline" className="opacity-70">+{employeePermissions.role_permissions.length - 10}</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Select New Permissions */}
               <div>
-                <Label className="text-sm font-medium">{t("اختر الصلاحيات الجديدة:", "Select New Permissions:")}</Label>
-                <ScrollArea className="h-[300px] mt-2 border rounded-lg p-4">
+                <Label className="text-sm font-medium">{t("إضافة صلاحيات جديدة:", "Add New Permissions:")}</Label>
+                <ScrollArea className="h-[250px] mt-2 border rounded-lg p-4">
                   {Object.entries(permissionCategories).map(([category, permissions]) => (
                     <div key={category} className="mb-4">
                       <h4 className="font-medium text-sm flex items-center gap-2 mb-2 text-primary">
@@ -689,7 +720,7 @@ const PermissionsManagement = () => {
                             <div
                               key={perm}
                               className={`flex items-center gap-2 p-2 rounded text-sm ${
-                                alreadyHas ? "bg-green-50 text-green-700" : "hover:bg-muted"
+                                alreadyHas ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" : "hover:bg-muted"
                               }`}
                             >
                               <Checkbox
@@ -711,13 +742,13 @@ const PermissionsManagement = () => {
               </div>
 
               {selectedPermissions.length > 0 && (
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm font-medium text-green-700 mb-2">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg">
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">
                     {t(`سيتم منح ${selectedPermissions.length} صلاحية:`, `${selectedPermissions.length} permissions will be granted:`)}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {selectedPermissions.map((perm) => (
-                      <Badge key={perm} className="bg-green-500 text-xs">
+                      <Badge key={perm} className="bg-amber-500 text-xs">
                         {getPermissionLabel(perm)}
                       </Badge>
                     ))}
@@ -729,7 +760,7 @@ const PermissionsManagement = () => {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setGrantDialogOpen(false)}>
-              {t("إلغاء", "Cancel")}
+              {t("إغلاق", "Close")}
             </Button>
             <Button
               onClick={handleGrantPermissions}
