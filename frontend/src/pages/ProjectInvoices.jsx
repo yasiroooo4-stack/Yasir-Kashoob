@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
 import { Plus, Receipt, Eye, Check, X, Printer, Download } from "lucide-react";
-import html2pdf from "html2pdf.js";
 
 // Company logo URL
 const COMPANY_LOGO = "https://customer-assets.emergentagent.com/job_dairy-farm-erp-3/artifacts/1hfmx6si_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%AC%20%D9%84%D9%84%D8%A7%D9%84%D8%A8%D8%A7%D9%86.png";
