@@ -357,7 +357,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="feed-purchases" element={
-                  <ProtectedRoute allowedDepartments={["purchasing", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["purchasing", "admin", "it"]} allowedPermissions={["purchases_view", "purchases_create", "purchases_edit"]}>
                     <FeedPurchases />
                   </ProtectedRoute>
                 } />
