@@ -492,6 +492,7 @@ async def login(credentials: UserLogin):
             "phone": user.get("phone"), 
             "avatar_url": user.get("avatar_url"), 
             "department": user.get("department"),
+            "position": user.get("position"),  # إضافة المنصب
             "employee_id": employee_id,
             "permissions": user_permissions
         }
