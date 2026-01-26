@@ -3463,40 +3463,6 @@ const HR = () => {
               </Select>
             </div>
             
-            {/* Permissions - الصلاحيات */}
-            <div className="space-y-2">
-              <Label>{language === "ar" ? "الصلاحيات" : "Permissions"}</Label>
-              <div className="border rounded-lg p-3 max-h-48 overflow-y-auto">
-                <div className="grid grid-cols-2 gap-2">
-                  {availablePermissions.map((perm) => (
-                    <label key={perm.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={employeeForm.permissions?.includes(perm.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setEmployeeForm({
-                              ...employeeForm,
-                              permissions: [...(employeeForm.permissions || []), perm.id]
-                            });
-                          } else {
-                            setEmployeeForm({
-                              ...employeeForm,
-                              permissions: (employeeForm.permissions || []).filter(p => p !== perm.id)
-                            });
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm">
-                        {language === "ar" ? perm.name : perm.name_en}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEmployeeDialogOpen(false)}>
                 {t("cancel")}
