@@ -269,9 +269,10 @@ const Layout = () => {
       '/marketing': ['marketing', 'marketing_view', 'marketing_create'],
       '/warehouse': ['warehouse', 'warehouse_view', 'inventory_view', 'inventory_edit', 'warehouse_products_view', 'warehouse_stock_receive', 'warehouse_stock_issue'],
       '/customers': ['customers', 'customers_view', 'customers_create'],
-      '/sales': ['sales', 'sales_view', 'sales_create'],
-      '/procurement': ['purchases_view', 'purchases_create', 'purchases_edit'],
-      '/feed-purchases': ['purchases_view', 'purchases_create'],
+      '/sales': ['sales', 'sales_view', 'sales_create', 'sales_edit'],
+      '/procurement': ['purchases_view', 'purchases_create', 'purchases_edit', 'purchases_approve'],
+      '/feed-purchases': ['purchases_view', 'purchases_create', 'purchases_edit'],
+      '/supplier-portal': ['supplier_portal_view', 'supplier_portal_messages', 'supplier_portal_feed_requests'],
       '/system-settings': [], // متاح للجميع
     };
     
