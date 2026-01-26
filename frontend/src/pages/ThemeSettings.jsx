@@ -86,13 +86,15 @@ const THEMES = [
 
 const ThemeSettings = ({ embedded = false }) => {
   const { language } = useLanguage();
+  const { user } = useContext(AuthContext);
   
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem("app_theme") || "default";
-  });
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("dark_mode") === "true";
-  });
+  const [currentTheme, setCurrentTheme] = useState("default");
+  const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
 
   // Helper: Convert hex to HSL for shadcn
   const hexToHSL = (hex) => {
@@ -119,56 +121,113 @@ const ThemeSettings = ({ embedded = false }) => {
     return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
   };
 
-  // Apply theme
-  const applyTheme = (themeId) => {
+  // Load user settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!token) {
+        // Fallback to localStorage if not logged in
+        const savedTheme = localStorage.getItem("app_theme") || "default";
+        const savedDarkMode = localStorage.getItem("dark_mode") === "true";
+        setCurrentTheme(savedTheme);
+        setDarkMode(savedDarkMode);
+        applyThemeToDOM(savedTheme, savedDarkMode);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await axios.get(`${API}/user/settings`, { headers });
+        const settings = res.data;
+        
+        const themeId = settings.app_theme || "default";
+        const isDarkMode = settings.dark_mode || false;
+        
+        setCurrentTheme(themeId);
+        setDarkMode(isDarkMode);
+        applyThemeToDOM(themeId, isDarkMode);
+      } catch (error) {
+        console.error("Failed to load settings:", error);
+        // Fallback to localStorage
+        const savedTheme = localStorage.getItem("app_theme") || "default";
+        const savedDarkMode = localStorage.getItem("dark_mode") === "true";
+        setCurrentTheme(savedTheme);
+        setDarkMode(savedDarkMode);
+        applyThemeToDOM(savedTheme, savedDarkMode);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [token]);
+
+  // Apply theme to DOM
+  const applyThemeToDOM = (themeId, isDark) => {
     const theme = THEMES.find(t => t.id === themeId);
     if (!theme) return;
     
-    // Set CSS variables
     document.documentElement.setAttribute('data-theme', themeId);
     document.documentElement.style.setProperty('--theme-primary', theme.primary);
     document.documentElement.style.setProperty('--theme-primary-dark', theme.secondary);
     
-    // Convert primary color to HSL for shadcn
     const primaryHSL = hexToHSL(theme.primary);
     document.documentElement.style.setProperty('--primary', primaryHSL);
     
-    // Save to localStorage
-    localStorage.setItem("app_theme", themeId);
-    setCurrentTheme(themeId);
-    
-    toast.success(language === "ar" ? "تم تغيير الثيم بنجاح" : "Theme changed successfully");
-  };
-
-  // Toggle dark mode
-  const toggleDarkMode = (enabled) => {
-    setDarkMode(enabled);
-    localStorage.setItem("dark_mode", enabled.toString());
-    
-    if (enabled) {
+    if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    
-    toast.success(language === "ar" ? "تم تغيير الوضع" : "Mode changed");
   };
 
-  // Apply saved theme on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("app_theme") || "default";
-    const theme = THEMES.find(t => t.id === savedTheme);
-    if (theme) {
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      document.documentElement.style.setProperty('--theme-primary', theme.primary);
-      document.documentElement.style.setProperty('--theme-primary-dark', theme.secondary);
+  // Save settings to backend
+  const saveSettings = async (themeId, isDarkMode) => {
+    if (!token) {
+      // No auth - just use localStorage
+      localStorage.setItem("app_theme", themeId);
+      localStorage.setItem("dark_mode", isDarkMode.toString());
+      return;
     }
-    
-    const savedDarkMode = localStorage.getItem("dark_mode") === "true";
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
+
+    setSaving(true);
+    try {
+      await axios.put(`${API}/user/settings`, {
+        app_theme: themeId,
+        dark_mode: isDarkMode,
+        // Keep other settings unchanged
+        background_id: "bg1",
+        theme: "light",
+        sidebar_collapsed: false
+      }, { headers });
+      
+      // Also save to localStorage as backup
+      localStorage.setItem("app_theme", themeId);
+      localStorage.setItem("dark_mode", isDarkMode.toString());
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      // Save to localStorage anyway
+      localStorage.setItem("app_theme", themeId);
+      localStorage.setItem("dark_mode", isDarkMode.toString());
+    } finally {
+      setSaving(false);
     }
-  }, []);
+  };
+
+  // Apply theme
+  const applyTheme = async (themeId) => {
+    applyThemeToDOM(themeId, darkMode);
+    setCurrentTheme(themeId);
+    await saveSettings(themeId, darkMode);
+    toast.success(language === "ar" ? "تم تغيير الثيم بنجاح" : "Theme changed successfully");
+  };
+
+  // Toggle dark mode
+  const toggleDarkMode = async (enabled) => {
+    setDarkMode(enabled);
+    applyThemeToDOM(currentTheme, enabled);
+    await saveSettings(currentTheme, enabled);
+    toast.success(language === "ar" ? "تم تغيير الوضع" : "Mode changed");
+  };
 
   const content = (
     <Card>
