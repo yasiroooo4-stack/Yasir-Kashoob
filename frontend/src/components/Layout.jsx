@@ -253,9 +253,11 @@ const Layout = () => {
     // Check user permissions for specific pages
     const userPermissions = user?.permissions || [];
     const pathToPermission = {
+      '/dashboard': ['dashboard_view', 'dashboard_stats'],
+      '/analysis': ['analysis_view', 'analysis_reports', 'analysis_export'],
+      '/reports': ['reports', 'reports_view', 'reports_operational', 'reports_financial', 'reports_export'],
       '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_payroll_view', 'hr_employee_schedule_view', 'hr_driver_schedule_view', 'hr_letters_view', 'hr_extra_pay_view', 'hr_documents_view'],
       '/payroll': ['hr', 'hr_payroll_view', 'hr_payroll_edit'],
-      '/reports': ['reports', 'reports_view', 'reports_operational', 'reports_financial'],
       '/finance': ['finance', 'treasury_view', 'treasury_transactions'],
       '/treasury': ['finance', 'treasury_view', 'treasury_transactions'],
       '/suppliers': ['suppliers', 'suppliers_view', 'suppliers_create', 'suppliers_edit'],
@@ -264,7 +266,6 @@ const Layout = () => {
       '/projects': ['projects', 'projects_view', 'projects_create', 'projects_edit'],
       '/operations': ['operations', 'operations_view', 'operations_edit'],
       '/marketing': ['marketing', 'marketing_view', 'marketing_create'],
-      '/analysis': ['analysis', 'analysis_view'],
       '/warehouse': ['warehouse', 'warehouse_view', 'inventory_view', 'inventory_edit', 'warehouse_products_view', 'warehouse_stock_receive', 'warehouse_stock_issue'],
       '/customers': ['customers', 'customers_view', 'customers_create'],
       '/sales': ['sales', 'sales_view', 'sales_create'],
