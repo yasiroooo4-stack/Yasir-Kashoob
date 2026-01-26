@@ -324,6 +324,25 @@ const PermissionsManagement = () => {
       driver_scheduling: t("جدولة السائقين", "Driver Scheduling"),
       employees_edit: t("تعديل جدول الموظفين", "Edit Employee Table"),
       drivers_edit: t("تعديل جدول السائقين", "Edit Driver Table"),
+      // بوابة الموردين
+      supplier_portal_view: t("عرض بوابة الموردين", "View Supplier Portal"),
+      supplier_portal_messages: t("رسائل الموردين", "Supplier Messages"),
+      supplier_portal_feed_requests: t("طلبات الأعلاف", "Feed Requests"),
+      // التسويق
+      marketing_view: t("عرض التسويق", "View Marketing"),
+      marketing_create: t("إنشاء حملة تسويقية", "Create Marketing Campaign"),
+      marketing_edit: t("تعديل حملة تسويقية", "Edit Marketing Campaign"),
+      marketing_reports: t("تقارير التسويق", "Marketing Reports"),
+      // المالية
+      finance_view: t("عرض المالية", "View Finance"),
+      finance_transactions: t("المعاملات المالية", "Financial Transactions"),
+      finance_reports: t("التقارير المالية", "Financial Reports"),
+      finance_approve: t("الموافقة على المعاملات المالية", "Approve Financial Transactions"),
+      // الموافقات
+      approvals_view: t("عرض الموافقات", "View Approvals"),
+      approvals_hr: t("موافقات الموارد البشرية", "HR Approvals"),
+      approvals_finance: t("موافقات المالية", "Finance Approvals"),
+      approvals_gm: t("موافقات المدير العام", "GM Approvals"),
     };
     return labels[permission] || permission;
   };
@@ -335,9 +354,13 @@ const PermissionsManagement = () => {
       "التقارير": FileText,
       "استلام الحليب": Milk,
       "الموردين": Users,
+      "بوابة الموردين": Users,
       "العملاء": User,
       "المبيعات": DollarSign,
       "الموارد البشرية": UserCog,
+      "المالية": DollarSign,
+      "التسويق": TrendingUp,
+      "الموافقات": CheckCircle,
       "المخزون": Package,
       "الخزينة": DollarSign,
       "النظام": Settings,
