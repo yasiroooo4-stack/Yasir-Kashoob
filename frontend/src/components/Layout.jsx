@@ -540,7 +540,7 @@ const Layout = () => {
                   <div className="hidden sm:flex flex-col items-start">
                     <span className="text-sm font-medium">{user?.full_name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {getRoleLabel(user?.role)}
+                      {getRoleLabel(user?.role, user?.position)}
                     </span>
                   </div>
                 </Button>
