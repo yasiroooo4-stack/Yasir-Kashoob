@@ -2192,6 +2192,16 @@ AVAILABLE_PERMISSIONS = [
     "hr_payroll_approve_hr",    # موافقة HR على الرواتب
     "hr_payroll_approve_finance", # موافقة المالية على الرواتب
     "hr_payroll_approve_gm",    # موافقة المدير العام على الرواتب
+    "hr_employee_schedule_view", # عرض جدول الموظفين
+    "hr_employee_schedule_edit", # تعديل جدول الموظفين
+    "hr_driver_schedule_view",  # عرض جدول السائقين
+    "hr_driver_schedule_edit",  # تعديل جدول السائقين
+    "hr_letters_view",          # عرض الخطابات
+    "hr_letters_create",        # إنشاء خطاب
+    "hr_extra_pay_view",        # عرض البدلات الإضافية
+    "hr_extra_pay_approve",     # الموافقة على البدلات الإضافية
+    "hr_documents_view",        # عرض المستندات
+    "hr_documents_upload",      # رفع المستندات
     
     # المخزون
     "inventory_view",           # عرض المخزون
