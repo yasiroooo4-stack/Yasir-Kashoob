@@ -472,17 +472,17 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="supplier-management" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedPermissions={["suppliers", "suppliers_view", "suppliers_edit"]}>
                     <SupplierManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="employee-scheduling" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]} allowedPermissions={["hr_employee_schedule_view", "hr_employee_schedule_edit"]}>
                     <EmployeeScheduling />
                   </ProtectedRoute>
                 } />
                 <Route path="driver-schedule" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "operations", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "operations", "admin", "it"]} allowedPermissions={["hr_driver_schedule_view", "hr_driver_schedule_edit"]}>
                     <DriverSchedule />
                   </ProtectedRoute>
                 } />
