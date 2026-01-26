@@ -187,83 +187,135 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
     ];
     
     const htmlContent = `
-      <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; padding: 20px; max-width: 210mm; margin: 0 auto; background: white;">
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-          <div style="flex: 1; text-align: right;">
-            <h1 style="margin: 0; font-size: 18px; color: #333;">شركة المروج للألبان ش.م.ع.م</h1>
-            <p style="margin: 3px 0; font-size: 11px; color: #555;">Al Morooj Dairy Company SAOC</p>
-            <p style="margin: 3px 0; font-size: 10px; color: #666;">رقم السجل التجاري: 2017520 / 1249988</p>
-            <p style="margin: 3px 0; font-size: 10px; color: #666;">صندوق بريد: 298 / 1385، الرمز البريدي: 211</p>
-            <p style="margin: 3px 0; font-size: 10px; color: #666;">الرقم الضريبي: OM1100007713 / OM1100091687</p>
-            <p style="margin: 3px 0; font-size: 10px; color: #666;">صلالة، سلطنة عمان</p>
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>فاتورة ${invoice.invoice_number}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; 
+            padding: 30px; 
+            background: white;
+            direction: rtl;
+            line-height: 1.6;
+          }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+          .company-info { flex: 1; text-align: right; }
+          .company-info h1 { font-size: 20px; color: #333; margin-bottom: 5px; }
+          .company-info p { font-size: 11px; color: #666; margin: 3px 0; }
+          .logo { width: 90px; height: 90px; }
+          .logo img { width: 100%; height: 100%; object-fit: contain; }
+          .separator { border-bottom: 2px solid #C8B482; margin: 20px 0; }
+          .invoice-title { text-align: center; color: #8B772A; font-size: 26px; margin: 20px 0; font-weight: 700; }
+          .details-box { background: #F5F5F0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+          .details-grid { display: flex; flex-wrap: wrap; gap: 30px; }
+          .details-col { flex: 1; min-width: 200px; }
+          .details-col p { margin: 8px 0; font-size: 13px; }
+          .details-col strong { color: #333; }
+          .description { margin-bottom: 20px; }
+          .description-label { font-weight: 700; margin-bottom: 8px; font-size: 14px; }
+          .description-text { background: #FAFAFA; padding: 15px; border-radius: 6px; font-size: 13px; }
+          .amount-box { background: #FAF8F0; border: 2px solid #C8B482; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+          .amount-label { font-weight: 700; font-size: 16px; }
+          .amount-value { font-size: 24px; font-weight: 700; color: #8B772A; }
+          .approval-section { margin-bottom: 20px; }
+          .approval-title { font-weight: 700; margin-bottom: 12px; font-size: 14px; }
+          .approval-box { background: #F9FAFB; padding: 20px; border-radius: 8px; }
+          .approval-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+          .approval-item:last-child { margin-bottom: 0; }
+          .approval-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+          .approved { background: #D1FAE5; color: #059669; }
+          .pending { background: #F3F4F6; color: #9CA3AF; }
+          .approval-text { flex: 1; font-size: 13px; }
+          .approval-name { font-weight: 600; }
+          .approval-status { margin-right: 8px; }
+          .paid-section { border-top: 1px solid #E5E7EB; margin-top: 15px; padding-top: 15px; }
+          .footer { border-top: 1px solid #C8B482; padding-top: 20px; margin-top: 30px; text-align: center; }
+          .footer p { font-size: 10px; color: #6B7280; margin: 4px 0; }
+          .footer .generated { font-size: 9px; color: #9CA3AF; }
+          @media print {
+            body { padding: 15px; }
+            @page { margin: 10mm; size: A4; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-info">
+            <h1>شركة المروج للألبان ش.م.ع.م</h1>
+            <p style="font-size: 12px; color: #555;">Al Morooj Dairy Company SAOC</p>
+            <p>رقم السجل التجاري: 2017520 / 1249988</p>
+            <p>صندوق بريد: 298 / 1385، الرمز البريدي: 211</p>
+            <p>الرقم الضريبي: OM1100007713 / OM1100091687</p>
+            <p>صلالة، سلطنة عمان</p>
           </div>
-          <div style="width: 80px; height: 80px;">
-            <img src="${COMPANY_LOGO}" style="width: 80px; height: 80px; object-fit: contain;" crossorigin="anonymous" />
+          <div class="logo">
+            <img src="${COMPANY_LOGO}" alt="Logo" crossorigin="anonymous" />
           </div>
         </div>
         
-        <!-- Separator -->
-        <div style="border-bottom: 2px solid #C8B482; margin: 15px 0;"></div>
+        <div class="separator"></div>
         
-        <!-- Invoice Title -->
-        <h2 style="text-align: center; color: #8B772A; font-size: 24px; margin: 15px 0;">فاتورة / INVOICE</h2>
+        <h2 class="invoice-title">فاتورة / INVOICE</h2>
         
-        <!-- Invoice Details Box -->
-        <div style="background: #F5F5F0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1; min-width: 200px;">
-              <p style="margin: 5px 0;"><strong>رقم الفاتورة:</strong> ${invoice.invoice_number || "-"}</p>
-              <p style="margin: 5px 0;"><strong>التاريخ:</strong> ${new Date(invoice.created_at).toLocaleDateString("ar-SA")}</p>
-              <p style="margin: 5px 0;"><strong>الحالة:</strong> <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></p>
+        <div class="details-box">
+          <div class="details-grid">
+            <div class="details-col">
+              <p><strong>رقم الفاتورة:</strong> ${invoice.invoice_number || "-"}</p>
+              <p><strong>التاريخ:</strong> ${new Date(invoice.created_at).toLocaleDateString("ar-SA")}</p>
+              <p><strong>الحالة:</strong> <span style="color: ${statusColor}; font-weight: 700;">${statusText}</span></p>
             </div>
-            <div style="flex: 1; min-width: 200px;">
-              <p style="margin: 5px 0;"><strong>المشروع:</strong> ${invoice.project_name || "-"}</p>
-              ${invoice.milestone_name ? `<p style="margin: 5px 0;"><strong>المرحلة:</strong> ${invoice.milestone_name}</p>` : ""}
-              <p style="margin: 5px 0;"><strong>النوع:</strong> ${invoice.invoice_type === "milestone" ? "مرحلة" : "دفعة جزئية"}</p>
+            <div class="details-col">
+              <p><strong>المشروع:</strong> ${invoice.project_name || "-"}</p>
+              ${invoice.milestone_name ? `<p><strong>المرحلة:</strong> ${invoice.milestone_name}</p>` : ""}
+              <p><strong>النوع:</strong> ${invoice.invoice_type === "milestone" ? "مرحلة" : "دفعة جزئية"}</p>
             </div>
           </div>
         </div>
         
-        <!-- Description -->
-        <div style="margin-bottom: 15px;">
-          <p style="font-weight: bold; margin-bottom: 5px;">الوصف:</p>
-          <p style="background: #FAFAFA; padding: 10px; border-radius: 5px; margin: 0;">${invoice.description || "-"}</p>
+        <div class="description">
+          <p class="description-label">الوصف:</p>
+          <p class="description-text">${invoice.description || "-"}</p>
         </div>
         
-        <!-- Amount Box -->
-        <div style="background: #FAF8F0; border: 1px solid #C8B482; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-weight: bold; font-size: 14px;">إجمالي المبلغ:</span>
-          <span style="font-size: 20px; font-weight: bold; color: #8B772A;">${invoice.amount?.toFixed(3)} ر.ع</span>
+        <div class="amount-box">
+          <span class="amount-label">إجمالي المبلغ:</span>
+          <span class="amount-value">${invoice.amount?.toFixed(3)} ر.ع</span>
         </div>
         
-        <!-- Approval Status -->
-        <div style="margin-bottom: 15px;">
-          <p style="font-weight: bold; margin-bottom: 10px;">حالة الموافقات:</p>
-          <div style="background: #F9FAFB; padding: 15px; border-radius: 8px;">
+        <div class="approval-section">
+          <p class="approval-title">حالة الموافقات:</p>
+          <div class="approval-box">
             ${approvals.map((app, idx) => `
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: ${idx < 2 ? "10px" : "0"};">
-                <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${app.approved ? "#D1FAE5" : "#F3F4F6"}; color: ${app.approved ? "#059669" : "#9CA3AF"}; font-weight: bold;">
+              <div class="approval-item">
+                <div class="approval-icon ${app.approved ? 'approved' : 'pending'}">
                   ${app.approved ? "✓" : (idx + 1)}
                 </div>
-                <div style="flex: 1;">
-                  <span style="font-weight: 600;">${app.name} (${app.nameEn})</span>
-                  ${app.approved 
-                    ? `<span style="color: #059669; margin-right: 10px;">- تمت الموافقة بواسطة ${app.by || "-"} (${app.date ? new Date(app.date).toLocaleDateString("ar-SA") : "-"})</span>` 
-                    : `<span style="color: #9CA3AF; margin-right: 10px;">- في الانتظار</span>`
-                  }
+                <div class="approval-text">
+                  <span class="approval-name">${app.name} (${app.nameEn})</span>
+                  <span class="approval-status" style="color: ${app.approved ? '#059669' : '#9CA3AF'};">
+                    ${app.approved 
+                      ? `- تمت الموافقة بواسطة ${app.by || "-"} (${app.date ? new Date(app.date).toLocaleDateString("ar-SA") : "-"})` 
+                      : "- في الانتظار"
+                    }
+                  </span>
                 </div>
               </div>
             `).join("")}
             
             ${invoice.is_paid ? `
-              <div style="border-top: 1px solid #E5E7EB; margin-top: 10px; padding-top: 10px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #D1FAE5; color: #059669; font-weight: bold;">✓</div>
-                  <div>
-                    <span style="font-weight: 600; color: #059669;">تم الصرف</span>
-                    <span style="color: #6B7280; margin-right: 10px;">- بواسطة ${invoice.paid_by || "-"} (${invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString("ar-SA") : "-"})</span>
-                    ${invoice.payment_reference ? `<span style="color: #6B7280;">- المرجع: ${invoice.payment_reference}</span>` : ""}
+              <div class="paid-section">
+                <div class="approval-item">
+                  <div class="approval-icon approved">✓</div>
+                  <div class="approval-text">
+                    <span class="approval-name" style="color: #059669;">تم الصرف</span>
+                    <span class="approval-status" style="color: #6B7280;">
+                      - بواسطة ${invoice.paid_by || "-"} (${invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString("ar-SA") : "-"})
+                      ${invoice.payment_reference ? ` - المرجع: ${invoice.payment_reference}` : ""}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -271,39 +323,31 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
           </div>
         </div>
         
-        <!-- Footer -->
-        <div style="border-top: 1px solid #C8B482; padding-top: 15px; margin-top: 20px; text-align: center;">
-          <p style="margin: 3px 0; font-size: 9px; color: #6B7280;">شركة المروج للألبان ش.م.ع.م | صلالة، سلطنة عمان</p>
-          <p style="margin: 3px 0; font-size: 9px; color: #6B7280;">الرقم الضريبي: OM1100007713 / OM1100091687 | السجل التجاري: 2017520 / 1249988</p>
-          <p style="margin: 3px 0; font-size: 8px; color: #9CA3AF;">تم الإنشاء في ${new Date().toLocaleString("ar-SA")}</p>
+        <div class="footer">
+          <p>شركة المروج للألبان ش.م.ع.م | صلالة، سلطنة عمان</p>
+          <p>الرقم الضريبي: OM1100007713 / OM1100091687 | السجل التجاري: 2017520 / 1249988</p>
+          <p class="generated">تم الإنشاء في ${new Date().toLocaleString("ar-SA")}</p>
         </div>
-      </div>
+      </body>
+      </html>
     `;
     
-    // Create a temporary container
-    const container = document.createElement("div");
-    container.innerHTML = htmlContent;
-    container.style.position = "absolute";
-    container.style.left = "-9999px";
-    document.body.appendChild(container);
-    
-    // Generate PDF
-    const options = {
-      margin: 10,
-      filename: `Invoice_${invoice.invoice_number || invoice.id}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    };
-    
-    try {
-      await html2pdf().set(options).from(container.firstChild).save();
-      toast.success(language === "ar" ? "تم تحميل الفاتورة" : "Invoice downloaded");
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      toast.error(language === "ar" ? "حدث خطأ أثناء إنشاء الفاتورة" : "Error generating invoice");
-    } finally {
-      document.body.removeChild(container);
+    // Open print window
+    const printWindow = window.open("", "_blank", "width=800,height=600");
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      
+      // Wait for fonts and images to load
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+      
+      toast.success(language === "ar" ? "جاري فتح نافذة الطباعة..." : "Opening print window...");
+    } else {
+      toast.error(language === "ar" ? "يرجى السماح بالنوافذ المنبثقة" : "Please allow pop-ups");
     }
   };
 
