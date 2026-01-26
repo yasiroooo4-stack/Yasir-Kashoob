@@ -285,10 +285,10 @@ const Layout = () => {
     { path: "/reports", icon: BarChart3, label: "reports" },
     
     // الأقسام الأخرى
-    { path: "/legal", icon: Scale, label: "legal", roles: ["admin"], departments: ["legal", "admin", "it"] },
-    { path: "/projects", icon: FolderKanban, label: "projects", departments: ["projects", "admin", "it"] },
-    { path: "/operations", icon: Activity, label: "operations", departments: ["operations", "admin", "it"] },
-    { path: "/marketing", icon: Megaphone, label: "marketing", departments: ["marketing", "admin", "it"] },
+    { path: "/legal", icon: Scale, label: "legal" },
+    { path: "/projects", icon: FolderKanban, label: "projects" },
+    { path: "/operations", icon: Activity, label: "operations" },
+    { path: "/marketing", icon: Megaphone, label: "marketing" },
     
     // إعدادات النظام (تم دمج إعدادات المظهر والإشعارات والكاميرات هنا)
     { path: "/system-settings", icon: Settings, label: "system_settings" },
