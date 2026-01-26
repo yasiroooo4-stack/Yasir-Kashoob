@@ -199,6 +199,13 @@ const PermissionsManagement = () => {
 
   const getPermissionLabel = (permission) => {
     const labels = {
+      // لوحة التحكم
+      dashboard_view: t("عرض لوحة التحكم", "View Dashboard"),
+      dashboard_stats: t("عرض الإحصائيات", "View Statistics"),
+      // التحليلات
+      analysis_view: t("عرض التحليلات", "View Analytics"),
+      analysis_reports: t("تقارير التحليلات", "Analytics Reports"),
+      analysis_export: t("تصدير التحليلات", "Export Analytics"),
       // استلام الحليب
       milk_reception_view: t("عرض استلامات الحليب", "View Milk Receptions"),
       milk_reception_create: t("إنشاء استلام حليب", "Create Milk Reception"),
