@@ -314,6 +314,7 @@ const Layout = () => {
       '/employee-scheduling': ['hr_employee_schedule_view', 'hr_employee_schedule_edit'],
       '/driver-schedule': ['hr_driver_schedule_view', 'hr_driver_schedule_edit'],
       '/salary-structures': ['hr_payroll_view', 'hr_payroll_edit'],
+      '/extra-pay-approvals': ['hr_extra_pay_view', 'hr_extra_pay_approve'],
       '/finance': ['finance', 'finance_view', 'treasury_view', 'treasury_transactions'],
       '/finance-system': ['finance', 'finance_view', 'finance_transactions'],
       '/treasury': ['finance', 'treasury_view', 'treasury_transactions'],
