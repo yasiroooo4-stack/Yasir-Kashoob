@@ -570,8 +570,20 @@ const HR = () => {
     setSelectedEmployee(null);
   };
 
-  const openEditEmployee = (employee) => {
+  const openEditEmployee = async (employee) => {
     setSelectedEmployee(employee);
+    
+    // Fetch permissions from user_permissions table
+    let employeePermissions = employee.permissions || [];
+    try {
+      const permRes = await axios.get(`${API}/permissions/user/${employee.id}`);
+      if (permRes.data?.granted_permissions) {
+        employeePermissions = permRes.data.granted_permissions;
+      }
+    } catch (error) {
+      console.error("Error fetching employee permissions:", error);
+    }
+    
     setEmployeeForm({
       name: employee.name,
       phone: employee.phone,
@@ -590,7 +602,7 @@ const HR = () => {
       additional_fingerprints: employee.additional_fingerprints || [],
       work_location: employee.work_location || "",
       exclude_from_payroll: employee.exclude_from_payroll || false,
-      permissions: employee.permissions || [],
+      permissions: employeePermissions,
       manager_id: employee.manager_id || "",
       manager_name: employee.manager_name || "",
       username: employee.username || "",
