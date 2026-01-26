@@ -151,6 +151,11 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPer
     return children;
   }
 
+  // If no restrictions defined, allow access
+  if (!allowedRoles && !allowedDepartments && !allowedPermissions) {
+    return children;
+  }
+
   // If no access granted, redirect to dashboard
   return <Navigate to="/dashboard" replace />;
 };
