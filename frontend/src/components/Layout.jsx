@@ -101,8 +101,65 @@ const Layout = () => {
         
         // Fetch user settings
         const settingsRes = await axios.get(`${API}/user/settings`, { headers });
-        if (settingsRes.data?.background_url) {
-          setBackgroundUrl(settingsRes.data.background_url);
+        const settings = settingsRes.data;
+        
+        if (settings?.background_url) {
+          setBackgroundUrl(settings.background_url);
+        }
+        
+        // Apply theme settings from backend
+        if (settings?.app_theme) {
+          const THEMES = [
+            { id: "default", primary: "#2563eb", secondary: "#64748b" },
+            { id: "ocean", primary: "#0ea5e9", secondary: "#0284c7" },
+            { id: "forest", primary: "#16a34a", secondary: "#15803d" },
+            { id: "sunset", primary: "#f97316", secondary: "#ea580c" },
+            { id: "royal", primary: "#7c3aed", secondary: "#6d28d9" },
+            { id: "rose", primary: "#e11d48", secondary: "#be123c" },
+            { id: "dark", primary: "#6366f1", secondary: "#4f46e5" },
+            { id: "slate", primary: "#475569", secondary: "#334155" }
+          ];
+          
+          const theme = THEMES.find(t => t.id === settings.app_theme);
+          if (theme) {
+            document.documentElement.setAttribute('data-theme', settings.app_theme);
+            document.documentElement.style.setProperty('--theme-primary', theme.primary);
+            document.documentElement.style.setProperty('--theme-primary-dark', theme.secondary);
+            
+            // Convert to HSL for shadcn
+            const hexToHSL = (hex) => {
+              let r = parseInt(hex.slice(1, 3), 16) / 255;
+              let g = parseInt(hex.slice(3, 5), 16) / 255;
+              let b = parseInt(hex.slice(5, 7), 16) / 255;
+              let max = Math.max(r, g, b), min = Math.min(r, g, b);
+              let h, s, l = (max + min) / 2;
+              if (max === min) { h = s = 0; }
+              else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                  case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                  case g: h = ((b - r) / d + 2) / 6; break;
+                  case b: h = ((r - g) / d + 4) / 6; break;
+                  default: h = 0;
+                }
+              }
+              return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+            };
+            document.documentElement.style.setProperty('--primary', hexToHSL(theme.primary));
+            
+            // Save to localStorage as backup
+            localStorage.setItem("app_theme", settings.app_theme);
+          }
+        }
+        
+        // Apply dark mode setting from backend
+        if (settings?.dark_mode) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem("dark_mode", "true");
+        } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem("dark_mode", "false");
         }
         
         // Fetch available backgrounds
