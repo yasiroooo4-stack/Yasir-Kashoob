@@ -555,9 +555,13 @@ const DataResetSettings = ({ language, t }) => {
 
 const SystemSettings = () => {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const t = (ar, en) => language === "ar" ? ar : en;
   
-  const [activeTab, setActiveTab] = useState("centers");
+  // Check if user is admin
+  const isAdmin = user?.role === "admin";
+  
+  const [activeTab, setActiveTab] = useState(isAdmin ? "centers" : "appearance");
   const [loading, setLoading] = useState(false);
   
   // Centers
