@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { API, useLanguage } from "../App";
+import { API, useLanguage, useAuth } from "../App";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
   Milk,
@@ -29,14 +29,32 @@ import {
 const Dashboard = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState([]);
   const [centralDashboard, setCentralDashboard] = useState(null);
+  const [backgroundUrl, setBackgroundUrl] = useState(null);
+
+  // Check if user has dashboard permission
+  const userPermissions = user?.permissions || [];
+  const hasDashboardPermission = user?.role === 'admin' || 
+    user?.department === 'admin' || 
+    user?.department === 'it' ||
+    userPermissions.some(p => p.startsWith('dashboard_'));
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (hasDashboardPermission) {
+      fetchDashboardData();
+    } else {
+      // Load user's background
+      const savedBg = localStorage.getItem("user_background");
+      if (savedBg) {
+        setBackgroundUrl(savedBg);
+      }
+      setLoading(false);
+    }
+  }, [hasDashboardPermission]);
 
   const fetchDashboardData = async () => {
     try {
@@ -54,6 +72,46 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  // If user doesn't have dashboard permission, show welcome screen with background
+  if (!hasDashboardPermission) {
+    return (
+      <div 
+        className="min-h-[calc(100vh-4rem)] flex items-center justify-center relative overflow-hidden"
+        style={{
+          backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/30" />
+        
+        {/* Welcome Content */}
+        <div className="relative z-10 text-center text-white p-8">
+          <h1 className="text-4xl font-bold mb-4">
+            {language === "ar" ? `مرحباً ${user?.full_name || ''}` : `Welcome ${user?.full_name || ''}`}
+          </h1>
+          <p className="text-xl opacity-90">
+            {language === "ar" 
+              ? "اختر من القائمة الجانبية للوصول إلى الصفحات المتاحة لك" 
+              : "Select from the sidebar to access your available pages"}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            {userPermissions.length > 0 && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-3">
+                <span className="text-lg">
+                  {language === "ar" 
+                    ? `لديك ${userPermissions.length} صلاحية` 
+                    : `You have ${userPermissions.length} permissions`}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const statCards = [
     {
