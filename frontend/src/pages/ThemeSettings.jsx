@@ -355,6 +355,8 @@ const ThemeSettings = ({ embedded = false }) => {
             />
           </div>
         </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
