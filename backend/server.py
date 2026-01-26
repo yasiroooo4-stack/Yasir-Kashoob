@@ -500,7 +500,47 @@ async def login(credentials: UserLogin):
 
 @api_router.get("/auth/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
-    return current_user
+    # Get full user data with permissions and position
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get employee data for position and department
+    employee = None
+    employee_id = user.get("employee_id")
+    
+    if employee_id:
+        employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+        if not employee:
+            employee = await db.hr_employees.find_one({"employee_code": employee_id}, {"_id": 0})
+    
+    if not employee:
+        employee = await db.hr_employees.find_one({"employee_code": user.get("username")}, {"_id": 0})
+    
+    # Get permissions
+    user_permissions = []
+    actual_employee_id = employee.get("id") if employee else None
+    
+    if actual_employee_id:
+        granted_permissions = await db.user_permissions.find(
+            {"employee_id": actual_employee_id, "is_active": True},
+            {"_id": 0, "permission": 1}
+        ).to_list(100)
+        user_permissions = [g["permission"] for g in granted_permissions]
+        
+        if employee:
+            user_permissions.extend(employee.get("permissions", []))
+            user["department"] = employee.get("department")
+            user["position"] = employee.get("position")
+            user["employee_id"] = actual_employee_id
+    
+    # Also include permissions stored directly on user
+    user_permissions.extend(user.get("permissions", []))
+    
+    # Remove duplicates and None values
+    user["permissions"] = list(set(filter(None, user_permissions)))
+    
+    return user
 
 @api_router.put("/auth/profile")
 async def update_profile(profile_data: UserUpdate, current_user: dict = Depends(get_current_user)):
