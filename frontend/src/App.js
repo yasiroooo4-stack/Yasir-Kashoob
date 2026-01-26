@@ -432,42 +432,42 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="warehouse" element={
-                  <ProtectedRoute allowedDepartments={["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"]}>
+                  <ProtectedRoute allowedDepartments={["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"]} allowedPermissions={["warehouse", "warehouse_view", "inventory_view", "inventory_edit"]}>
                     <WarehouseManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="projects" element={
-                  <ProtectedRoute allowedDepartments={["projects", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["projects", "admin", "it"]} allowedPermissions={["projects", "projects_view", "projects_create", "projects_edit"]}>
                     <Projects />
                   </ProtectedRoute>
                 } />
                 <Route path="operations" element={
-                  <ProtectedRoute allowedDepartments={["operations", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["operations", "admin", "it"]} allowedPermissions={["operations", "operations_view", "operations_edit"]}>
                     <Operations />
                   </ProtectedRoute>
                 } />
                 <Route path="marketing" element={
-                  <ProtectedRoute allowedDepartments={["marketing", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["marketing", "admin", "it"]} allowedPermissions={["marketing", "marketing_view", "marketing_create"]}>
                     <Marketing />
                   </ProtectedRoute>
                 } />
                 <Route path="payroll" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]} allowedPermissions={["hr_payroll_view", "hr_payroll_edit"]}>
                     <Payroll />
                   </ProtectedRoute>
                 } />
                 <Route path="salary-structures" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]} allowedPermissions={["hr_payroll_view", "hr_payroll_edit"]}>
                     <SalaryStructures />
                   </ProtectedRoute>
                 } />
                 <Route path="extra-pay-approvals" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "finance", "admin", "it"]} allowedPermissions={["hr_extra_pay_view", "hr_extra_pay_approve"]}>
                     <ExtraPayApprovals />
                   </ProtectedRoute>
                 } />
                 <Route path="analytics" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedPermissions={["analysis_view", "analysis_reports"]}>
                     <Analytics />
                   </ProtectedRoute>
                 } />
