@@ -70,7 +70,7 @@ import {
 } from "lucide-react";
 
 // Lazy load additional settings components
-const AppearanceSettings = lazy(() => import("./Settings"));
+const AppearanceSettings = lazy(() => import("./ThemeSettings"));
 const NotificationSettings = lazy(() => import("./NotificationSettings"));
 const CCTVSystem = lazy(() => import("./CCTVSystem"));
 
