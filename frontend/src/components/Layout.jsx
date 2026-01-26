@@ -257,21 +257,21 @@ const Layout = () => {
     // الموردين واستلام الحليب
     { path: "/suppliers", icon: Users, label: "suppliers", departments: ["purchasing", "milk_reception", "admin", "it"] },
     { path: "/supplier-management", icon: PackageSearch, label: "supplier_management", departments: ["purchasing", "admin", "it"] },
-    { path: "/milk-reception", icon: Milk, label: "milk_reception", departments: ["milk_reception", "admin", "it"] },
+    { path: "/milk-reception", icon: Milk, label: "milk_reception" },
     
     // العملاء والمبيعات
-    { path: "/customers", icon: ShoppingCart, label: "customers", departments: ["sales", "admin", "it"] },
-    { path: "/sales", icon: ShoppingCart, label: "sales", departments: ["sales", "admin", "it"] },
+    { path: "/customers", icon: ShoppingCart, label: "customers" },
+    { path: "/sales", icon: ShoppingCart, label: "sales" },
     
     // المشتريات والمخازن
-    { path: "/feed-purchases", icon: Wheat, label: "feed_purchases", departments: ["purchasing", "admin", "it"] },
-    { path: "/procurement", icon: ShoppingCart, label: "procurement", departments: ["procurement", "purchasing", "finance", "admin", "it"] },
-    { path: "/warehouse", icon: Package, label: "warehouse_management", departments: ["inventory", "warehouse", "operations", "admin", "it", "المخازن", "العمليات"] },
+    { path: "/feed-purchases", icon: Wheat, label: "feed_purchases" },
+    { path: "/procurement", icon: ShoppingCart, label: "procurement" },
+    { path: "/warehouse", icon: Package, label: "warehouse_management" },
     
     // المالية
-    { path: "/finance", icon: Wallet, label: "finance", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
-    { path: "/finance-system", icon: Landmark, label: "finance_system", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
-    { path: "/treasury", icon: PiggyBank, label: "treasury", roles: ["admin", "accountant"], departments: ["finance", "admin", "it"] },
+    { path: "/finance", icon: Wallet, label: "finance" },
+    { path: "/finance-system", icon: Landmark, label: "finance_system" },
+    { path: "/treasury", icon: PiggyBank, label: "treasury" },
     
     // الموارد البشرية (تم دمج البدلات الإضافية هنا)
     { path: "/hr", icon: Building2, label: "hr" },
