@@ -2303,8 +2303,6 @@ AVAILABLE_PERMISSIONS = [
     "approvals_hr",             # موافقات الموارد البشرية
     "approvals_finance",        # موافقات المالية
     "approvals_gm",             # موافقات المدير العام
-    "warehouse_issue_all",      # صرف من جميع المخازن (للمشرفين)
-    "warehouse_approve_issue",  # الموافقة على طلبات الصرف
 ]
 
 class DepartmentPermissions(BaseModel):
