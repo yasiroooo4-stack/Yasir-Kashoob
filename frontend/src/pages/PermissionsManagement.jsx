@@ -60,6 +60,8 @@ import {
   Package,
   Milk,
   UserCog,
+  Home,
+  TrendingUp,
 } from "lucide-react";
 
 const PermissionsManagement = () => {
