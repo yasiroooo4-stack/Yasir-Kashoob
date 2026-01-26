@@ -245,22 +245,23 @@ const Layout = () => {
       return true;
     }
     
-    // HR Manager has access to HR related pages
-    if (user?.role === 'hr_manager') {
-      return item.path === '/hr' || item.path === '/payroll' || item.path === '/dashboard' || item.path === '/settings' || item.path === '/reports' || item.path === '/analysis';
-    }
-    
     // Check user permissions for specific pages
     const userPermissions = user?.permissions || [];
     const pathToPermission = {
       '/dashboard': ['dashboard_view', 'dashboard_stats'],
       '/analysis': ['analysis_view', 'analysis_reports', 'analysis_export'],
+      '/analytics': ['analysis_view', 'analysis_reports', 'analysis_export'],
       '/reports': ['reports', 'reports_view', 'reports_operational', 'reports_financial', 'reports_export'],
-      '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_payroll_view', 'hr_employee_schedule_view', 'hr_letters_view', 'hr_extra_pay_view', 'hr_documents_view'],
+      '/hr': ['hr', 'hr_employees_view', 'hr_attendance_view', 'hr_leaves_view', 'hr_employee_schedule_view', 'hr_letters_view', 'hr_extra_pay_view', 'hr_documents_view'],
       '/payroll': ['hr_payroll_view', 'hr_payroll_edit', 'hr_payroll_approve_hr', 'hr_payroll_approve_finance', 'hr_payroll_approve_gm'],
-      '/finance': ['finance', 'treasury_view', 'treasury_transactions'],
+      '/employee-scheduling': ['hr_employee_schedule_view', 'hr_employee_schedule_edit'],
+      '/driver-schedule': ['hr_driver_schedule_view', 'hr_driver_schedule_edit'],
+      '/salary-structures': ['hr_payroll_view', 'hr_payroll_edit'],
+      '/finance': ['finance', 'finance_view', 'treasury_view', 'treasury_transactions'],
+      '/finance-system': ['finance', 'finance_view', 'finance_transactions'],
       '/treasury': ['finance', 'treasury_view', 'treasury_transactions'],
       '/suppliers': ['suppliers', 'suppliers_view', 'suppliers_create', 'suppliers_edit'],
+      '/supplier-management': ['suppliers', 'suppliers_view', 'suppliers_edit'],
       '/milk-reception': ['milk_reception', 'milk_reception_view', 'milk_reception_create', 'milk_reception_edit'],
       '/legal': ['legal', 'legal_view', 'legal_create', 'legal_contracts_view', 'legal_cases_view'],
       '/projects': ['projects', 'projects_view', 'projects_create', 'projects_edit'],
@@ -269,24 +270,30 @@ const Layout = () => {
       '/warehouse': ['warehouse', 'warehouse_view', 'inventory_view', 'inventory_edit', 'warehouse_products_view', 'warehouse_stock_receive', 'warehouse_stock_issue'],
       '/customers': ['customers', 'customers_view', 'customers_create'],
       '/sales': ['sales', 'sales_view', 'sales_create'],
-      '/driver-schedule': ['hr_driver_schedule_view', 'hr_driver_schedule_edit'],
-      '/employee-schedule': ['hr_employee_schedule_view', 'hr_employee_schedule_edit'],
-      '/system-settings': [], // متاح للجميع (المظهر فقط)
+      '/procurement': ['purchases_view', 'purchases_create', 'purchases_edit'],
+      '/feed-purchases': ['purchases_view', 'purchases_create'],
+      '/system-settings': [], // متاح للجميع
     };
     
-    // Pages that are always available for all authenticated users
+    // Pages always available
     const alwaysAvailablePages = ['/system-settings'];
     if (alwaysAvailablePages.includes(item.path)) {
       return true;
     }
     
-    // If user has specific permission for this path, allow access
+    // FIRST: Check if user has permission for this page
     const requiredPermissions = pathToPermission[item.path] || [];
     if (requiredPermissions.length > 0 && requiredPermissions.some(perm => userPermissions.includes(perm))) {
-      return true;
+      return true; // User has permission, show the page regardless of role/department
     }
     
-    // If path has permission requirements but user doesn't have them, deny access
+    // HR Manager special access
+    if (user?.role === 'hr_manager') {
+      const hrPaths = ['/hr', '/payroll', '/dashboard', '/settings', '/reports', '/analysis', '/employee-scheduling', '/driver-schedule', '/salary-structures'];
+      if (hrPaths.includes(item.path)) return true;
+    }
+    
+    // If page has permission requirements but user doesn't have them, deny
     if (requiredPermissions.length > 0) {
       return false;
     }
@@ -301,7 +308,7 @@ const Layout = () => {
       return false;
     }
     
-    // For regular employees without explicit permissions, deny access to protected pages
+    // For regular employees, deny access to unspecified pages
     if (user?.role === 'employee') {
       return false;
     }
