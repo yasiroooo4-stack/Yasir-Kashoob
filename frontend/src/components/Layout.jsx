@@ -380,7 +380,12 @@ const Layout = () => {
     navigate("/login");
   };
 
-  const getRoleLabel = (role) => {
+  const getRoleLabel = (role, position) => {
+    // إذا كان هناك منصب، أعرضه
+    if (position) {
+      return position;
+    }
+    // وإلا أعرض الدور
     const roles = {
       admin: t("admin"),
       employee: t("employee"),
