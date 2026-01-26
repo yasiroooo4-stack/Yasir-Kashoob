@@ -337,12 +337,12 @@ function App() {
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
                 <Route path="suppliers" element={
-                  <ProtectedRoute allowedDepartments={["purchasing", "milk_reception", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["purchasing", "milk_reception", "admin", "it"]} allowedPermissions={["suppliers", "suppliers_view", "suppliers_create", "suppliers_edit"]}>
                     <Suppliers />
                   </ProtectedRoute>
                 } />
                 <Route path="milk-reception" element={
-                  <ProtectedRoute allowedDepartments={["milk_reception", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["milk_reception", "admin", "it"]} allowedPermissions={["milk_reception", "milk_reception_view", "milk_reception_create", "milk_reception_edit"]}>
                     <MilkReception />
                   </ProtectedRoute>
                 } />
