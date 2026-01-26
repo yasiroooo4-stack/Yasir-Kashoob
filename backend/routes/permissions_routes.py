@@ -77,11 +77,13 @@ async def get_available_permissions(current_user: dict = Depends(get_current_use
     """الحصول على قائمة الصلاحيات المتاحة"""
     # تجميع الصلاحيات حسب الفئة
     categories = {
+        "لوحة التحكم": [p for p in AVAILABLE_PERMISSIONS if p.startswith("dashboard_")],
+        "التحليلات": [p for p in AVAILABLE_PERMISSIONS if p.startswith("analysis_")],
+        "التقارير": [p for p in AVAILABLE_PERMISSIONS if p.startswith("reports_")],
         "استلام الحليب": [p for p in AVAILABLE_PERMISSIONS if p.startswith("milk_")],
         "الموردين": [p for p in AVAILABLE_PERMISSIONS if p.startswith("suppliers_")],
         "العملاء": [p for p in AVAILABLE_PERMISSIONS if p.startswith("customers_")],
         "المبيعات": [p for p in AVAILABLE_PERMISSIONS if p.startswith("sales_")],
-        "التقارير": [p for p in AVAILABLE_PERMISSIONS if p.startswith("reports_")],
         "الموارد البشرية": [p for p in AVAILABLE_PERMISSIONS if p.startswith("hr_")],
         "المخزون": [p for p in AVAILABLE_PERMISSIONS if p.startswith("inventory_")],
         "الخزينة": [p for p in AVAILABLE_PERMISSIONS if p.startswith("treasury_")],
