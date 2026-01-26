@@ -512,11 +512,28 @@ const HR = () => {
   const handleEmployeeSubmit = async (e) => {
     e.preventDefault();
     try {
+      let employeeId;
       if (selectedEmployee) {
         await axios.put(`${API}/hr/employees/${selectedEmployee.id}`, employeeForm);
+        employeeId = selectedEmployee.id;
       } else {
-        await axios.post(`${API}/hr/employees`, employeeForm);
+        const res = await axios.post(`${API}/hr/employees`, employeeForm);
+        employeeId = res.data?.id;
       }
+      
+      // Sync permissions with the permissions system
+      if (employeeId && employeeForm.permissions) {
+        try {
+          await axios.post(`${API}/permissions/sync`, {
+            employee_id: employeeId,
+            permissions: employeeForm.permissions
+          });
+        } catch (permError) {
+          console.error("Error syncing permissions:", permError);
+          // Don't fail the whole operation if permissions sync fails
+        }
+      }
+      
       toast.success(t("success"));
       setEmployeeDialogOpen(false);
       resetEmployeeForm();
