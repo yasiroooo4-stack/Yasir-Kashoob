@@ -134,6 +134,27 @@ async def login(credentials: UserLogin):
     if not user.get("is_active", True):
         raise HTTPException(status_code=401, detail="Account is deactivated")
     
+    # Get user permissions from user_permissions table
+    user_permissions = []
+    employee_id = user.get("employee_id")
+    if employee_id:
+        granted_permissions = await db.user_permissions.find(
+            {"employee_id": employee_id, "is_active": True},
+            {"_id": 0, "permission": 1}
+        ).to_list(100)
+        user_permissions = [g["permission"] for g in granted_permissions]
+    
+    # Also get permissions from hr_employees if linked
+    if employee_id:
+        employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0, "permissions": 1, "department": 1})
+        if employee:
+            # Add permissions from employee record
+            user_permissions.extend(employee.get("permissions", []))
+            user["department"] = employee.get("department")
+    
+    # Remove duplicates
+    user_permissions = list(set(user_permissions))
+    
     # Log login activity
     await log_activity(
         user_id=user["id"],
@@ -157,7 +178,10 @@ async def login(credentials: UserLogin):
             "center_id": user.get("center_id"),
             "center_name": user.get("center_name"),
             "phone": user.get("phone"),
-            "avatar_url": user.get("avatar_url")
+            "avatar_url": user.get("avatar_url"),
+            "department": user.get("department"),
+            "employee_id": employee_id,
+            "permissions": user_permissions
         }
     )
 
