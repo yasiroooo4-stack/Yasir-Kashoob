@@ -362,32 +362,32 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="finance" element={
-                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]} allowedPermissions={["finance", "finance_view", "finance_transactions"]}>
                     <Finance />
                   </ProtectedRoute>
                 } />
                 <Route path="finance-system" element={
-                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]} allowedPermissions={["finance", "finance_view", "finance_transactions"]}>
                     <FinanceSystem />
                   </ProtectedRoute>
                 } />
                 <Route path="treasury" element={
-                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "accountant"]} allowedDepartments={["finance", "admin", "it"]} allowedPermissions={["finance", "treasury_view", "treasury_transactions"]}>
                     <Treasury />
                   </ProtectedRoute>
                 } />
                 <Route path="employees" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager"]} allowedDepartments={["hr", "admin", "it"]} allowedPermissions={["hr", "hr_employees_view", "hr_employees_edit"]}>
                     <Employees />
                   </ProtectedRoute>
                 } />
                 <Route path="reports" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedPermissions={["reports", "reports_view", "reports_operational", "reports_financial"]}>
                     <Reports />
                   </ProtectedRoute>
                 } />
                 <Route path="advanced-reports" element={
-                  <ProtectedRoute allowedRoles={["admin", "hr_manager", "accountant"]} allowedDepartments={["hr", "finance", "admin", "it"]}>
+                  <ProtectedRoute allowedRoles={["admin", "hr_manager", "accountant"]} allowedDepartments={["hr", "finance", "admin", "it"]} allowedPermissions={["reports", "reports_view", "reports_financial"]}>
                     <AdvancedReports />
                   </ProtectedRoute>
                 } />
