@@ -1977,6 +1977,8 @@ class UserAppearanceSettings(BaseModel):
     background_url: Optional[str] = None
     theme: str = "light"
     sidebar_collapsed: bool = False
+    app_theme: str = "default"  # Theme color: default, ocean, forest, sunset, royal, rose, dark, slate
+    dark_mode: bool = False     # Dark mode toggle
 
 # ==================== ZKTECO MODELS ====================
 
