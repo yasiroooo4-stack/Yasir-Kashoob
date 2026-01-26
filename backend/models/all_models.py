@@ -2149,6 +2149,15 @@ DEPARTMENTS = [
 
 # الصلاحيات المتاحة
 AVAILABLE_PERMISSIONS = [
+    # لوحة التحكم
+    "dashboard_view",           # عرض لوحة التحكم
+    "dashboard_stats",          # عرض الإحصائيات
+    
+    # التحليلات
+    "analysis_view",            # عرض التحليلات
+    "analysis_reports",         # تقارير التحليلات
+    "analysis_export",          # تصدير التحليلات
+    
     # استلام الحليب
     "milk_reception_view",      # عرض استلامات الحليب
     "milk_reception_create",    # إنشاء استلام حليب
