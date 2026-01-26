@@ -282,7 +282,7 @@ async def sync_permissions(
             permission=permission,
             granted_by=current_user["id"],
             granted_by_name=current_user.get("full_name", ""),
-            granted_at=datetime.now(timezone.utc),
+            granted_at=datetime.now(timezone.utc).isoformat(),
             is_active=True
         )
         await db.user_permissions.insert_one(grant.model_dump())
