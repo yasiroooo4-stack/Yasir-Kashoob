@@ -126,6 +126,9 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
     
     granted_list = [g["permission"] for g in granted_permissions]
     
+    # إعداد قائمة الصلاحيات مع الـ ID للإلغاء
+    permission_grants = [{"id": g["id"], "permission": g["permission"]} for g in granted_permissions]
+    
     # DEBUG
     import logging
     logging.info(f"Employee {employee_id}: DB grants = {len(granted_permissions)}, granted_list = {len(granted_list)}")
@@ -144,6 +147,7 @@ async def get_user_permissions(employee_id: str, current_user: dict = Depends(ge
         "position": position,
         "role_permissions": role_permissions,
         "granted_permissions": granted_list,
+        "permission_grants": permission_grants,
         "denied_permissions": denied_permissions,
         "all_permissions": all_permissions
     }
