@@ -352,7 +352,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="sales" element={
-                  <ProtectedRoute allowedDepartments={["sales", "admin", "it"]}>
+                  <ProtectedRoute allowedDepartments={["sales", "admin", "it"]} allowedPermissions={["sales", "sales_view", "sales_create", "sales_edit"]}>
                     <Sales />
                   </ProtectedRoute>
                 } />
