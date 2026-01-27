@@ -2324,6 +2324,7 @@ class TaskBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     title: str                              # عنوان المهمة
     description: str                        # وصف المهمة
+    task_type: str = "general"              # نوع المهمة: general, routine_maintenance, equipment_inspection, cleaning, report
     assigned_to_id: str                     # معرف الموظف المكلف
     assigned_to_name: str                   # اسم الموظف المكلف
     assigned_by_id: str                     # معرف المسؤول الذي أنشأ المهمة
@@ -2334,6 +2335,20 @@ class TaskBase(BaseModel):
     department: Optional[str] = None        # القسم
     center_id: Optional[str] = None         # المركز
     center_name: Optional[str] = None
+    recurring: bool = False                 # مهمة متكررة
+    recurrence_pattern: Optional[str] = None  # daily, weekly, monthly
+
+# أنواع المهام
+TASK_TYPES = [
+    {"id": "general", "name_ar": "مهمة عامة", "name_en": "General Task"},
+    {"id": "routine_maintenance", "name_ar": "صيانة روتينية", "name_en": "Routine Maintenance"},
+    {"id": "equipment_inspection", "name_ar": "فحص المعدات", "name_en": "Equipment Inspection"},
+    {"id": "cleaning", "name_ar": "تنظيف", "name_en": "Cleaning"},
+    {"id": "report", "name_ar": "تقرير", "name_en": "Report"},
+    {"id": "inventory", "name_ar": "جرد المخزون", "name_en": "Inventory Check"},
+    {"id": "delivery", "name_ar": "توصيل", "name_en": "Delivery"},
+    {"id": "meeting", "name_ar": "اجتماع", "name_en": "Meeting"},
+]
 
 class TaskCreate(TaskBase):
     pass
