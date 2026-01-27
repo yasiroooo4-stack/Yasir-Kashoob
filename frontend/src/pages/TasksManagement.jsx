@@ -379,7 +379,8 @@ export default function TasksManagement() {
         body: JSON.stringify({
           ...formData,
           assigned_by_id: user.id,
-          assigned_by_name: user.full_name
+          assigned_by_name: user.full_name,
+          requires_document: formData.requires_document || false
         }),
       });
 
@@ -395,7 +396,8 @@ export default function TasksManagement() {
           category: "",
           department: user?.department || "",
           center_id: "",
-          center_name: ""
+          center_name: "",
+          requires_document: false
         });
         fetchTasks();
         fetchStats();
