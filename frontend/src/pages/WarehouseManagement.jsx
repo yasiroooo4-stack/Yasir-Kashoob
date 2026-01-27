@@ -1466,6 +1466,11 @@ const WarehouseManagement = () => {
         <TabsContent value="fixed-assets" className="space-y-4">
           <FixedAssetsSection t={t} language={language} centers={centers} warehouses={warehouses} />
         </TabsContent>
+
+        {/* Advanced Settings Tab - الإعدادات المتقدمة */}
+        <TabsContent value="advanced-settings" className="space-y-4">
+          <AdvancedSettingsSection t={t} language={language} />
+        </TabsContent>
       </Tabs>
 
       {/* Warehouse Dialog */}
