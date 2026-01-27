@@ -328,6 +328,8 @@ class WarehouseProductBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: str                           # اسم المنتج
     code: str                           # رمز/باركود المنتج
+    barcode: Optional[str] = None       # الباركود (EAN-13, UPC, etc.)
+    qr_code: Optional[str] = None       # رمز QR
     category_id: Optional[str] = None   # فئة المنتج
     category_name: Optional[str] = None
     unit: str = "piece"                 # وحدة القياس: piece, kg, liter, box
@@ -335,6 +337,13 @@ class WarehouseProductBase(BaseModel):
     cost_price: float = 0               # سعر التكلفة
     min_quantity: float = 0             # الحد الأدنى للكمية
     max_quantity: Optional[float] = None # الحد الأقصى
+    safety_stock: float = 0             # مخزون الأمان
+    reorder_point: float = 0            # نقطة إعادة الطلب
+    reorder_quantity: float = 0         # كمية إعادة الطلب
+    auto_reorder_enabled: bool = False  # تفعيل إعادة الطلب التلقائي
+    abc_classification: str = "C"       # تصنيف ABC: A (مهم جداً), B (متوسط), C (منخفض)
+    annual_consumption: float = 0       # الاستهلاك السنوي (لحساب ABC)
+    annual_value: float = 0             # القيمة السنوية (لحساب ABC)
     expiry_tracking: bool = False       # تتبع الصلاحية
     batch_tracking: bool = False        # تتبع الدفعات
     description: Optional[str] = None
