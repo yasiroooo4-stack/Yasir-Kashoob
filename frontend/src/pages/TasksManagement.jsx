@@ -816,30 +816,51 @@ export default function TasksManagement() {
               />
             </div>
             
-            <div>
-              <Label>{tr.assignTo}</Label>
-              <Select
-                value={formData.assigned_to_id}
-                onValueChange={(value) => {
-                  const emp = employees.find(e => e.id === value);
-                  setFormData({
-                    ...formData,
-                    assigned_to_id: value,
-                    assigned_to_name: emp?.name || ""
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("اختر الموظف", "Select employee")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.name} - {emp.employee_id}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{tr.taskType}</Label>
+                <Select
+                  value={formData.task_type}
+                  onValueChange={(value) => setFormData({ ...formData, task_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taskTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {language === "ar" ? type.name_ar : type.name_en}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>{tr.assignTo}</Label>
+                <Select
+                  value={formData.assigned_to_id}
+                  onValueChange={(value) => {
+                    const emp = employees.find(e => e.id === value);
+                    setFormData({
+                      ...formData,
+                      assigned_to_id: value,
+                      assigned_to_name: emp?.name || ""
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("اختر الموظف", "Select employee")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.name} - {emp.employee_id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
