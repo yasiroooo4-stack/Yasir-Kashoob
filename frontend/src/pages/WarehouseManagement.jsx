@@ -1469,7 +1469,7 @@ const WarehouseManagement = () => {
 
       {/* Warehouse Dialog */}
       <Dialog open={warehouseDialog} onOpenChange={setWarehouseDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("إضافة مخزن جديد", "Add New Warehouse")}</DialogTitle>
           </DialogHeader>
@@ -1480,6 +1480,7 @@ const WarehouseManagement = () => {
                 <Input
                   value={warehouseForm.name}
                   onChange={(e) => setWarehouseForm({ ...warehouseForm, name: e.target.value })}
+                  placeholder={t("مثال: مخزن المختبر", "e.g., Lab Storage")}
                 />
               </div>
               <div>
@@ -1487,29 +1488,100 @@ const WarehouseManagement = () => {
                 <Input
                   value={warehouseForm.code}
                   onChange={(e) => setWarehouseForm({ ...warehouseForm, code: e.target.value })}
+                  placeholder={t("مثال: LAB-001", "e.g., LAB-001")}
                 />
               </div>
             </div>
-            <div>
-              <Label>{t("الموقع", "Location")}</Label>
-              <Input
-                value={warehouseForm.location}
-                onChange={(e) => setWarehouseForm({ ...warehouseForm, location: e.target.value })}
-              />
-            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("النوع", "Type")}</Label>
-                <Select value={warehouseForm.warehouse_type} onValueChange={(v) => setWarehouseForm({ ...warehouseForm, warehouse_type: v })}>
+                <Label>{t("المركز", "Center")}</Label>
+                <Select 
+                  value={warehouseForm.center_name || ''} 
+                  onValueChange={(v) => setWarehouseForm({ ...warehouseForm, center_name: v, parent_warehouse_id: '' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("اختر المركز", "Select Center")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {centers.map((center) => (
+                      <SelectItem key={center} value={center}>{center}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t("نوع المخزن", "Warehouse Type")}</Label>
+                <Select 
+                  value={warehouseForm.warehouse_type} 
+                  onValueChange={(v) => setWarehouseForm({ ...warehouseForm, warehouse_type: v })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="main">{t("رئيسي", "Main")}</SelectItem>
-                    <SelectItem value="branch">{t("فرعي", "Branch")}</SelectItem>
-                    <SelectItem value="cold">{t("مبرد", "Cold Storage")}</SelectItem>
+                    <SelectItem value="external">{t("خارجي (رئيسي)", "External (Main)")}</SelectItem>
+                    <SelectItem value="internal">{t("داخلي (فرعي)", "Internal (Sub)")}</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            
+            {/* Parent Warehouse - only show if center selected */}
+            {warehouseForm.center_name && (
+              <div>
+                <Label>{t("المخزن الأب (اختياري)", "Parent Warehouse (Optional)")}</Label>
+                <Select 
+                  value={warehouseForm.parent_warehouse_id || 'none'} 
+                  onValueChange={(v) => setWarehouseForm({ ...warehouseForm, parent_warehouse_id: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("بدون مخزن أب", "No Parent")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t("بدون مخزن أب (مستقل)", "No Parent (Independent)")}</SelectItem>
+                    {warehouses
+                      .filter(w => w.center_name === warehouseForm.center_name)
+                      .map((w) => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.name} ({w.warehouse_type === 'external' ? t('خارجي', 'External') : t('داخلي', 'Internal')})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div>
+              <Label>{t("تصنيف المخزن", "Warehouse Category")}</Label>
+              <Select 
+                value={warehouseForm.warehouse_category || 'general'} 
+                onValueChange={(v) => setWarehouseForm({ ...warehouseForm, warehouse_category: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">{t("عام", "General")}</SelectItem>
+                  <SelectItem value="lab">{t("مختبر", "Lab")}</SelectItem>
+                  <SelectItem value="maintenance">{t("صيانة", "Maintenance")}</SelectItem>
+                  <SelectItem value="cleaning">{t("تنظيف", "Cleaning")}</SelectItem>
+                  <SelectItem value="ppe">{t("معدات الحماية", "PPE")}</SelectItem>
+                  <SelectItem value="feed">{t("أعلاف", "Feed")}</SelectItem>
+                  <SelectItem value="equipment">{t("معدات", "Equipment")}</SelectItem>
+                  <SelectItem value="supplies">{t("مستلزمات", "Supplies")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{t("الموقع", "Location")}</Label>
+                <Input
+                  value={warehouseForm.location}
+                  onChange={(e) => setWarehouseForm({ ...warehouseForm, location: e.target.value })}
+                  placeholder={t("مثال: المبنى أ", "e.g., Building A")}
+                />
               </div>
               <div>
                 <Label>{t("السعة", "Capacity")}</Label>
@@ -1517,8 +1589,22 @@ const WarehouseManagement = () => {
                   type="number"
                   value={warehouseForm.capacity}
                   onChange={(e) => setWarehouseForm({ ...warehouseForm, capacity: e.target.value })}
+                  placeholder="0"
                 />
               </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="temperature_controlled"
+                checked={warehouseForm.temperature_controlled || false}
+                onChange={(e) => setWarehouseForm({ ...warehouseForm, temperature_controlled: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <Label htmlFor="temperature_controlled" className="cursor-pointer">
+                {t("مخزن مبرد / تحكم بالحرارة", "Cold Storage / Temperature Controlled")}
+              </Label>
             </div>
           </div>
           <DialogFooter>
