@@ -524,6 +524,9 @@ const Layout = () => {
             {/* Excuse Request Button */}
             <ExcuseRequestButton currentUser={user} />
 
+            {/* Tasks Button */}
+            <TasksButton currentUser={user} />
+
             {/* Advance Request Button */}
             <AdvanceRequestButton />
 
