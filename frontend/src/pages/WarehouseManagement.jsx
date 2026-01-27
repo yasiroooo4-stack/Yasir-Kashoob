@@ -129,6 +129,7 @@ const WarehouseManagement = () => {
     supervisor_phone: "",
     warehouse_manager_email: "",
     warehouse_manager_phone: "",
+    parent_warehouse_id: "",
   });
 
   const [productForm, setProductForm] = useState({
