@@ -68,6 +68,14 @@ import {
   Settings,
   Filter,
   ShoppingCart,
+  Sliders,
+  QrCode,
+  Barcode,
+  RotateCcw,
+  CheckCircle,
+  XCircle,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import MaterialIssue from "./MaterialIssue";
 
