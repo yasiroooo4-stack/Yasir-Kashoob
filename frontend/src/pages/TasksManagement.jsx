@@ -528,6 +528,14 @@ export default function TasksManagement() {
       matches = false;
     }
     
+    // Date range filter
+    if (dateRange.start && task.due_date < dateRange.start) {
+      matches = false;
+    }
+    if (dateRange.end && task.due_date > dateRange.end) {
+      matches = false;
+    }
+    
     return matches;
   });
 
