@@ -2348,6 +2348,7 @@ AVAILABLE_PERMISSIONS = [
     # المهام
     "tasks_view",               # عرض المهام
     "tasks_create",             # إنشاء مهمة
+    "tasks_new",                # مهمة جديدة (إنشاء وتعيين)
     "tasks_assign",             # تعيين مهام للموظفين
     "tasks_manage",             # إدارة جميع المهام
     "tasks_reports",            # تقارير المهام
