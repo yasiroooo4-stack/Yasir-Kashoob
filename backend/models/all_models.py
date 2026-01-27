@@ -2333,3 +2333,64 @@ class UserPermissionGrant(BaseModel):
     expires_at: Optional[str] = None  # تاريخ انتهاء الصلاحية (اختياري)
     is_active: bool = True
 
+
+# ==================== نظام المهام ====================
+
+class TaskBase(BaseModel):
+    """نموذج المهمة الأساسي"""
+    model_config = ConfigDict(extra="ignore")
+    title: str                              # عنوان المهمة
+    description: str                        # وصف المهمة
+    assigned_to_id: str                     # معرف الموظف المكلف
+    assigned_to_name: str                   # اسم الموظف المكلف
+    assigned_by_id: str                     # معرف المسؤول الذي أنشأ المهمة
+    assigned_by_name: str                   # اسم المسؤول
+    priority: str = "medium"                # الأولوية: low, medium, high, urgent
+    due_date: str                           # تاريخ الإنجاز المطلوب
+    category: Optional[str] = None          # تصنيف المهمة
+    department: Optional[str] = None        # القسم
+    center_id: Optional[str] = None         # المركز
+    center_name: Optional[str] = None
+
+class TaskCreate(TaskBase):
+    pass
+
+class Task(TaskBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    task_number: Optional[str] = None       # رقم المهمة
+    status: str = "pending"                 # pending, in_progress, completed, delayed, cancelled
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+    started_at: Optional[str] = None        # تاريخ بدء العمل
+    completed_at: Optional[str] = None      # تاريخ الإنجاز الفعلي
+    is_delayed: bool = False                # هل تأخرت المهمة؟
+    delay_days: int = 0                     # عدد أيام التأخير
+    completion_notes: Optional[str] = None  # ملاحظات الإنجاز
+    attachment_url: Optional[str] = None    # رابط مرفق الإنجاز
+    attachment_name: Optional[str] = None   # اسم الملف المرفق
+
+class TaskResponse(BaseModel):
+    """رد الموظف على المهمة"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    task_id: str
+    responder_id: str
+    responder_name: str
+    message: str
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class TaskNotification(BaseModel):
+    """إشعار المهمة"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    task_id: str
+    user_id: str
+    notification_type: str                  # new_task, task_updated, task_response, task_reminder
+    title: str
+    message: str
+    is_read: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    read_at: Optional[str] = None
+
