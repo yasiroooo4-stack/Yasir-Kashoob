@@ -2393,6 +2393,7 @@ class TaskBase(BaseModel):
     center_name: Optional[str] = None
     recurring: bool = False                 # مهمة متكررة
     recurrence_pattern: Optional[str] = None  # daily, weekly, monthly
+    requires_document: bool = False         # هل تتطلب مستند إنجاز؟
 
 # أنواع المهام
 TASK_TYPES = [
