@@ -130,14 +130,14 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPer
     );
   }
 
-  // Admin and IT have access to everything
-  if (user.role === 'admin' || user.department === 'it' || user.department === 'admin') {
-    return children;
-  }
-
   // Check user permissions first (if user has specific permission, allow access)
   const userPermissions = user.permissions || [];
   if (allowedPermissions && allowedPermissions.some(p => userPermissions.includes(p))) {
+    return children;
+  }
+
+  // Admin role (role: admin) has access to everything
+  if (user.role === 'admin') {
     return children;
   }
 
@@ -146,8 +146,13 @@ const ProtectedRoute = ({ children, allowedRoles, allowedDepartments, allowedPer
     return children;
   }
 
-  // Check department-based access
+  // Check department-based access (IT and admin departments have broad access, but still respect allowedPermissions)
   if (allowedDepartments && allowedDepartments.includes(user.department)) {
+    // If allowedPermissions is defined and user doesn't have them, deny for system-admin pages
+    if (allowedPermissions && allowedPermissions.some(p => ['permissions_grant', 'users_manage'].includes(p))) {
+      // This is a system-admin page, department alone is not enough
+      return <Navigate to="/dashboard" replace />;
+    }
     return children;
   }
 
