@@ -472,6 +472,11 @@ function App() {
                     <ExtraPayApprovals />
                   </ProtectedRoute>
                 } />
+                <Route path="tasks" element={
+                  <ProtectedRoute allowedPermissions={["tasks_view", "tasks_create", "tasks_assign", "tasks_manage"]}>
+                    <TasksManagement />
+                  </ProtectedRoute>
+                } />
                 <Route path="analytics" element={
                   <ProtectedRoute allowedPermissions={["analysis_view", "analysis_reports"]}>
                     <Analytics />
