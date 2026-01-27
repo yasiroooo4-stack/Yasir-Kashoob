@@ -414,6 +414,50 @@ async def register(user_data: UserCreate):
         user={"id": user.id, "username": user.username, "email": user.email, "full_name": user.full_name, "role": user.role}
     )
 
+async def calculate_user_permissions(user: dict, employee: dict) -> list:
+    """
+    حساب صلاحيات المستخدم بناءً على المنصب والدور
+    - مسؤول النظام (role: admin) يحصل على جميع الصلاحيات
+    - المدير العام يحصل على جميع الصلاحيات ما عدا إدارة النظام
+    """
+    from models.all_models import AVAILABLE_PERMISSIONS
+    
+    # صلاحيات إدارة النظام - فقط لمن لديه role: admin
+    SYSTEM_ADMIN_PERMISSIONS = ["permissions_grant", "users_manage", "settings_edit"]
+    
+    user_permissions = []
+    user_role = user.get("role", "employee")
+    position = employee.get("position", "") if employee else user.get("position", "")
+    department = employee.get("department", "") if employee else user.get("department", "")
+    actual_employee_id = employee.get("id") if employee else None
+    
+    # الصلاحيات التلقائية بناءً على المنصب والدور
+    if user_role == "admin":
+        # مسؤول النظام يحصل على جميع الصلاحيات
+        user_permissions = AVAILABLE_PERMISSIONS.copy()
+    elif position and "المدير العام" in position:
+        # المدير العام يحصل على جميع الصلاحيات ما عدا إدارة النظام
+        user_permissions = [p for p in AVAILABLE_PERMISSIONS if p not in SYSTEM_ADMIN_PERMISSIONS]
+    
+    # الصلاحيات الممنوحة يدوياً من جدول user_permissions
+    if actual_employee_id:
+        granted_permissions = await db.user_permissions.find(
+            {"employee_id": actual_employee_id, "is_active": True},
+            {"_id": 0, "permission": 1}
+        ).to_list(100)
+        user_permissions.extend([g["permission"] for g in granted_permissions])
+    
+    # الصلاحيات الموروثة من الموظف
+    if employee:
+        user_permissions.extend(employee.get("permissions", []))
+    
+    # الصلاحيات المخزنة مباشرة على المستخدم
+    user_permissions.extend(user.get("permissions", []))
+    
+    # إزالة التكرارات والقيم الفارغة
+    return list(set(filter(None, user_permissions)))
+
+
 @api_router.post("/auth/login", response_model=Token)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"username": credentials.username})
@@ -422,53 +466,30 @@ async def login(credentials: UserLogin):
     if not user or not password_field or not verify_password(credentials.password, password_field):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Get user permissions from user_permissions table
-    user_permissions = []
+    # Get employee data
     employee_id = user.get("employee_id")
     employee = None
     
     # Try to find employee by employee_id (could be UUID or employee_code)
     if employee_id:
-        # First try to find by id (UUID)
         employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
-        
-        # If not found, try by employee_code
         if not employee:
             employee = await db.hr_employees.find_one({"employee_code": employee_id}, {"_id": 0})
-        
-        # If still not found, try by username matching employee_code
         if not employee:
             employee = await db.hr_employees.find_one({"employee_code": credentials.username}, {"_id": 0})
     
-    # If no employee_id in user, try to find by username as employee_code
     if not employee:
         employee = await db.hr_employees.find_one({"employee_code": credentials.username}, {"_id": 0})
     
-    # Now get the correct employee_id for permissions lookup
     actual_employee_id = employee.get("id") if employee else None
     
-    if actual_employee_id:
-        # Get permissions from user_permissions table using the actual employee UUID
-        granted_permissions = await db.user_permissions.find(
-            {"employee_id": actual_employee_id, "is_active": True},
-            {"_id": 0, "permission": 1}
-        ).to_list(100)
-        user_permissions = [g["permission"] for g in granted_permissions]
-        
-        # Also get department, position and legacy permissions from hr_employees
-        if employee:
-            user_permissions.extend(employee.get("permissions", []))
-            user["department"] = employee.get("department")
-            user["position"] = employee.get("position")  # إضافة المنصب
-        
-        # Update the employee_id for the response
-        employee_id = actual_employee_id
+    # Update user data from employee
+    if employee:
+        user["department"] = employee.get("department")
+        user["position"] = employee.get("position")
     
-    # Also include permissions stored directly on user
-    user_permissions.extend(user.get("permissions", []))
-    
-    # Remove duplicates and None values
-    user_permissions = list(set(filter(None, user_permissions)))
+    # Calculate permissions using the helper function
+    user_permissions = await calculate_user_permissions(user, employee)
     
     token = create_access_token({"sub": user["id"], "role": user["role"]})
     
