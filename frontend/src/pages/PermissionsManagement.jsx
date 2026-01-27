@@ -726,26 +726,28 @@ const PermissionsManagement = () => {
               {employeePermissions.permission_grants?.length > 0 && (
                 <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
                   <p className="text-sm font-medium mb-2 text-green-700 dark:text-green-300">
-                    {t("الصلاحيات الممنوحة (قابلة للإلغاء):", "Granted Permissions (Can be revoked):")}
+                    {t("الصلاحيات الممنوحة", "Granted Permissions")} ({employeePermissions.permission_grants.length})
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {employeePermissions.permission_grants.map((grant) => (
-                      <Badge 
-                        key={grant.id} 
-                        variant="secondary" 
-                        className="text-xs bg-green-100 dark:bg-green-900 flex items-center gap-1 pe-1"
-                      >
-                        {getPermissionLabel(grant.permission)}
-                        <button
-                          onClick={() => handleRevokePermission(grant.id, grant.permission)}
-                          className="ms-1 p-0.5 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
-                          title={t("إلغاء الصلاحية", "Revoke permission")}
+                  <ScrollArea className="h-[120px]">
+                    <div className="flex flex-wrap gap-2">
+                      {employeePermissions.permission_grants.map((grant) => (
+                        <Badge 
+                          key={grant.id} 
+                          variant="secondary" 
+                          className="text-xs bg-green-100 dark:bg-green-900 flex items-center gap-1 pe-1"
                         >
-                          <XCircle className="w-4 h-4 text-red-500" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+                          {getPermissionLabel(grant.permission)}
+                          <button
+                            onClick={() => handleRevokePermission(grant.id, grant.permission)}
+                            className="ms-1 p-0.5 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                            title={t("إلغاء الصلاحية", "Revoke permission")}
+                          >
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
               )}
 
@@ -753,16 +755,16 @@ const PermissionsManagement = () => {
               {employeePermissions.role_permissions?.length > 0 && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   <p className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-300">
-                    {t("صلاحيات الدور (تلقائية - لا يمكن إلغاؤها):", "Role Permissions (Automatic - Cannot be revoked):")}
+                    {t("صلاحيات الدور (تلقائية)", "Role Permissions (Auto)")} ({employeePermissions.role_permissions.length})
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {employeePermissions.role_permissions.slice(0, 10).map((perm) => (
+                    {employeePermissions.role_permissions.slice(0, 5).map((perm) => (
                       <Badge key={perm} variant="outline" className="text-xs opacity-70">
                         {getPermissionLabel(perm)}
                       </Badge>
                     ))}
-                    {employeePermissions.role_permissions.length > 10 && (
-                      <Badge variant="outline" className="opacity-70">+{employeePermissions.role_permissions.length - 10}</Badge>
+                    {employeePermissions.role_permissions.length > 5 && (
+                      <Badge variant="outline" className="opacity-70">+{employeePermissions.role_permissions.length - 5}</Badge>
                     )}
                   </div>
                 </div>
