@@ -6,7 +6,7 @@ REFACTORED: Models imported from models/all_models.py
 REFACTORED: Config imported from config.py
 REFACTORED: Database imported from database.py
 """
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Form, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Form, Query, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
