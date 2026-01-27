@@ -2394,3 +2394,88 @@ class TaskNotification(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     read_at: Optional[str] = None
 
+
+# ==================== نظام الأصول الثابتة ====================
+
+class FixedAssetBase(BaseModel):
+    """نموذج الأصول الثابتة"""
+    model_config = ConfigDict(extra="ignore")
+    name: str                               # اسم الأصل
+    asset_code: str                         # رمز الأصل
+    asset_type: str                         # نوع الأصل: equipment, vehicle, machinery, furniture, electronics
+    category: str                           # الفئة: fixed_assets, consumables, spare_parts
+    brand: Optional[str] = None             # الماركة
+    model: Optional[str] = None             # الموديل
+    serial_number: Optional[str] = None     # الرقم التسلسلي
+    purchase_date: Optional[str] = None     # تاريخ الشراء
+    purchase_price: float = 0               # سعر الشراء
+    current_value: float = 0                # القيمة الحالية
+    depreciation_rate: float = 0            # نسبة الإهلاك السنوي
+    supplier_id: Optional[str] = None       # المورد
+    supplier_name: Optional[str] = None
+    warranty_expiry: Optional[str] = None   # تاريخ انتهاء الضمان
+    # معلومات الموقع
+    warehouse_id: Optional[str] = None      # المخزن
+    warehouse_name: Optional[str] = None
+    center_id: Optional[str] = None         # المركز
+    center_name: Optional[str] = None
+    location_details: Optional[str] = None  # تفاصيل الموقع (مبنى، طابق، غرفة)
+    assigned_to_id: Optional[str] = None    # الموظف المسؤول
+    assigned_to_name: Optional[str] = None
+    # معلومات الحالة
+    status: str = "active"                  # active, in_maintenance, disposed, transferred
+    condition: str = "good"                 # excellent, good, fair, poor
+    last_maintenance_date: Optional[str] = None
+    next_maintenance_date: Optional[str] = None
+    notes: Optional[str] = None
+
+class FixedAsset(FixedAssetBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+    created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+
+class AssetMovementBase(BaseModel):
+    """حركات الأصول (تحويل، صيانة، إهلاك)"""
+    model_config = ConfigDict(extra="ignore")
+    asset_id: str
+    asset_name: str
+    asset_code: str
+    movement_type: str                      # transfer, maintenance, disposal, status_change
+    from_location: Optional[str] = None     # الموقع السابق
+    to_location: Optional[str] = None       # الموقع الجديد
+    from_warehouse_id: Optional[str] = None
+    to_warehouse_id: Optional[str] = None
+    reason: Optional[str] = None            # سبب الحركة
+    notes: Optional[str] = None
+    performed_by: str
+    performed_by_name: str
+
+class AssetMovement(AssetMovementBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    movement_number: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# ==================== فئات المخازن المحسنة ====================
+
+# فئات المنتجات المتاحة
+PRODUCT_CATEGORIES = [
+    {"id": "fixed_assets", "name_ar": "الأصول الثابتة", "name_en": "Fixed Assets"},
+    {"id": "consumables", "name_ar": "المواد الاستهلاكية", "name_en": "Consumables"},
+    {"id": "spare_parts", "name_ar": "قطع الغيار", "name_en": "Spare Parts"},
+    {"id": "lab_solutions", "name_ar": "المحاليل المخبرية", "name_en": "Lab Solutions"},
+    {"id": "cleaning", "name_ar": "مواد التنظيف", "name_en": "Cleaning Materials"},
+    {"id": "ppe", "name_ar": "معدات الوقاية", "name_en": "PPE"},
+    {"id": "feed", "name_ar": "الأعلاف", "name_en": "Feed"},
+    {"id": "maintenance", "name_ar": "أدوات الصيانة", "name_en": "Maintenance Tools"},
+]
+
+# أنواع المخازن
+WAREHOUSE_TYPES = [
+    {"id": "external", "name_ar": "مخزن خارجي", "name_en": "External Warehouse"},
+    {"id": "internal", "name_ar": "مخزن داخلي", "name_en": "Internal Warehouse"},
+    {"id": "sub", "name_ar": "مخزن فرعي", "name_en": "Sub Warehouse"},
+]
+
