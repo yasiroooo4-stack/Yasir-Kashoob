@@ -3281,10 +3281,3 @@ async def reject_reorder_request(
     )
     
     return {"message": "تم رفض الطلب"}
-
-
-@router.get("/products/low-stock")
-async def get_low_stock_products(current_user: dict = Depends(get_current_user)):
-    """المنتجات التي وصلت لنقطة إعادة الطلب أو أقل"""
-    products = await db.warehouse_products.find({
-        "status": "active",
