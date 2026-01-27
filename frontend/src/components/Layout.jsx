@@ -306,6 +306,9 @@ const Layout = () => {
     { path: "/operations", icon: Activity, label: "operations" },
     { path: "/marketing", icon: Megaphone, label: "marketing" },
     
+    // المهام
+    { path: "/tasks", icon: ClipboardList, label: "tasks" },
+    
     // إعدادات النظام (تم دمج إعدادات المظهر والإشعارات والكاميرات هنا)
     { path: "/system-settings", icon: Settings, label: "system_settings" },
     { path: "/permissions", icon: Shield, label: "permissions_management", roles: ["admin"], departments: ["admin", "it", "الإدارة العامة", "تقنية المعلومات"] },
