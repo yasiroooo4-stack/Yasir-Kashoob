@@ -65,7 +65,7 @@ import EmployeeStatsWidget from "./EmployeeStatsWidget";
 
 const Layout = () => {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const { language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
