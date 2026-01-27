@@ -16,7 +16,8 @@ from models.all_models import (
     LabSolution, LabSolutionBase,
     SolutionConsumption, SolutionConsumptionBase,
     PurchaseRequest, PurchaseRequestBase,
-    StockAlert, StockAlertBase
+    StockAlert, StockAlertBase,
+    AutoReorderRequest, InventorySettings
 )
 from routes.base import get_current_user, require_role, log_activity
 import uuid
