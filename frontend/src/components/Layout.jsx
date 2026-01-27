@@ -205,7 +205,7 @@ const Layout = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${API}/user/profile`,
+        `${API}/auth/profile`,
         profileForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
