@@ -133,6 +133,20 @@ const translations = {
     totalTasks: "Total Tasks",
     completionRate: "On-time Completion Rate",
     topPerformers: "Top Performers",
+    taskType: "Task Type",
+    general: "General Task",
+    routine_maintenance: "Routine Maintenance",
+    equipment_inspection: "Equipment Inspection",
+    cleaning: "Cleaning",
+    report: "Report",
+    inventory: "Inventory Check",
+    delivery: "Delivery",
+    meeting: "Meeting",
+    export: "Export",
+    filterByType: "Filter by Type",
+    filterByPriority: "Filter by Priority",
+    startDate: "From Date",
+    endDate: "To Date",
   }
 };
 
