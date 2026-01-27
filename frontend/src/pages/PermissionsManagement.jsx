@@ -346,6 +346,7 @@ const PermissionsManagement = () => {
       // المهام
       tasks_view: t("عرض المهام", "View Tasks"),
       tasks_create: t("إنشاء مهمة", "Create Task"),
+      tasks_new: t("مهمة جديدة", "New Task"),
       tasks_assign: t("تعيين مهام للموظفين", "Assign Tasks"),
       tasks_manage: t("إدارة جميع المهام", "Manage All Tasks"),
       tasks_reports: t("تقارير المهام", "Tasks Reports"),
