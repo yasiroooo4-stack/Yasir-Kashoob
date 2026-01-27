@@ -18,7 +18,7 @@ def auth_token():
     """Get authentication token"""
     response = requests.post(f"{BASE_URL}/api/auth/login", json=TEST_USER)
     if response.status_code == 200:
-        return response.json().get("token")
+        return response.json().get("access_token")
     pytest.skip("Authentication failed - skipping tests")
 
 
