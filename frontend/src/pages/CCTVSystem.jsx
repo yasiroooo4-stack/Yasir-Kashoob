@@ -1758,7 +1758,7 @@ const CCTVSystem = ({ embedded = false }) => {
                   onClick={() => {
                     setSettings({
                       ...settings, 
-                      dairy_system_url: 'https://farmeasy-system.preview.emergentagent.com',
+                      dairy_system_url: 'https://milk-manager-17.preview.emergentagent.com',
                       dairy_api_key: 'sk-emergent-57a636238E2E8C04f1'
                     });
                     toast.success('تم تحديث البيانات تلقائياً');

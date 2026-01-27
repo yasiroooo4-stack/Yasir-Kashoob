@@ -78,7 +78,7 @@ class SyncManagerApp:
     def load_config(self):
         """تحميل ملف التكوين"""
         default_config = {
-            'api_url': 'https://farmeasy-system.preview.emergentagent.com',
+            'api_url': 'https://milk-manager-17.preview.emergentagent.com',
             'username': 'yasir',
             'password': 'admin123',
             'sync_interval': 3600,  # ساعة واحدة (60 دقيقة)
