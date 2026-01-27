@@ -1,0 +1,936 @@
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../App";
+import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { Badge } from "../components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { 
+  ClipboardList, Plus, Search, Calendar, User, Clock, 
+  CheckCircle2, AlertCircle, MessageSquare, Paperclip,
+  Send, Filter, ChevronRight, Bell, FileText
+} from "lucide-react";
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// ترجمة
+const translations = {
+  ar: {
+    tasks: "المهام",
+    myTasks: "مهامي",
+    assignedByMe: "المهام التي أنشأتها",
+    allTasks: "جميع المهام",
+    newTask: "مهمة جديدة",
+    taskDetails: "تفاصيل المهمة",
+    title: "العنوان",
+    description: "الوصف",
+    assignTo: "تكليف موظف",
+    dueDate: "تاريخ الإنجاز",
+    priority: "الأولوية",
+    low: "منخفضة",
+    medium: "متوسطة",
+    high: "عالية",
+    urgent: "عاجلة",
+    status: "الحالة",
+    pending: "معلقة",
+    in_progress: "قيد التنفيذ",
+    completed: "مكتملة",
+    delayed: "متأخرة",
+    cancelled: "ملغاة",
+    create: "إنشاء",
+    save: "حفظ",
+    cancel: "إلغاء",
+    responses: "الردود",
+    addResponse: "إضافة رد",
+    completeTask: "إنجاز المهمة",
+    completionNotes: "ملاحظات الإنجاز",
+    attachment: "مرفق",
+    noTasks: "لا توجد مهام",
+    search: "بحث...",
+    filterByStatus: "فلترة حسب الحالة",
+    all: "الكل",
+    onTime: "في الوقت",
+    delayedBy: "متأخرة بـ",
+    days: "يوم",
+    createdBy: "بواسطة",
+    assignedTo: "مكلف بها",
+    taskNumber: "رقم المهمة",
+    notifications: "الإشعارات",
+    markAsRead: "تحديد كمقروء",
+    startTask: "بدء العمل",
+    taskCreated: "تم إنشاء المهمة بنجاح",
+    taskCompleted: "تم إنجاز المهمة بنجاح",
+    reports: "التقارير",
+    totalTasks: "إجمالي المهام",
+    completionRate: "نسبة الإنجاز في الوقت",
+    topPerformers: "أفضل الموظفين إنجازاً",
+  },
+  en: {
+    tasks: "Tasks",
+    myTasks: "My Tasks",
+    assignedByMe: "Assigned by Me",
+    allTasks: "All Tasks",
+    newTask: "New Task",
+    taskDetails: "Task Details",
+    title: "Title",
+    description: "Description",
+    assignTo: "Assign To",
+    dueDate: "Due Date",
+    priority: "Priority",
+    low: "Low",
+    medium: "Medium",
+    high: "High",
+    urgent: "Urgent",
+    status: "Status",
+    pending: "Pending",
+    in_progress: "In Progress",
+    completed: "Completed",
+    delayed: "Delayed",
+    cancelled: "Cancelled",
+    create: "Create",
+    save: "Save",
+    cancel: "Cancel",
+    responses: "Responses",
+    addResponse: "Add Response",
+    completeTask: "Complete Task",
+    completionNotes: "Completion Notes",
+    attachment: "Attachment",
+    noTasks: "No tasks",
+    search: "Search...",
+    filterByStatus: "Filter by Status",
+    all: "All",
+    onTime: "On Time",
+    delayedBy: "Delayed by",
+    days: "days",
+    createdBy: "Created by",
+    assignedTo: "Assigned to",
+    taskNumber: "Task #",
+    notifications: "Notifications",
+    markAsRead: "Mark as Read",
+    startTask: "Start Task",
+    taskCreated: "Task created successfully",
+    taskCompleted: "Task completed successfully",
+    reports: "Reports",
+    totalTasks: "Total Tasks",
+    completionRate: "On-time Completion Rate",
+    topPerformers: "Top Performers",
+  }
+};
+
+export default function TasksManagement() {
+  const { user } = useAuth();
+  const [language] = useState("ar");
+  const t = (ar, en) => language === "ar" ? ar : en;
+  const tr = translations[language];
+
+  const [activeTab, setActiveTab] = useState("my-tasks");
+  const [tasks, setTasks] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    assigned_to_id: "",
+    assigned_to_name: "",
+    due_date: "",
+    priority: "medium",
+    category: "",
+    department: user?.department || "",
+    center_id: "",
+    center_name: ""
+  });
+
+  const [responseMessage, setResponseMessage] = useState("");
+  const [completionNotes, setCompletionNotes] = useState("");
+
+  const getAuthHeaders = useCallback(() => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  }), []);
+
+  // Fetch tasks based on active tab
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    try {
+      let endpoint = "/api/tasks";
+      if (activeTab === "my-tasks") {
+        endpoint = "/api/tasks/my-tasks";
+      } else if (activeTab === "assigned-by-me") {
+        endpoint = "/api/tasks/assigned-by-me";
+      }
+
+      if (statusFilter && statusFilter !== "all") {
+        endpoint += `?status=${statusFilter}`;
+      }
+
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(data);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, statusFilter, getAuthHeaders]);
+
+  // Fetch employees for assignment
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/hr/employees`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data.employees || data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  }, [getAuthHeaders]);
+
+  // Fetch stats
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/stats`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }, [getAuthHeaders]);
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/notifications?unread_only=true`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchTasks();
+    fetchEmployees();
+    fetchStats();
+    fetchNotifications();
+  }, [fetchTasks, fetchEmployees, fetchStats, fetchNotifications]);
+
+  // Create task
+  const handleCreateTask = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          ...formData,
+          assigned_by_id: user.id,
+          assigned_by_name: user.full_name
+        }),
+      });
+
+      if (response.ok) {
+        setShowCreateModal(false);
+        setFormData({
+          title: "",
+          description: "",
+          assigned_to_id: "",
+          assigned_to_name: "",
+          due_date: "",
+          priority: "medium",
+          category: "",
+          department: user?.department || "",
+          center_id: "",
+          center_name: ""
+        });
+        fetchTasks();
+        fetchStats();
+      }
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  // Update task status
+  const handleUpdateStatus = async (taskId, newStatus) => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        fetchTasks();
+        fetchStats();
+        if (selectedTask) {
+          const updated = await response.json();
+          setSelectedTask(updated);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+  };
+
+  // Complete task
+  const handleCompleteTask = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${selectedTask.id}/complete`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          completion_notes: completionNotes
+        }),
+      });
+
+      if (response.ok) {
+        setShowCompleteModal(false);
+        setShowDetailsModal(false);
+        setCompletionNotes("");
+        fetchTasks();
+        fetchStats();
+      }
+    } catch (error) {
+      console.error("Error completing task:", error);
+    }
+  };
+
+  // Add response
+  const handleAddResponse = async () => {
+    if (!responseMessage.trim()) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${selectedTask.id}/respond?message=${encodeURIComponent(responseMessage)}`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        setResponseMessage("");
+        // Refresh task details
+        const taskResponse = await fetch(`${API_URL}/api/tasks/${selectedTask.id}`, {
+          headers: getAuthHeaders(),
+        });
+        if (taskResponse.ok) {
+          setSelectedTask(await taskResponse.json());
+        }
+      }
+    } catch (error) {
+      console.error("Error adding response:", error);
+    }
+  };
+
+  // View task details
+  const viewTaskDetails = async (task) => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${task.id}`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        setSelectedTask(await response.json());
+        setShowDetailsModal(true);
+      }
+    } catch (error) {
+      console.error("Error fetching task details:", error);
+    }
+  };
+
+  // Mark notification as read
+  const markNotificationRead = async (notificationId) => {
+    try {
+      await fetch(`${API_URL}/api/tasks/notifications/${notificationId}/read`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error("Error marking notification:", error);
+    }
+  };
+
+  // Get priority color
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "urgent": return "bg-red-500";
+      case "high": return "bg-orange-500";
+      case "medium": return "bg-yellow-500";
+      case "low": return "bg-green-500";
+      default: return "bg-gray-500";
+    }
+  };
+
+  // Get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "completed": return "bg-green-100 text-green-800";
+      case "in_progress": return "bg-blue-100 text-blue-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "delayed": return "bg-red-100 text-red-800";
+      case "cancelled": return "bg-gray-100 text-gray-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Filter tasks
+  const filteredTasks = tasks.filter(task => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return task.title?.toLowerCase().includes(query) ||
+             task.description?.toLowerCase().includes(query) ||
+             task.assigned_to_name?.toLowerCase().includes(query);
+    }
+    return true;
+  });
+
+  return (
+    <div className="p-6 space-y-6" dir="rtl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <ClipboardList className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold">{tr.tasks}</h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Notifications Button */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="relative"
+            onClick={() => setShowNotificationsModal(true)}
+            data-testid="notifications-btn"
+          >
+            <Bell className="h-5 w-5" />
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {notifications.length}
+              </span>
+            )}
+          </Button>
+          
+          {/* Create Task Button */}
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2"
+            data-testid="create-task-btn"
+          >
+            <Plus className="h-4 w-4" />
+            {tr.newTask}
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{tr.myTasks}</p>
+                  <p className="text-2xl font-bold">{stats.my_tasks?.total || 0}</p>
+                </div>
+                <ClipboardList className="h-8 w-8 text-blue-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{tr.pending}</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.my_tasks?.pending || 0}</p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{tr.completed}</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.my_tasks?.completed || 0}</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{tr.delayed}</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.my_tasks?.delayed || 0}</p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-red-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <Card>
+        <CardContent className="p-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="border-b px-4">
+              <TabsList className="h-12">
+                <TabsTrigger value="my-tasks" className="data-[state=active]:bg-primary/10">
+                  {tr.myTasks}
+                </TabsTrigger>
+                <TabsTrigger value="assigned-by-me" className="data-[state=active]:bg-primary/10">
+                  {tr.assignedByMe}
+                </TabsTrigger>
+                <TabsTrigger value="all" className="data-[state=active]:bg-primary/10">
+                  {tr.allTasks}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Filters */}
+            <div className="p-4 border-b flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[200px]">
+                <div className="relative">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={tr.search}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pr-10"
+                  />
+                </div>
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="h-4 w-4 ml-2" />
+                  <SelectValue placeholder={tr.filterByStatus} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{tr.all}</SelectItem>
+                  <SelectItem value="pending">{tr.pending}</SelectItem>
+                  <SelectItem value="in_progress">{tr.in_progress}</SelectItem>
+                  <SelectItem value="completed">{tr.completed}</SelectItem>
+                  <SelectItem value="delayed">{tr.delayed}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tasks List */}
+            <TabsContent value={activeTab} className="m-0">
+              <ScrollArea className="h-[500px]">
+                {loading ? (
+                  <div className="flex items-center justify-center h-40">
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+                  </div>
+                ) : filteredTasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                    <ClipboardList className="h-12 w-12 mb-2 opacity-50" />
+                    <p>{tr.noTasks}</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {filteredTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => viewTaskDetails(task)}
+                        data-testid={`task-item-${task.id}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Priority Indicator */}
+                          <div className={`w-1 h-16 rounded-full ${getPriorityColor(task.priority)}`} />
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium truncate">{task.title}</h3>
+                              <Badge className={getStatusColor(task.status)}>
+                                {tr[task.status] || task.status}
+                              </Badge>
+                              {task.is_delayed && (
+                                <Badge variant="destructive">
+                                  {tr.delayedBy} {task.delay_days} {tr.days}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                              {task.description}
+                            </p>
+                            
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {activeTab === "my-tasks" ? task.assigned_by_name : task.assigned_to_name}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {task.due_date}
+                              </span>
+                              {task.task_number && (
+                                <span className="flex items-center gap-1">
+                                  <FileText className="h-3 w-3" />
+                                  {task.task_number}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Create Task Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>{tr.newTask}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>{tr.title}</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder={t("أدخل عنوان المهمة", "Enter task title")}
+              />
+            </div>
+            
+            <div>
+              <Label>{tr.description}</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder={t("أدخل وصف المهمة", "Enter task description")}
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label>{tr.assignTo}</Label>
+              <Select
+                value={formData.assigned_to_id}
+                onValueChange={(value) => {
+                  const emp = employees.find(e => e.id === value);
+                  setFormData({
+                    ...formData,
+                    assigned_to_id: value,
+                    assigned_to_name: emp?.name || ""
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("اختر الموظف", "Select employee")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name} - {emp.employee_id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{tr.dueDate}</Label>
+                <Input
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <Label>{tr.priority}</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">{tr.low}</SelectItem>
+                    <SelectItem value="medium">{tr.medium}</SelectItem>
+                    <SelectItem value="high">{tr.high}</SelectItem>
+                    <SelectItem value="urgent">{tr.urgent}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+              {tr.cancel}
+            </Button>
+            <Button onClick={handleCreateTask} disabled={!formData.title || !formData.assigned_to_id || !formData.due_date}>
+              {tr.create}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Task Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+          {selectedTask && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle>{selectedTask.title}</DialogTitle>
+                  <Badge className={getStatusColor(selectedTask.status)}>
+                    {tr[selectedTask.status] || selectedTask.status}
+                  </Badge>
+                </div>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {/* Task Info */}
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <FileText className="h-4 w-4" />
+                    <span className="text-muted-foreground">{tr.taskNumber}:</span>
+                    <span className="font-medium">{selectedTask.task_number}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4" />
+                    <span className="text-muted-foreground">{tr.assignedTo}:</span>
+                    <span className="font-medium">{selectedTask.assigned_to_name}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4" />
+                    <span className="text-muted-foreground">{tr.createdBy}:</span>
+                    <span className="font-medium">{selectedTask.assigned_by_name}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-muted-foreground">{tr.dueDate}:</span>
+                    <span className="font-medium">{selectedTask.due_date}</span>
+                    {selectedTask.is_delayed && (
+                      <Badge variant="destructive" className="mr-2">
+                        {tr.delayedBy} {selectedTask.delay_days} {tr.days}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-muted-foreground">{tr.priority}:</span>
+                    <Badge className={getPriorityColor(selectedTask.priority)}>
+                      {tr[selectedTask.priority]}
+                    </Badge>
+                  </div>
+                </div>
+                
+                {/* Description */}
+                <div>
+                  <h4 className="font-medium mb-2">{tr.description}</h4>
+                  <p className="text-sm bg-muted/30 p-3 rounded-lg whitespace-pre-wrap">
+                    {selectedTask.description}
+                  </p>
+                </div>
+                
+                {/* Completion Notes */}
+                {selectedTask.completion_notes && (
+                  <div>
+                    <h4 className="font-medium mb-2">{tr.completionNotes}</h4>
+                    <p className="text-sm bg-green-50 p-3 rounded-lg whitespace-pre-wrap">
+                      {selectedTask.completion_notes}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Attachment */}
+                {selectedTask.attachment_url && (
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" />
+                    <a href={selectedTask.attachment_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                      {selectedTask.attachment_name || tr.attachment}
+                    </a>
+                  </div>
+                )}
+                
+                {/* Responses */}
+                {selectedTask.responses && selectedTask.responses.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">{tr.responses}</h4>
+                    <div className="space-y-2">
+                      {selectedTask.responses.map((response) => (
+                        <div key={response.id} className="bg-muted/30 p-3 rounded-lg">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                            <User className="h-3 w-3" />
+                            <span>{response.responder_name}</span>
+                            <span>•</span>
+                            <span>{new Date(response.created_at).toLocaleDateString("ar")}</span>
+                          </div>
+                          <p className="text-sm">{response.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Add Response */}
+                {selectedTask.status !== "completed" && selectedTask.status !== "cancelled" && (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={t("أضف رداً...", "Add a response...")}
+                      value={responseMessage}
+                      onChange={(e) => setResponseMessage(e.target.value)}
+                    />
+                    <Button size="icon" onClick={handleAddResponse} disabled={!responseMessage.trim()}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                {selectedTask.status !== "completed" && selectedTask.status !== "cancelled" && (
+                  <div className="flex gap-2 pt-4 border-t">
+                    {selectedTask.status === "pending" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => handleUpdateStatus(selectedTask.id, "in_progress")}
+                      >
+                        {tr.startTask}
+                      </Button>
+                    )}
+                    
+                    {(selectedTask.assigned_to_id === user?.employee_id || selectedTask.assigned_to_id === user?.id) && (
+                      <Button
+                        onClick={() => setShowCompleteModal(true)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle2 className="h-4 w-4 ml-2" />
+                        {tr.completeTask}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Task Modal */}
+      <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>{tr.completeTask}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>{tr.completionNotes}</Label>
+              <Textarea
+                value={completionNotes}
+                onChange={(e) => setCompletionNotes(e.target.value)}
+                placeholder={t("أضف ملاحظات الإنجاز (اختياري)", "Add completion notes (optional)")}
+                rows={4}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
+              {tr.cancel}
+            </Button>
+            <Button onClick={handleCompleteTask} className="bg-green-600 hover:bg-green-700">
+              <CheckCircle2 className="h-4 w-4 ml-2" />
+              {tr.completeTask}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notifications Modal */}
+      <Dialog open={showNotificationsModal} onOpenChange={setShowNotificationsModal}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              {tr.notifications}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <ScrollArea className="h-[400px]">
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                <Bell className="h-12 w-12 mb-2 opacity-50" />
+                <p>{t("لا توجد إشعارات جديدة", "No new notifications")}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className="p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                    onClick={() => markNotificationRead(notification.id)}
+                  >
+                    <h4 className="font-medium text-sm">{notification.title}</h4>
+                    <p className="text-xs text-muted-foreground">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(notification.created_at).toLocaleDateString("ar")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
