@@ -305,7 +305,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout, loading }}>
       <LanguageContext.Provider value={{ language, toggleLanguage }}>
         <div className="min-h-screen bg-background" dir={language === "ar" ? "rtl" : "ltr"}>
           <Toaster 
