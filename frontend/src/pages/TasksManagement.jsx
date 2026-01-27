@@ -541,6 +541,28 @@ export default function TasksManagement() {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Reports Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { fetchReports(); setShowReportsModal(true); }}
+            data-testid="reports-btn"
+          >
+            <BarChart3 className="h-4 w-4 ml-1" />
+            {tr.reports}
+          </Button>
+          
+          {/* Export Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport("csv")}
+            data-testid="export-btn"
+          >
+            <Download className="h-4 w-4 ml-1" />
+            {tr.export}
+          </Button>
+          
           {/* Notifications Button */}
           <Button
             variant="outline"
