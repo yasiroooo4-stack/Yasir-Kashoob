@@ -233,7 +233,7 @@ const Layout = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${API}/user/change-password`,
+        `${API}/auth/password`,
         {
           current_password: passwordForm.current_password,
           new_password: passwordForm.new_password,
