@@ -430,11 +430,45 @@ export default function TasksManagement() {
   // Complete task
   const handleCompleteTask = async () => {
     try {
+      // التحقق من أن المستند مرفوع إذا كان مطلوباً
+      if (selectedTask?.requires_document && !completionDocument) {
+        alert(tr.cannotCompleteWithoutDocument);
+        return;
+      }
+
+      // إذا كان هناك مستند، نرفعه أولاً
+      let documentUrl = null;
+      if (completionDocument) {
+        setUploadingDocument(true);
+        const formData = new FormData();
+        formData.append("file", completionDocument);
+        formData.append("task_id", selectedTask.id);
+        
+        const uploadResponse = await fetch(`${API_URL}/api/tasks/${selectedTask.id}/upload-document`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json();
+          documentUrl = uploadResult.document_url;
+        } else {
+          alert(tr.documentUploadError);
+          setUploadingDocument(false);
+          return;
+        }
+        setUploadingDocument(false);
+      }
+
       const response = await fetch(`${API_URL}/api/tasks/${selectedTask.id}/complete`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          completion_notes: completionNotes
+          completion_notes: completionNotes,
+          completion_document_url: documentUrl
         }),
       });
 
@@ -442,6 +476,7 @@ export default function TasksManagement() {
         setShowCompleteModal(false);
         setShowDetailsModal(false);
         setCompletionNotes("");
+        setCompletionDocument(null);
         fetchTasks();
         fetchStats();
       }
