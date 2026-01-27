@@ -1450,19 +1450,6 @@ const WarehouseManagement = () => {
           <MaterialIssue embedded={true} />
         </TabsContent>
 
-        {/* Storage Locations Tab - مواقع التخزين لجميع المراكز */}
-        <TabsContent value="storage-locations" className="space-y-4">
-          <StorageLocationsSection 
-            t={t} 
-            language={language} 
-            centers={centers} 
-            warehousesByCenter={warehousesByCenter}
-            onAddWarehouse={() => setWarehouseDialog(true)}
-            onInitialize={handleInitializeWarehouses}
-            initializingWarehouses={initializingWarehouses}
-          />
-        </TabsContent>
-
         {/* Fixed Assets Tab - الأصول الثابتة */}
         <TabsContent value="fixed-assets" className="space-y-4">
           <FixedAssetsSection t={t} language={language} centers={centers} warehouses={warehouses} />
