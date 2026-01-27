@@ -2605,3 +2605,307 @@ async def get_consumption_log(
         movements = [m for m in movements if m.get("from_warehouse_id") in valid_warehouse_ids]
     
     return movements
+
+
+# ==================== الأصول الثابتة ====================
+
+@router.get("/fixed-assets")
+async def get_fixed_assets(
+    asset_type: Optional[str] = None,
+    category: Optional[str] = None,
+    warehouse_id: Optional[str] = None,
+    center_id: Optional[str] = None,
+    status: Optional[str] = None,
+    condition: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على قائمة الأصول الثابتة"""
+    query = {}
+    
+    if asset_type:
+        query["asset_type"] = asset_type
+    if category:
+        query["category"] = category
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    if center_id:
+        query["center_id"] = center_id
+    if status:
+        query["status"] = status
+    if condition:
+        query["condition"] = condition
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"asset_code": {"$regex": search, "$options": "i"}},
+            {"serial_number": {"$regex": search, "$options": "i"}}
+        ]
+    
+    assets = await db.fixed_assets.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return assets
+
+
+@router.get("/fixed-assets/stats")
+async def get_fixed_assets_stats(
+    current_user: dict = Depends(get_current_user)
+):
+    """إحصائيات الأصول الثابتة"""
+    total = await db.fixed_assets.count_documents({})
+    active = await db.fixed_assets.count_documents({"status": "active"})
+    in_maintenance = await db.fixed_assets.count_documents({"status": "in_maintenance"})
+    disposed = await db.fixed_assets.count_documents({"status": "disposed"})
+    
+    # إجمالي القيمة
+    pipeline = [
+        {"$match": {"status": "active"}},
+        {"$group": {"_id": None, "total_value": {"$sum": "$current_value"}}}
+    ]
+    value_result = await db.fixed_assets.aggregate(pipeline).to_list(1)
+    total_value = value_result[0]["total_value"] if value_result else 0
+    
+    # حسب النوع
+    by_type = {}
+    types = ["equipment", "vehicle", "machinery", "furniture", "electronics"]
+    for t in types:
+        by_type[t] = await db.fixed_assets.count_documents({"asset_type": t})
+    
+    # حسب الفئة
+    by_category = {}
+    categories = ["fixed_assets", "consumables", "spare_parts"]
+    for c in categories:
+        by_category[c] = await db.fixed_assets.count_documents({"category": c})
+    
+    # الأصول التي تحتاج صيانة قريباً
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    next_week = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
+    needs_maintenance = await db.fixed_assets.count_documents({
+        "next_maintenance_date": {"$gte": today, "$lte": next_week}
+    })
+    
+    return {
+        "total": total,
+        "active": active,
+        "in_maintenance": in_maintenance,
+        "disposed": disposed,
+        "total_value": total_value,
+        "by_type": by_type,
+        "by_category": by_category,
+        "needs_maintenance": needs_maintenance
+    }
+
+
+@router.get("/fixed-assets/{asset_id}")
+async def get_fixed_asset(
+    asset_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على تفاصيل أصل"""
+    asset = await db.fixed_assets.find_one({"id": asset_id}, {"_id": 0})
+    if not asset:
+        raise HTTPException(status_code=404, detail="الأصل غير موجود")
+    
+    # الحصول على تاريخ الحركات
+    movements = await db.asset_movements.find(
+        {"asset_id": asset_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    asset["movements"] = movements
+    return asset
+
+
+@router.post("/fixed-assets")
+async def create_fixed_asset(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """إنشاء أصل ثابت جديد"""
+    from models.all_models import FixedAsset
+    
+    # إنشاء رمز الأصل
+    count = await db.fixed_assets.count_documents({})
+    asset_code = f"AST-{datetime.now().strftime('%Y%m')}-{str(count + 1).zfill(4)}"
+    
+    asset = FixedAsset(
+        **data,
+        asset_code=asset_code,
+        created_by=current_user["id"],
+        created_by_name=current_user.get("full_name", "")
+    )
+    
+    await db.fixed_assets.insert_one(asset.model_dump())
+    return asset.model_dump()
+
+
+@router.put("/fixed-assets/{asset_id}")
+async def update_fixed_asset(
+    asset_id: str,
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """تحديث أصل ثابت"""
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.fixed_assets.update_one(
+        {"id": asset_id},
+        {"$set": data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="الأصل غير موجود")
+    
+    asset = await db.fixed_assets.find_one({"id": asset_id}, {"_id": 0})
+    return asset
+
+
+@router.post("/fixed-assets/{asset_id}/transfer")
+async def transfer_fixed_asset(
+    asset_id: str,
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """تحويل أصل لموقع جديد"""
+    from models.all_models import AssetMovement
+    
+    asset = await db.fixed_assets.find_one({"id": asset_id}, {"_id": 0})
+    if not asset:
+        raise HTTPException(status_code=404, detail="الأصل غير موجود")
+    
+    to_warehouse_id = data.get("to_warehouse_id")
+    to_location = data.get("to_location")
+    reason = data.get("reason")
+    
+    # إنشاء حركة التحويل
+    movement = AssetMovement(
+        asset_id=asset_id,
+        asset_name=asset["name"],
+        asset_code=asset["asset_code"],
+        movement_type="transfer",
+        from_location=asset.get("location_details"),
+        to_location=to_location,
+        from_warehouse_id=asset.get("warehouse_id"),
+        to_warehouse_id=to_warehouse_id,
+        reason=reason,
+        performed_by=current_user["id"],
+        performed_by_name=current_user.get("full_name", ""),
+        movement_number=f"MOV-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    )
+    
+    await db.asset_movements.insert_one(movement.model_dump())
+    
+    # تحديث موقع الأصل
+    update_data = {
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    if to_warehouse_id:
+        warehouse = await db.warehouses.find_one({"id": to_warehouse_id}, {"_id": 0})
+        if warehouse:
+            update_data["warehouse_id"] = to_warehouse_id
+            update_data["warehouse_name"] = warehouse.get("name")
+            update_data["center_id"] = warehouse.get("center_id")
+            update_data["center_name"] = warehouse.get("center_name")
+    
+    if to_location:
+        update_data["location_details"] = to_location
+    
+    await db.fixed_assets.update_one({"id": asset_id}, {"$set": update_data})
+    
+    return {"message": "تم تحويل الأصل بنجاح", "movement": movement.model_dump()}
+
+
+@router.get("/fixed-assets/movements/all")
+async def get_all_asset_movements(
+    asset_id: Optional[str] = None,
+    movement_type: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على جميع حركات الأصول"""
+    query = {}
+    
+    if asset_id:
+        query["asset_id"] = asset_id
+    if movement_type:
+        query["movement_type"] = movement_type
+    if start_date:
+        query.setdefault("created_at", {})["$gte"] = start_date
+    if end_date:
+        query.setdefault("created_at", {})["$lte"] = end_date + "T23:59:59"
+    
+    movements = await db.asset_movements.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return movements
+
+
+@router.delete("/fixed-assets/{asset_id}")
+async def delete_fixed_asset(
+    asset_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حذف/إتلاف أصل"""
+    asset = await db.fixed_assets.find_one({"id": asset_id}, {"_id": 0})
+    if not asset:
+        raise HTTPException(status_code=404, detail="الأصل غير موجود")
+    
+    # تغيير الحالة بدلاً من الحذف الفعلي
+    await db.fixed_assets.update_one(
+        {"id": asset_id},
+        {"$set": {
+            "status": "disposed",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "تم إتلاف الأصل"}
+
+
+# ==================== فئات المخازن ====================
+
+@router.get("/warehouse-categories")
+async def get_warehouse_categories(
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على فئات المخازن"""
+    from models.all_models import PRODUCT_CATEGORIES, WAREHOUSE_TYPES
+    return {
+        "product_categories": PRODUCT_CATEGORIES,
+        "warehouse_types": WAREHOUSE_TYPES
+    }
+
+
+@router.get("/warehouse-hierarchy/{center_id}")
+async def get_warehouse_hierarchy(
+    center_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على الهيكل الهرمي للمخازن في مركز معين"""
+    # المخازن الرئيسية (الخارجية)
+    external_warehouses = await db.warehouses.find({
+        "center_id": center_id,
+        "warehouse_type": {"$in": ["external", "main"]},
+        "parent_warehouse_id": None
+    }, {"_id": 0}).to_list(50)
+    
+    hierarchy = []
+    for ext_wh in external_warehouses:
+        # المخازن الداخلية التابعة
+        internal_warehouses = await db.warehouses.find({
+            "center_id": center_id,
+            "parent_warehouse_id": ext_wh["id"]
+        }, {"_id": 0}).to_list(50)
+        
+        children = []
+        for int_wh in internal_warehouses:
+            # المخازن الفرعية
+            sub_warehouses = await db.warehouses.find({
+                "center_id": center_id,
+                "parent_warehouse_id": int_wh["id"]
+            }, {"_id": 0}).to_list(50)
+            
+            int_wh["children"] = sub_warehouses
+            children.append(int_wh)
+        
+        ext_wh["children"] = children
+        hierarchy.append(ext_wh)
+    
+    return hierarchy
