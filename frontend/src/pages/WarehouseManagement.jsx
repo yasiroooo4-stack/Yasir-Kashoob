@@ -2093,16 +2093,24 @@ const WarehouseManagement = () => {
 // ==================== Storage Locations Section Component ====================
 const StorageLocationsSection = ({ t, language, centers, warehousesByCenter, onAddWarehouse, onInitialize, initializingWarehouses }) => {
   
-  // تجميع المخازن لكل مركز (internal + external)
+  // تجميع المخازن لكل مركز (external أولاً ثم internal)
   const getCenterWarehouses = (centerName) => {
     const centerData = warehousesByCenter[centerName];
     if (!centerData) return [];
-    return [...(centerData.internal || []), ...(centerData.external || [])];
+    // إعطاء الأولوية للمخازن الخارجية
+    return [...(centerData.external || []), ...(centerData.internal || [])];
   };
   
-  // الحصول على المخازن الرئيسية (بدون parent)
+  // الحصول على المخازن الرئيسية (بدون parent) - الخارجية أولاً
   const getRootWarehouses = (centerName) => {
-    return getCenterWarehouses(centerName).filter(w => !w.parent_warehouse_id);
+    const allWarehouses = getCenterWarehouses(centerName);
+    const roots = allWarehouses.filter(w => !w.parent_warehouse_id);
+    // ترتيب: الخارجية أولاً ثم الداخلية
+    return roots.sort((a, b) => {
+      if (a.warehouse_type === 'external' && b.warehouse_type !== 'external') return -1;
+      if (a.warehouse_type !== 'external' && b.warehouse_type === 'external') return 1;
+      return 0;
+    });
   };
   
   // الحصول على المخازن الفرعية
