@@ -271,7 +271,10 @@ const resources = {
       "operations": "العمليات",
       
       // Marketing
-      "marketing": "التسويق"
+      "marketing": "التسويق",
+      
+      // Tasks
+      "tasks": "المهام"
     }
   },
   en: {
