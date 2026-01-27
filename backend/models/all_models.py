@@ -634,24 +634,7 @@ class AccountsReceivable(BaseModel):
     description: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-class FixedAsset(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    asset_number: str
-    name: str
-    category: str
-    purchase_date: str
-    purchase_cost: float
-    useful_life_years: int
-    salvage_value: float = 0.0
-    depreciation_method: str = "straight_line"
-    accumulated_depreciation: float = 0.0
-    current_value: float = 0.0
-    location: Optional[str] = None
-    assigned_to: Optional[str] = None
-    status: str = "active"
-    notes: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+# FixedAsset class moved to Fixed Assets System section below
 
 class Budget(BaseModel):
     model_config = ConfigDict(extra="ignore")
