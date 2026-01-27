@@ -230,6 +230,40 @@ export default function TasksManagement() {
     }
   }, [activeTab, statusFilter, getAuthHeaders]);
 
+  // Fetch task types
+  const fetchTaskTypes = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/task-types`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTaskTypes(data);
+      }
+    } catch (error) {
+      console.error("Error fetching task types:", error);
+    }
+  }, [getAuthHeaders]);
+
+  // Fetch reports
+  const fetchReports = useCallback(async () => {
+    try {
+      const [byTypeRes, byEmployeeRes] = await Promise.all([
+        fetch(`${API_URL}/api/tasks/reports/by-type`, { headers: getAuthHeaders() }),
+        fetch(`${API_URL}/api/tasks/reports/by-employee`, { headers: getAuthHeaders() })
+      ]);
+      
+      if (byTypeRes.ok && byEmployeeRes.ok) {
+        setReports({
+          byType: await byTypeRes.json(),
+          byEmployee: await byEmployeeRes.json()
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  }, [getAuthHeaders]);
+
   // Fetch employees for assignment
   const fetchEmployees = useCallback(async () => {
     try {
