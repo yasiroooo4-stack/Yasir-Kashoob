@@ -149,6 +149,13 @@ const translations = {
     filterByPriority: "Filter by Priority",
     startDate: "From Date",
     endDate: "To Date",
+    requiredDocument: "Required Document",
+    uploadDocument: "Upload Document",
+    documentRequired: "Document required for completion",
+    noDocumentUploaded: "No document uploaded",
+    documentUploaded: "Document uploaded",
+    documentUploadError: "Error uploading document",
+    cannotCompleteWithoutDocument: "Cannot complete task without uploading required document",
   }
 };
 
