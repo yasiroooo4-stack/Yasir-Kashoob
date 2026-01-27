@@ -2154,4 +2154,576 @@ const WarehouseManagement = () => {
   );
 };
 
+// ==================== Fixed Assets Section Component ====================
+const FixedAssetsSection = ({ t, language, centers, warehouses }) => {
+  const [assets, setAssets] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    asset_type: "equipment",
+    category: "fixed_assets",
+    brand: "",
+    model: "",
+    serial_number: "",
+    purchase_date: "",
+    purchase_price: 0,
+    current_value: 0,
+    warehouse_id: "",
+    warehouse_name: "",
+    center_id: "",
+    center_name: "",
+    location_details: "",
+    condition: "good",
+    notes: ""
+  });
+
+  const [transferData, setTransferData] = useState({
+    to_warehouse_id: "",
+    to_location: "",
+    reason: ""
+  });
+
+  const API = process.env.REACT_APP_BACKEND_URL + "/api";
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const fetchAssets = useCallback(async () => {
+    setLoading(true);
+    try {
+      let url = `${API}/warehouse/fixed-assets`;
+      const params = [];
+      if (filterCategory !== "all") params.push(`category=${filterCategory}`);
+      if (filterStatus !== "all") params.push(`status=${filterStatus}`);
+      if (searchQuery) params.push(`search=${searchQuery}`);
+      if (params.length > 0) url += `?${params.join("&")}`;
+      
+      const response = await axios.get(url, { headers });
+      setAssets(response.data);
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterCategory, filterStatus, searchQuery, API, headers]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/fixed-assets/stats`, { headers });
+      setStats(response.data);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }, [API, headers]);
+
+  useEffect(() => {
+    fetchAssets();
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    fetchAssets();
+  }, [filterCategory, filterStatus, searchQuery]);
+
+  const handleCreateAsset = async () => {
+    try {
+      await axios.post(`${API}/warehouse/fixed-assets`, formData, { headers });
+      toast.success(t("تم إضافة الأصل بنجاح", "Asset added successfully"));
+      setShowAddDialog(false);
+      setFormData({
+        name: "", asset_type: "equipment", category: "fixed_assets",
+        brand: "", model: "", serial_number: "", purchase_date: "",
+        purchase_price: 0, current_value: 0, warehouse_id: "",
+        warehouse_name: "", center_id: "", center_name: "",
+        location_details: "", condition: "good", notes: ""
+      });
+      fetchAssets();
+      fetchStats();
+    } catch (error) {
+      toast.error(t("خطأ في إضافة الأصل", "Error adding asset"));
+    }
+  };
+
+  const handleTransferAsset = async () => {
+    if (!selectedAsset) return;
+    try {
+      await axios.post(`${API}/warehouse/fixed-assets/${selectedAsset.id}/transfer`, transferData, { headers });
+      toast.success(t("تم تحويل الأصل بنجاح", "Asset transferred successfully"));
+      setShowTransferDialog(false);
+      setTransferData({ to_warehouse_id: "", to_location: "", reason: "" });
+      fetchAssets();
+    } catch (error) {
+      toast.error(t("خطأ في تحويل الأصل", "Error transferring asset"));
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const colors = {
+      active: "bg-green-100 text-green-800",
+      in_maintenance: "bg-yellow-100 text-yellow-800",
+      disposed: "bg-red-100 text-red-800",
+      transferred: "bg-blue-100 text-blue-800"
+    };
+    const labels = {
+      active: t("نشط", "Active"),
+      in_maintenance: t("في الصيانة", "In Maintenance"),
+      disposed: t("مُتلف", "Disposed"),
+      transferred: t("محوّل", "Transferred")
+    };
+    return <Badge className={colors[status] || "bg-gray-100"}>{labels[status] || status}</Badge>;
+  };
+
+  const getConditionBadge = (condition) => {
+    const colors = {
+      excellent: "bg-green-500",
+      good: "bg-blue-500",
+      fair: "bg-yellow-500",
+      poor: "bg-red-500"
+    };
+    const labels = {
+      excellent: t("ممتاز", "Excellent"),
+      good: t("جيد", "Good"),
+      fair: t("مقبول", "Fair"),
+      poor: t("سيء", "Poor")
+    };
+    return <Badge className={colors[condition] || "bg-gray-500"}>{labels[condition] || condition}</Badge>;
+  };
+
+  const assetTypes = [
+    { id: "equipment", label: t("معدات", "Equipment") },
+    { id: "vehicle", label: t("مركبة", "Vehicle") },
+    { id: "machinery", label: t("آلة", "Machinery") },
+    { id: "furniture", label: t("أثاث", "Furniture") },
+    { id: "electronics", label: t("إلكترونيات", "Electronics") }
+  ];
+
+  const categoryOptions = [
+    { id: "fixed_assets", label: t("أصول ثابتة", "Fixed Assets") },
+    { id: "consumables", label: t("مواد استهلاكية", "Consumables") },
+    { id: "spare_parts", label: t("قطع غيار", "Spare Parts") }
+  ];
+
+  return (
+    <>
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("إجمالي الأصول", "Total Assets")}</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <Package className="h-8 w-8 text-blue-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("نشطة", "Active")}</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("في الصيانة", "In Maintenance")}</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.in_maintenance}</p>
+                </div>
+                <Settings className="h-8 w-8 text-yellow-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("تحتاج صيانة", "Needs Maintenance")}</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.needs_maintenance}</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-red-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <CardTitle>{t("الأصول الثابتة", "Fixed Assets")}</CardTitle>
+              <CardDescription>{t("إدارة وتتبع الأصول الثابتة والمعدات", "Manage and track fixed assets and equipment")}</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => { fetchAssets(); fetchStats(); }}>
+                <RefreshCw className="w-4 h-4 ml-1" />
+                {t("تحديث", "Refresh")}
+              </Button>
+              <Button onClick={() => setShowAddDialog(true)}>
+                <Plus className="w-4 h-4 ml-1" />
+                {t("إضافة أصل", "Add Asset")}
+              </Button>
+            </div>
+          </div>
+          
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 mt-4">
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t("بحث بالاسم أو الرمز...", "Search by name or code...")}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+            </div>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder={t("الفئة", "Category")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("الكل", "All")}</SelectItem>
+                {categoryOptions.map(opt => (
+                  <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder={t("الحالة", "Status")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("الكل", "All")}</SelectItem>
+                <SelectItem value="active">{t("نشط", "Active")}</SelectItem>
+                <SelectItem value="in_maintenance">{t("في الصيانة", "In Maintenance")}</SelectItem>
+                <SelectItem value="disposed">{t("مُتلف", "Disposed")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : assets.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>{t("لا توجد أصول", "No assets found")}</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("رمز الأصل", "Asset Code")}</TableHead>
+                  <TableHead>{t("الاسم", "Name")}</TableHead>
+                  <TableHead>{t("النوع", "Type")}</TableHead>
+                  <TableHead>{t("الموقع", "Location")}</TableHead>
+                  <TableHead>{t("الحالة", "Status")}</TableHead>
+                  <TableHead>{t("الحالة الفنية", "Condition")}</TableHead>
+                  <TableHead>{t("إجراءات", "Actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assets.map((asset) => (
+                  <TableRow key={asset.id}>
+                    <TableCell className="font-mono">{asset.asset_code}</TableCell>
+                    <TableCell className="font-medium">{asset.name}</TableCell>
+                    <TableCell>{assetTypes.find(t => t.id === asset.asset_type)?.label || asset.asset_type}</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div>{asset.warehouse_name || "-"}</div>
+                        <div className="text-xs text-muted-foreground">{asset.location_details}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(asset.status)}</TableCell>
+                    <TableCell>{getConditionBadge(asset.condition)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setSelectedAsset(asset); setShowDetailsDialog(true); }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setSelectedAsset(asset); setShowTransferDialog(true); }}
+                        >
+                          <ArrowRightLeft className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add Asset Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("إضافة أصل جديد", "Add New Asset")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>{t("اسم الأصل", "Asset Name")}</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>{t("نوع الأصل", "Asset Type")}</Label>
+              <Select value={formData.asset_type} onValueChange={(v) => setFormData({ ...formData, asset_type: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {assetTypes.map(type => (
+                    <SelectItem key={type.id} value={type.id}>{type.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{t("الفئة", "Category")}</Label>
+              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map(opt => (
+                    <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{t("الماركة", "Brand")}</Label>
+              <Input
+                value={formData.brand}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>{t("الموديل", "Model")}</Label>
+              <Input
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>{t("الرقم التسلسلي", "Serial Number")}</Label>
+              <Input
+                value={formData.serial_number}
+                onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>{t("المخزن", "Warehouse")}</Label>
+              <Select
+                value={formData.warehouse_id}
+                onValueChange={(v) => {
+                  const wh = warehouses.find(w => w.id === v);
+                  setFormData({
+                    ...formData,
+                    warehouse_id: v,
+                    warehouse_name: wh?.name || "",
+                    center_id: wh?.center_id || "",
+                    center_name: wh?.center_name || ""
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("اختر المخزن", "Select warehouse")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map(wh => (
+                    <SelectItem key={wh.id} value={wh.id}>{wh.name} - {wh.center_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{t("تفاصيل الموقع", "Location Details")}</Label>
+              <Input
+                value={formData.location_details}
+                onChange={(e) => setFormData({ ...formData, location_details: e.target.value })}
+                placeholder={t("مثال: مبنى أ، طابق 2، غرفة 15", "e.g., Building A, Floor 2, Room 15")}
+              />
+            </div>
+            <div>
+              <Label>{t("سعر الشراء", "Purchase Price")}</Label>
+              <Input
+                type="number"
+                value={formData.purchase_price}
+                onChange={(e) => setFormData({ ...formData, purchase_price: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+            <div>
+              <Label>{t("الحالة الفنية", "Condition")}</Label>
+              <Select value={formData.condition} onValueChange={(v) => setFormData({ ...formData, condition: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excellent">{t("ممتاز", "Excellent")}</SelectItem>
+                  <SelectItem value="good">{t("جيد", "Good")}</SelectItem>
+                  <SelectItem value="fair">{t("مقبول", "Fair")}</SelectItem>
+                  <SelectItem value="poor">{t("سيء", "Poor")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>{t("ملاحظات", "Notes")}</Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>{t("إلغاء", "Cancel")}</Button>
+            <Button onClick={handleCreateAsset}>{t("إضافة", "Add")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Asset Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("تحويل الأصل", "Transfer Asset")}</DialogTitle>
+            <DialogDescription>
+              {selectedAsset && `${selectedAsset.name} (${selectedAsset.asset_code})`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>{t("المخزن الجديد", "New Warehouse")}</Label>
+              <Select
+                value={transferData.to_warehouse_id}
+                onValueChange={(v) => setTransferData({ ...transferData, to_warehouse_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("اختر المخزن", "Select warehouse")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map(wh => (
+                    <SelectItem key={wh.id} value={wh.id}>{wh.name} - {wh.center_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{t("الموقع الجديد", "New Location")}</Label>
+              <Input
+                value={transferData.to_location}
+                onChange={(e) => setTransferData({ ...transferData, to_location: e.target.value })}
+                placeholder={t("مثال: مبنى ب، طابق 1", "e.g., Building B, Floor 1")}
+              />
+            </div>
+            <div>
+              <Label>{t("سبب التحويل", "Transfer Reason")}</Label>
+              <Textarea
+                value={transferData.reason}
+                onChange={(e) => setTransferData({ ...transferData, reason: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTransferDialog(false)}>{t("إلغاء", "Cancel")}</Button>
+            <Button onClick={handleTransferAsset}>{t("تحويل", "Transfer")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Asset Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("تفاصيل الأصل", "Asset Details")}</DialogTitle>
+          </DialogHeader>
+          {selectedAsset && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("رمز الأصل", "Asset Code")}</p>
+                  <p className="font-mono font-medium">{selectedAsset.asset_code}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الاسم", "Name")}</p>
+                  <p className="font-medium">{selectedAsset.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("النوع", "Type")}</p>
+                  <p>{assetTypes.find(t => t.id === selectedAsset.asset_type)?.label}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الفئة", "Category")}</p>
+                  <p>{categoryOptions.find(c => c.id === selectedAsset.category)?.label}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الماركة/الموديل", "Brand/Model")}</p>
+                  <p>{selectedAsset.brand} {selectedAsset.model}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الرقم التسلسلي", "Serial Number")}</p>
+                  <p className="font-mono">{selectedAsset.serial_number || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("المخزن", "Warehouse")}</p>
+                  <p>{selectedAsset.warehouse_name || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الموقع", "Location")}</p>
+                  <p>{selectedAsset.location_details || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الحالة", "Status")}</p>
+                  {getStatusBadge(selectedAsset.status)}
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("الحالة الفنية", "Condition")}</p>
+                  {getConditionBadge(selectedAsset.condition)}
+                </div>
+              </div>
+              {selectedAsset.notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("ملاحظات", "Notes")}</p>
+                  <p className="bg-muted p-2 rounded">{selectedAsset.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
 export default WarehouseManagement;
