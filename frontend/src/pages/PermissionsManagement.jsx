@@ -395,15 +395,32 @@ const PermissionsManagement = () => {
   };
 
   const getRoleBadge = (position) => {
-    if (position?.includes("المدير العام") || position?.includes("General Manager")) {
+    // تنظيف المنصب من المسافات الزائدة
+    const cleanPosition = position?.trim();
+    
+    // المدير العام - يجب أن يكون المنصب بالضبط أو يبدأ بـ "المدير العام" بدون كلمات قبله
+    if (cleanPosition === "المدير العام" || 
+        cleanPosition === "General Manager" ||
+        cleanPosition?.startsWith("المدير العام -") ||
+        cleanPosition?.startsWith("General Manager -")) {
       return <Badge className="bg-purple-500">{t("المدير العام", "GM")}</Badge>;
     }
-    if (position?.includes("مدير")) {
+    
+    // مدير (ليس منسق أو مساعد)
+    if (cleanPosition?.startsWith("مدير") || 
+        (cleanPosition?.includes("مدير") && 
+         !cleanPosition?.includes("منسق") && 
+         !cleanPosition?.includes("مساعد") &&
+         !cleanPosition?.includes("سكرتير"))) {
       return <Badge className="bg-blue-500">{t("مدير", "Manager")}</Badge>;
     }
-    if (position?.includes("مشرف")) {
+    
+    // مشرف
+    if (cleanPosition?.includes("مشرف") || cleanPosition?.includes("Supervisor")) {
       return <Badge className="bg-green-500">{t("مشرف", "Supervisor")}</Badge>;
     }
+    
+    // الباقي موظفين
     return <Badge variant="secondary">{t("موظف", "Employee")}</Badge>;
   };
 
