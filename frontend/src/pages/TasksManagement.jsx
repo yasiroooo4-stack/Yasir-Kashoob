@@ -642,14 +642,21 @@ export default function TasksManagement() {
           </Button>
           
           {/* Create Task Button */}
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2"
-            data-testid="create-task-btn"
-          >
-            <Plus className="h-4 w-4" />
-            {tr.newTask}
-          </Button>
+          {/* زر مهمة جديدة - يظهر فقط لمن لديه صلاحية */}
+          {(user?.permissions?.includes('tasks_new') || 
+            user?.permissions?.includes('tasks_create') || 
+            user?.permissions?.includes('tasks_assign') || 
+            user?.permissions?.includes('tasks_manage') || 
+            user?.role === 'admin') && (
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2"
+              data-testid="create-task-btn"
+            >
+              <Plus className="h-4 w-4" />
+              {tr.newTask}
+            </Button>
+          )}
         </div>
       </div>
 
