@@ -2423,6 +2423,8 @@ class Task(TaskBase):
     completion_notes: Optional[str] = None  # ملاحظات الإنجاز
     attachment_url: Optional[str] = None    # رابط مرفق الإنجاز
     attachment_name: Optional[str] = None   # اسم الملف المرفق
+    completion_document_url: Optional[str] = None  # رابط مستند الإنجاز
+    completion_document_name: Optional[str] = None  # اسم مستند الإنجاز
 
 class TaskResponse(BaseModel):
     """رد الموظف على المهمة"""
