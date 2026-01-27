@@ -2910,3 +2910,409 @@ async def get_warehouse_hierarchy(
         hierarchy.append(ext_wh)
     
     return hierarchy
+
+
+# ==================== إعدادات المخزون والميزات المتقدمة ====================
+
+@router.get("/settings")
+async def get_inventory_settings(current_user: dict = Depends(get_current_user)):
+    """الحصول على إعدادات المخزون"""
+    settings = await db.inventory_settings.find_one({"id": "inventory_settings"}, {"_id": 0})
+    if not settings:
+        # إنشاء الإعدادات الافتراضية
+        default_settings = {
+            "id": "inventory_settings",
+            "auto_reorder_enabled": False,
+            "auto_reorder_check_interval": 24,
+            "auto_reorder_notification_email": None,
+            "auto_reorder_notification_phone": None,
+            "abc_a_percentage": 80,
+            "abc_b_percentage": 15,
+            "abc_auto_calculate": True,
+            "abc_calculation_period_months": 12,
+            "barcode_auto_generate": True,
+            "barcode_prefix": "PRD",
+            "qr_code_include_price": False,
+            "qr_code_include_expiry": True,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.inventory_settings.insert_one(default_settings)
+        settings = default_settings
+    
+    return settings
+
+
+@router.put("/settings")
+async def update_inventory_settings(
+    settings_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """تحديث إعدادات المخزون"""
+    settings_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    settings_data["updated_by"] = current_user.get("user_id")
+    
+    await db.inventory_settings.update_one(
+        {"id": "inventory_settings"},
+        {"$set": settings_data},
+        upsert=True
+    )
+    
+    return {"message": "تم تحديث الإعدادات بنجاح"}
+
+
+# ==================== الباركود و QR Code ====================
+
+@router.post("/products/{product_id}/generate-barcode")
+async def generate_product_barcode(
+    product_id: str,
+    barcode_type: str = "EAN13",
+    current_user: dict = Depends(get_current_user)
+):
+    """توليد باركود للمنتج"""
+    product = await db.warehouse_products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="المنتج غير موجود")
+    
+    # توليد باركود فريد
+    settings = await db.inventory_settings.find_one({"id": "inventory_settings"}, {"_id": 0})
+    prefix = settings.get("barcode_prefix", "PRD") if settings else "PRD"
+    
+    # استخدام الوقت والـ ID لإنشاء باركود فريد
+    timestamp = datetime.now().strftime("%y%m%d%H%M")
+    barcode = f"{prefix}{timestamp}{str(uuid.uuid4())[:4].upper()}"
+    
+    # تحديث المنتج
+    await db.warehouse_products.update_one(
+        {"id": product_id},
+        {"$set": {
+            "barcode": barcode,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"barcode": barcode, "product_id": product_id}
+
+
+@router.get("/products/scan/{barcode}")
+async def scan_barcode(
+    barcode: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """البحث عن منتج بالباركود"""
+    # البحث في barcode أو code
+    product = await db.warehouse_products.find_one(
+        {"$or": [{"barcode": barcode}, {"code": barcode}]},
+        {"_id": 0}
+    )
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="المنتج غير موجود")
+    
+    # جلب معلومات المخزون
+    stocks = await db.warehouse_stock.find({"product_id": product["id"]}, {"_id": 0}).to_list(100)
+    total_quantity = sum(s.get("quantity", 0) for s in stocks)
+    
+    return {
+        "product": product,
+        "stocks": stocks,
+        "total_quantity": total_quantity
+    }
+
+
+@router.post("/products/{product_id}/generate-qr")
+async def generate_product_qr(
+    product_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """توليد رمز QR للمنتج"""
+    product = await db.warehouse_products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="المنتج غير موجود")
+    
+    settings = await db.inventory_settings.find_one({"id": "inventory_settings"}, {"_id": 0})
+    
+    # بناء محتوى QR
+    qr_data = {
+        "id": product["id"],
+        "code": product.get("code", ""),
+        "name": product.get("name", "")
+    }
+    
+    if settings and settings.get("qr_code_include_price"):
+        qr_data["price"] = product.get("unit_price", 0)
+    
+    import json
+    qr_content = json.dumps(qr_data, ensure_ascii=False)
+    
+    # تحديث المنتج
+    await db.warehouse_products.update_one(
+        {"id": product_id},
+        {"$set": {
+            "qr_code": qr_content,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"qr_code": qr_content, "product_id": product_id}
+
+
+# ==================== تصنيف ABC ====================
+
+@router.post("/abc/calculate")
+async def calculate_abc_classification(
+    current_user: dict = Depends(get_current_user)
+):
+    """حساب تصنيف ABC لجميع المنتجات"""
+    settings = await db.inventory_settings.find_one({"id": "inventory_settings"}, {"_id": 0})
+    a_pct = settings.get("abc_a_percentage", 80) if settings else 80
+    b_pct = settings.get("abc_b_percentage", 15) if settings else 15
+    months = settings.get("abc_calculation_period_months", 12) if settings else 12
+    
+    # حساب فترة التحليل
+    start_date = (datetime.now(timezone.utc) - timedelta(days=months * 30)).isoformat()
+    
+    # جلب جميع حركات الصرف في الفترة المحددة
+    movements = await db.warehouse_movements.find({
+        "movement_type": "issue",
+        "movement_date": {"$gte": start_date}
+    }, {"_id": 0}).to_list(10000)
+    
+    # حساب القيمة السنوية لكل منتج
+    product_values = {}
+    for mov in movements:
+        pid = mov.get("product_id")
+        value = mov.get("quantity", 0) * mov.get("unit_price", 0)
+        product_values[pid] = product_values.get(pid, 0) + value
+    
+    # ترتيب المنتجات حسب القيمة
+    sorted_products = sorted(product_values.items(), key=lambda x: x[1], reverse=True)
+    total_value = sum(product_values.values())
+    
+    if total_value == 0:
+        return {"message": "لا توجد حركات صرف لحساب ABC", "updated": 0}
+    
+    # تصنيف المنتجات
+    cumulative_value = 0
+    updated_count = 0
+    
+    for product_id, annual_value in sorted_products:
+        cumulative_value += annual_value
+        cumulative_pct = (cumulative_value / total_value) * 100
+        
+        if cumulative_pct <= a_pct:
+            classification = "A"
+        elif cumulative_pct <= (a_pct + b_pct):
+            classification = "B"
+        else:
+            classification = "C"
+        
+        # تحديث المنتج
+        await db.warehouse_products.update_one(
+            {"id": product_id},
+            {"$set": {
+                "abc_classification": classification,
+                "annual_value": annual_value,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        updated_count += 1
+    
+    return {
+        "message": f"تم تحديث تصنيف ABC لـ {updated_count} منتج",
+        "total_value": total_value,
+        "a_count": len([p for p in sorted_products if product_values.get(p[0], 0) / total_value * 100 <= a_pct]),
+        "b_count": len([p for p in sorted_products if a_pct < product_values.get(p[0], 0) / total_value * 100 <= a_pct + b_pct]),
+        "c_count": len([p for p in sorted_products if product_values.get(p[0], 0) / total_value * 100 > a_pct + b_pct])
+    }
+
+
+@router.get("/abc/summary")
+async def get_abc_summary(current_user: dict = Depends(get_current_user)):
+    """ملخص تصنيف ABC"""
+    products = await db.warehouse_products.find({"status": "active"}, {"_id": 0}).to_list(10000)
+    
+    summary = {
+        "A": {"count": 0, "value": 0, "products": []},
+        "B": {"count": 0, "value": 0, "products": []},
+        "C": {"count": 0, "value": 0, "products": []}
+    }
+    
+    for product in products:
+        classification = product.get("abc_classification", "C")
+        annual_value = product.get("annual_value", 0)
+        
+        if classification in summary:
+            summary[classification]["count"] += 1
+            summary[classification]["value"] += annual_value
+            if len(summary[classification]["products"]) < 10:  # أعلى 10 منتجات فقط
+                summary[classification]["products"].append({
+                    "id": product["id"],
+                    "name": product.get("name"),
+                    "code": product.get("code"),
+                    "annual_value": annual_value
+                })
+    
+    # ترتيب المنتجات حسب القيمة
+    for cls in summary:
+        summary[cls]["products"] = sorted(
+            summary[cls]["products"],
+            key=lambda x: x["annual_value"],
+            reverse=True
+        )
+    
+    return summary
+
+
+# ==================== إعادة الطلب التلقائي ====================
+
+@router.post("/auto-reorder/check")
+async def check_auto_reorder(
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """فحص المنتجات التي تحتاج إعادة طلب"""
+    settings = await db.inventory_settings.find_one({"id": "inventory_settings"}, {"_id": 0})
+    
+    if not settings or not settings.get("auto_reorder_enabled"):
+        return {"message": "إعادة الطلب التلقائي غير مفعلة", "requests": []}
+    
+    # جلب المنتجات المفعل بها إعادة الطلب التلقائي
+    products = await db.warehouse_products.find({
+        "auto_reorder_enabled": True,
+        "status": "active"
+    }, {"_id": 0}).to_list(1000)
+    
+    reorder_requests = []
+    
+    for product in products:
+        # حساب الكمية الإجمالية المتاحة
+        stocks = await db.warehouse_stock.find({"product_id": product["id"]}, {"_id": 0}).to_list(100)
+        total_quantity = sum(s.get("quantity", 0) for s in stocks)
+        
+        reorder_point = product.get("reorder_point", 0)
+        
+        if total_quantity <= reorder_point and reorder_point > 0:
+            # إنشاء طلب إعادة طلب
+            request_number = f"RO-{datetime.now().strftime(\"%Y%m%d\")}-{str(uuid.uuid4())[:6].upper()}"
+            
+            reorder_request = {
+                "id": str(uuid.uuid4()),
+                "request_number": request_number,
+                "product_id": product["id"],
+                "product_name": product.get("name"),
+                "product_code": product.get("code"),
+                "current_quantity": total_quantity,
+                "reorder_point": reorder_point,
+                "reorder_quantity": product.get("reorder_quantity", reorder_point * 2),
+                "warehouse_id": stocks[0].get("warehouse_id") if stocks else None,
+                "warehouse_name": stocks[0].get("warehouse_name") if stocks else None,
+                "estimated_cost": product.get("cost_price", 0) * product.get("reorder_quantity", reorder_point * 2),
+                "status": "pending",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            # التحقق من عدم وجود طلب معلق لنفس المنتج
+            existing = await db.auto_reorder_requests.find_one({
+                "product_id": product["id"],
+                "status": "pending"
+            })
+            
+            if not existing:
+                await db.auto_reorder_requests.insert_one(reorder_request)
+                reorder_requests.append(reorder_request)
+    
+    return {
+        "message": f"تم إنشاء {len(reorder_requests)} طلب إعادة طلب",
+        "requests": reorder_requests
+    }
+
+
+@router.get("/auto-reorder/requests")
+async def get_auto_reorder_requests(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على طلبات إعادة الطلب"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    requests = await db.auto_reorder_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return requests
+
+
+@router.put("/auto-reorder/requests/{request_id}/approve")
+async def approve_reorder_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """الموافقة على طلب إعادة الطلب"""
+    request = await db.auto_reorder_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    await db.auto_reorder_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user.get("user_id"),
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "تمت الموافقة على الطلب"}
+
+
+@router.put("/auto-reorder/requests/{request_id}/reject")
+async def reject_reorder_request(
+    request_id: str,
+    reason: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """رفض طلب إعادة الطلب"""
+    await db.auto_reorder_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "rejection_reason": reason,
+            "approved_by": current_user.get("user_id"),
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "تم رفض الطلب"}
+
+
+@router.get("/products/low-stock")
+async def get_low_stock_products(current_user: dict = Depends(get_current_user)):
+    """المنتجات التي وصلت لنقطة إعادة الطلب أو أقل"""
+    products = await db.warehouse_products.find({
+        "status": "active",
+        "reorder_point": {"$gt": 0}
+    }, {"_id": 0}).to_list(1000)
+    
+    low_stock = []
+    
+    for product in products:
+        stocks = await db.warehouse_stock.find({"product_id": product["id"]}, {"_id": 0}).to_list(100)
+        total_quantity = sum(s.get("quantity", 0) for s in stocks)
+        reorder_point = product.get("reorder_point", 0)
+        min_quantity = product.get("min_quantity", 0)
+        
+        if total_quantity <= reorder_point:
+            status = "critical" if total_quantity <= min_quantity else "warning"
+            low_stock.append({
+                "product": product,
+                "total_quantity": total_quantity,
+                "reorder_point": reorder_point,
+                "min_quantity": min_quantity,
+                "shortage": reorder_point - total_quantity,
+                "status": status,
+                "auto_reorder_enabled": product.get("auto_reorder_enabled", False)
+            })
+    
+    # ترتيب حسب الأهمية (critical أولاً)
+    low_stock.sort(key=lambda x: (0 if x["status"] == "critical" else 1, -x["shortage"]))
+    
+    return low_stock
+
