@@ -715,6 +715,25 @@ export default function TasksManagement() {
                   <SelectItem value="urgent">{tr.urgent}</SelectItem>
                 </SelectContent>
               </Select>
+              
+              {/* Date Filters */}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                  className="w-[140px]"
+                  placeholder={tr.startDate}
+                />
+                <span className="text-muted-foreground">-</span>
+                <Input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                  className="w-[140px]"
+                  placeholder={tr.endDate}
+                />
+              </div>
             </div>
 
             {/* Tasks List */}
