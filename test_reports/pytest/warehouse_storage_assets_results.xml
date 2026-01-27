@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="15" skipped="0" tests="15" time="4.204" timestamp="2026-01-27T10:33:29.581371+00:00" hostname="agent-env-6ff453d9-8066-4909-b5fb-f88e1310880d"><testcase classname="backend.tests.test_warehouse_storage_assets.TestWarehousesByCenter" name="test_get_warehouses_by_center_returns_200" time="2.746"><failure message="AssertionError: Expected 200, got 401&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:40: in test_get_warehouses_by_center_returns_200
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+E   AssertionError: Expected 200, got 401
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestWarehousesByCenter" name="test_get_warehouses_by_center_structure" time="0.073"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:45: in test_get_warehouses_by_center_structure
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestWarehousesByCenter" name="test_warehouses_have_required_fields" time="0.073"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:59: in test_warehouses_have_required_fields
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestCreateWarehouse" name="test_create_warehouse_success" time="0.066"><failure message="AssertionError: Expected 200, got 401: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:92: in test_create_warehouse_success
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+E   AssertionError: Expected 200, got 401: {"detail":"Invalid token"}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestCreateWarehouse" name="test_create_warehouse_with_parent" time="0.065"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:104: in test_create_warehouse_with_parent
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestCreateWarehouse" name="test_create_warehouse_duplicate_code_fails" time="0.082"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:133: in test_create_warehouse_duplicate_code_fails
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetsAPI" name="test_get_fixed_assets_returns_200" time="0.068"><failure message="AssertionError: Expected 200, got 401&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:159: in test_get_fixed_assets_returns_200
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+E   AssertionError: Expected 200, got 401
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetsAPI" name="test_get_fixed_assets_stats_returns_200" time="0.071"><failure message="AssertionError: Expected 200, got 401&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:167: in test_get_fixed_assets_stats_returns_200
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+E   AssertionError: Expected 200, got 401
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetsAPI" name="test_create_fixed_asset_success" time="0.069"><failure message="KeyError: 0">backend/tests/test_warehouse_storage_assets.py:183: in test_create_fixed_asset_success
+    warehouse = warehouses[0] if warehouses else None
+                ^^^^^^^^^^^^^
+E   KeyError: 0</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetsAPI" name="test_get_fixed_asset_by_id" time="0.065"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:231: in test_get_fixed_asset_by_id
+    assert create_response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetsAPI" name="test_filter_fixed_assets_by_category" time="0.062"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:247: in test_filter_fixed_assets_by_category
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetsAPI" name="test_filter_fixed_assets_by_status" time="0.065"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:256: in test_filter_fixed_assets_by_status
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestFixedAssetTransfer" name="test_transfer_fixed_asset" time="0.071"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:279: in test_transfer_fixed_asset
+    assert create_response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestInitializeWarehouses" name="test_initialize_warehouses_returns_200" time="0.071"><failure message="AssertionError: Expected 200, got 401&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:317: in test_initialize_warehouses_returns_200
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+E   AssertionError: Expected 200, got 401
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_warehouse_storage_assets.TestWarehouseCenters" name="test_get_centers_returns_200" time="0.072"><failure message="AssertionError: Expected 200, got 401&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_warehouse_storage_assets.py:336: in test_get_centers_returns_200
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+E   AssertionError: Expected 200, got 401
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase></testsuite></testsuites>
