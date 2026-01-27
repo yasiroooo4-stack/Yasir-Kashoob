@@ -343,6 +343,12 @@ const PermissionsManagement = () => {
       approvals_hr: t("موافقات الموارد البشرية", "HR Approvals"),
       approvals_finance: t("موافقات المالية", "Finance Approvals"),
       approvals_gm: t("موافقات المدير العام", "GM Approvals"),
+      // المهام
+      tasks_view: t("عرض المهام", "View Tasks"),
+      tasks_create: t("إنشاء مهمة", "Create Task"),
+      tasks_assign: t("تعيين مهام للموظفين", "Assign Tasks"),
+      tasks_manage: t("إدارة جميع المهام", "Manage All Tasks"),
+      tasks_reports: t("تقارير المهام", "Tasks Reports"),
     };
     return labels[permission] || permission;
   };
