@@ -734,15 +734,15 @@ const PermissionsManagement = () => {
                         <Badge 
                           key={grant.id} 
                           variant="secondary" 
-                          className="text-xs bg-green-100 dark:bg-green-900 flex items-center gap-1 pe-1"
+                          className="text-xs bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100 flex items-center gap-1 pe-1"
                         >
                           {getPermissionLabel(grant.permission)}
                           <button
                             onClick={() => handleRevokePermission(grant.id, grant.permission)}
-                            className="ms-1 p-0.5 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                            className="ms-1 p-0.5 rounded-full hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
                             title={t("إلغاء الصلاحية", "Revoke permission")}
                           >
-                            <XCircle className="w-4 h-4 text-red-500" />
+                            <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                           </button>
                         </Badge>
                       ))}
