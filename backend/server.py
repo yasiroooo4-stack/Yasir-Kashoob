@@ -14884,6 +14884,10 @@ app.include_router(warehouse_router, prefix="/api")
 from routes.driver_schedule_routes import router as driver_schedule_router
 app.include_router(driver_schedule_router, prefix="/api")
 
+# Include Tasks Management router
+from routes.tasks_routes import router as tasks_router
+app.include_router(tasks_router, prefix="/api")
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
