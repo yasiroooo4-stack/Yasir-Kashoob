@@ -2090,6 +2090,225 @@ const WarehouseManagement = () => {
   );
 };
 
+// ==================== Storage Locations Section Component ====================
+const StorageLocationsSection = ({ t, language, centers, warehousesByCenter, onAddWarehouse, onInitialize, initializingWarehouses }) => {
+  
+  // تجميع المخازن لكل مركز (internal + external)
+  const getCenterWarehouses = (centerName) => {
+    const centerData = warehousesByCenter[centerName];
+    if (!centerData) return [];
+    return [...(centerData.internal || []), ...(centerData.external || [])];
+  };
+  
+  // الحصول على المخازن الرئيسية (بدون parent)
+  const getRootWarehouses = (centerName) => {
+    return getCenterWarehouses(centerName).filter(w => !w.parent_warehouse_id);
+  };
+  
+  // الحصول على المخازن الفرعية
+  const getChildWarehouses = (centerName, parentId) => {
+    return getCenterWarehouses(centerName).filter(w => w.parent_warehouse_id === parentId);
+  };
+  
+  // الحصول على عدد المنتجات
+  const getProductCount = (warehouseId) => {
+    // يمكن إضافة API لجلب عدد المنتجات لكل مخزن
+    return 0;
+  };
+  
+  const getWarehouseTypeBadge = (warehouseType) => {
+    if (warehouseType === "external") {
+      return <Badge className="bg-blue-100 text-blue-800">{t("خارجي", "External")}</Badge>;
+    } else if (warehouseType === "internal") {
+      return <Badge className="bg-green-100 text-green-800">{t("داخلي", "Internal")}</Badge>;
+    }
+    return <Badge variant="outline">{warehouseType}</Badge>;
+  };
+  
+  const getCategoryLabel = (category) => {
+    const categories = {
+      lab: t("مختبر", "Lab"),
+      maintenance: t("صيانة", "Maintenance"),
+      cleaning: t("تنظيف", "Cleaning"),
+      ppe: t("حماية", "PPE"),
+      feed: t("أعلاف", "Feed"),
+      equipment: t("معدات", "Equipment"),
+      supplies: t("مستلزمات", "Supplies")
+    };
+    return categories[category] || category || t("عام", "General");
+  };
+  
+  const getTotalWarehouses = () => {
+    return centers.reduce((total, centerName) => {
+      return total + getCenterWarehouses(centerName).length;
+    }, 0);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Warehouse className="w-5 h-5 text-primary" />
+              {t("مواقع التخزين الهرمية", "Hierarchical Storage Locations")}
+            </CardTitle>
+            <CardDescription>
+              {t("عرض هرمي للمخازن حسب المركز - مخزن رئيسي ← داخلي ← فرعي", 
+                "Hierarchical view of warehouses by center - Main → Internal → Sub")}
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="text-sm">
+              {getTotalWarehouses()} {t("مخزن", "warehouses")}
+            </Badge>
+            <Button 
+              variant="outline" 
+              onClick={onInitialize}
+              disabled={initializingWarehouses}
+            >
+              {initializingWarehouses ? (
+                <RefreshCw className="w-4 h-4 animate-spin me-2" />
+              ) : (
+                <Building2 className="w-4 h-4 me-2" />
+              )}
+              {t("تهيئة المخازن", "Initialize Warehouses")}
+            </Button>
+            <Button onClick={onAddWarehouse}>
+              <Plus className="w-4 h-4 me-2" />
+              {t("إضافة مخزن", "Add Warehouse")}
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {centers.map((centerName) => {
+            const centerWarehouses = getCenterWarehouses(centerName);
+            const rootWarehouses = getRootWarehouses(centerName);
+            
+            return (
+              <div key={centerName} className="border rounded-lg overflow-hidden">
+                {/* Center Header */}
+                <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Building2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{t("مركز", "Center")} {centerName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {centerWarehouses.length} {t("مخزن", "warehouses")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Center Warehouses */}
+                <div className="p-4">
+                  {rootWarehouses.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Warehouse className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p>{t("لا توجد مخازن في هذا المركز", "No warehouses in this center")}</p>
+                      <p className="text-sm mt-1">
+                        {t("انقر على 'تهيئة المخازن' لإنشاء الهيكل الافتراضي", 
+                          "Click 'Initialize Warehouses' to create default structure")}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {rootWarehouses.map((rootWh) => (
+                        <div key={rootWh.id} className="border rounded-lg overflow-hidden">
+                          {/* Root/External Warehouse */}
+                          <div className={`flex items-center gap-3 p-3 ${
+                            rootWh.warehouse_type === 'external' ? 'bg-blue-50' : 'bg-green-50'
+                          }`}>
+                            <div className={`p-1.5 rounded ${
+                              rootWh.warehouse_type === 'external' ? 'bg-blue-200' : 'bg-green-200'
+                            }`}>
+                              <Warehouse className={`w-4 h-4 ${
+                                rootWh.warehouse_type === 'external' ? 'text-blue-700' : 'text-green-700'
+                              }`} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{rootWh.name}</span>
+                                {getWarehouseTypeBadge(rootWh.warehouse_type)}
+                                {rootWh.temperature_controlled && (
+                                  <Badge variant="outline" className="bg-cyan-50 text-cyan-700">
+                                    {t("تبريد", "Cold")}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">{rootWh.code}</p>
+                            </div>
+                            <Badge variant="secondary">
+                              {getChildWarehouses(centerName, rootWh.id).length} {t("فرعي", "sub")}
+                            </Badge>
+                          </div>
+                          
+                          {/* Internal/Child Warehouses - Level 2 */}
+                          {getChildWarehouses(centerName, rootWh.id).length > 0 && (
+                            <div className="border-t">
+                              {getChildWarehouses(centerName, rootWh.id).map((childWh) => (
+                                <div key={childWh.id}>
+                                  <div className="flex items-center gap-3 p-3 ps-8 bg-gray-50/50 border-b last:border-b-0">
+                                    <div className="w-6 flex justify-center">
+                                      <div className="w-px h-4 bg-gray-300"></div>
+                                    </div>
+                                    <div className="p-1.5 rounded bg-gray-200">
+                                      <Package className="w-3.5 h-3.5 text-gray-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm">{childWh.name}</span>
+                                        <Badge variant="outline" className="text-xs">
+                                          {getCategoryLabel(childWh.warehouse_category)}
+                                        </Badge>
+                                        {childWh.temperature_controlled && (
+                                          <Badge variant="outline" className="text-xs bg-cyan-50 text-cyan-700">
+                                            {t("تبريد", "Cold")}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">{childWh.code}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Sub-warehouses - Level 3 (Bins/Locations) */}
+                                  {getChildWarehouses(centerName, childWh.id).length > 0 && (
+                                    <div className="bg-gray-50/30">
+                                      {getChildWarehouses(centerName, childWh.id).map((subWh) => (
+                                        <div key={subWh.id} className="flex items-center gap-3 p-2 ps-14 border-b last:border-b-0">
+                                          <div className="w-4 flex justify-center">
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                                          </div>
+                                          <span className="text-sm text-muted-foreground">{subWh.name}</span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {getCategoryLabel(subWh.warehouse_category)}
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 // ==================== Fixed Assets Section Component ====================
 const FixedAssetsSection = ({ t, language, centers, warehouses }) => {
   const [assets, setAssets] = useState([]);
