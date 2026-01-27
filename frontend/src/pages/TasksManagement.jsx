@@ -511,13 +511,24 @@ export default function TasksManagement() {
 
   // Filter tasks
   const filteredTasks = tasks.filter(task => {
+    let matches = true;
+    
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      return task.title?.toLowerCase().includes(query) ||
-             task.description?.toLowerCase().includes(query) ||
-             task.assigned_to_name?.toLowerCase().includes(query);
+      matches = task.title?.toLowerCase().includes(query) ||
+               task.description?.toLowerCase().includes(query) ||
+               task.assigned_to_name?.toLowerCase().includes(query);
     }
-    return true;
+    
+    if (typeFilter !== "all" && task.task_type !== typeFilter) {
+      matches = false;
+    }
+    
+    if (priorityFilter !== "all" && task.priority !== priorityFilter) {
+      matches = false;
+    }
+    
+    return matches;
   });
 
   return (
