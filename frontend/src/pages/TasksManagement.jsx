@@ -1117,6 +1117,105 @@ export default function TasksManagement() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Reports Modal */}
+      <Dialog open={showReportsModal} onOpenChange={setShowReportsModal}>
+        <DialogContent className="max-w-3xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              {tr.reports}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Tabs defaultValue="by-type">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="by-type">{t("حسب النوع", "By Type")}</TabsTrigger>
+              <TabsTrigger value="by-employee">{t("حسب الموظف", "By Employee")}</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="by-type" className="mt-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3">
+                  {reports.byType.map((item) => {
+                    const typeInfo = taskTypes.find(t => t.id === item.task_type);
+                    return (
+                      <div key={item.task_type} className="p-4 bg-muted/50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium">
+                            {typeInfo ? (language === "ar" ? typeInfo.name_ar : typeInfo.name_en) : item.task_type}
+                          </h4>
+                          <Badge>{item.total} {t("مهمة", "tasks")}</Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span>{t("مكتملة:", "Completed:")} {item.completed}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-yellow-500" />
+                            <span>{t("معلقة:", "Pending:")} {item.pending}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-500" />
+                            <span>{t("متأخرة:", "Delayed:")} {item.delayed}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {reports.byType.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">
+                      {t("لا توجد بيانات", "No data")}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="by-employee" className="mt-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3">
+                  {reports.byEmployee.map((item) => (
+                    <div key={item.employee_id} className="p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {item.employee_name}
+                        </h4>
+                        <Badge variant="outline">{item.completion_rate}% {t("في الوقت", "on time")}</Badge>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">{t("الإجمالي", "Total")}</span>
+                          <p className="font-medium">{item.total}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">{t("مكتملة", "Completed")}</span>
+                          <p className="font-medium text-green-600">{item.completed}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">{t("في الوقت", "On Time")}</span>
+                          <p className="font-medium text-blue-600">{item.on_time}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">{t("متأخرة", "Delayed")}</span>
+                          <p className="font-medium text-red-600">{item.delayed}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {reports.byEmployee.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">
+                      {t("لا توجد بيانات", "No data")}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
