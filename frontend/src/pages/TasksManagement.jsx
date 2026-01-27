@@ -85,6 +85,13 @@ const translations = {
     filterByPriority: "فلترة حسب الأولوية",
     startDate: "من تاريخ",
     endDate: "إلى تاريخ",
+    requiredDocument: "المستند المطلوب",
+    uploadDocument: "رفع مستند الإنجاز",
+    documentRequired: "مستند مطلوب لإتمام المهمة",
+    noDocumentUploaded: "لم يتم رفع مستند",
+    documentUploaded: "تم رفع المستند",
+    documentUploadError: "خطأ في رفع المستند",
+    cannotCompleteWithoutDocument: "لا يمكن إتمام المهمة بدون رفع المستند المطلوب",
   },
   en: {
     tasks: "Tasks",
