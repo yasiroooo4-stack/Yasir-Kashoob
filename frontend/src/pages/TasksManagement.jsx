@@ -677,8 +677,7 @@ export default function TasksManagement() {
               </div>
               
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 ml-2" />
+                <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder={tr.filterByStatus} />
                 </SelectTrigger>
                 <SelectContent>
@@ -687,6 +686,33 @@ export default function TasksManagement() {
                   <SelectItem value="in_progress">{tr.in_progress}</SelectItem>
                   <SelectItem value="completed">{tr.completed}</SelectItem>
                   <SelectItem value="delayed">{tr.delayed}</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder={tr.filterByType} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{tr.all}</SelectItem>
+                  {taskTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {language === "ar" ? type.name_ar : type.name_en}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder={tr.filterByPriority} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{tr.all}</SelectItem>
+                  <SelectItem value="low">{tr.low}</SelectItem>
+                  <SelectItem value="medium">{tr.medium}</SelectItem>
+                  <SelectItem value="high">{tr.high}</SelectItem>
+                  <SelectItem value="urgent">{tr.urgent}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
