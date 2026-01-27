@@ -518,3 +518,147 @@ async def get_tasks_report(
         "completion_rate": round(completion_rate, 1),
         "top_performers": top_performers
     }
+
+
+@router.get("/task-types")
+async def get_task_types(
+    current_user: dict = Depends(get_current_user)
+):
+    """الحصول على أنواع المهام المتاحة"""
+    from models.all_models import TASK_TYPES
+    return TASK_TYPES
+
+
+@router.get("/export")
+async def export_tasks(
+    format: str = "json",
+    status: Optional[str] = None,
+    task_type: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """تصدير المهام"""
+    query = {}
+    
+    if status:
+        query["status"] = status
+    if task_type:
+        query["task_type"] = task_type
+    if assigned_to:
+        query["assigned_to_id"] = assigned_to
+    if start_date:
+        query.setdefault("created_at", {})["$gte"] = start_date
+    if end_date:
+        query.setdefault("created_at", {})["$lte"] = end_date + "T23:59:59"
+    
+    tasks = await db.tasks.find(query, {"_id": 0}).sort("created_at", -1).to_list(10000)
+    
+    if format == "json":
+        return tasks
+    elif format == "csv":
+        import csv
+        import io
+        from fastapi.responses import StreamingResponse
+        
+        output = io.StringIO()
+        if tasks:
+            writer = csv.DictWriter(output, fieldnames=tasks[0].keys())
+            writer.writeheader()
+            writer.writerows(tasks)
+        
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=tasks_export.csv"}
+        )
+    
+    return tasks
+
+
+@router.get("/reports/by-type")
+async def get_tasks_by_type(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """تقرير المهام حسب النوع"""
+    query = {}
+    
+    if start_date:
+        query.setdefault("created_at", {})["$gte"] = start_date
+    if end_date:
+        query.setdefault("created_at", {})["$lte"] = end_date + "T23:59:59"
+    
+    pipeline = [
+        {"$match": query},
+        {"$group": {
+            "_id": "$task_type",
+            "total": {"$sum": 1},
+            "completed": {"$sum": {"$cond": [{"$eq": ["$status", "completed"]}, 1, 0]}},
+            "pending": {"$sum": {"$cond": [{"$eq": ["$status", "pending"]}, 1, 0]}},
+            "delayed": {"$sum": {"$cond": ["$is_delayed", 1, 0]}}
+        }},
+        {"$sort": {"total": -1}}
+    ]
+    
+    results = []
+    async for doc in db.tasks.aggregate(pipeline):
+        results.append({
+            "task_type": doc["_id"] or "general",
+            "total": doc["total"],
+            "completed": doc["completed"],
+            "pending": doc["pending"],
+            "delayed": doc["delayed"]
+        })
+    
+    return results
+
+
+@router.get("/reports/by-employee")
+async def get_tasks_by_employee(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """تقرير المهام حسب الموظف"""
+    query = {}
+    
+    if start_date:
+        query.setdefault("created_at", {})["$gte"] = start_date
+    if end_date:
+        query.setdefault("created_at", {})["$lte"] = end_date + "T23:59:59"
+    
+    pipeline = [
+        {"$match": query},
+        {"$group": {
+            "_id": {"id": "$assigned_to_id", "name": "$assigned_to_name"},
+            "total": {"$sum": 1},
+            "completed": {"$sum": {"$cond": [{"$eq": ["$status", "completed"]}, 1, 0]}},
+            "on_time": {"$sum": {"$cond": [
+                {"$and": [
+                    {"$eq": ["$status", "completed"]},
+                    {"$eq": ["$is_delayed", False]}
+                ]}, 1, 0
+            ]}},
+            "delayed": {"$sum": {"$cond": ["$is_delayed", 1, 0]}}
+        }},
+        {"$sort": {"total": -1}}
+    ]
+    
+    results = []
+    async for doc in db.tasks.aggregate(pipeline):
+        completion_rate = (doc["on_time"] / doc["completed"] * 100) if doc["completed"] > 0 else 0
+        results.append({
+            "employee_id": doc["_id"]["id"],
+            "employee_name": doc["_id"]["name"],
+            "total": doc["total"],
+            "completed": doc["completed"],
+            "on_time": doc["on_time"],
+            "delayed": doc["delayed"],
+            "completion_rate": round(completion_rate, 1)
+        })
+    
+    return results
