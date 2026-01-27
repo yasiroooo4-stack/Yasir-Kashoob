@@ -1123,6 +1123,19 @@ export default function TasksManagement() {
           </DialogHeader>
           
           <div className="space-y-4">
+            {/* تحذير إذا كان المستند مطلوب */}
+            {selectedTask?.requires_document && (
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-300 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-800">{tr.documentRequired}</p>
+                  <p className="text-sm text-amber-700">
+                    {t("يجب رفع مستند إنجاز المهمة قبل الإتمام", "You must upload completion document before completing")}
+                  </p>
+                </div>
+              </div>
+            )}
+            
             <div>
               <Label>{tr.completionNotes}</Label>
               <Textarea
@@ -1132,13 +1145,79 @@ export default function TasksManagement() {
                 rows={4}
               />
             </div>
+            
+            {/* حقل رفع مستند الإنجاز */}
+            <div className={`p-4 rounded-lg border-2 border-dashed ${
+              selectedTask?.requires_document && !completionDocument 
+                ? 'border-red-300 bg-red-50' 
+                : completionDocument 
+                  ? 'border-green-300 bg-green-50' 
+                  : 'border-gray-300 bg-gray-50'
+            }`}>
+              <div className="text-center">
+                {completionDocument ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <CheckCircle2 className="w-8 h-8 text-green-600" />
+                    <div className="text-right">
+                      <p className="font-medium text-green-700">{tr.documentUploaded}</p>
+                      <p className="text-sm text-green-600">{completionDocument.name}</p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setCompletionDocument(null)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Paperclip className={`w-10 h-10 mx-auto mb-2 ${
+                      selectedTask?.requires_document ? 'text-red-400' : 'text-gray-400'
+                    }`} />
+                    <Label 
+                      htmlFor="completion-document" 
+                      className={`cursor-pointer font-medium ${
+                        selectedTask?.requires_document ? 'text-red-600' : 'text-gray-600'
+                      }`}
+                    >
+                      {tr.uploadDocument}
+                      {selectedTask?.requires_document && <span className="text-red-500"> *</span>}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("اضغط لاختيار ملف (PDF, صورة، Word)", "Click to select file (PDF, Image, Word)")}
+                    </p>
+                    <input
+                      id="completion-document"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          setCompletionDocument(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </>
+                )}
+              </div>
+            </div>
           </div>
           
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowCompleteModal(false);
+              setCompletionDocument(null);
+              setCompletionNotes("");
+            }}>
               {tr.cancel}
             </Button>
-            <Button onClick={handleCompleteTask} className="bg-green-600 hover:bg-green-700">
+            <Button 
+              onClick={handleCompleteTask} 
+              className="bg-green-600 hover:bg-green-700"
+              disabled={selectedTask?.requires_document && !completionDocument}
+            >
               <CheckCircle2 className="h-4 w-4 ml-2" />
               {tr.completeTask}
             </Button>
