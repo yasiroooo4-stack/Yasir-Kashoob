@@ -770,6 +770,10 @@ const WarehouseManagement = () => {
             <ShoppingCart className="w-4 h-4" />
             {t("صرف المواد", "Material Issue")}
           </TabsTrigger>
+          <TabsTrigger value="advanced-settings" className="flex items-center gap-1">
+            <Sliders className="w-4 h-4" />
+            {t("إعدادات متقدمة", "Advanced Settings")}
+          </TabsTrigger>
         </TabsList>
 
         {/* Stock Tab */}
