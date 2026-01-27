@@ -310,11 +310,6 @@ const Layout = () => {
 
   // Filter nav items based on role, department, and permissions
   const filteredNavItems = navItems.filter((item) => {
-    // Admin and IT have access to everything
-    if (user?.role === 'admin' || user?.department === 'it' || user?.department === 'admin') {
-      return true;
-    }
-    
     // Check user permissions for specific pages
     const userPermissions = user?.permissions || [];
     const pathToPermission = {
