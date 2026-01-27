@@ -427,7 +427,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="permissions" element={
-                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["admin", "it", "الإدارة العامة", "تقنية المعلومات"]}>
+                  <ProtectedRoute allowedRoles={["admin"]} allowedDepartments={["admin", "it", "الإدارة العامة", "تقنية المعلومات"]} allowedPermissions={["permissions_grant", "users_manage"]}>
                     <PermissionsManagement />
                   </ProtectedRoute>
                 } />
