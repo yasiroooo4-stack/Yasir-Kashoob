@@ -589,16 +589,24 @@ async def respond_to_task(
 @router.post("/{task_id}/complete")
 async def complete_task(
     task_id: str,
-    completion_notes: Optional[str] = None,
-    attachment_url: Optional[str] = None,
-    attachment_name: Optional[str] = None,
+    data: dict = None,
     current_user: dict = Depends(get_current_user)
 ):
     """إنجاز مهمة"""
+    if data is None:
+        data = {}
+    
     task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
     
     if not task:
         raise HTTPException(status_code=404, detail="المهمة غير موجودة")
+    
+    # التحقق من أن المستند مرفوع إذا كان مطلوباً
+    if task.get("requires_document") and not data.get("completion_document_url"):
+        raise HTTPException(
+            status_code=400, 
+            detail="لا يمكن إتمام المهمة بدون رفع المستند المطلوب"
+        )
     
     user_id = current_user.get("employee_id") or current_user["id"]
     if task["assigned_to_id"] != user_id and current_user.get("role") != "admin":
@@ -621,9 +629,9 @@ async def complete_task(
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "is_delayed": is_delayed,
         "delay_days": delay_days,
-        "completion_notes": completion_notes,
-        "attachment_url": attachment_url,
-        "attachment_name": attachment_name
+        "completion_notes": data.get("completion_notes"),
+        "completion_document_url": data.get("completion_document_url"),
+        "completion_document_name": data.get("completion_document_name")
     }
     
     await db.tasks.update_one({"id": task_id}, {"$set": update_data})
@@ -638,6 +646,55 @@ async def complete_task(
     )
     
     return {"message": "تم إنجاز المهمة بنجاح", "is_delayed": is_delayed, "delay_days": delay_days}
+
+
+@router.post("/{task_id}/upload-document")
+async def upload_task_document(
+    task_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """رفع مستند إنجاز المهمة"""
+    task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="المهمة غير موجودة")
+    
+    # التحقق من نوع الملف
+    allowed_types = ["application/pdf", "image/png", "image/jpeg", "image/jpg",
+                     "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. الأنواع المدعومة: PDF, PNG, JPG, DOC, DOCX")
+    
+    # حفظ الملف
+    upload_dir = "/app/uploads/task_documents"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_ext = file.filename.split(".")[-1] if "." in file.filename else "pdf"
+    filename = f"{task_id}_{uuid.uuid4()}.{file_ext}"
+    file_path = os.path.join(upload_dir, filename)
+    
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # تحديث المهمة برابط المستند
+    document_url = f"/uploads/task_documents/{filename}"
+    
+    await db.tasks.update_one(
+        {"id": task_id},
+        {"$set": {
+            "completion_document_url": document_url,
+            "completion_document_name": file.filename,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "message": "تم رفع المستند بنجاح",
+        "document_url": document_url,
+        "document_name": file.filename
+    }
 
 
 @router.delete("/{task_id}")
