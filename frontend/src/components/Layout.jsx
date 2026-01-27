@@ -89,6 +89,11 @@ const Layout = () => {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
 
   // Fetch user settings and backgrounds
   useEffect(() => {
