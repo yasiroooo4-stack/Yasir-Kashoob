@@ -412,6 +412,53 @@ class StockMovement(StockMovementBase):
     approved_at: Optional[str] = None
 
 
+# طلبات إعادة الطلب التلقائي
+class AutoReorderRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    request_number: str                     # رقم الطلب
+    product_id: str
+    product_name: str
+    product_code: str
+    current_quantity: float                 # الكمية الحالية
+    reorder_point: float                    # نقطة إعادة الطلب
+    reorder_quantity: float                 # كمية إعادة الطلب المقترحة
+    warehouse_id: str
+    warehouse_name: str
+    suggested_supplier_id: Optional[str] = None
+    suggested_supplier_name: Optional[str] = None
+    estimated_cost: float = 0               # التكلفة المقدرة
+    status: str = "pending"                 # pending, approved, rejected, ordered
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    purchase_order_id: Optional[str] = None # رقم أمر الشراء بعد الموافقة
+    notes: Optional[str] = None
+
+
+# إعدادات تصنيف ABC وإعادة الطلب
+class InventorySettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "inventory_settings"
+    # إعدادات إعادة الطلب التلقائي
+    auto_reorder_enabled: bool = False      # تفعيل/إغلاق إعادة الطلب التلقائي على مستوى النظام
+    auto_reorder_check_interval: int = 24   # فترة الفحص بالساعات
+    auto_reorder_notification_email: Optional[str] = None
+    auto_reorder_notification_phone: Optional[str] = None
+    # إعدادات تصنيف ABC
+    abc_a_percentage: float = 80            # المنتجات A تمثل 80% من القيمة
+    abc_b_percentage: float = 15            # المنتجات B تمثل 15% من القيمة
+    abc_auto_calculate: bool = True         # حساب ABC تلقائياً
+    abc_calculation_period_months: int = 12 # فترة حساب ABC (بالأشهر)
+    # إعدادات الباركود
+    barcode_auto_generate: bool = True      # توليد باركود تلقائي للمنتجات الجديدة
+    barcode_prefix: str = "PRD"             # بادئة الباركود
+    qr_code_include_price: bool = False     # تضمين السعر في QR
+    qr_code_include_expiry: bool = True     # تضمين تاريخ الصلاحية في QR
+    updated_at: Optional[str] = None
+    updated_by: Optional[str] = None
+
+
 # المحاليل والفحوصات (خاص بالمختبرات)
 class LabSolutionBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
