@@ -393,14 +393,19 @@ const WarehouseManagement = () => {
   const handleCreateWarehouse = async () => {
     try {
       setLoading(true);
-      await axios.post(`${API}/warehouse/warehouses`, warehouseForm);
+      const formData = { ...warehouseForm };
+      // إزالة parent_warehouse_id إذا كان فارغاً
+      if (!formData.parent_warehouse_id) {
+        delete formData.parent_warehouse_id;
+      }
+      await axios.post(`${API}/warehouse/warehouses`, formData);
       toast.success(t("تم إنشاء المخزن بنجاح", "Warehouse created successfully"));
       setWarehouseDialog(false);
       setWarehouseForm({ 
         name: "", code: "", location: "", warehouse_type: "internal", 
         warehouse_category: "", center_name: "", capacity: "", 
         temperature_controlled: false, supervisor_email: "", supervisor_phone: "",
-        warehouse_manager_email: "", warehouse_manager_phone: ""
+        warehouse_manager_email: "", warehouse_manager_phone: "", parent_warehouse_id: ""
       });
       fetchWarehouses();
       fetchWarehousesByCenter();
