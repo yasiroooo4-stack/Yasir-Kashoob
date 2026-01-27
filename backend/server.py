@@ -14880,6 +14880,10 @@ app.include_router(operations_router)
 from routes.warehouse_routes import router as warehouse_router
 app.include_router(warehouse_router, prefix="/api")
 
+# Include Advanced Inventory Management router
+from routes.inventory_advanced_routes import router as inventory_advanced_router
+app.include_router(inventory_advanced_router, prefix="/api")
+
 # Include Driver Schedule router
 from routes.driver_schedule_routes import router as driver_schedule_router
 app.include_router(driver_schedule_router, prefix="/api")
