@@ -455,8 +455,146 @@ class InventorySettings(BaseModel):
     barcode_prefix: str = "PRD"             # بادئة الباركود
     qr_code_include_price: bool = False     # تضمين السعر في QR
     qr_code_include_expiry: bool = True     # تضمين تاريخ الصلاحية في QR
+    # إعدادات تقييم المخزون
+    inventory_valuation_method: str = "weighted_average"  # FIFO, LIFO, weighted_average
     updated_at: Optional[str] = None
     updated_by: Optional[str] = None
+
+
+# ==================== تتبع الدفعات (Batch/Lot Tracking) ====================
+class ProductBatch(BaseModel):
+    """نموذج دفعة الإنتاج"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    batch_number: str                       # رقم الدفعة
+    product_id: str
+    product_name: str
+    product_code: str
+    warehouse_id: str
+    warehouse_name: str
+    quantity: float                         # الكمية المتبقية
+    initial_quantity: float                 # الكمية الأولية
+    unit_cost: float = 0                    # تكلفة الوحدة
+    production_date: Optional[str] = None   # تاريخ الإنتاج
+    expiry_date: Optional[str] = None       # تاريخ انتهاء الصلاحية
+    supplier_id: Optional[str] = None
+    supplier_name: Optional[str] = None
+    supplier_batch_number: Optional[str] = None  # رقم دفعة المورد
+    quality_status: str = "approved"        # approved, pending, rejected, quarantine
+    quality_notes: Optional[str] = None
+    status: str = "active"                  # active, depleted, expired, recalled
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
+
+
+# ==================== الجرد الدوري (Cycle Count) ====================
+class CycleCount(BaseModel):
+    """نموذج الجرد الدوري"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    count_number: str                       # رقم الجرد
+    warehouse_id: str
+    warehouse_name: str
+    count_type: str = "full"                # full (جرد كامل), partial (جرد جزئي), abc (جرد ABC)
+    status: str = "draft"                   # draft, in_progress, completed, approved, cancelled
+    scheduled_date: str                     # تاريخ الجرد المجدول
+    started_at: Optional[str] = None        # تاريخ بدء الجرد
+    completed_at: Optional[str] = None      # تاريخ انتهاء الجرد
+    counted_by: Optional[str] = None        # من قام بالجرد
+    counted_by_name: Optional[str] = None
+    approved_by: Optional[str] = None       # من وافق على الجرد
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    total_items: int = 0                    # عدد الأصناف
+    items_counted: int = 0                  # عدد الأصناف المجرودة
+    variance_count: int = 0                 # عدد الفروقات
+    variance_value: float = 0               # قيمة الفروقات
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: Optional[str] = None
+
+
+class CycleCountItem(BaseModel):
+    """عنصر الجرد"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    cycle_count_id: str
+    product_id: str
+    product_name: str
+    product_code: str
+    batch_number: Optional[str] = None
+    system_quantity: float                  # الكمية في النظام
+    counted_quantity: Optional[float] = None  # الكمية الفعلية
+    variance: Optional[float] = None        # الفرق
+    variance_value: Optional[float] = None  # قيمة الفرق
+    unit_cost: float = 0
+    status: str = "pending"                 # pending, counted, verified
+    notes: Optional[str] = None
+    counted_at: Optional[str] = None
+
+
+# ==================== إدارة المرتجعات ====================
+class ProductReturn(BaseModel):
+    """نموذج مرتجع"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    return_number: str                      # رقم المرتجع
+    return_type: str                        # supplier (مرتجع للمورد), customer (مرتجع من العميل)
+    status: str = "pending"                 # pending, approved, rejected, completed
+    # تفاصيل المورد/العميل
+    party_type: str                         # supplier أو customer
+    party_id: str
+    party_name: str
+    # تفاصيل المنتج
+    product_id: str
+    product_name: str
+    product_code: str
+    batch_number: Optional[str] = None
+    quantity: float
+    unit_price: float
+    total_value: float
+    # سبب المرتجع
+    return_reason: str                      # damaged, expired, quality_issue, wrong_item, excess
+    reason_notes: Optional[str] = None
+    # المخزن
+    warehouse_id: str
+    warehouse_name: str
+    # المرجع
+    reference_type: Optional[str] = None    # purchase_order, sales_order
+    reference_id: Optional[str] = None
+    reference_number: Optional[str] = None
+    # التواريخ والموافقات
+    return_date: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_by: Optional[str] = None
+    created_by_name: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    notes: Optional[str] = None
+
+
+# ==================== ربط المنتجات بالموردين ====================
+class ProductSupplier(BaseModel):
+    """ربط منتج بمورد"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    product_id: str
+    product_name: str
+    supplier_id: str
+    supplier_name: str
+    supplier_product_code: Optional[str] = None  # رمز المنتج لدى المورد
+    is_primary: bool = False                # المورد الأساسي
+    unit_price: float = 0                   # سعر الوحدة
+    min_order_quantity: float = 0           # الحد الأدنى للطلب
+    lead_time_days: int = 0                 # وقت التوريد بالأيام
+    currency: str = "OMR"
+    last_purchase_date: Optional[str] = None
+    last_purchase_price: Optional[float] = None
+    quality_rating: Optional[int] = None    # تقييم الجودة 1-5
+    notes: Optional[str] = None
+    status: str = "active"
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: Optional[str] = None
 
 
 # المحاليل والفحوصات (خاص بالمختبرات)
