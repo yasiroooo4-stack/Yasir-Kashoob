@@ -13,10 +13,12 @@ import { ScrollArea } from "../components/ui/scroll-area";
 import { 
   ClipboardList, Plus, Search, Calendar, User, Clock, 
   CheckCircle2, AlertCircle, MessageSquare, Paperclip,
-  Send, Filter, ChevronRight, Bell, FileText
+  Send, Filter, ChevronRight, Bell, FileText, Download,
+  BarChart3, Wrench, Package, Trash2, FileSpreadsheet
 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 
 // ترجمة
 const translations = {
