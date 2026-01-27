@@ -2182,6 +2182,384 @@ const WarehouseManagement = () => {
   );
 };
 
+// ==================== Advanced Settings Section Component ====================
+const AdvancedSettingsSection = ({ t, language }) => {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [abcSummary, setAbcSummary] = useState(null);
+  const [reorderRequests, setReorderRequests] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [calculatingABC, setCalculatingABC] = useState(false);
+  const [checkingReorder, setCheckingReorder] = useState(false);
+
+  const API = process.env.REACT_APP_BACKEND_URL + "/api";
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/settings`, { headers });
+      setSettings(response.data);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [API]);
+
+  const fetchAbcSummary = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/abc/summary`, { headers });
+      setAbcSummary(response.data);
+    } catch (error) {
+      console.error("Error fetching ABC summary:", error);
+    }
+  }, [API]);
+
+  const fetchReorderRequests = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/auto-reorder/requests?status=pending`, { headers });
+      setReorderRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching reorder requests:", error);
+    }
+  }, [API]);
+
+  const fetchLowStockProducts = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/warehouse/products/low-stock`, { headers });
+      setLowStockProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching low stock products:", error);
+    }
+  }, [API]);
+
+  useEffect(() => {
+    fetchSettings();
+    fetchAbcSummary();
+    fetchReorderRequests();
+    fetchLowStockProducts();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    try {
+      setSaving(true);
+      await axios.put(`${API}/warehouse/settings`, settings, { headers });
+      toast.success(t("تم حفظ الإعدادات بنجاح", "Settings saved successfully"));
+    } catch (error) {
+      toast.error(t("فشل في حفظ الإعدادات", "Failed to save settings"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCalculateABC = async () => {
+    try {
+      setCalculatingABC(true);
+      const response = await axios.post(`${API}/warehouse/abc/calculate`, {}, { headers });
+      toast.success(response.data.message);
+      fetchAbcSummary();
+    } catch (error) {
+      toast.error(t("فشل في حساب تصنيف ABC", "Failed to calculate ABC"));
+    } finally {
+      setCalculatingABC(false);
+    }
+  };
+
+  const handleCheckReorder = async () => {
+    try {
+      setCheckingReorder(true);
+      const response = await axios.post(`${API}/warehouse/auto-reorder/check`, {}, { headers });
+      toast.success(response.data.message);
+      fetchReorderRequests();
+      fetchLowStockProducts();
+    } catch (error) {
+      toast.error(t("فشل في فحص إعادة الطلب", "Failed to check reorder"));
+    } finally {
+      setCheckingReorder(false);
+    }
+  };
+
+  const handleApproveRequest = async (requestId) => {
+    try {
+      await axios.put(`${API}/warehouse/auto-reorder/requests/${requestId}/approve`, {}, { headers });
+      toast.success(t("تمت الموافقة", "Approved"));
+      fetchReorderRequests();
+    } catch (error) {
+      toast.error(t("فشل في الموافقة", "Failed to approve"));
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    try {
+      await axios.put(`${API}/warehouse/auto-reorder/requests/${requestId}/reject`, {}, { headers });
+      toast.success(t("تم الرفض", "Rejected"));
+      fetchReorderRequests();
+    } catch (error) {
+      toast.error(t("فشل في الرفض", "Failed to reject"));
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center p-8"><RefreshCw className="w-8 h-8 animate-spin" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* إعدادات إعادة الطلب التلقائي */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <RotateCcw className="w-5 h-5" />
+                {t("إعادة الطلب التلقائي", "Auto Reorder")}
+              </CardTitle>
+              <CardDescription>
+                {t("تفعيل إعادة الطلب التلقائي عند وصول المنتجات لنقطة إعادة الطلب", 
+                  "Enable automatic reorder when products reach reorder point")}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm ${settings?.auto_reorder_enabled ? 'text-green-600' : 'text-gray-500'}`}>
+                {settings?.auto_reorder_enabled ? t("مفعّل", "Enabled") : t("معطّل", "Disabled")}
+              </span>
+              <Button
+                variant={settings?.auto_reorder_enabled ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSettings({ ...settings, auto_reorder_enabled: !settings?.auto_reorder_enabled })}
+              >
+                {settings?.auto_reorder_enabled ? (
+                  <ToggleRight className="w-5 h-5" />
+                ) : (
+                  <ToggleLeft className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {settings?.auto_reorder_enabled && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <div>
+                <Label>{t("فترة الفحص (بالساعات)", "Check Interval (hours)")}</Label>
+                <Input
+                  type="number"
+                  value={settings?.auto_reorder_check_interval || 24}
+                  onChange={(e) => setSettings({ ...settings, auto_reorder_check_interval: parseInt(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label>{t("البريد الإلكتروني للإشعارات", "Notification Email")}</Label>
+                <Input
+                  type="email"
+                  value={settings?.auto_reorder_notification_email || ''}
+                  onChange={(e) => setSettings({ ...settings, auto_reorder_notification_email: e.target.value })}
+                  placeholder="email@example.com"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center pt-4 border-t">
+            <Button variant="outline" onClick={handleCheckReorder} disabled={checkingReorder}>
+              {checkingReorder ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <Search className="w-4 h-4 me-2" />}
+              {t("فحص المنتجات الآن", "Check Products Now")}
+            </Button>
+            <Badge variant="secondary">
+              {lowStockProducts.length} {t("منتج يحتاج إعادة طلب", "products need reorder")}
+            </Badge>
+          </div>
+
+          {/* طلبات إعادة الطلب المعلقة */}
+          {reorderRequests.length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-medium mb-2">{t("طلبات معلقة", "Pending Requests")}</h4>
+              <div className="space-y-2">
+                {reorderRequests.slice(0, 5).map(req => (
+                  <div key={req.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div>
+                      <span className="font-medium">{req.product_name}</span>
+                      <span className="text-sm text-muted-foreground mx-2">|</span>
+                      <span className="text-sm">{t("الكمية الحالية:", "Current:")} {req.current_quantity}</span>
+                      <span className="text-sm text-muted-foreground mx-2">|</span>
+                      <span className="text-sm text-green-600">{t("الكمية المقترحة:", "Suggested:")} {req.reorder_quantity}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="text-green-600" onClick={() => handleApproveRequest(req.id)}>
+                        <CheckCircle className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-600" onClick={() => handleRejectRequest(req.id)}>
+                        <XCircle className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* تصنيف ABC */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                {t("تصنيف ABC", "ABC Classification")}
+              </CardTitle>
+              <CardDescription>
+                {t("تصنيف المنتجات حسب القيمة السنوية (A: مهم جداً، B: متوسط، C: منخفض)", 
+                  "Classify products by annual value (A: High, B: Medium, C: Low)")}
+              </CardDescription>
+            </div>
+            <Button onClick={handleCalculateABC} disabled={calculatingABC}>
+              {calculatingABC ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <BarChart3 className="w-4 h-4 me-2" />}
+              {t("حساب التصنيف", "Calculate")}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <Label>{t("نسبة الفئة A (%)", "Class A Percentage (%)")}</Label>
+              <Input
+                type="number"
+                value={settings?.abc_a_percentage || 80}
+                onChange={(e) => setSettings({ ...settings, abc_a_percentage: parseFloat(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>{t("نسبة الفئة B (%)", "Class B Percentage (%)")}</Label>
+              <Input
+                type="number"
+                value={settings?.abc_b_percentage || 15}
+                onChange={(e) => setSettings({ ...settings, abc_b_percentage: parseFloat(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>{t("فترة الحساب (بالأشهر)", "Calculation Period (months)")}</Label>
+              <Input
+                type="number"
+                value={settings?.abc_calculation_period_months || 12}
+                onChange={(e) => setSettings({ ...settings, abc_calculation_period_months: parseInt(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          {/* ملخص ABC */}
+          {abcSummary && (
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="p-4 bg-red-50 rounded-lg border border-red-200 text-center">
+                <div className="text-3xl font-bold text-red-600">{abcSummary.A?.count || 0}</div>
+                <div className="text-sm text-red-700">{t("الفئة A", "Class A")}</div>
+                <div className="text-xs text-muted-foreground">{t("مهم جداً", "High Value")}</div>
+              </div>
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-center">
+                <div className="text-3xl font-bold text-yellow-600">{abcSummary.B?.count || 0}</div>
+                <div className="text-sm text-yellow-700">{t("الفئة B", "Class B")}</div>
+                <div className="text-xs text-muted-foreground">{t("متوسط", "Medium Value")}</div>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200 text-center">
+                <div className="text-3xl font-bold text-green-600">{abcSummary.C?.count || 0}</div>
+                <div className="text-sm text-green-700">{t("الفئة C", "Class C")}</div>
+                <div className="text-xs text-muted-foreground">{t("منخفض", "Low Value")}</div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* إعدادات الباركود و QR */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <QrCode className="w-5 h-5" />
+            {t("الباركود و QR Code", "Barcode & QR Code")}
+          </CardTitle>
+          <CardDescription>
+            {t("إعدادات توليد الباركود ورموز QR للمنتجات", 
+              "Settings for generating barcodes and QR codes for products")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <Barcode className="w-4 h-4" />
+                {t("الباركود", "Barcode")}
+              </h4>
+              <div className="flex items-center gap-4">
+                <input
+                  type="checkbox"
+                  id="barcode_auto"
+                  checked={settings?.barcode_auto_generate || false}
+                  onChange={(e) => setSettings({ ...settings, barcode_auto_generate: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="barcode_auto">
+                  {t("توليد باركود تلقائي للمنتجات الجديدة", "Auto-generate barcode for new products")}
+                </Label>
+              </div>
+              <div>
+                <Label>{t("بادئة الباركود", "Barcode Prefix")}</Label>
+                <Input
+                  value={settings?.barcode_prefix || 'PRD'}
+                  onChange={(e) => setSettings({ ...settings, barcode_prefix: e.target.value })}
+                  placeholder="PRD"
+                  className="w-32"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <QrCode className="w-4 h-4" />
+                {t("رمز QR", "QR Code")}
+              </h4>
+              <div className="flex items-center gap-4">
+                <input
+                  type="checkbox"
+                  id="qr_price"
+                  checked={settings?.qr_code_include_price || false}
+                  onChange={(e) => setSettings({ ...settings, qr_code_include_price: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="qr_price">
+                  {t("تضمين السعر في رمز QR", "Include price in QR code")}
+                </Label>
+              </div>
+              <div className="flex items-center gap-4">
+                <input
+                  type="checkbox"
+                  id="qr_expiry"
+                  checked={settings?.qr_code_include_expiry || false}
+                  onChange={(e) => setSettings({ ...settings, qr_code_include_expiry: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="qr_expiry">
+                  {t("تضمين تاريخ الصلاحية في رمز QR", "Include expiry date in QR code")}
+                </Label>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* زر الحفظ */}
+      <div className="flex justify-end">
+        <Button onClick={handleSaveSettings} disabled={saving} size="lg">
+          {saving ? <RefreshCw className="w-4 h-4 animate-spin me-2" /> : <CheckCircle className="w-4 h-4 me-2" />}
+          {t("حفظ جميع الإعدادات", "Save All Settings")}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // ==================== Storage Locations Section Component ====================
 const StorageLocationsSection = ({ t, language, centers, warehousesByCenter, onAddWarehouse, onInitialize, initializingWarehouses }) => {
   
