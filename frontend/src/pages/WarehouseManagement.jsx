@@ -68,6 +68,9 @@ import {
   Settings,
   Filter,
   ShoppingCart,
+  Warehouse,
+  Package,
+  ArrowRightLeft,
 } from "lucide-react";
 import MaterialIssue from "./MaterialIssue";
 
