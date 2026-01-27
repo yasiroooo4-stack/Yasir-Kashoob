@@ -3193,7 +3193,7 @@ async def check_auto_reorder(
         
         if total_quantity <= reorder_point and reorder_point > 0:
             # إنشاء طلب إعادة طلب
-            request_number = f"RO-{datetime.now().strftime(\"%Y%m%d\")}-{str(uuid.uuid4())[:6].upper()}"
+            request_number = f"RO-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
             
             reorder_request = {
                 "id": str(uuid.uuid4()),
