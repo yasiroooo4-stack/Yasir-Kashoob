@@ -6721,7 +6721,7 @@ async def get_allowed_login_locations(current_user: dict = Depends(require_role(
 
 @api_router.post("/system/allowed-login-locations")
 async def set_allowed_login_locations(
-    locations: list,
+    locations: List[dict] = Body(...),
     current_user: dict = Depends(require_role(["admin"]))
 ):
     """تحديد المواقع المسموح بتسجيل الدخول منها"""
