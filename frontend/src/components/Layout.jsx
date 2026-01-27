@@ -355,6 +355,11 @@ const Layout = () => {
       return true; // User has permission, show the page regardless of role/department
     }
     
+    // Admin role (role: admin) has access to everything
+    if (user?.role === 'admin') {
+      return true;
+    }
+    
     // HR Manager special access
     if (user?.role === 'hr_manager') {
       const hrPaths = ['/hr', '/payroll', '/dashboard', '/settings', '/reports', '/analysis', '/employee-scheduling', '/driver-schedule', '/salary-structures'];
