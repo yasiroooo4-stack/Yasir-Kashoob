@@ -345,6 +345,7 @@ const Layout = () => {
       '/procurement': ['purchases_view', 'purchases_create', 'purchases_edit', 'purchases_approve'],
       '/feed-purchases': ['purchases_view', 'purchases_create', 'purchases_edit'],
       '/supplier-portal': ['supplier_portal_view', 'supplier_portal_messages', 'supplier_portal_feed_requests'],
+      '/tasks': ['tasks_view', 'tasks_create', 'tasks_assign', 'tasks_manage'], // المهام
       '/permissions': ['permissions_grant', 'users_manage'], // صفحة إدارة الصلاحيات تحتاج صلاحية خاصة
       '/system-settings': [], // متاح للجميع
     };
