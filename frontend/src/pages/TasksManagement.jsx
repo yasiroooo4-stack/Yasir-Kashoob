@@ -206,11 +206,14 @@ export default function TasksManagement() {
     category: "",
     department: user?.department || "",
     center_id: "",
-    center_name: ""
+    center_name: "",
+    requires_document: false
   });
 
   const [responseMessage, setResponseMessage] = useState("");
   const [completionNotes, setCompletionNotes] = useState("");
+  const [completionDocument, setCompletionDocument] = useState(null);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
 
   const getAuthHeaders = useCallback(() => ({
     "Content-Type": "application/json",
