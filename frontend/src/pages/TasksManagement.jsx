@@ -935,6 +935,27 @@ export default function TasksManagement() {
                 </Select>
               </div>
             </div>
+            
+            {/* حقل مستند مطلوب للإنجاز */}
+            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <input
+                type="checkbox"
+                id="requires_document"
+                checked={formData.requires_document}
+                onChange={(e) => setFormData({ ...formData, requires_document: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <div className="flex-1">
+                <Label htmlFor="requires_document" className="cursor-pointer font-medium">
+                  {t("مستند مطلوب لإتمام المهمة", "Document required for completion")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("عند التفعيل، لن يتمكن الموظف من إنجاز المهمة بدون رفع مستند الإنجاز", 
+                     "When enabled, employee cannot complete task without uploading completion document")}
+                </p>
+              </div>
+              <Paperclip className="w-5 h-5 text-amber-600" />
+            </div>
           </div>
           
           <DialogFooter className="gap-2">
