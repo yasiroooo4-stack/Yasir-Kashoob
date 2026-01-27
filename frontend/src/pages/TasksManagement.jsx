@@ -314,7 +314,42 @@ export default function TasksManagement() {
     fetchEmployees();
     fetchStats();
     fetchNotifications();
-  }, [fetchTasks, fetchEmployees, fetchStats, fetchNotifications]);
+    fetchTaskTypes();
+  }, [fetchTasks, fetchEmployees, fetchStats, fetchNotifications, fetchTaskTypes]);
+
+  // Export tasks
+  const handleExport = async (format = "json") => {
+    try {
+      let url = `${API_URL}/api/tasks/export?format=${format}`;
+      if (statusFilter !== "all") url += `&status=${statusFilter}`;
+      if (typeFilter !== "all") url += `&task_type=${typeFilter}`;
+      
+      const response = await fetch(url, { headers: getAuthHeaders() });
+      
+      if (format === "csv") {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `tasks_export_${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        const data = await response.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `tasks_export_${new Date().toISOString().split("T")[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+    } catch (error) {
+      console.error("Error exporting tasks:", error);
+    }
+  };
 
   // Create task
   const handleCreateTask = async () => {
