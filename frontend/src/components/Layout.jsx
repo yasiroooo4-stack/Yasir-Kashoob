@@ -752,30 +752,60 @@ const Layout = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>{language === "ar" ? "كلمة المرور الحالية" : "Current Password"}</Label>
-              <Input
-                type="password"
-                value={passwordForm.current_password}
-                onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-                placeholder={language === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"}
-              />
+              <div className="relative">
+                <Input
+                  type={showPasswords.current ? "text" : "password"}
+                  value={passwordForm.current_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+                  placeholder={language === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"}
+                  className="pe-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{language === "ar" ? "كلمة المرور الجديدة" : "New Password"}</Label>
-              <Input
-                type="password"
-                value={passwordForm.new_password}
-                onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
-                placeholder={language === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"}
-              />
+              <div className="relative">
+                <Input
+                  type={showPasswords.new ? "text" : "password"}
+                  value={passwordForm.new_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                  placeholder={language === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"}
+                  className="pe-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
+                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{language === "ar" ? "تأكيد كلمة المرور" : "Confirm Password"}</Label>
-              <Input
-                type="password"
-                value={passwordForm.confirm_password}
-                onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
-                placeholder={language === "ar" ? "أعد إدخال كلمة المرور الجديدة" : "Re-enter new password"}
-              />
+              <div className="relative">
+                <Input
+                  type={showPasswords.confirm ? "text" : "password"}
+                  value={passwordForm.confirm_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                  placeholder={language === "ar" ? "أعد إدخال كلمة المرور الجديدة" : "Re-enter new password"}
+                  className="pe-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
+                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-gray-500 hover:text-gray-700"
+                >
+                  {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
           <DialogFooter>
