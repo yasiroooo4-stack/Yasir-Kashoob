@@ -752,6 +752,14 @@ const WarehouseManagement = () => {
             <Building2 className="w-4 h-4" />
             {t("المخازن", "Warehouses")}
           </TabsTrigger>
+          <TabsTrigger value="storage-locations" className="flex items-center gap-1">
+            <Warehouse className="w-4 h-4" />
+            {t("مواقع التخزين", "Storage Locations")}
+          </TabsTrigger>
+          <TabsTrigger value="fixed-assets" className="flex items-center gap-1">
+            <Package className="w-4 h-4" />
+            {t("الأصول الثابتة", "Fixed Assets")}
+          </TabsTrigger>
           <TabsTrigger value="products" className="flex items-center gap-1">
             <Settings className="w-4 h-4" />
             {t("المنتجات", "Products")}
