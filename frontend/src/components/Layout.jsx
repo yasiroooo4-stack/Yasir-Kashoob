@@ -65,6 +65,7 @@ import LetterRequestButton from "./LetterRequestButton";
 import LeaveRequestButton from "./LeaveRequestButton";
 import ExcuseRequestButton from "./ExcuseRequestButton";
 import AdvanceRequestButton from "./AdvanceRequestButton";
+import TasksButton from "./TasksButton";
 import EmployeeStatsWidget from "./EmployeeStatsWidget";
 
 const Layout = () => {
