@@ -161,21 +161,28 @@ export default function TasksManagement() {
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [taskTypes, setTaskTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [reports, setReports] = useState({ byType: [], byEmployee: [] });
 
   // Form state
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    task_type: "general",
     assigned_to_id: "",
     assigned_to_name: "",
     due_date: "",
