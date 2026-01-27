@@ -1450,79 +1450,15 @@ const WarehouseManagement = () => {
 
         {/* Storage Locations Tab - مواقع التخزين لجميع المراكز */}
         <TabsContent value="storage-locations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>{t("مواقع التخزين لجميع المراكز", "Storage Locations for All Centers")}</CardTitle>
-                  <CardDescription>{t("عرض هرمي للمخازن حسب المركز", "Hierarchical view of warehouses by center")}</CardDescription>
-                </div>
-                <Button onClick={() => setWarehouseDialog(true)}>
-                  <Plus className="w-4 h-4 ml-2" />
-                  {t("إضافة مخزن", "Add Warehouse")}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {centers.map((center) => (
-                  <div key={center.id} className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Building2 className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold">{center.name}</h3>
-                      <Badge variant="outline">{warehousesByCenter[center.id]?.length || 0} {t("مخزن", "warehouses")}</Badge>
-                    </div>
-                    
-                    <div className="mr-6 space-y-2">
-                      {/* المخازن الخارجية (الرئيسية) */}
-                      {warehousesByCenter[center.id]?.filter(w => !w.parent_warehouse_id).map((extWh) => (
-                        <div key={extWh.id} className="border-r-2 border-blue-500 pr-4">
-                          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                            <Warehouse className="w-4 h-4 text-blue-600" />
-                            <span className="font-medium">{extWh.name}</span>
-                            <Badge className="bg-blue-100 text-blue-800">{t("خارجي", "External")}</Badge>
-                            <span className="text-xs text-muted-foreground mr-auto">{extWh.product_count || 0} {t("منتج", "products")}</span>
-                          </div>
-                          
-                          {/* المخازن الداخلية */}
-                          <div className="mr-6 mt-2 space-y-2">
-                            {warehousesByCenter[center.id]?.filter(w => w.parent_warehouse_id === extWh.id).map((intWh) => (
-                              <div key={intWh.id} className="border-r-2 border-green-500 pr-4">
-                                <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-                                  <Package className="w-4 h-4 text-green-600" />
-                                  <span>{intWh.name}</span>
-                                  <Badge className="bg-green-100 text-green-800">{t("داخلي", "Internal")}</Badge>
-                                  <span className="text-xs text-muted-foreground mr-auto">{intWh.product_count || 0} {t("منتج", "products")}</span>
-                                </div>
-                                
-                                {/* المخازن الفرعية */}
-                                <div className="mr-6 mt-2 space-y-1">
-                                  {warehousesByCenter[center.id]?.filter(w => w.parent_warehouse_id === intWh.id).map((subWh) => (
-                                    <div key={subWh.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                      <span className="text-sm">{subWh.name}</span>
-                                      <Badge variant="outline" className="text-xs">{subWh.category || t("عام", "General")}</Badge>
-                                      <span className="text-xs text-muted-foreground mr-auto">{subWh.product_count || 0} {t("منتج", "products")}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {(!warehousesByCenter[center.id] || warehousesByCenter[center.id].length === 0) && (
-                        <div className="text-center text-muted-foreground py-4">
-                          {t("لا توجد مخازن في هذا المركز", "No warehouses in this center")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <StorageLocationsSection 
+            t={t} 
+            language={language} 
+            centers={centers} 
+            warehousesByCenter={warehousesByCenter}
+            onAddWarehouse={() => setWarehouseDialog(true)}
+            onInitialize={handleInitializeWarehouses}
+            initializingWarehouses={initializingWarehouses}
+          />
         </TabsContent>
 
         {/* Fixed Assets Tab - الأصول الثابتة */}
