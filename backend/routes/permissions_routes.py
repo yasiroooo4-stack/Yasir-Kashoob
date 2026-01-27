@@ -404,13 +404,20 @@ async def get_user_permissions_helper(user_id: str) -> List[str]:
     department = employee.get("department", "")
     position = employee.get("position", "")
     
+    # صلاحيات إدارة النظام - فقط لمن لديه role: admin
+    SYSTEM_ADMIN_PERMISSIONS = ["permissions_grant", "users_manage", "settings_edit"]
+    
     role_permissions = []
     
-    if "المدير العام" in position or role == "admin":
+    # مسؤول النظام (role: admin) يحصل على جميع الصلاحيات
+    if role == "admin":
         role_permissions = AVAILABLE_PERMISSIONS.copy()
+    # المدير العام يحصل على جميع الصلاحيات ما عدا إدارة النظام
+    elif "المدير العام" in position:
+        role_permissions = [p for p in AVAILABLE_PERMISSIONS if p not in SYSTEM_ADMIN_PERMISSIONS]
     elif "مدير" in position:
         role_permissions = DEFAULT_DEPARTMENT_PERMISSIONS.get(department, []).copy()
-        role_permissions.append("permissions_grant")
+        # المدراء العاديون لا يحصلون على صلاحية منح الصلاحيات تلقائياً
     elif "مشرف" in position:
         dept_perms = DEFAULT_DEPARTMENT_PERMISSIONS.get(department, [])
         role_permissions = [p for p in dept_perms if "view" in p or "create" in p]
