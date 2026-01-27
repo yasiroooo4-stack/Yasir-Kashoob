@@ -707,7 +707,7 @@ const PermissionsManagement = () => {
 
       {/* Grant Permission Dialog */}
       <Dialog open={grantDialogOpen} onOpenChange={setGrantDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-primary" />
@@ -771,7 +771,7 @@ const PermissionsManagement = () => {
               {/* Select New Permissions */}
               <div>
                 <Label className="text-sm font-medium">{t("إضافة صلاحيات جديدة:", "Add New Permissions:")}</Label>
-                <ScrollArea className="h-[250px] mt-2 border rounded-lg p-4">
+                <ScrollArea className="h-[200px] mt-2 border rounded-lg p-4">
                   {Object.entries(permissionCategories).map(([category, permissions]) => (
                     <div key={category} className="mb-4">
                       <h4 className="font-medium text-sm flex items-center gap-2 mb-2 text-primary">
