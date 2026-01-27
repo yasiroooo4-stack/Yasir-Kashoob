@@ -536,7 +536,10 @@ const resources = {
       "operations": "Operations",
       
       // Marketing
-      "marketing": "Marketing"
+      "marketing": "Marketing",
+      
+      // Tasks
+      "tasks": "Tasks"
     }
   }
 };
