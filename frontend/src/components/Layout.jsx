@@ -204,11 +204,17 @@ const Layout = () => {
     setSavingProfile(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
+      const response = await axios.put(
         `${API}/auth/profile`,
         profileForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
+      // تحديث بيانات المستخدم في الـ context والـ localStorage
+      const updatedUser = { ...user, ...profileForm };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
       toast.success(language === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
       setProfileDialogOpen(false);
     } catch (error) {
