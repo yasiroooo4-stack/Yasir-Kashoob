@@ -7982,10 +7982,16 @@ async def export_attendance_excel(
             emp_code = emp_info["code"] or "-"
             emp_fp = emp_info["fingerprint"] or "-"
             
-            # Calculate absent dates, weekly offs, and holidays
+            # Calculate absent dates, weekly offs, holidays, excuses, and leaves
             absent_dates = []
             weekly_off_dates = []
             holiday_dates_for_emp = []
+            excuse_dates = []
+            leave_dates = []
+            
+            # Get employee excuses and leaves
+            emp_excuses = excuse_lookup.get(emp_key, {})
+            emp_leaves = leave_lookup.get(emp_key, {})
             
             for date_str in all_dates:
                 date_obj = dt.strptime(date_str, "%Y-%m-%d")
@@ -7998,7 +8004,17 @@ async def export_attendance_excel(
                     
                 # Check if official holiday
                 if date_str in holiday_dates:
-                    holiday_dates_for_emp.append(date_str)
+                    holiday_dates_for_emp.append((date_str, holiday_dates[date_str]))
+                    continue
+                
+                # Check if approved leave
+                if date_str in emp_leaves:
+                    leave_dates.append((date_str, emp_leaves[date_str].get("type", "إجازة")))
+                    continue
+                
+                # Check if approved excuse
+                if date_str in emp_excuses:
+                    excuse_dates.append((date_str, emp_excuses[date_str].get("type", "عذر"), emp_excuses[date_str].get("reason", "")))
                     continue
                 
                 # If no attendance record for this working day, it's absent
@@ -8008,13 +8024,15 @@ async def export_attendance_excel(
             absent_count = len(absent_dates)
             weekly_off_count = len(weekly_off_dates)
             holiday_count = len(holiday_dates_for_emp)
+            excuse_count = len(excuse_dates)
+            leave_count = len(leave_dates)
             
             # Add employee header row with summary
             rows.append({
                 'Employee Name': f"📋 {emp_name}",
                 'Employee Code': emp_code,
                 'Fingerprint ID': emp_fp,
-                'Date': f"حضور: {days_count} | غياب: {absent_count} | إجازة أسبوعية: {weekly_off_count} | عطلة رسمية: {holiday_count}",
+                'Date': f"حضور: {days_count} | غياب: {absent_count} | عذر: {excuse_count} | إجازة: {leave_count} | إجازة أسبوعية: {weekly_off_count} | عطلة: {holiday_count}",
                 'Check In': '',
                 'Check Out': '',
                 'Status': '',
@@ -8029,7 +8047,8 @@ async def export_attendance_excel(
                 all_employee_dates.append({
                     'date': record.get('date', ''),
                     'type': 'present',
-                    'record': record
+                    'record': record,
+                    'detail': ''
                 })
             
             # Add absent dates
@@ -8037,7 +8056,8 @@ async def export_attendance_excel(
                 all_employee_dates.append({
                     'date': absent_date,
                     'type': 'absent',
-                    'record': None
+                    'record': None,
+                    'detail': ''
                 })
             
             # Add weekly off dates
@@ -8045,15 +8065,35 @@ async def export_attendance_excel(
                 all_employee_dates.append({
                     'date': off_date,
                     'type': 'weekly_off',
-                    'record': None
+                    'record': None,
+                    'detail': ''
                 })
             
             # Add official holiday dates
-            for hol_date in holiday_dates_for_emp:
+            for hol_date, hol_name in holiday_dates_for_emp:
                 all_employee_dates.append({
                     'date': hol_date,
                     'type': 'holiday',
-                    'record': None
+                    'record': None,
+                    'detail': hol_name
+                })
+            
+            # Add excuse dates
+            for exc_date, exc_type, exc_reason in excuse_dates:
+                all_employee_dates.append({
+                    'date': exc_date,
+                    'type': 'excuse',
+                    'record': None,
+                    'detail': f"{exc_type}: {exc_reason}"
+                })
+            
+            # Add leave dates
+            for lv_date, lv_type in leave_dates:
+                all_employee_dates.append({
+                    'date': lv_date,
+                    'type': 'leave',
+                    'record': None,
+                    'detail': lv_type
                 })
             
             # Sort all dates
@@ -8065,6 +8105,7 @@ async def export_attendance_excel(
                 date_str = entry['date']
                 date_obj = dt.strptime(date_str, "%Y-%m-%d")
                 day_name = day_names[date_obj.weekday()]
+                detail = entry.get('detail', '')
                 
                 if entry['type'] == 'present':
                     record = entry['record']
@@ -8108,8 +8149,30 @@ async def export_attendance_excel(
                         'Date': f"{date_str} ({day_name})",
                         'Check In': '-',
                         'Check Out': '-',
-                        'Status': '🟢 عطلة رسمية',
+                        'Status': f'🟢 عطلة رسمية: {detail}',
                         'Source': '-'
+                    })
+                elif entry['type'] == 'excuse':
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': '-',
+                        'Check Out': '-',
+                        'Status': f'🟡 عذر معتمد: {detail}',
+                        'Source': 'excuse_approved'
+                    })
+                elif entry['type'] == 'leave':
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': '-',
+                        'Check Out': '-',
+                        'Status': f'🟣 إجازة: {detail}',
+                        'Source': 'leave_approved'
                     })
             
             # Add empty row after each employee
