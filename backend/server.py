@@ -6249,7 +6249,7 @@ async def check_employee_working_day(
         raise HTTPException(status_code=400, detail="تنسيق التاريخ غير صحيح")
     
     # Get employee's weekly off days
-    weekly_off_days = employee.get("weekly_off_days", [5, 6])  # Default: Friday & Saturday
+    weekly_off_days = employee.get("weekly_off_days", [4, 5])  # Default: Friday=4 & Saturday=5
     
     # Check if it's an official holiday
     holiday = await db.hr_official_holidays.find_one({"date": date}, {"_id": 0})
