@@ -8302,11 +8302,6 @@ async def export_attendance_excel(
                     continue
                 
                 # Find the day before the weekend (Thursday = 3) and day after (Sunday = 6)
-                # For Friday (4): check Thursday (3)
-                # For Saturday (5): check Sunday (6)
-                thursday_date = (date_obj - timedelta(days=(day_of_week - 3))).strftime("%Y-%m-%d") if day_of_week >= 4 else None
-                sunday_date = (date_obj + timedelta(days=(6 - day_of_week))).strftime("%Y-%m-%d") if day_of_week <= 5 else None
-                
                 # Calculate Thursday and Sunday for this weekend
                 if day_of_week == 4:  # Friday
                     thursday_date = (date_obj - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -8314,25 +8309,48 @@ async def export_attendance_excel(
                 elif day_of_week == 5:  # Saturday
                     thursday_date = (date_obj - timedelta(days=2)).strftime("%Y-%m-%d")
                     sunday_date = (date_obj + timedelta(days=1)).strftime("%Y-%m-%d")
+                else:
+                    thursday_date = None
+                    sunday_date = None
                 
-                # NEW RULE: Check if employee was PHYSICALLY PRESENT on Thursday and Sunday
-                # If NOT present on BOTH days (regardless of reason - leave, absent, excuse), weekend is ABSENT
-                thursday_is_present = thursday_date in present_dates if thursday_date else False
-                sunday_is_present = sunday_date in present_dates if sunday_date else False
+                # NEW RULE: Weekend is ABSENT only if BOTH Thursday and Sunday are:
+                # - Absent (no attendance) OR Annual leave (إجازة سنوية)
+                # Weekend stays as WEEKLY OFF if Thursday or Sunday has:
+                # - Excuse, Sick leave, Official holiday, External work, or Present
                 
-                # Check if Thursday/Sunday are official holidays (exception - don't count as absence trigger)
-                thursday_is_holiday = thursday_date in holiday_dates if thursday_date else False
-                sunday_is_holiday = sunday_date in holiday_dates if sunday_date else False
+                def is_annual_leave_or_absent(check_date):
+                    """Check if date is annual leave or absent (triggers weekend absence)"""
+                    if not check_date:
+                        return False
+                    # If present, not a trigger
+                    if check_date in present_dates:
+                        return False
+                    # If official holiday, not a trigger
+                    if check_date in holiday_dates:
+                        return False
+                    # If excuse (any type), not a trigger
+                    if check_date in emp_excuses:
+                        return False
+                    # If external work, not a trigger
+                    if check_date in emp_external_work:
+                        return False
+                    # If leave, check if it's annual leave
+                    if check_date in emp_leaves:
+                        leave_type = emp_leaves[check_date].get("type", "").lower()
+                        # Only annual leave triggers absence
+                        if "annual" in leave_type or "سنوي" in leave_type:
+                            return True
+                        else:
+                            # Sick leave, emergency, etc. don't trigger absence
+                            return False
+                    # If none of the above, it's regular absence - triggers weekend absence
+                    return True
                 
-                # If BOTH Thursday and Sunday have NO actual attendance AND neither is a holiday, weekend is absent
-                # Exception: If Thursday or Sunday is a holiday, we don't use it as absence trigger
-                if not thursday_is_present and not sunday_is_present and not thursday_is_holiday and not sunday_is_holiday:
-                    absent_dates.append(date_str)
-                elif thursday_is_holiday and not sunday_is_present and not sunday_is_holiday:
-                    # Thursday is holiday, but Sunday is not present and not holiday -> absent
-                    absent_dates.append(date_str)
-                elif sunday_is_holiday and not thursday_is_present and not thursday_is_holiday:
-                    # Sunday is holiday, but Thursday is not present and not holiday -> absent
+                thursday_triggers_absence = is_annual_leave_or_absent(thursday_date)
+                sunday_triggers_absence = is_annual_leave_or_absent(sunday_date)
+                
+                # If BOTH Thursday and Sunday trigger absence (annual leave or absent), weekend is absent
+                if thursday_triggers_absence and sunday_triggers_absence:
                     absent_dates.append(date_str)
                 else:
                     weekly_off_dates.append(date_str)
