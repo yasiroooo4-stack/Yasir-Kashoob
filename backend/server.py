@@ -6480,6 +6480,202 @@ async def delete_excuse_request(request_id: str, current_user: dict = Depends(ge
     
     return {"message": "Excuse request deleted successfully"}
 
+# ==================== HR - EXTERNAL WORK REQUESTS (طلبات العمل الخارجي) ====================
+
+@api_router.post("/hr/external-work", response_model=ExternalWorkRequest)
+async def create_external_work_request(request_data: ExternalWorkRequestCreate, current_user: dict = Depends(get_current_user)):
+    """إنشاء طلب عمل خارجي جديد"""
+    external_work_request = ExternalWorkRequest(**request_data.model_dump())
+    await db.hr_external_work_requests.insert_one(external_work_request.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_external_work",
+        entity_type="external_work",
+        entity_id=external_work_request.id,
+        entity_name=request_data.employee_name,
+        details=f"طلب عمل خارجي: {request_data.employee_name} - {request_data.work_type} - {request_data.work_date}"
+    )
+    
+    return external_work_request
+
+@api_router.get("/hr/external-work")
+async def get_external_work_requests(
+    status: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة طلبات العمل الخارجي"""
+    query = {}
+    if status:
+        query["status"] = status
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    requests = await db.hr_external_work_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return requests
+
+@api_router.get("/hr/external-work/{request_id}")
+async def get_external_work_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل طلب عمل خارجي محدد"""
+    request = await db.hr_external_work_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="External work request not found")
+    return request
+
+@api_router.put("/hr/external-work/{request_id}/approve")
+async def approve_external_work_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """الموافقة على طلب العمل الخارجي وتسجيل حضور تلقائي"""
+    # Get the external work request
+    external_work = await db.hr_external_work_requests.find_one({"id": request_id}, {"_id": 0})
+    if not external_work:
+        raise HTTPException(status_code=404, detail="External work request not found")
+    
+    if external_work.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Request already processed")
+    
+    # Update external work request status
+    await db.hr_external_work_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "attendance_updated": True
+        }}
+    )
+    
+    # Get date range
+    start_date = external_work.get("work_date")
+    end_date = external_work.get("work_date_to") or start_date
+    employee_id = external_work.get("employee_id")
+    employee_name = external_work.get("employee_name")
+    
+    # Create attendance records for all dates in range
+    from datetime import datetime as dt_ext, timedelta
+    start_dt = dt_ext.strptime(start_date, "%Y-%m-%d")
+    end_dt = dt_ext.strptime(end_date, "%Y-%m-%d")
+    current_dt = start_dt
+    
+    while current_dt <= end_dt:
+        work_date = current_dt.strftime("%Y-%m-%d")
+        
+        # Check if attendance exists for this date
+        existing_attendance = await db.hr_attendance.find_one({
+            "employee_id": employee_id,
+            "date": work_date
+        })
+        
+        work_type_names = {
+            "client_visit": "زيارة عميل",
+            "conference": "مؤتمر",
+            "training": "تدريب",
+            "field_work": "عمل ميداني",
+            "other": "أخرى"
+        }
+        work_type_name = work_type_names.get(external_work.get("work_type"), external_work.get("work_type"))
+        
+        if existing_attendance:
+            # Update existing attendance to mark as external work
+            await db.hr_attendance.update_one(
+                {"id": existing_attendance["id"]},
+                {"$set": {
+                    "source": "external_work_approved",
+                    "check_in": "08:00",
+                    "check_out": "16:00",
+                    "notes": f"عمل خارجي معتمد: {work_type_name} - {external_work.get('location', '')} - {external_work.get('purpose', '')}"
+                }}
+            )
+        else:
+            # Create new attendance record
+            attendance = Attendance(
+                employee_id=employee_id,
+                employee_name=employee_name,
+                date=work_date,
+                check_in="08:00",
+                check_out="16:00",
+                source="external_work_approved",
+                total_hours=8.0
+            )
+            await db.hr_attendance.insert_one(attendance.model_dump())
+        
+        current_dt += timedelta(days=1)
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="approve_external_work",
+        entity_type="external_work",
+        entity_id=request_id,
+        entity_name=employee_name,
+        details=f"موافقة على عمل خارجي: {employee_name} - من {start_date} إلى {end_date}"
+    )
+    
+    updated_request = await db.hr_external_work_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.put("/hr/external-work/{request_id}/reject")
+async def reject_external_work_request(
+    request_id: str, 
+    reason: str = "",
+    current_user: dict = Depends(get_current_user)
+):
+    """رفض طلب العمل الخارجي"""
+    external_work = await db.hr_external_work_requests.find_one({"id": request_id}, {"_id": 0})
+    if not external_work:
+        raise HTTPException(status_code=404, detail="External work request not found")
+    
+    if external_work.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Request already processed")
+    
+    # Update external work request status
+    await db.hr_external_work_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rejected",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "rejection_reason": reason
+        }}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="reject_external_work",
+        entity_type="external_work",
+        entity_id=request_id,
+        entity_name=external_work.get("employee_name"),
+        details=f"رفض عمل خارجي: {external_work.get('employee_name')} - {external_work.get('work_date')} - {reason}"
+    )
+    
+    updated_request = await db.hr_external_work_requests.find_one({"id": request_id}, {"_id": 0})
+    return updated_request
+
+@api_router.delete("/hr/external-work/{request_id}")
+async def delete_external_work_request(request_id: str, current_user: dict = Depends(get_current_user)):
+    """حذف طلب عمل خارجي"""
+    external_work = await db.hr_external_work_requests.find_one({"id": request_id}, {"_id": 0})
+    if not external_work:
+        raise HTTPException(status_code=404, detail="External work request not found")
+    
+    await db.hr_external_work_requests.delete_one({"id": request_id})
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_external_work",
+        entity_type="external_work",
+        entity_id=request_id,
+        entity_name=external_work.get("employee_name"),
+        details=f"حذف طلب عمل خارجي: {external_work.get('employee_name')}"
+    )
+    
+    return {"message": "External work request deleted successfully"}
+
 # ==================== HR - ADVANCE REQUESTS (طلبات السلف والمصاريف) ====================
 
 @api_router.post("/hr/advance-requests", response_model=AdvanceRequest)
