@@ -1488,6 +1488,26 @@ const WarehouseManagement = () => {
         <TabsContent value="advanced-settings" className="space-y-4">
           <AdvancedSettingsSection t={t} language={language} />
         </TabsContent>
+
+        {/* Batches Tab - تتبع الدفعات */}
+        <TabsContent value="batches" className="space-y-4">
+          <BatchTracking t={t} language={language} warehouses={warehouses} products={products} />
+        </TabsContent>
+
+        {/* Cycle Count Tab - الجرد الدوري */}
+        <TabsContent value="cycle-count" className="space-y-4">
+          <CycleCount t={t} language={language} warehouses={warehouses} />
+        </TabsContent>
+
+        {/* Returns Tab - المرتجعات */}
+        <TabsContent value="returns" className="space-y-4">
+          <ReturnsManagement t={t} language={language} warehouses={warehouses} products={products} />
+        </TabsContent>
+
+        {/* Valuation Tab - التقييم */}
+        <TabsContent value="valuation" className="space-y-4">
+          <InventoryValuation t={t} language={language} warehouses={warehouses} />
+        </TabsContent>
       </Tabs>
 
       {/* Warehouse Dialog */}
