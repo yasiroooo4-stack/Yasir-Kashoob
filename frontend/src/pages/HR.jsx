@@ -2628,6 +2628,32 @@ const HR = () => {
           </Card>
         </TabsContent>
 
+        {/* External Work Tab */}
+        <TabsContent value="external-work">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  {language === "ar" ? "العمل الخارجي" : "External Work"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة طلبات العمل خارج المكتب" : "Manage external work requests"}
+                </CardDescription>
+              </div>
+              <Button className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                {language === "ar" ? "طلب عمل خارجي جديد" : "New External Work Request"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                {language === "ar" ? "قريباً - ميزة العمل الخارجي قيد التطوير" : "Coming Soon - External Work feature under development"}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Extra Pay Approvals Tab */}
         <TabsContent value="extra-pay">
           <ExtraPayApprovals embedded={true} />
