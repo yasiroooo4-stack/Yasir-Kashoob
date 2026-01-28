@@ -7912,16 +7912,23 @@ async def export_attendance_excel(
             emp_code = emp_info["code"] or "-"
             emp_fp = emp_info["fingerprint"] or "-"
             
-            # Calculate absent dates (working days without attendance)
+            # Calculate absent dates, weekly offs, and holidays
             absent_dates = []
+            weekly_off_dates = []
+            holiday_dates_for_emp = []
+            
             for date_str in all_dates:
                 date_obj = dt.strptime(date_str, "%Y-%m-%d")
                 day_of_week = date_obj.weekday()
                 
-                # Skip weekends and holidays
+                # Check if weekend
                 if day_of_week in weekly_off_days:
+                    weekly_off_dates.append(date_str)
                     continue
+                    
+                # Check if official holiday
                 if date_str in holiday_dates:
+                    holiday_dates_for_emp.append(date_str)
                     continue
                 
                 # If no attendance record for this working day, it's absent
@@ -7929,44 +7936,111 @@ async def export_attendance_excel(
                     absent_dates.append(date_str)
             
             absent_count = len(absent_dates)
+            weekly_off_count = len(weekly_off_dates)
+            holiday_count = len(holiday_dates_for_emp)
             
             # Add employee header row with summary
             rows.append({
                 'Employee Name': f"📋 {emp_name}",
                 'Employee Code': emp_code,
                 'Fingerprint ID': emp_fp,
-                'Date': f"حضور: {days_count} | غياب: {absent_count}",
+                'Date': f"حضور: {days_count} | غياب: {absent_count} | إجازة أسبوعية: {weekly_off_count} | عطلة رسمية: {holiday_count}",
                 'Check In': '',
                 'Check Out': '',
                 'Status': '',
                 'Source': ''
             })
             
+            # Combine all dates and sort them
+            all_employee_dates = []
+            
             # Add attendance records (present days)
-            for record in sorted(records.values(), key=lambda x: x.get('date', '')):
-                rows.append({
-                    'Employee Name': emp_name,
-                    'Employee Code': emp_code,
-                    'Fingerprint ID': emp_fp,
-                    'Date': record.get('date', ''),
-                    'Check In': record.get('check_in', '-'),
-                    'Check Out': record.get('check_out', '-'),
-                    'Status': '✅ حاضر',
-                    'Source': record.get('source', 'manual')
+            for record in records.values():
+                all_employee_dates.append({
+                    'date': record.get('date', ''),
+                    'type': 'present',
+                    'record': record
                 })
             
             # Add absent dates
-            for absent_date in sorted(absent_dates):
-                rows.append({
-                    'Employee Name': emp_name,
-                    'Employee Code': emp_code,
-                    'Fingerprint ID': emp_fp,
-                    'Date': absent_date,
-                    'Check In': '-',
-                    'Check Out': '-',
-                    'Status': '❌ غائب',
-                    'Source': '-'
+            for absent_date in absent_dates:
+                all_employee_dates.append({
+                    'date': absent_date,
+                    'type': 'absent',
+                    'record': None
                 })
+            
+            # Add weekly off dates
+            for off_date in weekly_off_dates:
+                all_employee_dates.append({
+                    'date': off_date,
+                    'type': 'weekly_off',
+                    'record': None
+                })
+            
+            # Add official holiday dates
+            for hol_date in holiday_dates_for_emp:
+                all_employee_dates.append({
+                    'date': hol_date,
+                    'type': 'holiday',
+                    'record': None
+                })
+            
+            # Sort all dates
+            all_employee_dates.sort(key=lambda x: x['date'])
+            
+            # Add rows for each date
+            day_names = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+            for entry in all_employee_dates:
+                date_str = entry['date']
+                date_obj = dt.strptime(date_str, "%Y-%m-%d")
+                day_name = day_names[date_obj.weekday()]
+                
+                if entry['type'] == 'present':
+                    record = entry['record']
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': record.get('check_in', '-'),
+                        'Check Out': record.get('check_out', '-'),
+                        'Status': '✅ حاضر',
+                        'Source': record.get('source', 'manual')
+                    })
+                elif entry['type'] == 'absent':
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': '-',
+                        'Check Out': '-',
+                        'Status': '❌ غياب',
+                        'Source': '-'
+                    })
+                elif entry['type'] == 'weekly_off':
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': '-',
+                        'Check Out': '-',
+                        'Status': '🔵 إجازة أسبوعية',
+                        'Source': '-'
+                    })
+                elif entry['type'] == 'holiday':
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': '-',
+                        'Check Out': '-',
+                        'Status': '🟢 عطلة رسمية',
+                        'Source': '-'
+                    })
             
             # Add empty row after each employee
             rows.append({
