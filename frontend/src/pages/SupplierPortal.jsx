@@ -55,12 +55,21 @@ import {
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
-const FEED_TYPES = [
+// سيتم جلب أنواع الأعلاف من API
+const DEFAULT_FEED_TYPES = [
   { id: "barley", name: "شعير", name_en: "Barley", price: 85 },
   { id: "wheat_bran", name: "نخالة قمح", name_en: "Wheat Bran", price: 70 },
   { id: "corn", name: "ذرة", name_en: "Corn", price: 95 },
   { id: "alfalfa", name: "برسيم", name_en: "Alfalfa", price: 120 },
   { id: "mixed", name: "علف مخلوط", name_en: "Mixed Feed", price: 100 },
+];
+
+// أنواع الحليب
+const MILK_TYPES = [
+  { id: "cow", name: "حليب بقر", name_en: "Cow Milk" },
+  { id: "camel", name: "حليب إبل", name_en: "Camel Milk" },
+  { id: "goat", name: "حليب ماعز", name_en: "Goat Milk" },
+  { id: "sheep", name: "حليب غنم", name_en: "Sheep Milk" },
 ];
 
 const MESSAGE_TYPES = [
