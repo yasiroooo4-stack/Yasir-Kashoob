@@ -965,14 +965,7 @@ const SupplierPortal = () => {
               />
               {feedForm.feed_type && feedForm.quantity && (
                 <p className="text-xs text-muted-foreground">
-                  {(() => {
-                    const feed = feedTypes.find(f => f.id === feedForm.feed_type);
-                    if (feed) {
-                      const bags = (parseFloat(feedForm.quantity) / (feed.kg_per_unit || 1)).toFixed(2);
-                      return `${bags} ${txt("كيس", "bags")} × ${feed.price} ${txt("ريال", "OMR")} = ${feedForm.amount_to_deduct} ${txt("ريال", "OMR")}`;
-                    }
-                    return '';
-                  })()}
+                  {feedForm.quantity} {txt("كيس", "bags")} × {feedTypes.find(f => f.id === feedForm.feed_type)?.price} {txt("ريال", "OMR")} = {feedForm.amount_to_deduct} {txt("ريال", "OMR")}
                 </p>
               )}
               {/* تنبيه تجاوز الرصيد */}
