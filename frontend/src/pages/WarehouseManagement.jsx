@@ -78,6 +78,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import MaterialIssue from "./MaterialIssue";
+import { BatchTracking, CycleCount, ReturnsManagement, InventoryValuation } from "../components/inventory";
 
 const API = process.env.REACT_APP_BACKEND_URL + "/api";
 
