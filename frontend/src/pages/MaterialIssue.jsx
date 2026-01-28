@@ -770,7 +770,16 @@ const MaterialIssue = ({ embedded = false }) => {
                         <TableCell>{log.quantity}</TableCell>
                         <TableCell>{log.from_warehouse_name}</TableCell>
                         <TableCell>{log.created_by_name}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{log.notes}</TableCell>
+                        <TableCell className="max-w-[300px]">
+                          <div className="group relative">
+                            <span className="block truncate">{log.notes}</span>
+                            {log.notes && log.notes.length > 40 && (
+                              <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
+                                {log.notes}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
