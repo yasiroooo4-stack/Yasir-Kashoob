@@ -2450,6 +2450,10 @@ const HR = () => {
                   {language === "ar" ? "إدارة طلبات الأعذار عن الغياب" : "Manage absence excuse requests"}
                 </CardDescription>
               </div>
+              <Button onClick={() => setExcuseDialogOpen(true)} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                {language === "ar" ? "طلب عذر جديد" : "New Excuse Request"}
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
