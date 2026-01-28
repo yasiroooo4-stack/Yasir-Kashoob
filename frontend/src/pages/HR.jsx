@@ -775,7 +775,6 @@ const HR = () => {
         
         const uploadRes = await axios.post(`${API}/hr/upload-file`, formData, {
           headers: { 
-            ...headers,
             "Content-Type": "multipart/form-data"
           }
         });
@@ -786,7 +785,7 @@ const HR = () => {
       await axios.post(`${API}/hr/leave-requests`, {
         ...leaveForm,
         attachment_url: attachmentUrl
-      }, { headers });
+      });
       toast.success(t("success"));
       setLeaveDialogOpen(false);
       resetLeaveForm();
