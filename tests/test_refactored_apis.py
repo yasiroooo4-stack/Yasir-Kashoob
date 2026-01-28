@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://inventory-plus-93.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-attendance-8.preview.emergentagent.com').rstrip('/')
 
 class TestAPIRoot:
     """Test API root endpoint"""

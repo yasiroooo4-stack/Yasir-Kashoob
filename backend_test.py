@@ -20,7 +20,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://inventory-plus-93.preview.emergentagent.com/api"
+BACKEND_URL = "https://hr-attendance-8.preview.emergentagent.com/api"
 
 # Test credentials (as specified in review request)
 TEST_USERNAME = "yasir"
