@@ -128,6 +128,8 @@ const SupplierPortal = () => {
   const [milkReceptions, setMilkReceptions] = useState([]);
   const [feedRequests, setFeedRequests] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [feedTypes, setFeedTypes] = useState(DEFAULT_FEED_TYPES);
+  const [centers, setCenters] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
