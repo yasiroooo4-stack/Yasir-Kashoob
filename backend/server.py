@@ -7906,7 +7906,7 @@ async def export_attendance_excel(
             records = emp_info["records"]  # Dict of date -> record
             present_dates = set(records.keys())
             days_count = len(records)
-            weekly_off_days = emp_info.get("weekly_off_days", [5, 6])
+            weekly_off_days = emp_info.get("weekly_off_days", [4, 5])
             
             emp_name = emp_info["name"] or "Unknown"
             emp_code = emp_info["code"] or "-"
