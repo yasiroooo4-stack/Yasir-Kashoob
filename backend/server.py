@@ -8103,6 +8103,7 @@ async def export_attendance_excel(
     
     # Build leave lookup by employee_id and date
     leave_lookup = {}
+    from datetime import datetime as dt_lv, timedelta as td_lv
     for leave in approved_leaves:
         emp_id = leave.get("employee_id")
         start = leave.get("start_date")
@@ -8110,15 +8111,15 @@ async def export_attendance_excel(
         leave_type = leave.get("leave_type", "إجازة")
         
         # Add all dates in range
-        start_dt = dt.strptime(start, "%Y-%m-%d")
-        end_dt = dt.strptime(end, "%Y-%m-%d")
+        start_dt = dt_lv.strptime(start, "%Y-%m-%d")
+        end_dt = dt_lv.strptime(end, "%Y-%m-%d")
         curr = start_dt
         while curr <= end_dt:
             date_str = curr.strftime("%Y-%m-%d")
             if emp_id not in leave_lookup:
                 leave_lookup[emp_id] = {}
             leave_lookup[emp_id][date_str] = {"type": leave_type}
-            curr += timedelta(days=1)
+            curr += td_lv(days=1)
     
     # Get approved external work requests for the period
     approved_external_work = await db.hr_external_work_requests.find({
