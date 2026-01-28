@@ -1935,6 +1935,13 @@ async def get_supplier_portal_data_by_id(supplier_id: str):
         }
     }
 
+# Supplier Portal - Get feed types (أنواع الأعلاف للموردين)
+@api_router.get("/supplier-portal/feed-types")
+async def get_supplier_portal_feed_types():
+    """جلب أنواع الأعلاف للموردين - بدون توثيق"""
+    feed_types = await db.feed_types.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    return feed_types
+
 # Supplier Portal - Request feed (تحويل رصيد إلى أعلاف)
 @api_router.post("/supplier-portal/feed-requests")
 async def create_supplier_feed_request(request_data: SupplierFeedRequestCreate):
