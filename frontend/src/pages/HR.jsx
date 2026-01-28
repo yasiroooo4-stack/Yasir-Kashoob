@@ -2264,10 +2264,19 @@ const HR = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <Badge variant={record.source === "fingerprint" ? "success" : "secondary"}>
+                              <Badge variant={record.source === "fingerprint" ? "success" : 
+                                             record.source === "external_work_approved" ? "default" :
+                                             record.source === "excuse_approved" ? "default" :
+                                             record.source === "leave_approved" ? "default" : "secondary"}
+                                     className={record.source === "external_work_approved" ? "bg-orange-500" :
+                                               record.source === "excuse_approved" ? "bg-yellow-500" :
+                                               record.source === "leave_approved" ? "bg-purple-500" : ""}>
                                 {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : 
                                  record.source === "zkteco_import" ? "ZKTeco" :
                                  record.source === "excel_import" ? "Excel" :
+                                 record.source === "external_work_approved" ? (language === "ar" ? "عمل خارجي" : "External Work") :
+                                 record.source === "excuse_approved" ? (language === "ar" ? "عذر" : "Excuse") :
+                                 record.source === "leave_approved" ? (language === "ar" ? "إجازة" : "Leave") :
                                  (language === "ar" ? "يدوي" : "Manual")}
                               </Badge>
                               {record.multi_location && (
