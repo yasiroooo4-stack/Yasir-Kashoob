@@ -73,6 +73,7 @@ async def create_product_batch(
     }
     
     await db.product_batches.insert_one(batch)
+    batch.pop("_id", None)  # Remove MongoDB _id before returning
     return batch
 
 
