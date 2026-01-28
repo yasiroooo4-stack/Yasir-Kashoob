@@ -8284,14 +8284,20 @@ async def export_attendance_pdf(
         present_dates = set(records.keys())
         weekly_off_days = emp_info.get("weekly_off_days", [4, 5])  # Friday=4, Saturday=5
         
-        # Calculate absent dates
+        # Calculate absent dates, weekly offs, and holidays
         absent_dates_pdf = []
+        weekly_off_dates_pdf = []
+        holiday_dates_for_emp_pdf = []
+        
         for date_str in all_dates_pdf:
             date_obj = dt_pdf.strptime(date_str, "%Y-%m-%d")
             day_of_week = date_obj.weekday()
+            
             if day_of_week in weekly_off_days:
+                weekly_off_dates_pdf.append(date_str)
                 continue
             if date_str in holiday_dates_pdf:
+                holiday_dates_for_emp_pdf.append(date_str)
                 continue
             if date_str not in present_dates:
                 absent_dates_pdf.append(date_str)
@@ -8299,6 +8305,8 @@ async def export_attendance_pdf(
         total_records += len(records)
         days_count = len(records)
         absent_count = len(absent_dates_pdf)
+        weekly_off_count = len(weekly_off_dates_pdf)
+        holiday_count_pdf = len(holiday_dates_for_emp_pdf)
         
         # Employee header box with full details
         emp_name = emp_info["name"] or "Unknown"
@@ -8308,16 +8316,19 @@ async def export_attendance_pdf(
         # Create employee info table with name displayed properly
         name_para = Paragraph(f'<b>{emp_name}</b>', ParagraphStyle('EmpName', fontSize=10, alignment=TA_CENTER))
         emp_header_data = [
-            ['Employee Name', 'Code', 'Fingerprint ID', 'Present', 'Absent'],
-            [name_para, emp_code, emp_fp, str(days_count), str(absent_count)]
+            ['Employee Name', 'Code', 'Present', 'Absent', 'Weekly Off', 'Holiday'],
+            [name_para, emp_code, str(days_count), str(absent_count), str(weekly_off_count), str(holiday_count_pdf)]
         ]
         
-        emp_table = Table(emp_header_data, colWidths=[200, 80, 100, 60, 60])
+        emp_table = Table(emp_header_data, colWidths=[180, 80, 60, 60, 60, 60])
         emp_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E7D32')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#E8F5E9')),
-            ('BACKGROUND', (4, 1), (4, 1), colors.HexColor('#FFCDD2')),  # Absent column red
+            ('BACKGROUND', (0, 1), (1, 1), colors.HexColor('#E8F5E9')),
+            ('BACKGROUND', (2, 1), (2, 1), colors.HexColor('#C8E6C9')),  # Present - green
+            ('BACKGROUND', (3, 1), (3, 1), colors.HexColor('#FFCDD2')),  # Absent - red
+            ('BACKGROUND', (4, 1), (4, 1), colors.HexColor('#BBDEFB')),  # Weekly Off - blue
+            ('BACKGROUND', (5, 1), (5, 1), colors.HexColor('#C8E6C9')),  # Holiday - green
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
             ('FONTSIZE', (0, 1), (-1, 1), 10),
@@ -8330,35 +8341,77 @@ async def export_attendance_pdf(
         elements.append(emp_table)
         elements.append(Spacer(1, 5))
         
-        # Attendance records table (present days)
-        headers = ['#', 'Date', 'Check In', 'Check Out', 'Status', 'Source']
-        data = [headers]
+        # Combine all dates and sort them
+        all_pdf_entries = []
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         
-        records_list = list(records.values())
-        for idx, record in enumerate(sorted(records_list, key=lambda x: x.get('date', '')), 1):
-            data.append([
-                str(idx),
-                record.get('date', ''),
-                record.get('check_in', '-'),
-                record.get('check_out', '-'),
-                'Present',
-                record.get('source', 'manual')
-            ])
+        # Add present records
+        for record in records.values():
+            all_pdf_entries.append({
+                'date': record.get('date', ''),
+                'type': 'Present',
+                'record': record
+            })
         
         # Add absent dates
-        for idx, absent_date in enumerate(sorted(absent_dates_pdf), len(records_list) + 1):
-            data.append([
-                str(idx),
-                absent_date,
-                '-',
-                '-',
-                'Absent',
-                '-'
-            ])
+        for absent_date in absent_dates_pdf:
+            all_pdf_entries.append({
+                'date': absent_date,
+                'type': 'Absent',
+                'record': None
+            })
         
-        table = Table(data, repeatRows=1, colWidths=[30, 80, 70, 70, 60, 70])
+        # Add weekly off dates
+        for off_date in weekly_off_dates_pdf:
+            all_pdf_entries.append({
+                'date': off_date,
+                'type': 'Weekly Off',
+                'record': None
+            })
         
-        # Style with different colors for present/absent
+        # Add holiday dates
+        for hol_date in holiday_dates_for_emp_pdf:
+            all_pdf_entries.append({
+                'date': hol_date,
+                'type': 'Holiday',
+                'record': None
+            })
+        
+        # Sort all entries by date
+        all_pdf_entries.sort(key=lambda x: x['date'])
+        
+        # Attendance records table
+        headers = ['#', 'Date', 'Day', 'Check In', 'Check Out', 'Status']
+        data = [headers]
+        
+        for idx, entry in enumerate(all_pdf_entries, 1):
+            date_str = entry['date']
+            date_obj = dt_pdf.strptime(date_str, "%Y-%m-%d")
+            day_name = day_names[date_obj.weekday()]
+            
+            if entry['type'] == 'Present':
+                record = entry['record']
+                data.append([
+                    str(idx),
+                    date_str,
+                    day_name,
+                    record.get('check_in', '-'),
+                    record.get('check_out', '-'),
+                    'Present'
+                ])
+            else:
+                data.append([
+                    str(idx),
+                    date_str,
+                    day_name,
+                    '-',
+                    '-',
+                    entry['type']
+                ])
+        
+        table = Table(data, repeatRows=1, colWidths=[25, 75, 40, 70, 70, 70])
+        
+        # Style with different colors for each status
         style_commands = [
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -8371,10 +8424,15 @@ async def export_attendance_pdf(
         
         # Color rows based on status
         for row_idx, row in enumerate(data[1:], 1):
-            if row[4] == 'Absent':
-                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#FFCDD2')))
-            else:
-                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#C8E6C9')))
+            status = row[5]
+            if status == 'Absent':
+                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#FFCDD2')))  # Red
+            elif status == 'Weekly Off':
+                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#BBDEFB')))  # Blue
+            elif status == 'Holiday':
+                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#B2DFDB')))  # Teal
+            else:  # Present
+                style_commands.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#C8E6C9')))  # Green
         
         table.setStyle(TableStyle(style_commands))
         
