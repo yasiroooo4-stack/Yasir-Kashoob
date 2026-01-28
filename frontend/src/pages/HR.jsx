@@ -1865,7 +1865,9 @@ const HR = () => {
                                warning.warning_type}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-[200px] truncate">{warning.reason}</TableCell>
+                          <TableCell className="max-w-[200px]">
+                            <ExpandableText text={warning.reason} maxLength={40} />
+                          </TableCell>
                           <TableCell>{new Date(warning.date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
                           <TableCell>
                             <Badge variant={warning.status === "active" ? "destructive" : "secondary"}>
