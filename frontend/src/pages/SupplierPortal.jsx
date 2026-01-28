@@ -401,9 +401,19 @@ const SupplierPortal = () => {
   const calculateFeedAmount = (feedType, quantity) => {
     const feed = feedTypes.find(f => f.id === feedType);
     if (feed && quantity) {
-      return feed.price * parseFloat(quantity);
+      // حساب عدد الأكياس المطلوبة = الكمية بالكجم / وزن الكيس
+      const bagsNeeded = parseFloat(quantity) / (feed.kg_per_unit || 1);
+      // المبلغ الإجمالي = عدد الأكياس × سعر الكيس
+      return (bagsNeeded * feed.price).toFixed(2);
     }
     return 0;
+  };
+
+  // التحقق من تجاوز الرصيد
+  const isAmountExceedsBalance = () => {
+    const amount = parseFloat(feedForm.amount_to_deduct) || 0;
+    const balance = supplier?.balance || 0;
+    return amount > balance;
   };
 
   const getStatusBadge = (status) => {
