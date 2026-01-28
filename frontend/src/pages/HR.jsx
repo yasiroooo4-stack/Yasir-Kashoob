@@ -635,6 +635,34 @@ const HR = () => {
     }
   };
 
+  // إنشاء طلب عذر جديد
+  const handleCreateExcuse = async () => {
+    if (!excuseForm.employee_id || !excuseForm.excuse_date || !excuseForm.reason) {
+      toast.error(language === "ar" ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields");
+      return;
+    }
+    try {
+      await axios.post(`${API}/hr/excuse-requests`, {
+        ...excuseForm,
+        excuse_date_to: excuseForm.excuse_date_to || excuseForm.excuse_date
+      });
+      toast.success(language === "ar" ? "تم إرسال طلب العذر بنجاح" : "Excuse request submitted successfully");
+      setExcuseDialogOpen(false);
+      setExcuseForm({
+        employee_id: "",
+        employee_name: "",
+        excuse_date: "",
+        excuse_date_to: "",
+        excuse_type: "medical",
+        reason: "",
+        notes: ""
+      });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل في إرسال الطلب" : "Failed to submit request"));
+    }
+  };
+
   const handleCreateAccount = async () => {
     if (!accountPassword) {
       toast.error(language === "ar" ? "أدخل كلمة المرور" : "Enter password");
