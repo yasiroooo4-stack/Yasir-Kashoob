@@ -44,8 +44,8 @@ const InventoryValuation = ({ t, language, warehouses = [] }) => {
   const [valuation, setValuation] = useState(null);
   const [turnover, setTurnover] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedWarehouse, setSelectedWarehouse] = useState("");
-  const [valuationMethod, setValuationMethod] = useState("");
+  const [selectedWarehouse, setSelectedWarehouse] = useState("all");
+  const [valuationMethod, setValuationMethod] = useState("all");
   const [turnoverMonths, setTurnoverMonths] = useState(12);
 
   const token = localStorage.getItem("token");
@@ -55,8 +55,8 @@ const InventoryValuation = ({ t, language, warehouses = [] }) => {
     try {
       let url = `${API}/inventory-advanced/valuation`;
       const params = new URLSearchParams();
-      if (selectedWarehouse) params.append("warehouse_id", selectedWarehouse);
-      if (valuationMethod) params.append("method", valuationMethod);
+      if (selectedWarehouse && selectedWarehouse !== "all") params.append("warehouse_id", selectedWarehouse);
+      if (valuationMethod && valuationMethod !== "all") params.append("method", valuationMethod);
       if (params.toString()) url += `?${params.toString()}`;
       
       const response = await axios.get(url, { headers });
@@ -135,7 +135,7 @@ const InventoryValuation = ({ t, language, warehouses = [] }) => {
                   <SelectValue placeholder={t("كل المستودعات", "All Warehouses")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("كل المستودعات", "All Warehouses")}</SelectItem>
+                  <SelectItem value="all">{t("كل المستودعات", "All Warehouses")}</SelectItem>
                   {warehouses.map((w) => (
                     <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                   ))}
@@ -146,7 +146,7 @@ const InventoryValuation = ({ t, language, warehouses = [] }) => {
                   <SelectValue placeholder={t("طريقة التقييم", "Valuation Method")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("الافتراضية", "Default")}</SelectItem>
+                  <SelectItem value="all">{t("الافتراضية", "Default")}</SelectItem>
                   <SelectItem value="weighted_average">{t("المتوسط المرجح", "Weighted Average")}</SelectItem>
                   <SelectItem value="fifo">FIFO</SelectItem>
                   <SelectItem value="lifo">LIFO</SelectItem>
