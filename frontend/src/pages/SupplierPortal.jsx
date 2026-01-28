@@ -607,7 +607,21 @@ const SupplierPortal = () => {
               <div>
                 <p className="text-xs text-muted-foreground">{txt("المورد", "Supplier")}</p>
                 <h1 className="font-bold text-lg">{supplier?.name}</h1>
-                <p className="text-sm text-muted-foreground">{txt("كود:", "Code:")} {supplier?.code}</p>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <span>{txt("كود:", "Code:")} {supplier?.code}</span>
+                  {supplier?.center_name && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                      {txt("المركز:", "Center:")} {language === "ar" ? supplier.center_name : supplier.center_name_en || supplier.center_name}
+                    </span>
+                  )}
+                  {supplier?.milk_type && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                      {txt("نوع الحليب:", "Milk Type:")} {supplier.milk_type_ar || MILK_TYPES.find(m => m.id === supplier.milk_type)?.name || supplier.milk_type}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
