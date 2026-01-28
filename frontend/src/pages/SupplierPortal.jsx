@@ -1001,7 +1001,11 @@ const SupplierPortal = () => {
               <Button type="button" variant="outline" onClick={() => setFeedDialogOpen(false)}>
                 {txt("إلغاء", "Cancel")}
               </Button>
-              <Button type="submit" className="gradient-primary text-white" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="gradient-primary text-white" 
+                disabled={loading || isAmountExceedsBalance()}
+              >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 me-2" />}
                 {txt("إرسال الطلب", "Send Request")}
               </Button>
