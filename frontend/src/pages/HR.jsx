@@ -5305,7 +5305,9 @@ const AdvanceRequestsTab = ({ language }) => {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono">{req.amount?.toFixed(3)} ر.ع</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{req.reason}</TableCell>
+                  <TableCell className="max-w-[200px]">
+                    <ExpandableText text={req.reason} maxLength={40} />
+                  </TableCell>
                   <TableCell>{getStatusBadge(req.status)}</TableCell>
                   <TableCell>{req.created_at?.slice(0, 10)}</TableCell>
                   <TableCell>
