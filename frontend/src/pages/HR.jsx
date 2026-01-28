@@ -2457,7 +2457,7 @@ const HR = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
-                      <TableHead>{language === "ar" ? "تاريخ الغياب" : "Absence Date"}</TableHead>
+                      <TableHead>{language === "ar" ? "تاريخ الغياب (من - إلى)" : "Absence Date (From - To)"}</TableHead>
                       <TableHead>{language === "ar" ? "نوع العذر" : "Excuse Type"}</TableHead>
                       <TableHead>{language === "ar" ? "السبب" : "Reason"}</TableHead>
                       <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
