@@ -51,8 +51,8 @@ const BatchTracking = ({ t, language, warehouses = [], products = [] }) => {
   const [expiringBatches, setExpiringBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState("");
+  const [selectedWarehouse, setSelectedWarehouse] = useState("all");
+  const [selectedProduct, setSelectedProduct] = useState("all");
   const [expiryDays, setExpiryDays] = useState(30);
   
   const [formData, setFormData] = useState({
@@ -77,8 +77,8 @@ const BatchTracking = ({ t, language, warehouses = [], products = [] }) => {
       setLoading(true);
       let url = `${API}/inventory-advanced/batches`;
       const params = new URLSearchParams();
-      if (selectedWarehouse) params.append("warehouse_id", selectedWarehouse);
-      if (selectedProduct) params.append("product_id", selectedProduct);
+      if (selectedWarehouse && selectedWarehouse !== "all") params.append("warehouse_id", selectedWarehouse);
+      if (selectedProduct && selectedProduct !== "all") params.append("product_id", selectedProduct);
       if (params.toString()) url += `?${params.toString()}`;
       
       const response = await axios.get(url, { headers });
@@ -209,7 +209,7 @@ const BatchTracking = ({ t, language, warehouses = [], products = [] }) => {
                   <SelectValue placeholder={t("الكل", "All")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("الكل", "All")}</SelectItem>
+                  <SelectItem value="all">{t("الكل", "All")}</SelectItem>
                   {warehouses.map((w) => (
                     <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                   ))}
@@ -223,7 +223,7 @@ const BatchTracking = ({ t, language, warehouses = [], products = [] }) => {
                   <SelectValue placeholder={t("الكل", "All")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("الكل", "All")}</SelectItem>
+                  <SelectItem value="all">{t("الكل", "All")}</SelectItem>
                   {products.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
