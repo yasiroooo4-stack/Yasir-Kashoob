@@ -699,7 +699,16 @@ const Operations = () => {
                         <TableCell>{m.maintenance_date?.split('T')[0]}</TableCell>
                         <TableCell className="font-medium">{m.equipment_name}</TableCell>
                         <TableCell>{m.maintenance_type}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{m.description}</TableCell>
+                        <TableCell className="max-w-[300px]">
+                          <div className="group relative">
+                            <span className="block truncate">{m.description}</span>
+                            {m.description && m.description.length > 40 && (
+                              <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
+                                {m.description}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{m.cost?.toFixed(3)} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
                         <TableCell>{m.next_maintenance_date?.split('T')[0] || "-"}</TableCell>
                       </TableRow>
