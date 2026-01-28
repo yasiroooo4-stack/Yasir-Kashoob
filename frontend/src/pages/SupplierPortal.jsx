@@ -402,10 +402,8 @@ const SupplierPortal = () => {
   const calculateFeedAmount = (feedType, quantity) => {
     const feed = feedTypes.find(f => f.id === feedType);
     if (feed && quantity) {
-      // حساب عدد الأكياس المطلوبة = الكمية بالكجم / وزن الكيس
-      const bagsNeeded = parseFloat(quantity) / (feed.kg_per_unit || 1);
       // المبلغ الإجمالي = عدد الأكياس × سعر الكيس
-      return (bagsNeeded * feed.price).toFixed(2);
+      return (parseFloat(quantity) * feed.price).toFixed(2);
     }
     return 0;
   };
