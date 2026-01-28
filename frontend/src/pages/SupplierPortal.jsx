@@ -214,10 +214,13 @@ const SupplierPortal = () => {
   };
   
   const fetchFeedTypesAndCenters = async () => {
+    const token = localStorage.getItem("supplier_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    
     try {
       // جلب أنواع الأعلاف من النظام
-      const feedTypesRes = await axios.get(`${API}/api/feed-types`);
-      if (feedTypesRes.data && feedTypesRes.data.length > 0) {
+      const feedTypesRes = await axios.get(`${API}/api/feed-types`, { headers });
+      if (feedTypesRes.data && Array.isArray(feedTypesRes.data) && feedTypesRes.data.length > 0) {
         const formattedFeedTypes = feedTypesRes.data.map(ft => ({
           id: ft.id,
           name: ft.name_ar || ft.name,
@@ -228,8 +231,8 @@ const SupplierPortal = () => {
       }
       
       // جلب المراكز
-      const centersRes = await axios.get(`${API}/api/centers`);
-      if (centersRes.data) {
+      const centersRes = await axios.get(`${API}/api/centers`, { headers });
+      if (centersRes.data && Array.isArray(centersRes.data)) {
         setCenters(centersRes.data);
       }
     } catch (error) {
