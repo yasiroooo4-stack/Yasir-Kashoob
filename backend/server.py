@@ -8270,13 +8270,14 @@ async def export_attendance_excel(
             holiday_count = len(holiday_dates_for_emp)
             excuse_count = len(excuse_dates)
             leave_count = len(leave_dates)
+            external_work_count = len(external_work_dates)
             
             # Add employee header row with summary
             rows.append({
                 'Employee Name': f"📋 {emp_name}",
                 'Employee Code': emp_code,
                 'Fingerprint ID': emp_fp,
-                'Date': f"حضور: {days_count} | غياب: {absent_count} | عذر: {excuse_count} | إجازة: {leave_count} | إجازة أسبوعية: {weekly_off_count} | عطلة: {holiday_count}",
+                'Date': f"حضور: {days_count} | غياب: {absent_count} | عذر: {excuse_count} | إجازة: {leave_count} | عمل خارجي: {external_work_count} | إجازة أسبوعية: {weekly_off_count} | عطلة: {holiday_count}",
                 'Check In': '',
                 'Check Out': '',
                 'Status': '',
