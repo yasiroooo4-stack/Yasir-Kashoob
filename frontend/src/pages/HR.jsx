@@ -449,6 +449,7 @@ const HR = () => {
         axios.get(`${API}/hr/documents`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/warnings`).catch(() => ({ data: [] })),
         axios.get(`${API}/hr/official-holidays`).catch(() => ({ data: [] })),
+        axios.get(`${API}/hr/external-work`).catch(() => ({ data: [] })),
       ]);
       
       setEmployees(employeesRes.data);
@@ -469,6 +470,7 @@ const HR = () => {
       setDocuments(documentsRes.data || []);
       setWarnings(warningsRes.data || []);
       setOfficialHolidays(holidaysRes.data || []);
+      setExternalWorkRequests(externalWorkRes.data || []);
     } catch (error) {
       console.error("Error fetching HR data:", error);
     } finally {
