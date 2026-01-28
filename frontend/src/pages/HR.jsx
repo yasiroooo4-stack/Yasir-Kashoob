@@ -5194,6 +5194,103 @@ const HR = () => {
         onOpenChange={setSalaryHistoryDialogOpen}
         employee={selectedEmployeeForSalary}
       />
+
+      {/* نافذة طلب عذر جديد */}
+      <Dialog open={excuseDialogOpen} onOpenChange={setExcuseDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "طلب عذر جديد" : "New Excuse Request"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف *" : "Employee *"}</Label>
+              <Select
+                value={excuseForm.employee_id}
+                onValueChange={(v) => {
+                  const emp = employees.find(e => e.id === v);
+                  setExcuseForm({
+                    ...excuseForm,
+                    employee_id: v,
+                    employee_name: emp?.name || ""
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select employee"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "من تاريخ *" : "From Date *"}</Label>
+                <Input
+                  type="date"
+                  value={excuseForm.excuse_date}
+                  onChange={(e) => setExcuseForm({ ...excuseForm, excuse_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "إلى تاريخ" : "To Date"}</Label>
+                <Input
+                  type="date"
+                  value={excuseForm.excuse_date_to}
+                  onChange={(e) => setExcuseForm({ ...excuseForm, excuse_date_to: e.target.value })}
+                  min={excuseForm.excuse_date}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "نوع العذر *" : "Excuse Type *"}</Label>
+              <Select
+                value={excuseForm.excuse_type}
+                onValueChange={(v) => setExcuseForm({ ...excuseForm, excuse_type: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="medical">{language === "ar" ? "طبي" : "Medical"}</SelectItem>
+                  <SelectItem value="personal">{language === "ar" ? "شخصي" : "Personal"}</SelectItem>
+                  <SelectItem value="family">{language === "ar" ? "عائلي" : "Family"}</SelectItem>
+                  <SelectItem value="emergency">{language === "ar" ? "طارئ" : "Emergency"}</SelectItem>
+                  <SelectItem value="other">{language === "ar" ? "أخرى" : "Other"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "سبب الغياب *" : "Reason *"}</Label>
+              <Textarea
+                value={excuseForm.reason}
+                onChange={(e) => setExcuseForm({ ...excuseForm, reason: e.target.value })}
+                placeholder={language === "ar" ? "اشرح سبب الغياب..." : "Explain the reason for absence..."}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "ملاحظات إضافية" : "Additional Notes"}</Label>
+              <Textarea
+                value={excuseForm.notes}
+                onChange={(e) => setExcuseForm({ ...excuseForm, notes: e.target.value })}
+                placeholder={language === "ar" ? "ملاحظات..." : "Notes..."}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcuseDialogOpen(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button onClick={handleCreateExcuse}>
+              {language === "ar" ? "إرسال الطلب" : "Submit Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
