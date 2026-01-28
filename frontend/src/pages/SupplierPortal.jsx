@@ -201,11 +201,40 @@ const SupplierPortal = () => {
       localStorage.setItem("supplier_code", supplierCode);
       localStorage.setItem("supplier_token", response.data.access_token);
       toast.success(`مرحباً ${response.data.supplier.name}`);
+      
+      // جلب أنواع الأعلاف والمراكز
+      fetchFeedTypesAndCenters();
+      
       fetchData(supplierCode);
     } catch (error) {
       toast.error(error.response?.data?.detail || "كود المورد أو كلمة المرور غير صحيحة");
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchFeedTypesAndCenters = async () => {
+    try {
+      // جلب أنواع الأعلاف من النظام
+      const feedTypesRes = await axios.get(`${API}/api/feed-types`);
+      if (feedTypesRes.data && feedTypesRes.data.length > 0) {
+        const formattedFeedTypes = feedTypesRes.data.map(ft => ({
+          id: ft.id,
+          name: ft.name_ar || ft.name,
+          name_en: ft.name_en || ft.name,
+          price: ft.price_per_ton || ft.price || 0
+        }));
+        setFeedTypes(formattedFeedTypes);
+      }
+      
+      // جلب المراكز
+      const centersRes = await axios.get(`${API}/api/centers`);
+      if (centersRes.data) {
+        setCenters(centersRes.data);
+      }
+    } catch (error) {
+      console.error("Error fetching feed types and centers:", error);
+      // استخدام القائمة الافتراضية في حالة الخطأ
     }
   };
 
