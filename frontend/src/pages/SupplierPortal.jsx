@@ -940,7 +940,7 @@ const SupplierPortal = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{txt("الكمية (كجم) *", "Quantity (kg) *")}</Label>
+              <Label>{txt("الكمية (كيس) *", "Quantity (bags) *")}</Label>
               <Input
                 type="number"
                 value={feedForm.quantity}
@@ -952,7 +952,7 @@ const SupplierPortal = () => {
                     amount_to_deduct: calculateFeedAmount(feedForm.feed_type, qty).toString()
                   });
                 }}
-                placeholder={txt("أدخل الكمية", "Enter quantity")}
+                placeholder={txt("أدخل عدد الأكياس", "Enter number of bags")}
               />
             </div>
             <div className="space-y-2">
