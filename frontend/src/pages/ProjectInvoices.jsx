@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
+import ExpandableText from "../components/ui/ExpandableText";
 import { Plus, Receipt, Eye, Check, X, Printer, Download } from "lucide-react";
 
 // Company logo URL
@@ -417,14 +418,7 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
                           </Badge>
                         </TableCell>
                         <TableCell className="max-w-[300px]">
-                          <div className="group relative">
-                            <span className="block truncate">{invoice.description}</span>
-                            {invoice.description && invoice.description.length > 40 && (
-                              <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
-                                {invoice.description}
-                              </div>
-                            )}
-                          </div>
+                          <ExpandableText text={invoice.description} maxLength={50} />
                         </TableCell>
                         <TableCell className="font-medium">{invoice.amount?.toFixed(3)} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
                         <TableCell>{getStatusBadge(invoice.status)}</TableCell>
