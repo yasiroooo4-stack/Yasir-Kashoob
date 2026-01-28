@@ -169,6 +169,7 @@ const SupplierPortal = () => {
       setSupplier(response.data);
       setSupplierCode(code);
       setIsLoggedIn(true);
+      fetchFeedTypesAndCenters();
       fetchData(code);
     } catch (error) {
       // Token expired or invalid
