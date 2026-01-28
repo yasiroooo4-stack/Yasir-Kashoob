@@ -225,7 +225,11 @@ const SupplierPortal = () => {
           id: ft.id,
           name: ft.name_ar || ft.name,
           name_en: ft.name_en || ft.name,
-          price: ft.price_per_ton || ft.price || 0
+          // السعر لكل كجم = سعر الوحدة / وزن الوحدة بالكجم
+          price: ft.kg_per_unit > 0 ? (ft.price_per_unit / ft.kg_per_unit).toFixed(2) : (ft.price_per_unit || ft.price || 0),
+          price_per_unit: ft.price_per_unit || 0,
+          kg_per_unit: ft.kg_per_unit || 1,
+          company_name: ft.company_name || ''
         }));
         setFeedTypes(formattedFeedTypes);
       }
