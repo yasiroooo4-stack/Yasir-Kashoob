@@ -2749,13 +2749,14 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "الموقع" : "Location"}</TableHead>
                       <TableHead>{language === "ar" ? "الغرض" : "Purpose"}</TableHead>
                       <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                      <TableHead>{language === "ar" ? "حذف" : "Delete"}</TableHead>
                       <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {externalWorkRequests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           {language === "ar" ? "لا توجد طلبات عمل خارجي" : "No external work requests"}
                         </TableCell>
                       </TableRow>
@@ -2792,6 +2793,16 @@ const HR = () => {
                                request.status === "rejected" ? (language === "ar" ? "مرفوض" : "Rejected") :
                                (language === "ar" ? "قيد الانتظار" : "Pending")}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                              onClick={() => handleDeleteExternalWork(request.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </TableCell>
                           <TableCell>
                             {request.status === "pending" && (
