@@ -836,7 +836,7 @@ const SupplierPortal = () => {
                       feedRequests.map((r) => (
                         <TableRow key={r.id}>
                           <TableCell>{new Date(r.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-GB")}</TableCell>
-                          <TableCell>{FEED_TYPES.find(f => f.id === r.feed_type)?.name || r.feed_type}</TableCell>
+                          <TableCell>{feedTypes.find(f => f.id === r.feed_type)?.name || r.feed_type}</TableCell>
                           <TableCell>{r.quantity}</TableCell>
                           <TableCell>{r.amount_to_deduct?.toLocaleString()} {txt("ريال", "OMR")}</TableCell>
                           <TableCell>{getStatusBadge(r.status)}</TableCell>
