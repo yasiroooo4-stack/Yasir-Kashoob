@@ -6,6 +6,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
+import ExpandableText from "../components/ui/ExpandableText";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -832,7 +833,7 @@ export default function TasksManagement() {
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium truncate">{task.title}</h3>
+                            <h3 className="font-medium truncate">{task.title}</h3>
                               <Badge className={getStatusColor(task.status)}>
                                 {tr[task.status] || task.status}
                               </Badge>
