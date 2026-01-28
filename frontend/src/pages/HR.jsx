@@ -74,6 +74,7 @@ import {
   AlertTriangle,
   Link,
   Gift,
+  Briefcase,
 } from "lucide-react";
 import FingerprintManager from "../components/hr/FingerprintManager";
 import SalaryHistoryDialog from "../components/SalaryHistoryDialog";
