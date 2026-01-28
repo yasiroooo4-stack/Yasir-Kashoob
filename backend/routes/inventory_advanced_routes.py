@@ -485,6 +485,7 @@ async def add_product_supplier(
         )
     
     await db.product_suppliers.insert_one(product_supplier)
+    product_supplier.pop("_id", None)  # Remove MongoDB _id before returning
     return product_supplier
 
 
