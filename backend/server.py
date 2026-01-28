@@ -8177,7 +8177,7 @@ async def export_attendance_pdf(
     
     # Group by employee - REMOVE DUPLICATE DATES
     from collections import defaultdict
-    employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [5, 6]})
+    employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [4, 5]})
     
     for record in attendance:
         emp_id = record.get('employee_id', '')
@@ -8190,7 +8190,7 @@ async def export_attendance_pdf(
             employee_data[key]["name"] = emp_info.get('name', emp_name)
             employee_data[key]["code"] = emp_info.get('employee_code', '')
             employee_data[key]["fingerprint"] = emp_info.get('fingerprint_id', '')
-            employee_data[key]["weekly_off_days"] = emp_info.get('weekly_off_days', [5, 6])
+            employee_data[key]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
         else:
             key = emp_id or emp_name
             employee_data[key]["name"] = emp_name
