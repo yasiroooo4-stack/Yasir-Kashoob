@@ -13,6 +13,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
+import ExpandableText from "../components/ui/ExpandableText";
 import { Textarea } from "../components/ui/textarea";
 import {
   Select,
@@ -771,14 +772,7 @@ const MaterialIssue = ({ embedded = false }) => {
                         <TableCell>{log.from_warehouse_name}</TableCell>
                         <TableCell>{log.created_by_name}</TableCell>
                         <TableCell className="max-w-[300px]">
-                          <div className="group relative">
-                            <span className="block truncate">{log.notes}</span>
-                            {log.notes && log.notes.length > 40 && (
-                              <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
-                                {log.notes}
-                              </div>
-                            )}
-                          </div>
+                          <ExpandableText text={log.notes} maxLength={50} />
                         </TableCell>
                       </TableRow>
                     ))}
