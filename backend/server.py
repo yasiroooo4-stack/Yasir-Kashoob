@@ -8233,13 +8233,14 @@ async def export_attendance_excel(
             emp_leaves = leave_lookup.get(emp_key, {})
             emp_external_work = external_work_lookup.get(emp_key, {})
             
+            # First pass: collect all dates by type (without weekends yet)
+            temp_absent_dates = []
             for date_str in all_dates:
                 date_obj = dt.strptime(date_str, "%Y-%m-%d")
                 day_of_week = date_obj.weekday()
                 
-                # Check if weekend
+                # Skip weekends for now - will process them separately
                 if day_of_week in weekly_off_days:
-                    weekly_off_dates.append(date_str)
                     continue
                     
                 # Check if official holiday
@@ -8264,7 +8265,78 @@ async def export_attendance_excel(
                 
                 # If no attendance record for this working day, it's absent
                 if date_str not in present_dates:
+                    temp_absent_dates.append(date_str)
+            
+            # Second pass: process weekends - check if surrounded by absences
+            # Rule: If absent on day before weekend (Thursday) AND day after weekend (Sunday), 
+            # then weekend days (Friday/Saturday) count as absent
+            absent_dates_set = set(temp_absent_dates)
+            
+            for date_str in all_dates:
+                date_obj = dt.strptime(date_str, "%Y-%m-%d")
+                day_of_week = date_obj.weekday()
+                
+                # Only process weekend days
+                if day_of_week not in weekly_off_days:
+                    continue
+                
+                # Check if it's an official holiday (even on weekend)
+                if date_str in holiday_dates:
+                    holiday_dates_for_emp.append((date_str, holiday_dates[date_str]))
+                    continue
+                
+                # Check if employee has approved leave/excuse/external work on this day
+                if date_str in emp_leaves:
+                    leave_dates.append((date_str, emp_leaves[date_str].get("type", "إجازة")))
+                    continue
+                if date_str in emp_excuses:
+                    excuse_dates.append((date_str, emp_excuses[date_str].get("type", "عذر"), emp_excuses[date_str].get("reason", "")))
+                    continue
+                if date_str in emp_external_work:
+                    external_work_dates.append((date_str, emp_external_work[date_str].get("type", "عمل خارجي"), emp_external_work[date_str].get("location", ""), emp_external_work[date_str].get("purpose", "")))
+                    continue
+                
+                # Check if has attendance record
+                if date_str in present_dates:
+                    weekly_off_dates.append(date_str)
+                    continue
+                
+                # Find the day before the weekend (Thursday = 3) and day after (Sunday = 6)
+                # For Friday (4): check Thursday (3)
+                # For Saturday (5): check Sunday (6)
+                thursday_date = (date_obj - timedelta(days=(day_of_week - 3))).strftime("%Y-%m-%d") if day_of_week >= 4 else None
+                sunday_date = (date_obj + timedelta(days=(6 - day_of_week))).strftime("%Y-%m-%d") if day_of_week <= 5 else None
+                
+                # Calculate Thursday and Sunday for this weekend
+                if day_of_week == 4:  # Friday
+                    thursday_date = (date_obj - timedelta(days=1)).strftime("%Y-%m-%d")
+                    sunday_date = (date_obj + timedelta(days=2)).strftime("%Y-%m-%d")
+                elif day_of_week == 5:  # Saturday
+                    thursday_date = (date_obj - timedelta(days=2)).strftime("%Y-%m-%d")
+                    sunday_date = (date_obj + timedelta(days=1)).strftime("%Y-%m-%d")
+                
+                # Check if Thursday is absent AND Sunday is absent (both within the report period)
+                thursday_is_absent = thursday_date in absent_dates_set if thursday_date and thursday_date in all_dates else False
+                sunday_is_absent = sunday_date in absent_dates_set if sunday_date and sunday_date in all_dates else False
+                
+                # Also check if Thursday/Sunday are not holidays, leaves, excuses, etc.
+                thursday_is_working_day = (thursday_date not in holiday_dates and 
+                                          thursday_date not in emp_leaves and 
+                                          thursday_date not in emp_excuses and 
+                                          thursday_date not in emp_external_work) if thursday_date else True
+                sunday_is_working_day = (sunday_date not in holiday_dates and 
+                                        sunday_date not in emp_leaves and 
+                                        sunday_date not in emp_excuses and 
+                                        sunday_date not in emp_external_work) if sunday_date else True
+                
+                # If both Thursday and Sunday are absent (and they are normal working days), weekend is absent
+                if thursday_is_absent and sunday_is_absent and thursday_is_working_day and sunday_is_working_day:
                     absent_dates.append(date_str)
+                else:
+                    weekly_off_dates.append(date_str)
+            
+            # Add the temp absent dates to final absent dates
+            absent_dates.extend(temp_absent_dates)
             
             absent_count = len(absent_dates)
             weekly_off_count = len(weekly_off_dates)
