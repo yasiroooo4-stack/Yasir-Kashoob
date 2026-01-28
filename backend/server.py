@@ -8138,6 +8138,7 @@ async def export_attendance_excel(
         "field_work": "عمل ميداني",
         "other": "أخرى"
     }
+    from datetime import datetime as dt_ext, timedelta as td_ext
     for ext_work in approved_external_work:
         emp_id = ext_work.get("employee_id")
         start = ext_work.get("work_date")
@@ -8148,7 +8149,6 @@ async def export_attendance_excel(
         purpose = ext_work.get("purpose", "")
         
         # Add all dates in range
-        from datetime import datetime as dt_ext
         start_dt = dt_ext.strptime(start, "%Y-%m-%d")
         end_dt = dt_ext.strptime(end, "%Y-%m-%d")
         curr = start_dt
@@ -8157,7 +8157,7 @@ async def export_attendance_excel(
             if emp_id not in external_work_lookup:
                 external_work_lookup[emp_id] = {}
             external_work_lookup[emp_id][date_str] = {"type": work_type_name, "location": location, "purpose": purpose}
-            curr += timedelta(days=1)
+            curr += td_ext(days=1)
     
     # Generate all working days in the period
     from datetime import datetime as dt, timedelta
