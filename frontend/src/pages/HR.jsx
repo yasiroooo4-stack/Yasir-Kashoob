@@ -2789,7 +2789,9 @@ const HR = () => {
                           </TableCell>
                           <TableCell className="font-medium">{letter.employee_name}</TableCell>
                           <TableCell>{getLetterTypeName(letter.letter_type)}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">{letter.purpose || "-"}</TableCell>
+                          <TableCell className="max-w-[200px]">
+                            <ExpandableText text={letter.purpose || "-"} maxLength={40} />
+                          </TableCell>
                           <TableCell>{getStatusBadge(letter.status)}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
