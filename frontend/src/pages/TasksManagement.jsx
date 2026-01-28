@@ -844,8 +844,8 @@ export default function TasksManagement() {
                               )}
                             </div>
                             
-                            <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
-                              {task.description}
+                            <p className="text-sm text-muted-foreground mb-2">
+                              <ExpandableText text={task.description} maxLength={80} />
                             </p>
                             
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
