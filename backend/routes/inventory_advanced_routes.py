@@ -179,6 +179,7 @@ async def create_cycle_count(
         {"$set": {"total_items": len(items)}}
     )
     
+    cycle_count.pop("_id", None)  # Remove MongoDB _id before returning
     return cycle_count
 
 
