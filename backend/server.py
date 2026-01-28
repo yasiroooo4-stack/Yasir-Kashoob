@@ -8341,6 +8341,15 @@ async def export_attendance_excel(
                     'detail': lv_type
                 })
             
+            # Add external work dates
+            for ext_date, ext_type, ext_location, ext_purpose in external_work_dates:
+                all_employee_dates.append({
+                    'date': ext_date,
+                    'type': 'external_work',
+                    'record': None,
+                    'detail': f"{ext_type}: {ext_location} - {ext_purpose}"
+                })
+            
             # Sort all dates
             all_employee_dates.sort(key=lambda x: x['date'])
             
