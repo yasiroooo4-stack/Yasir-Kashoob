@@ -8081,7 +8081,7 @@ async def export_attendance_excel(
         exc_reason = excuse.get("reason", "")
         
         # Add all dates in range
-        from datetime import datetime as dt_exc
+        from datetime import datetime as dt_exc, timedelta as td_exc
         start_dt = dt_exc.strptime(start, "%Y-%m-%d")
         end_dt = dt_exc.strptime(end, "%Y-%m-%d")
         curr = start_dt
@@ -8090,7 +8090,7 @@ async def export_attendance_excel(
             if emp_id not in excuse_lookup:
                 excuse_lookup[emp_id] = {}
             excuse_lookup[emp_id][date_str] = {"type": exc_type, "reason": exc_reason}
-            curr += timedelta(days=1)
+            curr += td_exc(days=1)
     
     # Get approved leave requests for the period
     approved_leaves = await db.hr_leave_requests.find({
