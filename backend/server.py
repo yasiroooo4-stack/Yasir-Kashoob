@@ -4692,7 +4692,7 @@ async def update_hr_employee(employee_id: str, employee_data: EmployeeCreate, cu
     # Preserve status fields that should not be changed during regular updates
     update_data["is_active"] = existing_employee.get("is_active", True)
     update_data["can_login"] = existing_employee.get("can_login", False)
-    update_data["weekly_off_days"] = existing_employee.get("weekly_off_days", [5, 6])
+    update_data["weekly_off_days"] = existing_employee.get("weekly_off_days", [4, 5])  # Default: Friday=4, Saturday=5
     
     result = await db.hr_employees.update_one(
         {"id": employee_id},
