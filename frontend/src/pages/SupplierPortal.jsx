@@ -218,8 +218,8 @@ const SupplierPortal = () => {
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     
     try {
-      // جلب أنواع الأعلاف من النظام
-      const feedTypesRes = await axios.get(`${API}/api/feed-types`, { headers });
+      // جلب أنواع الأعلاف من النظام - استخدام endpoint خاص بالموردين
+      const feedTypesRes = await axios.get(`${API}/api/supplier-portal/feed-types`);
       if (feedTypesRes.data && Array.isArray(feedTypesRes.data) && feedTypesRes.data.length > 0) {
         const formattedFeedTypes = feedTypesRes.data.map(ft => ({
           id: ft.id,
