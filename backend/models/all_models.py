@@ -1056,7 +1056,8 @@ class ExcuseRequestBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
     employee_id: str
     employee_name: str
-    excuse_date: str
+    excuse_date: str  # تاريخ البداية (للتوافق مع القديم)
+    excuse_date_to: Optional[str] = None  # تاريخ النهاية (اختياري)
     excuse_type: str
     reason: str
     start_time: Optional[str] = None
