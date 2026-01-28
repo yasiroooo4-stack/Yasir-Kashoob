@@ -2627,7 +2627,16 @@ const HR = () => {
                           <TableCell className="font-medium">{req.employee_name}</TableCell>
                           <TableCell>{req.expense_type}</TableCell>
                           <TableCell>{req.amount} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">{req.description}</TableCell>
+                          <TableCell className="max-w-[300px]">
+                            <div className="group relative">
+                              <span className="block truncate">{req.description}</span>
+                              {req.description && req.description.length > 40 && (
+                                <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
+                                  {req.description}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>{getStatusBadge(req.status)}</TableCell>
                           <TableCell>
                             {req.status === "pending" && (
