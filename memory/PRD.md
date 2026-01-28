@@ -22,6 +22,65 @@
 
 ## الميزات المُنجزة
 
+### 28 يناير 2026 - ميزات المخزون المتقدمة وإصلاحات
+
+#### 1. إصلاح أنواع الأعلاف في بوابة الموردين (P0) ✅
+- **المشكلة:** أنواع الأعلاف كانت hardcoded ولا تظهر من قاعدة البيانات
+- **الحل:** 
+  - إنشاء API جديد `/api/supplier-portal/feed-types` بدون authentication
+  - تحديث Frontend لحساب السعر بشكل صحيح: `price_per_unit / kg_per_unit`
+  - الآن تظهر 7 أنواع أعلاف مع الأسعار الصحيحة
+
+#### 2. واجهات المخزون المتقدمة (P0) ✅
+تم إنشاء 4 مكونات جديدة في `/app/frontend/src/components/inventory/`:
+
+##### BatchTracking.jsx - تتبع الدفعات واللوتات
+- عرض وإدارة دفعات المنتجات مع تواريخ الإنتاج والصلاحية
+- تنبيهات للدفعات قريبة الانتهاء
+- فلترة حسب المستودع والمنتج
+- إنشاء دفعات جديدة
+
+##### CycleCount.jsx - الجرد الدوري
+- إنشاء عمليات جرد دوري جديدة
+- إدخال الكميات الفعلية ومقارنتها بالنظام
+- حساب الفروقات تلقائياً
+- اعتماد الجرد وتعديل المخزون
+
+##### ReturnsManagement.jsx - إدارة المرتجعات
+- مرتجعات من العملاء وإلى الموردين
+- تتبع أسباب الإرجاع
+- الموافقة على المرتجعات وتعديل المخزون
+- إحصائيات شاملة
+
+##### InventoryValuation.jsx - تقييم المخزون
+- تقييم المخزون بطرق مختلفة (FIFO، المتوسط المرجح)
+- أعلى 10 منتجات قيمة
+- معدل دوران المخزون مع التحليل والتوصيات
+- أيام المخزون والتصنيف (ممتاز/جيد/متوسط/منخفض)
+
+#### 3. APIs المخزون المتقدم
+- `GET/POST /api/inventory-advanced/batches` - إدارة الدفعات
+- `GET /api/inventory-advanced/batches/expiring` - الدفعات منتهية الصلاحية
+- `GET/POST /api/inventory-advanced/cycle-counts` - الجرد الدوري
+- `PUT /api/inventory-advanced/cycle-counts/{id}/item/{item_id}` - تحديث عنصر الجرد
+- `PUT /api/inventory-advanced/cycle-counts/{id}/approve` - اعتماد الجرد
+- `GET/POST /api/inventory-advanced/returns` - المرتجعات
+- `PUT /api/inventory-advanced/returns/{id}/approve` - الموافقة على المرتجع
+- `GET /api/inventory-advanced/valuation` - تقييم المخزون
+- `GET /api/inventory-advanced/turnover` - معدل الدوران
+
+#### 4. إصلاح النصوص المقطوعة في الجداول (P1) ✅
+- **المشكلة:** النصوص الطويلة تُقطع بـ `truncate` class ولا يمكن قراءتها
+- **الحل:** إنشاء مكون `ExpandableText.jsx` قابل لإعادة الاستخدام
+- **الصفحات المُحدّثة:**
+  - Treasury.jsx
+  - HR.jsx (5 مواضع)
+  - Finance.jsx
+  - Legal.jsx
+  - MaterialIssue.jsx
+  - ProjectInvoices.jsx
+  - TasksManagement.jsx
+
 ### 25 يناير 2026 - الجلسة الثالثة
 
 #### 1. إضافة نوع الحليب والمركز لبوابة الموردين (P0) ✅
