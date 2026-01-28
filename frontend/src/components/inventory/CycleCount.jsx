@@ -55,7 +55,7 @@ const CycleCount = ({ t, language, warehouses = [] }) => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedCount, setSelectedCount] = useState(null);
   const [countItems, setCountItems] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [formData, setFormData] = useState({
     warehouse_id: "",
@@ -72,7 +72,7 @@ const CycleCount = ({ t, language, warehouses = [] }) => {
     try {
       setLoading(true);
       let url = `${API}/inventory-advanced/cycle-counts`;
-      if (statusFilter) url += `?status=${statusFilter}`;
+      if (statusFilter && statusFilter !== "all") url += `?status=${statusFilter}`;
       
       const response = await axios.get(url, { headers });
       setCycleCounts(response.data);
@@ -218,7 +218,7 @@ const CycleCount = ({ t, language, warehouses = [] }) => {
                   <SelectValue placeholder={t("حالة الجرد", "Count Status")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("الكل", "All")}</SelectItem>
+                  <SelectItem value="all">{t("الكل", "All")}</SelectItem>
                   <SelectItem value="draft">{t("مسودة", "Draft")}</SelectItem>
                   <SelectItem value="in_progress">{t("قيد التنفيذ", "In Progress")}</SelectItem>
                   <SelectItem value="approved">{t("معتمد", "Approved")}</SelectItem>
