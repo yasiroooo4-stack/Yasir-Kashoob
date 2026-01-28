@@ -391,7 +391,7 @@ const SupplierPortal = () => {
   };
 
   const calculateFeedAmount = (feedType, quantity) => {
-    const feed = FEED_TYPES.find(f => f.id === feedType);
+    const feed = feedTypes.find(f => f.id === feedType);
     if (feed && quantity) {
       return feed.price * parseFloat(quantity);
     }
