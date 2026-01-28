@@ -64,7 +64,7 @@ const EmployeeScheduling = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [scheduleForm, setScheduleForm] = useState({
     shift_type: "morning",
-    weekly_off_days: [5, 6], // Friday and Saturday by default
+    weekly_off_days: [4, 5], // Friday=4 and Saturday=5 by default
   });
 
   const SHIFTS = [
