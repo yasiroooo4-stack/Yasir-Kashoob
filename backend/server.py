@@ -8225,10 +8225,12 @@ async def export_attendance_excel(
             holiday_dates_for_emp = []
             excuse_dates = []
             leave_dates = []
+            external_work_dates = []
             
-            # Get employee excuses and leaves
+            # Get employee excuses, leaves, and external work
             emp_excuses = excuse_lookup.get(emp_key, {})
             emp_leaves = leave_lookup.get(emp_key, {})
+            emp_external_work = external_work_lookup.get(emp_key, {})
             
             for date_str in all_dates:
                 date_obj = dt.strptime(date_str, "%Y-%m-%d")
