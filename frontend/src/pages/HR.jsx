@@ -100,6 +100,18 @@ const HR = () => {
   const [dashboard, setDashboard] = useState({});
   const [centers, setCenters] = useState([]);
   
+  // Excuse request dialog state
+  const [excuseDialogOpen, setExcuseDialogOpen] = useState(false);
+  const [excuseForm, setExcuseForm] = useState({
+    employee_id: "",
+    employee_name: "",
+    excuse_date: "",
+    excuse_date_to: "",
+    excuse_type: "medical",
+    reason: "",
+    notes: ""
+  });
+  
   // New HR features states
   const [shifts, setShifts] = useState([]);
   const [employeeShifts, setEmployeeShifts] = useState([]);
