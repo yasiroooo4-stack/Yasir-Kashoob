@@ -8256,6 +8256,11 @@ async def export_attendance_excel(
                     excuse_dates.append((date_str, emp_excuses[date_str].get("type", "عذر"), emp_excuses[date_str].get("reason", "")))
                     continue
                 
+                # Check if approved external work
+                if date_str in emp_external_work:
+                    external_work_dates.append((date_str, emp_external_work[date_str].get("type", "عمل خارجي"), emp_external_work[date_str].get("location", ""), emp_external_work[date_str].get("purpose", "")))
+                    continue
+                
                 # If no attendance record for this working day, it's absent
                 if date_str not in present_dates:
                     absent_dates.append(date_str)
