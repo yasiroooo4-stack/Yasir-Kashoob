@@ -948,7 +948,7 @@ const SupplierPortal = () => {
               />
               {feedForm.feed_type && feedForm.quantity && (
                 <p className="text-xs text-muted-foreground">
-                  {FEED_TYPES.find(f => f.id === feedForm.feed_type)?.price} {txt("ريال", "OMR")} × {feedForm.quantity} {txt("كجم", "kg")} = {feedForm.amount_to_deduct} {txt("ريال", "OMR")}
+                  {feedTypes.find(f => f.id === feedForm.feed_type)?.price} {txt("ريال", "OMR")} × {feedForm.quantity} {txt("كجم", "kg")} = {feedForm.amount_to_deduct} {txt("ريال", "OMR")}
                 </p>
               )}
             </div>
