@@ -2487,7 +2487,9 @@ const HR = () => {
                                (language === "ar" ? "سبب آخر" : "Other")}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-[200px] truncate">{request.reason}</TableCell>
+                          <TableCell className="max-w-[200px]">
+                            <ExpandableText text={request.reason} maxLength={40} />
+                          </TableCell>
                           <TableCell>{getStatusBadge(request.status)}</TableCell>
                           <TableCell>{new Date(request.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
                           <TableCell>
