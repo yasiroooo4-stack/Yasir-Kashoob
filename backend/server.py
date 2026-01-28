@@ -7876,7 +7876,7 @@ async def export_attendance_excel(
                 employee_data[employee_id]["name"] = emp_info.get('name', '')
                 employee_data[employee_id]["code"] = emp_info.get('employee_code', '')
                 employee_data[employee_id]["fingerprint"] = emp_info.get('fingerprint_id', '')
-                employee_data[employee_id]["weekly_off_days"] = emp_info.get('weekly_off_days', [5, 6])
+                employee_data[employee_id]["weekly_off_days"] = emp_info.get('weekly_off_days', [4, 5])
         
         for record in attendance:
             emp_id = record.get('employee_id', '')
