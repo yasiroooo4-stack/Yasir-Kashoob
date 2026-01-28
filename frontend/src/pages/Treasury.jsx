@@ -431,7 +431,17 @@ const Treasury = () => {
                       <TableCell className="font-medium">
                         {tx.balance_after?.toLocaleString()} {t("currency")}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{tx.description}</TableCell>
+                      <TableCell className="max-w-[300px]">
+                        <div className="group relative">
+                          <span className="block truncate">{tx.description}</span>
+                          {tx.description && tx.description.length > 40 && (
+                            <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
+                              {tx.description}
+                              <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-gray-900"></div>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{tx.created_by_name || "-"}</TableCell>
                       {user?.role === "admin" && (
                         <TableCell className="text-center">
