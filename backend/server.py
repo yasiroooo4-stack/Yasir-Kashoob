@@ -6334,40 +6334,52 @@ async def approve_excuse_request(request_id: str, current_user: dict = Depends(g
         }}
     )
     
-    # Create or update attendance record as "excused" presence
-    excuse_date = excuse_request.get("excuse_date")
+    # Get date range
+    start_date = excuse_request.get("excuse_date")
+    end_date = excuse_request.get("excuse_date_to") or start_date
     employee_id = excuse_request.get("employee_id")
     employee_name = excuse_request.get("employee_name")
     
-    # Check if attendance exists for this date
-    existing_attendance = await db.hr_attendance.find_one({
-        "employee_id": employee_id,
-        "date": excuse_date
-    })
+    # Create attendance records for all dates in range
+    from datetime import datetime as dt_excuse, timedelta
+    start_dt = dt_excuse.strptime(start_date, "%Y-%m-%d")
+    end_dt = dt_excuse.strptime(end_date, "%Y-%m-%d")
+    current_dt = start_dt
     
-    if existing_attendance:
-        # Update existing attendance to mark as excused
-        await db.hr_attendance.update_one(
-            {"id": existing_attendance["id"]},
-            {"$set": {
-                "source": "excuse_approved",
-                "check_in": excuse_request.get("start_time") or "08:00",
-                "check_out": excuse_request.get("end_time") or "16:00",
-                "notes": f"عذر معتمد: {excuse_request.get('excuse_type')} - {excuse_request.get('reason')}"
-            }}
-        )
-    else:
-        # Create new attendance record
-        attendance = Attendance(
-            employee_id=employee_id,
-            employee_name=employee_name,
-            date=excuse_date,
-            check_in=excuse_request.get("start_time") or "08:00",
-            check_out=excuse_request.get("end_time") or "16:00",
-            source="excuse_approved",
-            total_hours=8.0
-        )
-        await db.hr_attendance.insert_one(attendance.model_dump())
+    while current_dt <= end_dt:
+        excuse_date = current_dt.strftime("%Y-%m-%d")
+        
+        # Check if attendance exists for this date
+        existing_attendance = await db.hr_attendance.find_one({
+            "employee_id": employee_id,
+            "date": excuse_date
+        })
+        
+        if existing_attendance:
+            # Update existing attendance to mark as excused
+            await db.hr_attendance.update_one(
+                {"id": existing_attendance["id"]},
+                {"$set": {
+                    "source": "excuse_approved",
+                    "check_in": excuse_request.get("start_time") or "08:00",
+                    "check_out": excuse_request.get("end_time") or "16:00",
+                    "notes": f"عذر معتمد: {excuse_request.get('excuse_type')} - {excuse_request.get('reason')}"
+                }}
+            )
+        else:
+            # Create new attendance record
+            attendance = Attendance(
+                employee_id=employee_id,
+                employee_name=employee_name,
+                date=excuse_date,
+                check_in=excuse_request.get("start_time") or "08:00",
+                check_out=excuse_request.get("end_time") or "16:00",
+                source="excuse_approved",
+                total_hours=8.0
+            )
+            await db.hr_attendance.insert_one(attendance.model_dump())
+        
+        current_dt += timedelta(days=1)
     
     await log_activity(
         user_id=current_user["id"],
@@ -6376,7 +6388,7 @@ async def approve_excuse_request(request_id: str, current_user: dict = Depends(g
         entity_type="excuse_request",
         entity_id=request_id,
         entity_name=employee_name,
-        details=f"موافقة على عذر: {employee_name} - {excuse_date}"
+        details=f"موافقة على عذر: {employee_name} - من {start_date} إلى {end_date}"
     )
     
     updated_request = await db.hr_excuse_requests.find_one({"id": request_id}, {"_id": 0})
