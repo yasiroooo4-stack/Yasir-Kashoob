@@ -69,6 +69,8 @@ from models.all_models import (
     LeaveRequestBase, LeaveRequestCreate, LeaveRequest,
     # Excuse models
     ExcuseRequestBase, ExcuseRequestCreate, ExcuseRequest,
+    # External work models
+    ExternalWorkRequestBase, ExternalWorkRequestCreate, ExternalWorkRequest,
     # Expense models
     ExpenseRequestBase, ExpenseRequestCreate, ExpenseRequest,
     # Advance request models
