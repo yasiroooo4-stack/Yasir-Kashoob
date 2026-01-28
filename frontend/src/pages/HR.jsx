@@ -2476,7 +2476,12 @@ const HR = () => {
                       excuseRequests.map((request) => (
                         <TableRow key={request.id}>
                           <TableCell className="font-medium">{request.employee_name}</TableCell>
-                          <TableCell>{new Date(request.excuse_date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
+                          <TableCell>
+                            {new Date(request.excuse_date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}
+                            {request.excuse_date_to && request.excuse_date_to !== request.excuse_date && (
+                              <span> → {new Date(request.excuse_date_to).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge variant={
                               request.excuse_type === "medical" ? "default" :
