@@ -732,6 +732,20 @@ const HR = () => {
     }
   };
 
+  // حذف طلب عمل خارجي
+  const handleDeleteExternalWork = async (requestId) => {
+    if (!window.confirm(language === "ar" ? "هل أنت متأكد من حذف هذا الطلب؟" : "Are you sure you want to delete this request?")) {
+      return;
+    }
+    try {
+      await axios.delete(`${API}/hr/external-work/${requestId}`);
+      toast.success(language === "ar" ? "تم حذف الطلب بنجاح" : "Request deleted successfully");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
   const handleCreateAccount = async () => {
     if (!accountPassword) {
       toast.error(language === "ar" ? "أدخل كلمة المرور" : "Enter password");
