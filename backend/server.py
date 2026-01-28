@@ -5484,7 +5484,7 @@ async def get_pending_extra_pay_requests(
         d = datetime.strptime(date_str, "%Y-%m-%d")
         weekday = d.weekday()  # Friday=4, Saturday=5
         
-        is_weekend = weekday in [5, 6]  # الجمعة أو السبت (isoweekday: 5=Friday, 6=Saturday)
+        is_weekend = weekday in [4, 5]  # الجمعة أو السبت (weekday: 4=Friday, 5=Saturday)
         is_holiday = date_str in holiday_dates
         
         if is_weekend or is_holiday:
