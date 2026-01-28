@@ -8208,7 +8208,7 @@ async def export_attendance_pdf(
         emp_info = employee_data[emp_key]
         records = emp_info["records"]  # Dict of date -> record
         present_dates = set(records.keys())
-        weekly_off_days = emp_info.get("weekly_off_days", [5, 6])
+        weekly_off_days = emp_info.get("weekly_off_days", [4, 5])  # Friday=4, Saturday=5
         
         # Calculate absent dates
         absent_dates_pdf = []
