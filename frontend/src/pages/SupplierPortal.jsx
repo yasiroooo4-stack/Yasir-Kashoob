@@ -914,7 +914,7 @@ const SupplierPortal = () => {
                   <SelectValue placeholder={txt("اختر نوع العلف", "Select feed type")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {FEED_TYPES.map((f) => (
+                  {feedTypes.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.name} - {f.price} {txt("ريال/كجم", "OMR/kg")}
                     </SelectItem>
