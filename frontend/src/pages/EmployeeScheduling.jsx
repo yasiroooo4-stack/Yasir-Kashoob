@@ -114,7 +114,7 @@ const EmployeeScheduling = () => {
     setSelectedEmployee(employee);
     setScheduleForm({
       shift_type: employee.shift_type || "morning",
-      weekly_off_days: employee.weekly_off_days || [5, 6],
+      weekly_off_days: employee.weekly_off_days || [4, 5],
     });
     setEditDialogOpen(true);
   };
