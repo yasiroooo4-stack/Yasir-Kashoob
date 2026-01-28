@@ -8120,6 +8120,45 @@ async def export_attendance_excel(
             leave_lookup[emp_id][date_str] = {"type": leave_type}
             curr += timedelta(days=1)
     
+    # Get approved external work requests for the period
+    approved_external_work = await db.hr_external_work_requests.find({
+        "status": "approved",
+        "$or": [
+            {"work_date": {"$gte": date_from, "$lte": date_to}},
+            {"work_date_to": {"$gte": date_from, "$lte": date_to}}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    # Build external work lookup by employee_id and date
+    external_work_lookup = {}
+    work_type_names = {
+        "client_visit": "زيارة عميل",
+        "conference": "مؤتمر",
+        "training": "تدريب",
+        "field_work": "عمل ميداني",
+        "other": "أخرى"
+    }
+    for ext_work in approved_external_work:
+        emp_id = ext_work.get("employee_id")
+        start = ext_work.get("work_date")
+        end = ext_work.get("work_date_to") or start
+        work_type = ext_work.get("work_type", "other")
+        work_type_name = work_type_names.get(work_type, work_type)
+        location = ext_work.get("location", "")
+        purpose = ext_work.get("purpose", "")
+        
+        # Add all dates in range
+        from datetime import datetime as dt_ext
+        start_dt = dt_ext.strptime(start, "%Y-%m-%d")
+        end_dt = dt_ext.strptime(end, "%Y-%m-%d")
+        curr = start_dt
+        while curr <= end_dt:
+            date_str = curr.strftime("%Y-%m-%d")
+            if emp_id not in external_work_lookup:
+                external_work_lookup[emp_id] = {}
+            external_work_lookup[emp_id][date_str] = {"type": work_type_name, "location": location, "purpose": purpose}
+            curr += timedelta(days=1)
+    
     # Generate all working days in the period
     from datetime import datetime as dt, timedelta
     all_dates = []
