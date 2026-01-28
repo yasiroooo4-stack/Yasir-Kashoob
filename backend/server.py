@@ -8428,6 +8428,17 @@ async def export_attendance_excel(
                         'Status': f'🟣 إجازة: {detail}',
                         'Source': 'leave_approved'
                     })
+                elif entry['type'] == 'external_work':
+                    rows.append({
+                        'Employee Name': emp_name,
+                        'Employee Code': emp_code,
+                        'Fingerprint ID': emp_fp,
+                        'Date': f"{date_str} ({day_name})",
+                        'Check In': '08:00',
+                        'Check Out': '16:00',
+                        'Status': f'🟠 عمل خارجي: {detail}',
+                        'Source': 'external_work_approved'
+                    })
             
             # Add empty row after each employee
             rows.append({
