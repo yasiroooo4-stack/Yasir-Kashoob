@@ -782,6 +782,22 @@ const WarehouseManagement = () => {
             <Sliders className="w-4 h-4" />
             {t("إعدادات متقدمة", "Advanced Settings")}
           </TabsTrigger>
+          <TabsTrigger value="batches" className="flex items-center gap-1">
+            <Package className="w-4 h-4" />
+            {t("الدفعات", "Batches")}
+          </TabsTrigger>
+          <TabsTrigger value="cycle-count" className="flex items-center gap-1">
+            <History className="w-4 h-4" />
+            {t("الجرد الدوري", "Cycle Count")}
+          </TabsTrigger>
+          <TabsTrigger value="returns" className="flex items-center gap-1">
+            <RotateCcw className="w-4 h-4" />
+            {t("المرتجعات", "Returns")}
+          </TabsTrigger>
+          <TabsTrigger value="valuation" className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" />
+            {t("التقييم", "Valuation")}
+          </TabsTrigger>
         </TabsList>
 
         {/* Stock Tab */}
