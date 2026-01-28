@@ -98,7 +98,7 @@ python sync_agent.py --mdb C:/ZKTeco/att2000.mdb -u yasir -p password
 
 ```json
 {
-  "api_url": "https://erp-inventory-26.preview.emergentagent.com",
+  "api_url": "https://inventory-plus-93.preview.emergentagent.com",
   "username": "yasir",
   "password": "your_password",
   "sync_interval": 3600,
