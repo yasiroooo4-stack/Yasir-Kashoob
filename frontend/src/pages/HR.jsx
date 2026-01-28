@@ -5494,6 +5494,113 @@ const HR = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* نافذة طلب عمل خارجي جديد */}
+      <Dialog open={externalWorkDialogOpen} onOpenChange={setExternalWorkDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5" />
+              {language === "ar" ? "طلب عمل خارجي جديد" : "New External Work Request"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموظف *" : "Employee *"}</Label>
+              <Select
+                value={externalWorkForm.employee_id}
+                onValueChange={(v) => {
+                  const emp = employees.find(e => e.id === v);
+                  setExternalWorkForm({
+                    ...externalWorkForm,
+                    employee_id: v,
+                    employee_name: emp?.name || ""
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ar" ? "اختر الموظف" : "Select employee"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "من تاريخ *" : "From Date *"}</Label>
+                <Input
+                  type="date"
+                  value={externalWorkForm.work_date}
+                  onChange={(e) => setExternalWorkForm({ ...externalWorkForm, work_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "ar" ? "إلى تاريخ" : "To Date"}</Label>
+                <Input
+                  type="date"
+                  value={externalWorkForm.work_date_to}
+                  onChange={(e) => setExternalWorkForm({ ...externalWorkForm, work_date_to: e.target.value })}
+                  min={externalWorkForm.work_date}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "نوع العمل *" : "Work Type *"}</Label>
+              <Select
+                value={externalWorkForm.work_type}
+                onValueChange={(v) => setExternalWorkForm({ ...externalWorkForm, work_type: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client_visit">{language === "ar" ? "زيارة عميل" : "Client Visit"}</SelectItem>
+                  <SelectItem value="meeting">{language === "ar" ? "اجتماع خارجي" : "External Meeting"}</SelectItem>
+                  <SelectItem value="training">{language === "ar" ? "تدريب" : "Training"}</SelectItem>
+                  <SelectItem value="conference">{language === "ar" ? "مؤتمر" : "Conference"}</SelectItem>
+                  <SelectItem value="fieldwork">{language === "ar" ? "عمل ميداني" : "Fieldwork"}</SelectItem>
+                  <SelectItem value="other">{language === "ar" ? "أخرى" : "Other"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الموقع / العنوان" : "Location / Address"}</Label>
+              <Input
+                value={externalWorkForm.location}
+                onChange={(e) => setExternalWorkForm({ ...externalWorkForm, location: e.target.value })}
+                placeholder={language === "ar" ? "مثال: مكتب العميل - مسقط" : "e.g., Client Office - Muscat"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "الغرض من العمل *" : "Purpose *"}</Label>
+              <Textarea
+                value={externalWorkForm.purpose}
+                onChange={(e) => setExternalWorkForm({ ...externalWorkForm, purpose: e.target.value })}
+                placeholder={language === "ar" ? "اشرح الغرض من العمل الخارجي..." : "Explain the purpose of external work..."}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "ملاحظات إضافية" : "Additional Notes"}</Label>
+              <Textarea
+                value={externalWorkForm.notes}
+                onChange={(e) => setExternalWorkForm({ ...externalWorkForm, notes: e.target.value })}
+                placeholder={language === "ar" ? "ملاحظات..." : "Notes..."}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExternalWorkDialogOpen(false)}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button onClick={handleCreateExternalWork}>
+              {language === "ar" ? "إرسال الطلب" : "Submit Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
