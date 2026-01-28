@@ -6198,7 +6198,7 @@ async def update_employee_work_schedule(
     try:
         off_days = [int(d.strip()) for d in weekly_off_days.split(",") if d.strip()]
     except:
-        off_days = [5, 6]  # Default Friday, Saturday
+        off_days = [4, 5]  # Default Friday=4, Saturday=5
     
     # Update employee
     result = await db.hr_employees.update_one(
