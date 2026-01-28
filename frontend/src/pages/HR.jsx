@@ -1653,6 +1653,10 @@ const HR = () => {
             <AlertTriangle className="w-5 h-5 text-orange-500" />
             <span>{language === "ar" ? "الأعذار" : "Excuses"}</span>
           </TabsTrigger>
+          <TabsTrigger value="external-work" className="gap-2 px-4 py-3 text-base font-medium">
+            <Briefcase className="w-5 h-5" />
+            <span>{language === "ar" ? "عمل خارجي" : "External Work"}</span>
+          </TabsTrigger>
           <TabsTrigger value="extra-pay" className="gap-2 px-4 py-3 text-base font-medium">
             <Gift className="w-5 h-5 text-green-500" />
             <span>{language === "ar" ? "البدلات الإضافية" : "Extra Pay"}</span>
