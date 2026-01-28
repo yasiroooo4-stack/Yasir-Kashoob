@@ -7861,8 +7861,66 @@ async def export_attendance_excel(
     # Get official holidays
     official_holidays = await db.hr_official_holidays.find({
         "date": {"$gte": date_from, "$lte": date_to}
-    }, {"_id": 0, "date": 1}).to_list(100)
-    holiday_dates = set(h.get("date") for h in official_holidays)
+    }, {"_id": 0, "date": 1, "name": 1}).to_list(100)
+    holiday_dates = {h.get("date"): h.get("name", "عطلة رسمية") for h in official_holidays}
+    
+    # Get approved excuse requests for the period
+    approved_excuses = await db.hr_excuse_requests.find({
+        "status": "approved",
+        "$or": [
+            {"excuse_date": {"$gte": date_from, "$lte": date_to}},
+            {"excuse_date_to": {"$gte": date_from, "$lte": date_to}}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    # Build excuse lookup by employee_id and date
+    excuse_lookup = {}
+    for excuse in approved_excuses:
+        emp_id = excuse.get("employee_id")
+        start = excuse.get("excuse_date")
+        end = excuse.get("excuse_date_to") or start
+        exc_type = excuse.get("excuse_type", "عذر")
+        exc_reason = excuse.get("reason", "")
+        
+        # Add all dates in range
+        from datetime import datetime as dt_exc
+        start_dt = dt_exc.strptime(start, "%Y-%m-%d")
+        end_dt = dt_exc.strptime(end, "%Y-%m-%d")
+        curr = start_dt
+        while curr <= end_dt:
+            date_str = curr.strftime("%Y-%m-%d")
+            if emp_id not in excuse_lookup:
+                excuse_lookup[emp_id] = {}
+            excuse_lookup[emp_id][date_str] = {"type": exc_type, "reason": exc_reason}
+            curr += timedelta(days=1)
+    
+    # Get approved leave requests for the period
+    approved_leaves = await db.hr_leave_requests.find({
+        "status": "approved",
+        "$or": [
+            {"start_date": {"$gte": date_from, "$lte": date_to}},
+            {"end_date": {"$gte": date_from, "$lte": date_to}}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    # Build leave lookup by employee_id and date
+    leave_lookup = {}
+    for leave in approved_leaves:
+        emp_id = leave.get("employee_id")
+        start = leave.get("start_date")
+        end = leave.get("end_date")
+        leave_type = leave.get("leave_type", "إجازة")
+        
+        # Add all dates in range
+        start_dt = dt.strptime(start, "%Y-%m-%d")
+        end_dt = dt.strptime(end, "%Y-%m-%d")
+        curr = start_dt
+        while curr <= end_dt:
+            date_str = curr.strftime("%Y-%m-%d")
+            if emp_id not in leave_lookup:
+                leave_lookup[emp_id] = {}
+            leave_lookup[emp_id][date_str] = {"type": leave_type}
+            curr += timedelta(days=1)
     
     # Generate all working days in the period
     from datetime import datetime as dt, timedelta
