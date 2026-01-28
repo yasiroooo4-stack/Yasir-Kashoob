@@ -371,6 +371,7 @@ async def create_return(
     }
     
     await db.product_returns.insert_one(product_return)
+    product_return.pop("_id", None)  # Remove MongoDB _id before returning
     return product_return
 
 
