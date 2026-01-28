@@ -6044,7 +6044,7 @@ async def get_holidays_config(current_user: dict = Depends(get_current_user)):
     
     # Get default weekly off days (from system settings or default)
     settings = await db.system_settings.find_one({"key": "default_weekly_off_days"}, {"_id": 0})
-    default_weekly_off_days = settings.get("value", [5, 6]) if settings else [5, 6]  # Friday & Saturday
+    default_weekly_off_days = settings.get("value", [4, 5]) if settings else [4, 5]  # Friday=4 & Saturday=5
     
     return {
         "official_holidays": official_holidays,
