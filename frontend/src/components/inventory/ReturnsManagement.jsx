@@ -61,8 +61,8 @@ const ReturnsManagement = ({ t, language, warehouses = [], products = [] }) => {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [returnTypeFilter, setReturnTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [returnTypeFilter, setReturnTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [formData, setFormData] = useState({
     return_type: "customer", // customer or supplier
@@ -88,8 +88,8 @@ const ReturnsManagement = ({ t, language, warehouses = [], products = [] }) => {
       setLoading(true);
       let url = `${API}/inventory-advanced/returns`;
       const params = new URLSearchParams();
-      if (returnTypeFilter) params.append("return_type", returnTypeFilter);
-      if (statusFilter) params.append("status", statusFilter);
+      if (returnTypeFilter && returnTypeFilter !== "all") params.append("return_type", returnTypeFilter);
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
       if (params.toString()) url += `?${params.toString()}`;
       
       const response = await axios.get(url, { headers });
@@ -238,7 +238,7 @@ const ReturnsManagement = ({ t, language, warehouses = [], products = [] }) => {
                   <SelectValue placeholder={t("نوع المرتجع", "Return Type")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("الكل", "All")}</SelectItem>
+                  <SelectItem value="all">{t("الكل", "All")}</SelectItem>
                   <SelectItem value="customer">{t("من عميل", "From Customer")}</SelectItem>
                   <SelectItem value="supplier">{t("إلى مورد", "To Supplier")}</SelectItem>
                 </SelectContent>
@@ -250,7 +250,7 @@ const ReturnsManagement = ({ t, language, warehouses = [], products = [] }) => {
                   <SelectValue placeholder={t("الحالة", "Status")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("الكل", "All")}</SelectItem>
+                  <SelectItem value="all">{t("الكل", "All")}</SelectItem>
                   <SelectItem value="pending">{t("قيد الانتظار", "Pending")}</SelectItem>
                   <SelectItem value="completed">{t("مكتمل", "Completed")}</SelectItem>
                 </SelectContent>
