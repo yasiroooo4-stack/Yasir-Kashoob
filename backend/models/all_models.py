@@ -1078,6 +1078,32 @@ class ExcuseRequest(ExcuseRequestBase):
     attendance_updated: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ==================== EXTERNAL WORK REQUEST MODELS ====================
+
+class ExternalWorkRequestBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    employee_id: str
+    employee_name: str
+    work_date: str  # تاريخ البداية
+    work_date_to: Optional[str] = None  # تاريخ النهاية (اختياري)
+    work_type: str = "client_visit"  # نوع العمل: client_visit, conference, training, field_work, other
+    location: Optional[str] = None
+    purpose: str
+    notes: Optional[str] = None
+
+class ExternalWorkRequestCreate(ExternalWorkRequestBase):
+    pass
+
+class ExternalWorkRequest(ExternalWorkRequestBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: str = "pending"
+    approved_by: Optional[str] = None
+    approved_by_name: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    attendance_updated: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # ==================== EXPENSE REQUEST MODELS ====================
 
 class ExpenseRequestBase(BaseModel):
