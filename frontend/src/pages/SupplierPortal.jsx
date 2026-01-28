@@ -962,12 +962,31 @@ const SupplierPortal = () => {
                 type="number"
                 value={feedForm.amount_to_deduct}
                 readOnly
-                className="bg-muted font-bold text-lg"
+                className={`font-bold text-lg ${isAmountExceedsBalance() ? 'bg-red-50 border-red-500 text-red-700' : 'bg-muted'}`}
               />
               {feedForm.feed_type && feedForm.quantity && (
                 <p className="text-xs text-muted-foreground">
-                  {feedTypes.find(f => f.id === feedForm.feed_type)?.price} {txt("ريال", "OMR")} × {feedForm.quantity} {txt("كجم", "kg")} = {feedForm.amount_to_deduct} {txt("ريال", "OMR")}
+                  {(() => {
+                    const feed = feedTypes.find(f => f.id === feedForm.feed_type);
+                    if (feed) {
+                      const bags = (parseFloat(feedForm.quantity) / (feed.kg_per_unit || 1)).toFixed(2);
+                      return `${bags} ${txt("كيس", "bags")} × ${feed.price} ${txt("ريال", "OMR")} = ${feedForm.amount_to_deduct} ${txt("ريال", "OMR")}`;
+                    }
+                    return '';
+                  })()}
                 </p>
+              )}
+              {/* تنبيه تجاوز الرصيد */}
+              {isAmountExceedsBalance() && (
+                <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-md text-red-700">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium">
+                    {txt(
+                      `المبلغ المطلوب (${feedForm.amount_to_deduct} ريال) يتجاوز رصيدك الحالي (${supplier?.balance?.toFixed(2) || 0} ريال)`,
+                      `Amount (${feedForm.amount_to_deduct} OMR) exceeds your current balance (${supplier?.balance?.toFixed(2) || 0} OMR)`
+                    )}
+                  </span>
+                </div>
               )}
             </div>
             <div className="space-y-2">
