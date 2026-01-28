@@ -7867,7 +7867,7 @@ async def export_attendance_excel(
     else:
         # Group attendance by employee and add summary - REMOVE DUPLICATE DATES
         from collections import defaultdict
-        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [5, 6]})
+        employee_data = defaultdict(lambda: {"records": {}, "name": "", "code": "", "fingerprint": "", "weekly_off_days": [4, 5]})
         
         # If filtering by employee_id, add that employee even if no attendance records
         if employee_id:
