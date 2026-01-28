@@ -681,6 +681,57 @@ const HR = () => {
     }
   };
 
+  // إنشاء طلب عمل خارجي جديد
+  const handleCreateExternalWork = async () => {
+    if (!externalWorkForm.employee_id || !externalWorkForm.work_date || !externalWorkForm.purpose) {
+      toast.error(language === "ar" ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields");
+      return;
+    }
+    try {
+      await axios.post(`${API}/hr/external-work`, {
+        ...externalWorkForm,
+        work_date_to: externalWorkForm.work_date_to || externalWorkForm.work_date
+      });
+      toast.success(language === "ar" ? "تم إرسال طلب العمل الخارجي بنجاح" : "External work request submitted successfully");
+      setExternalWorkDialogOpen(false);
+      setExternalWorkForm({
+        employee_id: "",
+        employee_name: "",
+        work_date: "",
+        work_date_to: "",
+        work_type: "client_visit",
+        location: "",
+        purpose: "",
+        notes: ""
+      });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل في إرسال الطلب" : "Failed to submit request"));
+    }
+  };
+
+  // الموافقة على طلب عمل خارجي
+  const handleApproveExternalWork = async (requestId) => {
+    try {
+      await axios.put(`${API}/hr/external-work/${requestId}/approve`);
+      toast.success(language === "ar" ? "تم الموافقة على الطلب" : "Request approved");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
+  // رفض طلب عمل خارجي
+  const handleRejectExternalWork = async (requestId) => {
+    try {
+      await axios.put(`${API}/hr/external-work/${requestId}/reject`);
+      toast.success(language === "ar" ? "تم رفض الطلب" : "Request rejected");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
   const handleCreateAccount = async () => {
     if (!accountPassword) {
       toast.error(language === "ar" ? "أدخل كلمة المرور" : "Enter password");
