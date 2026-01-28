@@ -416,7 +416,16 @@ const ProjectInvoices = ({ project, contracts = [], onUpdate }) => {
                               : (language === "ar" ? "دفعة جزئية" : "Partial")}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">{invoice.description}</TableCell>
+                        <TableCell className="max-w-[300px]">
+                          <div className="group relative">
+                            <span className="block truncate">{invoice.description}</span>
+                            {invoice.description && invoice.description.length > 40 && (
+                              <div className="absolute z-50 invisible group-hover:visible bg-gray-900 text-white text-sm rounded-lg p-3 -top-2 left-0 transform -translate-y-full min-w-[300px] max-w-[400px] whitespace-normal shadow-lg">
+                                {invoice.description}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="font-medium">{invoice.amount?.toFixed(3)} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
                         <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                         <TableCell>
