@@ -2722,6 +2722,111 @@ const HR = () => {
           </Card>
         </TabsContent>
 
+        {/* External Work Tab */}
+        <TabsContent value="external-work">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-blue-500" />
+                  {language === "ar" ? "طلبات العمل الخارجي" : "External Work Requests"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" ? "إدارة طلبات العمل خارج الشركة" : "Manage out-of-office work requests"}
+                </CardDescription>
+              </div>
+              <Button onClick={() => setExternalWorkDialogOpen(true)} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                {language === "ar" ? "طلب عمل خارجي جديد" : "New External Work"}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                      <TableHead>{language === "ar" ? "التاريخ (من - إلى)" : "Date (From - To)"}</TableHead>
+                      <TableHead>{language === "ar" ? "نوع العمل" : "Work Type"}</TableHead>
+                      <TableHead>{language === "ar" ? "الموقع" : "Location"}</TableHead>
+                      <TableHead>{language === "ar" ? "الغرض" : "Purpose"}</TableHead>
+                      <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {externalWorkRequests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          {language === "ar" ? "لا توجد طلبات عمل خارجي" : "No external work requests"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      externalWorkRequests.map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">{request.employee_name}</TableCell>
+                          <TableCell>
+                            {new Date(request.work_date).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}
+                            {request.work_date_to && request.work_date_to !== request.work_date && (
+                              <span> → {new Date(request.work_date_to).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {request.work_type === "client_visit" ? (language === "ar" ? "زيارة عميل" : "Client Visit") :
+                               request.work_type === "meeting" ? (language === "ar" ? "اجتماع" : "Meeting") :
+                               request.work_type === "training" ? (language === "ar" ? "تدريب" : "Training") :
+                               request.work_type === "conference" ? (language === "ar" ? "مؤتمر" : "Conference") :
+                               request.work_type === "fieldwork" ? (language === "ar" ? "عمل ميداني" : "Fieldwork") :
+                               (language === "ar" ? "أخرى" : "Other")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{request.location || "-"}</TableCell>
+                          <TableCell className="max-w-[200px]">
+                            <ExpandableText text={request.purpose} maxLength={30} />
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              request.status === "approved" ? "default" :
+                              request.status === "rejected" ? "destructive" : "secondary"
+                            } className={request.status === "approved" ? "bg-green-600" : ""}>
+                              {request.status === "approved" ? (language === "ar" ? "موافق" : "Approved") :
+                               request.status === "rejected" ? (language === "ar" ? "مرفوض" : "Rejected") :
+                               (language === "ar" ? "قيد الانتظار" : "Pending")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {request.status === "pending" && (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-green-600"
+                                  onClick={() => handleApproveExternalWork(request.id)}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-600"
+                                  onClick={() => handleRejectExternalWork(request.id)}
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Extra Pay Approvals Tab */}
         <TabsContent value="extra-pay">
           <ExtraPayApprovals embedded={true} />
