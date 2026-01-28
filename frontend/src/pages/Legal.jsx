@@ -19,6 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
+import ExpandableText from "../components/ui/ExpandableText";
 import { FileText, Scale, MessageSquare, FolderOpen, Plus, Pencil, Eye, AlertTriangle } from "lucide-react";
 
 const Legal = () => {
@@ -725,7 +726,9 @@ const Legal = () => {
                         <TableCell>{waiver.to_supplier_name}</TableCell>
                         <TableCell>{waiver.quota_amount} {language === "ar" ? "لتر" : "L"}</TableCell>
                         <TableCell>{waiver.waiver_date?.split('T')[0]}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{waiver.reason}</TableCell>
+                        <TableCell className="max-w-[150px]">
+                          <ExpandableText text={waiver.reason} maxLength={30} />
+                        </TableCell>
                         <TableCell>
                           <Badge className={getStatusBadge(waiver.status)}>{waiver.status}</Badge>
                         </TableCell>
