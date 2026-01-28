@@ -34,6 +34,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Badge } from "../components/ui/badge";
+import ExpandableText from "../components/ui/ExpandableText";
 import { Plus, Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, Banknote, Building, Users, FileText, Download, Check, X, Clock } from "lucide-react";
 
 const Finance = () => {
@@ -482,8 +483,8 @@ const Finance = () => {
                       <TableCell>
                         {getStatusBadge(payment.status || "pending")}
                       </TableCell>
-                      <TableCell className="text-muted-foreground max-w-[150px] truncate">
-                        {payment.notes || "-"}
+                      <TableCell className="text-muted-foreground max-w-[150px]">
+                        <ExpandableText text={payment.notes || "-"} maxLength={30} />
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
