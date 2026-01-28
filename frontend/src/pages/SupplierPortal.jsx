@@ -924,7 +924,7 @@ const SupplierPortal = () => {
                 <SelectContent>
                   {feedTypes.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
-                      {f.name} - {f.price} {txt("ريال/كجم", "OMR/kg")}
+                      {f.name} - {f.price} {txt("ريال/كيس", "OMR/bag")} ({f.kg_per_unit} {txt("كجم", "kg")})
                     </SelectItem>
                   ))}
                 </SelectContent>
