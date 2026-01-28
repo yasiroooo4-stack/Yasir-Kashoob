@@ -8315,22 +8315,24 @@ async def export_attendance_excel(
                     thursday_date = (date_obj - timedelta(days=2)).strftime("%Y-%m-%d")
                     sunday_date = (date_obj + timedelta(days=1)).strftime("%Y-%m-%d")
                 
-                # Check if Thursday is absent AND Sunday is absent (both within the report period)
-                thursday_is_absent = thursday_date in absent_dates_set if thursday_date and thursday_date in all_dates else False
-                sunday_is_absent = sunday_date in absent_dates_set if sunday_date and sunday_date in all_dates else False
+                # NEW RULE: Check if employee was PHYSICALLY PRESENT on Thursday and Sunday
+                # If NOT present on BOTH days (regardless of reason - leave, absent, excuse), weekend is ABSENT
+                thursday_is_present = thursday_date in present_dates if thursday_date else False
+                sunday_is_present = sunday_date in present_dates if sunday_date else False
                 
-                # Also check if Thursday/Sunday are not holidays, leaves, excuses, etc.
-                thursday_is_working_day = (thursday_date not in holiday_dates and 
-                                          thursday_date not in emp_leaves and 
-                                          thursday_date not in emp_excuses and 
-                                          thursday_date not in emp_external_work) if thursday_date else True
-                sunday_is_working_day = (sunday_date not in holiday_dates and 
-                                        sunday_date not in emp_leaves and 
-                                        sunday_date not in emp_excuses and 
-                                        sunday_date not in emp_external_work) if sunday_date else True
+                # Check if Thursday/Sunday are official holidays (exception - don't count as absence trigger)
+                thursday_is_holiday = thursday_date in holiday_dates if thursday_date else False
+                sunday_is_holiday = sunday_date in holiday_dates if sunday_date else False
                 
-                # If both Thursday and Sunday are absent (and they are normal working days), weekend is absent
-                if thursday_is_absent and sunday_is_absent and thursday_is_working_day and sunday_is_working_day:
+                # If BOTH Thursday and Sunday have NO actual attendance AND neither is a holiday, weekend is absent
+                # Exception: If Thursday or Sunday is a holiday, we don't use it as absence trigger
+                if not thursday_is_present and not sunday_is_present and not thursday_is_holiday and not sunday_is_holiday:
+                    absent_dates.append(date_str)
+                elif thursday_is_holiday and not sunday_is_present and not sunday_is_holiday:
+                    # Thursday is holiday, but Sunday is not present and not holiday -> absent
+                    absent_dates.append(date_str)
+                elif sunday_is_holiday and not thursday_is_present and not thursday_is_holiday:
+                    # Sunday is holiday, but Thursday is not present and not holiday -> absent
                     absent_dates.append(date_str)
                 else:
                     weekly_off_dates.append(date_str)
