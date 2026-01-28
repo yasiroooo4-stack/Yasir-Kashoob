@@ -1545,6 +1545,14 @@ async def supplier_portal_login(login_data: SupplierLoginRequest):
     }
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
     
+    # تحويل نوع الحليب للعربية
+    milk_type_ar = {
+        "cow": "حليب بقر",
+        "camel": "حليب إبل",
+        "goat": "حليب ماعز",
+        "sheep": "حليب غنم"
+    }.get(supplier.get("milk_type"), supplier.get("milk_type"))
+    
     return {
         "access_token": token,
         "supplier": {
@@ -1555,6 +1563,8 @@ async def supplier_portal_login(login_data: SupplierLoginRequest):
             "balance": supplier.get("balance", 0),
             "total_supplied": supplier.get("total_supplied", 0),
             "milk_type": supplier.get("milk_type"),
+            "milk_type_ar": milk_type_ar,
+            "center_id": supplier.get("center_id"),
             "center_name": supplier.get("center_name"),
             "has_custom_password": password_changed or stored_password_hash is not None,
             "password_changed": password_changed
