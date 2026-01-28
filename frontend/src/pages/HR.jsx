@@ -113,6 +113,20 @@ const HR = () => {
     notes: ""
   });
   
+  // External Work states
+  const [externalWorkRequests, setExternalWorkRequests] = useState([]);
+  const [externalWorkDialogOpen, setExternalWorkDialogOpen] = useState(false);
+  const [externalWorkForm, setExternalWorkForm] = useState({
+    employee_id: "",
+    employee_name: "",
+    work_date: "",
+    work_date_to: "",
+    work_type: "client_visit",
+    location: "",
+    purpose: "",
+    notes: ""
+  });
+  
   // New HR features states
   const [shifts, setShifts] = useState([]);
   const [employeeShifts, setEmployeeShifts] = useState([]);
