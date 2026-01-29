@@ -12087,6 +12087,514 @@ async def get_leave_balance_logs(
     logs = await db.leave_balance_logs.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     return logs
 
+# ==================== ADVANCED INVENTORY MODULE (المخزون المتقدم) ====================
+
+# ----- تتبع الدفعات (Batch Tracking) -----
+
+@api_router.get("/inventory-advanced/batches")
+async def get_batches(
+    warehouse_id: Optional[str] = None,
+    product_id: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة الدفعات"""
+    query = {}
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    if product_id:
+        query["product_id"] = product_id
+    if status:
+        query["status"] = status
+    
+    batches = await db.product_batches.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return batches
+
+@api_router.get("/inventory-advanced/batches/expiring")
+async def get_expiring_batches(
+    days: int = 30,
+    warehouse_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب الدفعات قريبة انتهاء الصلاحية"""
+    from datetime import datetime as dt_batch, timedelta as td_batch
+    future_date = (dt_batch.now() + td_batch(days=days)).strftime("%Y-%m-%d")
+    today = dt_batch.now().strftime("%Y-%m-%d")
+    
+    query = {
+        "expiry_date": {"$gte": today, "$lte": future_date},
+        "status": "active"
+    }
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    batches = await db.product_batches.find(query, {"_id": 0}).sort("expiry_date", 1).to_list(100)
+    return batches
+
+@api_router.post("/inventory-advanced/batches")
+async def create_batch(batch_data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء دفعة جديدة"""
+    from models.all_models import ProductBatch
+    
+    # Generate batch number
+    count = await db.product_batches.count_documents({})
+    batch_number = f"BAT-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
+    
+    batch = ProductBatch(
+        batch_number=batch_number,
+        product_id=batch_data.get("product_id", ""),
+        product_name=batch_data.get("product_name", ""),
+        product_code=batch_data.get("product_code", ""),
+        warehouse_id=batch_data.get("warehouse_id", ""),
+        warehouse_name=batch_data.get("warehouse_name", ""),
+        quantity=float(batch_data.get("quantity", 0)),
+        initial_quantity=float(batch_data.get("quantity", 0)),
+        unit_cost=float(batch_data.get("unit_cost", 0)),
+        production_date=batch_data.get("production_date"),
+        expiry_date=batch_data.get("expiry_date"),
+        supplier_name=batch_data.get("supplier_name"),
+        supplier_batch_number=batch_data.get("supplier_batch_number"),
+    )
+    
+    await db.product_batches.insert_one(batch.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_batch",
+        entity_type="batch",
+        entity_id=batch.id,
+        entity_name=batch_number,
+        details=f"إنشاء دفعة: {batch_number} - {batch_data.get('product_name', '')} - الكمية: {batch_data.get('quantity', 0)}"
+    )
+    
+    return batch.model_dump()
+
+@api_router.put("/inventory-advanced/batches/{batch_id}")
+async def update_batch(batch_id: str, batch_data: dict, current_user: dict = Depends(get_current_user)):
+    """تحديث دفعة"""
+    batch_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.product_batches.update_one(
+        {"id": batch_id},
+        {"$set": batch_data}
+    )
+    
+    batch = await db.product_batches.find_one({"id": batch_id}, {"_id": 0})
+    return batch
+
+@api_router.delete("/inventory-advanced/batches/{batch_id}")
+async def delete_batch(batch_id: str, current_user: dict = Depends(get_current_user)):
+    """حذف دفعة"""
+    await db.product_batches.delete_one({"id": batch_id})
+    return {"message": "تم حذف الدفعة بنجاح"}
+
+# ----- الجرد الدوري (Cycle Count) -----
+
+@api_router.get("/inventory-advanced/cycle-counts")
+async def get_cycle_counts(
+    warehouse_id: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة الجرد الدوري"""
+    query = {}
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    if status:
+        query["status"] = status
+    
+    counts = await db.cycle_counts.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return counts
+
+@api_router.post("/inventory-advanced/cycle-counts")
+async def create_cycle_count(count_data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء جرد دوري جديد"""
+    from models.all_models import CycleCount
+    
+    # Generate count number
+    count_num = await db.cycle_counts.count_documents({})
+    count_number = f"CC-{datetime.now().strftime('%Y%m')}-{count_num + 1:04d}"
+    
+    cycle_count = CycleCount(
+        count_number=count_number,
+        warehouse_id=count_data.get("warehouse_id", ""),
+        warehouse_name=count_data.get("warehouse_name", ""),
+        count_type=count_data.get("count_type", "full"),
+        scheduled_date=count_data.get("scheduled_date", datetime.now().strftime("%Y-%m-%d")),
+        notes=count_data.get("notes"),
+        created_by=current_user["id"],
+    )
+    
+    await db.cycle_counts.insert_one(cycle_count.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_cycle_count",
+        entity_type="cycle_count",
+        entity_id=cycle_count.id,
+        entity_name=count_number,
+        details=f"إنشاء جرد دوري: {count_number} - {count_data.get('warehouse_name', '')}"
+    )
+    
+    return cycle_count.model_dump()
+
+@api_router.get("/inventory-advanced/cycle-counts/{count_id}")
+async def get_cycle_count(count_id: str, current_user: dict = Depends(get_current_user)):
+    """جلب تفاصيل جرد"""
+    count = await db.cycle_counts.find_one({"id": count_id}, {"_id": 0})
+    if not count:
+        raise HTTPException(status_code=404, detail="الجرد غير موجود")
+    
+    # Get items
+    items = await db.cycle_count_items.find({"cycle_count_id": count_id}, {"_id": 0}).to_list(1000)
+    count["items"] = items
+    
+    return count
+
+@api_router.put("/inventory-advanced/cycle-counts/{count_id}/start")
+async def start_cycle_count(count_id: str, current_user: dict = Depends(get_current_user)):
+    """بدء الجرد"""
+    await db.cycle_counts.update_one(
+        {"id": count_id},
+        {"$set": {
+            "status": "in_progress",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "counted_by": current_user["id"],
+            "counted_by_name": current_user["full_name"]
+        }}
+    )
+    
+    count = await db.cycle_counts.find_one({"id": count_id}, {"_id": 0})
+    return count
+
+@api_router.put("/inventory-advanced/cycle-counts/{count_id}/complete")
+async def complete_cycle_count(count_id: str, current_user: dict = Depends(get_current_user)):
+    """إكمال الجرد"""
+    # Calculate totals
+    items = await db.cycle_count_items.find({"cycle_count_id": count_id}, {"_id": 0}).to_list(1000)
+    
+    total_items = len(items)
+    items_counted = sum(1 for i in items if i.get("counted_quantity") is not None)
+    variance_count = sum(1 for i in items if i.get("variance", 0) != 0)
+    variance_value = sum(i.get("variance_value", 0) or 0 for i in items)
+    
+    await db.cycle_counts.update_one(
+        {"id": count_id},
+        {"$set": {
+            "status": "completed",
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "total_items": total_items,
+            "items_counted": items_counted,
+            "variance_count": variance_count,
+            "variance_value": variance_value
+        }}
+    )
+    
+    count = await db.cycle_counts.find_one({"id": count_id}, {"_id": 0})
+    return count
+
+@api_router.put("/inventory-advanced/cycle-counts/{count_id}/approve")
+async def approve_cycle_count(count_id: str, current_user: dict = Depends(get_current_user)):
+    """الموافقة على الجرد"""
+    await db.cycle_counts.update_one(
+        {"id": count_id},
+        {"$set": {
+            "status": "approved",
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"]
+        }}
+    )
+    
+    count = await db.cycle_counts.find_one({"id": count_id}, {"_id": 0})
+    return count
+
+@api_router.post("/inventory-advanced/cycle-counts/{count_id}/items")
+async def add_cycle_count_item(count_id: str, item_data: dict, current_user: dict = Depends(get_current_user)):
+    """إضافة صنف للجرد"""
+    from models.all_models import CycleCountItem
+    
+    item = CycleCountItem(
+        cycle_count_id=count_id,
+        product_id=item_data.get("product_id", ""),
+        product_name=item_data.get("product_name", ""),
+        product_code=item_data.get("product_code", ""),
+        batch_number=item_data.get("batch_number"),
+        system_quantity=float(item_data.get("system_quantity", 0)),
+        unit_cost=float(item_data.get("unit_cost", 0)),
+    )
+    
+    await db.cycle_count_items.insert_one(item.model_dump())
+    return item.model_dump()
+
+@api_router.put("/inventory-advanced/cycle-counts/items/{item_id}")
+async def update_cycle_count_item(item_id: str, item_data: dict, current_user: dict = Depends(get_current_user)):
+    """تحديث صنف الجرد (إدخال الكمية الفعلية)"""
+    counted_qty = item_data.get("counted_quantity")
+    
+    # Get current item
+    item = await db.cycle_count_items.find_one({"id": item_id}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="الصنف غير موجود")
+    
+    system_qty = item.get("system_quantity", 0)
+    unit_cost = item.get("unit_cost", 0)
+    
+    variance = counted_qty - system_qty if counted_qty is not None else None
+    variance_value = variance * unit_cost if variance is not None else None
+    
+    await db.cycle_count_items.update_one(
+        {"id": item_id},
+        {"$set": {
+            "counted_quantity": counted_qty,
+            "variance": variance,
+            "variance_value": variance_value,
+            "status": "counted",
+            "counted_at": datetime.now(timezone.utc).isoformat(),
+            "notes": item_data.get("notes")
+        }}
+    )
+    
+    updated_item = await db.cycle_count_items.find_one({"id": item_id}, {"_id": 0})
+    return updated_item
+
+# ----- إدارة المرتجعات (Returns Management) -----
+
+@api_router.get("/inventory-advanced/returns")
+async def get_returns(
+    return_type: Optional[str] = None,
+    status: Optional[str] = None,
+    warehouse_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب قائمة المرتجعات"""
+    query = {}
+    if return_type:
+        query["return_type"] = return_type
+    if status:
+        query["status"] = status
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    returns = await db.product_returns.find(query, {"_id": 0}).sort("return_date", -1).to_list(500)
+    return returns
+
+@api_router.post("/inventory-advanced/returns")
+async def create_return(return_data: dict, current_user: dict = Depends(get_current_user)):
+    """إنشاء مرتجع جديد"""
+    from models.all_models import ProductReturn
+    
+    # Generate return number
+    count = await db.product_returns.count_documents({})
+    return_type_prefix = "SR" if return_data.get("return_type") == "supplier" else "CR"
+    return_number = f"{return_type_prefix}-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
+    
+    quantity = float(return_data.get("quantity", 0))
+    unit_price = float(return_data.get("unit_price", 0))
+    
+    product_return = ProductReturn(
+        return_number=return_number,
+        return_type=return_data.get("return_type", "customer"),
+        party_type=return_data.get("party_type", "customer"),
+        party_id=return_data.get("party_id", ""),
+        party_name=return_data.get("party_name", ""),
+        product_id=return_data.get("product_id", ""),
+        product_name=return_data.get("product_name", ""),
+        product_code=return_data.get("product_code", ""),
+        batch_number=return_data.get("batch_number"),
+        quantity=quantity,
+        unit_price=unit_price,
+        total_value=quantity * unit_price,
+        return_reason=return_data.get("return_reason", "other"),
+        reason_notes=return_data.get("reason_notes"),
+        warehouse_id=return_data.get("warehouse_id", ""),
+        warehouse_name=return_data.get("warehouse_name", ""),
+        reference_type=return_data.get("reference_type"),
+        reference_id=return_data.get("reference_id"),
+        reference_number=return_data.get("reference_number"),
+        created_by=current_user["id"],
+        created_by_name=current_user["full_name"],
+    )
+    
+    await db.product_returns.insert_one(product_return.model_dump())
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="create_return",
+        entity_type="product_return",
+        entity_id=product_return.id,
+        entity_name=return_number,
+        details=f"إنشاء مرتجع: {return_number} - {return_data.get('product_name', '')} - الكمية: {quantity}"
+    )
+    
+    return product_return.model_dump()
+
+@api_router.put("/inventory-advanced/returns/{return_id}/approve")
+async def approve_return(return_id: str, current_user: dict = Depends(get_current_user)):
+    """الموافقة على المرتجع"""
+    await db.product_returns.update_one(
+        {"id": return_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return_doc = await db.product_returns.find_one({"id": return_id}, {"_id": 0})
+    return return_doc
+
+@api_router.put("/inventory-advanced/returns/{return_id}/reject")
+async def reject_return(return_id: str, reason: str = "", current_user: dict = Depends(get_current_user)):
+    """رفض المرتجع"""
+    await db.product_returns.update_one(
+        {"id": return_id},
+        {"$set": {
+            "status": "rejected",
+            "rejection_reason": reason,
+            "approved_by": current_user["id"],
+            "approved_by_name": current_user["full_name"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return_doc = await db.product_returns.find_one({"id": return_id}, {"_id": 0})
+    return return_doc
+
+@api_router.put("/inventory-advanced/returns/{return_id}/complete")
+async def complete_return(return_id: str, current_user: dict = Depends(get_current_user)):
+    """إكمال المرتجع (تنفيذه)"""
+    return_doc = await db.product_returns.find_one({"id": return_id}, {"_id": 0})
+    if not return_doc:
+        raise HTTPException(status_code=404, detail="المرتجع غير موجود")
+    
+    if return_doc.get("status") != "approved":
+        raise HTTPException(status_code=400, detail="يجب الموافقة على المرتجع أولاً")
+    
+    await db.product_returns.update_one(
+        {"id": return_id},
+        {"$set": {
+            "status": "completed",
+            "completed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return_doc = await db.product_returns.find_one({"id": return_id}, {"_id": 0})
+    return return_doc
+
+@api_router.delete("/inventory-advanced/returns/{return_id}")
+async def delete_return(return_id: str, current_user: dict = Depends(get_current_user)):
+    """حذف مرتجع"""
+    await db.product_returns.delete_one({"id": return_id})
+    return {"message": "تم حذف المرتجع بنجاح"}
+
+# ----- تقييم المخزون (Inventory Valuation) -----
+
+@api_router.get("/inventory-advanced/valuation")
+async def get_inventory_valuation(
+    warehouse_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب تقييم المخزون"""
+    query = {}
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    # Get all active batches
+    batches = await db.product_batches.find(
+        {"status": "active", **query},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Group by product
+    from collections import defaultdict
+    product_values = defaultdict(lambda: {"quantity": 0, "value": 0, "batches": []})
+    
+    for batch in batches:
+        product_id = batch.get("product_id", "")
+        product_name = batch.get("product_name", "")
+        quantity = batch.get("quantity", 0)
+        unit_cost = batch.get("unit_cost", 0)
+        value = quantity * unit_cost
+        
+        product_values[product_id]["product_name"] = product_name
+        product_values[product_id]["product_id"] = product_id
+        product_values[product_id]["quantity"] += quantity
+        product_values[product_id]["value"] += value
+        product_values[product_id]["batches"].append({
+            "batch_number": batch.get("batch_number"),
+            "quantity": quantity,
+            "unit_cost": unit_cost,
+            "value": value,
+            "expiry_date": batch.get("expiry_date")
+        })
+    
+    # Calculate summary
+    total_value = sum(p["value"] for p in product_values.values())
+    total_quantity = sum(p["quantity"] for p in product_values.values())
+    
+    return {
+        "products": list(product_values.values()),
+        "summary": {
+            "total_products": len(product_values),
+            "total_quantity": total_quantity,
+            "total_value": total_value
+        }
+    }
+
+@api_router.get("/inventory-advanced/stats")
+async def get_inventory_stats(current_user: dict = Depends(get_current_user)):
+    """إحصائيات المخزون"""
+    from datetime import datetime as dt_stats, timedelta as td_stats
+    
+    today = dt_stats.now().strftime("%Y-%m-%d")
+    week_later = (dt_stats.now() + td_stats(days=7)).strftime("%Y-%m-%d")
+    month_later = (dt_stats.now() + td_stats(days=30)).strftime("%Y-%m-%d")
+    
+    # Total batches
+    total_batches = await db.product_batches.count_documents({"status": "active"})
+    
+    # Expiring this week
+    expiring_week = await db.product_batches.count_documents({
+        "status": "active",
+        "expiry_date": {"$gte": today, "$lte": week_later}
+    })
+    
+    # Expiring this month
+    expiring_month = await db.product_batches.count_documents({
+        "status": "active",
+        "expiry_date": {"$gte": today, "$lte": month_later}
+    })
+    
+    # Low stock (quantity < 10)
+    low_stock = await db.product_batches.count_documents({
+        "status": "active",
+        "quantity": {"$lt": 10, "$gt": 0}
+    })
+    
+    # Pending cycle counts
+    pending_counts = await db.cycle_counts.count_documents({
+        "status": {"$in": ["draft", "in_progress"]}
+    })
+    
+    # Pending returns
+    pending_returns = await db.product_returns.count_documents({
+        "status": "pending"
+    })
+    
+    return {
+        "total_batches": total_batches,
+        "expiring_this_week": expiring_week,
+        "expiring_this_month": expiring_month,
+        "low_stock_items": low_stock,
+        "pending_cycle_counts": pending_counts,
+        "pending_returns": pending_returns
+    }
+
 # ==================== MARKETING MODULE ROUTES (قسم التسويق) ====================
 
 # Marketing Campaigns
