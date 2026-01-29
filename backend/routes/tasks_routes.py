@@ -271,6 +271,71 @@ async def export_tasks(
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=tasks_export.csv"}
         )
+    elif format == "excel":
+        import io
+        import pandas as pd
+        from fastapi.responses import StreamingResponse
+        
+        # Convert to DataFrame
+        if tasks:
+            # Select and rename columns for Arabic headers
+            columns_map = {
+                "task_number": "رقم المهمة",
+                "title": "العنوان",
+                "description": "الوصف",
+                "task_type": "نوع المهمة",
+                "assigned_to_name": "مكلف بها",
+                "assigned_by_name": "منشئ المهمة",
+                "priority": "الأولوية",
+                "status": "الحالة",
+                "due_date": "تاريخ الإنجاز",
+                "created_at": "تاريخ الإنشاء",
+                "completed_at": "تاريخ الإكمال",
+                "is_delayed": "متأخرة",
+                "delay_days": "أيام التأخير",
+                "completion_notes": "ملاحظات الإنجاز",
+                "department": "القسم",
+                "center_name": "المركز"
+            }
+            
+            # Filter only existing columns
+            available_columns = {k: v for k, v in columns_map.items() if k in tasks[0]}
+            
+            df = pd.DataFrame(tasks)
+            df = df[list(available_columns.keys())]
+            df.rename(columns=available_columns, inplace=True)
+            
+            # Status translation
+            status_map = {
+                "pending": "معلقة",
+                "in_progress": "قيد التنفيذ",
+                "completed": "مكتملة",
+                "delayed": "متأخرة",
+                "cancelled": "ملغاة"
+            }
+            df["الحالة"] = df["الحالة"].map(lambda x: status_map.get(x, x))
+            
+            # Priority translation
+            priority_map = {
+                "low": "منخفضة",
+                "medium": "متوسطة",
+                "high": "عالية",
+                "urgent": "عاجلة"
+            }
+            df["الأولوية"] = df["الأولوية"].map(lambda x: priority_map.get(x, x))
+        else:
+            df = pd.DataFrame()
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='المهام')
+        
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=tasks_export_{datetime.now().strftime('%Y%m%d')}.xlsx"}
+        )
     
     return tasks
 
