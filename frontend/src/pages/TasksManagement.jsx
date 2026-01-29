@@ -624,16 +624,41 @@ export default function TasksManagement() {
             {tr.reports}
           </Button>
           
-          {/* Export Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleExport("csv")}
-            data-testid="export-btn"
-          >
-            <Download className="h-4 w-4 ml-1" />
-            {tr.export}
-          </Button>
+          {/* Export Button - مع قائمة خيارات */}
+          <div className="relative group">
+            <Button
+              variant="outline"
+              size="sm"
+              data-testid="export-btn"
+              className="flex items-center gap-1"
+            >
+              <Download className="h-4 w-4 ml-1" />
+              {tr.export}
+            </Button>
+            <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[120px]">
+              <button 
+                className="w-full px-3 py-2 text-sm text-right hover:bg-gray-100 flex items-center gap-2"
+                onClick={() => handleExport("excel")}
+              >
+                <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                Excel
+              </button>
+              <button 
+                className="w-full px-3 py-2 text-sm text-right hover:bg-gray-100 flex items-center gap-2"
+                onClick={() => handleExport("csv")}
+              >
+                <FileText className="h-4 w-4 text-blue-600" />
+                CSV
+              </button>
+              <button 
+                className="w-full px-3 py-2 text-sm text-right hover:bg-gray-100 flex items-center gap-2"
+                onClick={() => handleExport("json")}
+              >
+                <FileText className="h-4 w-4 text-yellow-600" />
+                JSON
+              </button>
+            </div>
+          </div>
           
           {/* Notifications Button */}
           <Button
