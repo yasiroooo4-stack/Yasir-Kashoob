@@ -97,7 +97,7 @@ const BatchTracking = ({ t, language, warehouses = [], products = [] }) => {
         `${API}/inventory-advanced/batches/expiring?days=${expiryDays}`,
         { headers }
       );
-      setExpiringBatches(response.data.expiring_soon || []);
+      setExpiringBatches(response.data || []);
     } catch (error) {
       console.error("Error fetching expiring batches:", error);
     }
