@@ -12595,6 +12595,37 @@ async def get_inventory_stats(current_user: dict = Depends(get_current_user)):
         "pending_returns": pending_returns
     }
 
+@api_router.get("/inventory-advanced/turnover")
+async def get_inventory_turnover(
+    months: int = 12,
+    warehouse_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """حساب معدل دوران المخزون"""
+    # This is a simplified calculation
+    # Turnover = Cost of Goods Sold / Average Inventory
+    
+    # Get average inventory value
+    query = {"status": "active"}
+    if warehouse_id:
+        query["warehouse_id"] = warehouse_id
+    
+    batches = await db.product_batches.find(query, {"_id": 0}).to_list(10000)
+    
+    total_inventory_value = sum(b.get("quantity", 0) * b.get("unit_cost", 0) for b in batches)
+    total_inventory_quantity = sum(b.get("quantity", 0) for b in batches)
+    
+    # For now, return basic metrics
+    return {
+        "period_months": months,
+        "total_inventory_value": total_inventory_value,
+        "total_inventory_quantity": total_inventory_quantity,
+        "average_inventory_value": total_inventory_value,
+        "turnover_rate": 0,  # Would need sales data to calculate
+        "days_of_inventory": 0,
+        "note": "Requires sales data for full calculation"
+    }
+
 # ==================== MARKETING MODULE ROUTES (قسم التسويق) ====================
 
 # Marketing Campaigns
