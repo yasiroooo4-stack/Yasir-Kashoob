@@ -355,6 +355,15 @@ export default function TasksManagement() {
         document.body.appendChild(a);
         a.click();
         a.remove();
+      } else if (format === "excel") {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `tasks_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       } else {
         const data = await response.json();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
