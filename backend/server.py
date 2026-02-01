@@ -5070,7 +5070,9 @@ async def bulk_sync_attendance(
                 "status": record.get("status", "present"),
                 "source": "fingerprint",
                 "device_ip": record.get("device_ip", ""),
-                "fingerprint_id": str(record.get("fingerprint_id", "")),
+                # استخدام البصمة الأساسية للموظف بدلاً من البصمة المستخدمة
+                "fingerprint_id": str(employee.get("fingerprint_id", record.get("fingerprint_id", ""))),
+                "original_fingerprint_id": str(record.get("fingerprint_id", "")) if str(record.get("fingerprint_id", "")) != str(employee.get("fingerprint_id", "")) else None,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             
