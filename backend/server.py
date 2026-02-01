@@ -5282,6 +5282,9 @@ async def sync_single_attendance(
                 "status": record.get("status", "present"),
                 "source": "fingerprint",
                 "device_ip": record.get("device_ip", ""),
+                # استخدام البصمة الأساسية للموظف
+                "fingerprint_id": str(employee.get("fingerprint_id", record.get("fingerprint_id", ""))),
+                "original_fingerprint_id": str(record.get("fingerprint_id", "")) if str(record.get("fingerprint_id", "")) != str(employee.get("fingerprint_id", "")) else None,
                 "locations": [new_location],
                 "multi_location": False,
                 "created_at": datetime.now(timezone.utc).isoformat()
