@@ -294,6 +294,7 @@ const HR = () => {
     manager_id: "",
     manager_name: "",
     username: "",
+    signature_url: null,  // رابط التوقيع الإلكتروني
   });
 
   // Work locations list
