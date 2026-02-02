@@ -819,7 +819,12 @@ const Operations = () => {
                 <Card className="bg-amber-50 border-amber-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <Fuel className="w-8 h-8 text-amber-600" />
+                      {/* 🐪 Camel Icon - SVG */}
+                      <div className="w-10 h-10 flex items-center justify-center text-amber-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+                          <path d="M22,10c0-1.1-0.9-2-2-2h-1V6c0-1.7-1.3-3-3-3c-0.8,0-1.5,0.3-2,0.8V3c0-0.6-0.4-1-1-1s-1,0.4-1,1v1H8 C6.3,4,5,5.3,5,7v1H4c-1.1,0-2,0.9-2,2v2c0,1.1,0.9,2,2,2h1v2c0,1.7,1.3,3,3,3h1v2c0,0.6,0.4,1,1,1s1-0.4,1-1v-2h2v2 c0,0.6,0.4,1,1,1s1-0.4,1-1v-2h1c1.7,0,3-1.3,3-3v-2h1c1.1,0,2-0.9,2-2V10z M18,13c0,0.6-0.4,1-1,1H7c-0.6,0-1-0.4-1-1V9 c0-0.6,0.4-1,1-1h10c0.6,0,1,0.4,1,1V13z M9,11c0.6,0,1-0.4,1-1s-0.4-1-1-1s-1,0.4-1,1S8.4,11,9,11z"/>
+                        </svg>
+                      </div>
                       <div>
                         <p className="text-2xl font-bold text-amber-700">{driverTasksSummary.camel_milk_tasks || 0}</p>
                         <p className="text-sm text-amber-600">{language === "ar" ? "حليب إبل" : "Camel Milk"}</p>
@@ -830,7 +835,12 @@ const Operations = () => {
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <Fuel className="w-8 h-8 text-blue-600" />
+                      {/* 🐄 Cow Icon - SVG */}
+                      <div className="w-10 h-10 flex items-center justify-center text-blue-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+                          <path d="M12,2C9.2,2,7,4.2,7,7v1H5c-1.7,0-3,1.3-3,3v3c0,1.1,0.9,2,2,2h1v1c0,1.7,1.3,3,3,3v2c0,0.6,0.4,1,1,1s1-0.4,1-1v-2h4v2 c0,0.6,0.4,1,1,1s1-0.4,1-1v-2c1.7,0,3-1.3,3-3v-1h1c1.1,0,2-0.9,2-2v-3c0-1.7-1.3-3-3-3h-2V7C17,4.2,14.8,2,12,2z M10,9 c0.6,0,1,0.4,1,1s-0.4,1-1,1s-1-0.4-1-1S9.4,9,10,9z M14,9c0.6,0,1,0.4,1,1s-0.4,1-1,1s-1-0.4-1-1S13.4,9,14,9z M8,14h8 c0,1.1-0.9,2-2,2h-4C8.9,16,8,15.1,8,14z"/>
+                        </svg>
+                      </div>
                       <div>
                         <p className="text-2xl font-bold text-blue-700">{driverTasksSummary.cow_milk_tasks || 0}</p>
                         <p className="text-sm text-blue-600">{language === "ar" ? "حليب أبقار" : "Cow Milk"}</p>
@@ -841,7 +851,12 @@ const Operations = () => {
                 <Card className="bg-pink-50 border-pink-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <Fuel className="w-8 h-8 text-pink-600" />
+                      {/* 🐑 Sheep Icon - SVG */}
+                      <div className="w-10 h-10 flex items-center justify-center text-pink-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+                          <path d="M18,9c0-0.6-0.4-1-1-1c-0.3,0-0.5,0.1-0.7,0.3C15.4,7.5,13.8,7,12,7S8.6,7.5,7.7,8.3C7.5,8.1,7.3,8,7,8C6.4,8,6,8.4,6,9 c-1.1,0-2,0.9-2,2v1c0,1.1,0.9,2,2,2v1c0,1.7,1.3,3,3,3v1c0,0.6,0.4,1,1,1s1-0.4,1-1v-1h2v1c0,0.6,0.4,1,1,1s1-0.4,1-1v-1 c1.7,0,3-1.3,3-3v-1c1.1,0,2-0.9,2-2v-1C20,9.9,19.1,9,18,9z M10,12c-0.6,0-1-0.4-1-1s0.4-1,1-1s1,0.4,1,1S10.6,12,10,12z M14,12 c-0.6,0-1-0.4-1-1s0.4-1,1-1s1,0.4,1,1S14.6,12,14,12z"/>
+                        </svg>
+                      </div>
                       <div>
                         <p className="text-2xl font-bold text-pink-700">{driverTasksSummary.sheep_milk_tasks || 0}</p>
                         <p className="text-sm text-pink-600">{language === "ar" ? "حليب أغنام" : "Sheep Milk"}</p>
