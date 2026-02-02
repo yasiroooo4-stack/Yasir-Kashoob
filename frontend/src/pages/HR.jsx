@@ -1317,48 +1317,71 @@ const HR = () => {
     }
     
     const letterTypeName = LETTER_TYPES.find(t => t.id === letter.letter_type);
+    const isEn = language === 'en';
+    
+    // الترجمات
+    const t = {
+      employeeName: isEn ? 'Employee Name' : 'اسم الموظف',
+      department: isEn ? 'Department' : 'القسم',
+      position: isEn ? 'Position' : 'المسمى الوظيفي',
+      leaveType: isEn ? 'Leave Type' : 'نوع الإجازة',
+      annual: isEn ? 'Annual' : 'سنوية',
+      startDate: isEn ? 'Start Date' : 'تاريخ البداية',
+      endDate: isEn ? 'End Date' : 'تاريخ النهاية',
+      daysCount: isEn ? 'Days Count' : 'عدد الأيام',
+      reason: isEn ? 'Reason' : 'السبب',
+      employeeSignature: isEn ? 'Employee Signature' : 'توقيع الموظف',
+      managerSignature: isEn ? 'Direct Manager Signature' : 'توقيع المدير المباشر',
+      hrSignature: isEn ? 'Human Resources' : 'توقيع الموارد البشرية',
+      gmSignature: isEn ? 'General Manager' : 'المدير العام',
+      toWhom: isEn ? 'To Whom It May Concern,' : 'إلى من يهمه الأمر،',
+      certify: isEn ? 'We, Al Morooj Dairy Company, certify that Mr./Ms.' : 'نشهد نحن شركة المروج للألبان بأن السيد/ة',
+      purpose: isEn ? 'Purpose' : 'الغرض',
+      disclaimer: isEn ? 'This letter has been issued at their request without any liability to the company.' : 'وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.',
+      regards: isEn ? 'Best regards,' : 'وتفضلوا بقبول فائق الاحترام والتقدير،',
+    };
     
     let content = '';
     
     if (letter.letter_type === 'leave_form') {
       content = `
         <table>
-          <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${letter.employee_name}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>القسم</strong></td><td>${letter.department || '-'}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>المسمى الوظيفي</strong></td><td>${letter.position || '-'}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>نوع الإجازة</strong></td><td>${letter.leave_type || 'سنوية'}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>تاريخ البداية</strong></td><td>${letter.start_date || '-'}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>تاريخ النهاية</strong></td><td>${letter.end_date || '-'}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>عدد الأيام</strong></td><td>${letter.days_count || '-'}</td></tr>
-          <tr><td style="background:#faf5f0;"><strong>السبب</strong></td><td>${letter.content || letter.purpose || '-'}</td></tr>
+          <tr><td style="width:35%; background:#faf5f0;"><strong>${t.employeeName}</strong></td><td>${letter.employee_name}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.department}</strong></td><td>${letter.department || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.position}</strong></td><td>${letter.position || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.leaveType}</strong></td><td>${letter.leave_type || t.annual}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.startDate}</strong></td><td>${letter.start_date || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.endDate}</strong></td><td>${letter.end_date || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.daysCount}</strong></td><td>${letter.days_count || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>${t.reason}</strong></td><td>${letter.content || letter.purpose || '-'}</td></tr>
         </table>
         <div class="signatures">
-          ${createSignatureBox('توقيع الموظف', letter.employee_signature)}
-          ${createSignatureBox('توقيع المدير المباشر', letter.manager_signature)}
-          ${createSignatureBox('توقيع الموارد البشرية', letter.hr_signature, 'hr')}
+          ${createSignatureBox(t.employeeSignature, letter.employee_signature)}
+          ${createSignatureBox(t.managerSignature, letter.manager_signature)}
+          ${createSignatureBox(t.hrSignature, letter.hr_signature, 'hr')}
         </div>
       `;
     } else {
       content = `
         <div class="content">
-          <p><strong>إلى من يهمه الأمر،</strong></p>
-          <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
-          ${letter.department ? `<p>القسم: <strong>${letter.department}</strong></p>` : ''}
-          ${letter.position ? `<p>المسمى الوظيفي: <strong>${letter.position}</strong></p>` : ''}
-          ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
+          <p><strong>${t.toWhom}</strong></p>
+          <p>${t.certify} <strong>${letter.employee_name}</strong></p>
+          ${letter.department ? `<p>${t.department}: <strong>${letter.department}</strong></p>` : ''}
+          ${letter.position ? `<p>${t.position}: <strong>${letter.position}</strong></p>` : ''}
+          ${letter.purpose ? `<p><strong>${t.purpose}:</strong> ${letter.purpose}</p>` : ''}
           ${letter.content ? `<p>${letter.content}</p>` : ''}
-          <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
-          <p style="margin-top: 30px;">وتفضلوا بقبول فائق الاحترام والتقدير،</p>
+          <p>${t.disclaimer}</p>
+          <p style="margin-top: 30px;">${t.regards}</p>
         </div>
         <div class="signatures">
-          ${createSignatureBox('إدارة الموارد البشرية', letter.hr_signature, 'hr')}
-          ${createSignatureBox('المدير العام', letter.gm_signature, 'gm')}
+          ${createSignatureBox(t.hrSignature, letter.hr_signature, 'hr')}
+          ${createSignatureBox(t.gmSignature, letter.gm_signature, 'gm')}
         </div>
       `;
     }
     
     printDocument(
-      letterTypeName ? (language === 'ar' ? letterTypeName.name : letterTypeName.name_en) : 'رسالة رسمية',
+      letterTypeName ? (language === 'ar' ? letterTypeName.name : letterTypeName.name_en) : (isEn ? 'Official Letter' : 'رسالة رسمية'),
       content,
       { refNumber: letter.letter_number }
     );
@@ -1366,30 +1389,44 @@ const HR = () => {
 
   // طباعة إنذار
   const handlePrintWarning = (warning) => {
+    const isEn = language === 'en';
     const warningTypes = {
-      verbal: 'إنذار شفهي',
-      written: 'إنذار كتابي',
-      final: 'إنذار نهائي'
+      verbal: isEn ? 'Verbal Warning' : 'إنذار شفهي',
+      written: isEn ? 'Written Warning' : 'إنذار كتابي',
+      final: isEn ? 'Final Warning' : 'إنذار نهائي'
+    };
+    
+    const t = {
+      warningNo: isEn ? 'Warning No' : 'رقم الإنذار',
+      date: isEn ? 'Date' : 'التاريخ',
+      employeeName: isEn ? 'Employee Name' : 'اسم الموظف',
+      warningType: isEn ? 'Warning Type' : 'نوع الإنذار',
+      warningReason: isEn ? 'Warning Reason' : 'سبب الإنذار',
+      notes: isEn ? 'Notes' : 'ملاحظات',
+      notice: isEn ? 'Notice: Please comply with company regulations. Repeated violations may result in further disciplinary action.' : 'تنبيه: يرجى الالتزام بقوانين وأنظمة العمل المعمول بها في الشركة. في حالة تكرار المخالفة قد يتم اتخاذ إجراءات تأديبية أخرى.',
+      employeeSignature: isEn ? 'Employee Signature' : 'توقيع الموظف',
+      managerSignature: isEn ? 'Direct Manager Signature' : 'توقيع المدير المباشر',
+      hrSignature: isEn ? 'Human Resources' : 'إدارة الموارد البشرية',
     };
     
     const content = `
       <div class="document-info">
-        <div><span class="info-label">رقم الإنذار:</span> ${warning.id?.slice(0,8) || '-'}</div>
-        <div><span class="info-label">التاريخ:</span> ${warning.date}</div>
+        <div><span class="info-label">${t.warningNo}:</span> ${warning.id?.slice(0,8) || '-'}</div>
+        <div><span class="info-label">${t.date}:</span> ${warning.date}</div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${warning.employee_name}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>نوع الإنذار</strong></td><td>${warningTypes[warning.warning_type] || warning.warning_type}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>سبب الإنذار</strong></td><td>${warning.reason || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>ملاحظات</strong></td><td>${warning.notes || '-'}</td></tr>
+        <tr><td style="width:35%; background:#faf5f0;"><strong>${t.employeeName}</strong></td><td>${warning.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.warningType}</strong></td><td>${warningTypes[warning.warning_type] || warning.warning_type}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.warningReason}</strong></td><td>${warning.reason || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.notes}</strong></td><td>${warning.notes || '-'}</td></tr>
       </table>
       <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px;">
-        <p><strong>تنبيه:</strong> يرجى الالتزام بقوانين وأنظمة العمل المعمول بها في الشركة. في حالة تكرار المخالفة قد يتم اتخاذ إجراءات تأديبية أخرى.</p>
+        <p><strong>${isEn ? 'Notice:' : 'تنبيه:'}</strong> ${t.notice}</p>
       </div>
       <div class="signatures">
-        ${createSignatureBox('توقيع الموظف', warning.employee_signature)}
-        ${createSignatureBox('توقيع المدير المباشر', warning.manager_signature)}
-        ${createSignatureBox('إدارة الموارد البشرية', warning.hr_signature, 'hr')}
+        ${createSignatureBox(t.employeeSignature, warning.employee_signature)}
+        ${createSignatureBox(t.managerSignature, warning.manager_signature)}
+        ${createSignatureBox(t.hrSignature, warning.hr_signature, 'hr')}
       </div>
     `;
     
