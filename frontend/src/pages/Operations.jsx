@@ -453,42 +453,42 @@ const Operations = () => {
               SALALAH, SULTANATE OF OMAN
             </div>
           </div>
-          <div style="text-align: left; font-size: 10px;">
-            <div>التاريخ: ${today}</div>
-            <div>رقم الإيصال: ${task.id?.slice(0, 8) || 'N/A'}</div>
+          <div style="text-align: ${isEn ? 'right' : 'left'}; font-size: 10px;">
+            <div>${t.date}: ${today}</div>
+            <div>${t.receiptNo}: ${task.id?.slice(0, 8) || 'N/A'}</div>
           </div>
         </div>
         
-        <div class="document-title">إيصال توصيل الحليب - Milk Delivery Receipt</div>
+        <div class="document-title">${t.title}</div>
         
         <div class="delivery-info">
           <div class="info-box">
-            <h4>معلومات السائق</h4>
+            <h4>${t.driverInfo}</h4>
             <div class="info-row">
-              <span class="info-label">اسم السائق:</span>
+              <span class="info-label">${t.driverName}:</span>
               <span class="info-value">${task.driver_name || '-'}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">رقم السيارة:</span>
+              <span class="info-label">${t.vehiclePlate}:</span>
               <span class="info-value">${task.vehicle_plate || '-'}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">نوع المركبة:</span>
-              <span class="info-value">${task.vehicle_type === 'truck' ? 'شاحنة' : task.vehicle_type === 'tanker' ? 'صهريج' : task.vehicle_type || '-'}</span>
+              <span class="info-label">${t.vehicleType}:</span>
+              <span class="info-value">${task.vehicle_type === 'truck' ? t.truck : task.vehicle_type === 'tanker' ? t.tanker : task.vehicle_type || '-'}</span>
             </div>
           </div>
           <div class="info-box">
-            <h4>معلومات النقل</h4>
+            <h4>${t.transportInfo}</h4>
             <div class="info-row">
-              <span class="info-label">تاريخ النقل:</span>
+              <span class="info-label">${t.transportDate}:</span>
               <span class="info-value">${task.transport_date || '-'}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">وقت النقل:</span>
+              <span class="info-label">${t.transportTime}:</span>
               <span class="info-value">${task.transport_time || '-'}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">نوع الحليب:</span>
+              <span class="info-label">${t.milkType}:</span>
               <span class="info-value">${transportTypes[task.transport_type] || task.transport_type || '-'}</span>
             </div>
           </div>
@@ -496,46 +496,46 @@ const Operations = () => {
         
         <div class="quantity-highlight">
           <div class="amount">${task.quantity?.toLocaleString() || 0}</div>
-          <div class="unit">لتر من ${transportTypes[task.transport_type] || 'الحليب'}</div>
+          <div class="unit">${t.litersOf} ${transportTypes[task.transport_type] || (isEn ? 'Milk' : 'الحليب')}</div>
         </div>
         
         <div class="route-section">
           <div class="route-point">
-            <div class="label">من مركز</div>
+            <div class="label">${t.fromCenter}</div>
             <div class="name">${task.from_location || '-'}</div>
           </div>
-          <div class="route-arrow">←</div>
+          <div class="route-arrow">${isEn ? '→' : '←'}</div>
           <div class="route-point">
-            <div class="label">إلى</div>
+            <div class="label">${t.to}</div>
             <div class="name">${task.to_destination || '-'}</div>
           </div>
         </div>
         
         ${task.notes ? `
         <div class="notes-section">
-          <h4>ملاحظات:</h4>
+          <h4>${t.notes}:</h4>
           <p>${task.notes}</p>
         </div>
         ` : ''}
         
         <div class="signatures">
           <div class="signature-box">
-            <div class="e-signature">مكان التوقيع</div>
-            <div class="signature-line">توقيع السائق</div>
+            <div class="e-signature">${t.signaturePlace}</div>
+            <div class="signature-line">${t.driverSignature}</div>
           </div>
           <div class="signature-box">
-            <div class="e-signature">مكان التوقيع</div>
-            <div class="signature-line">توقيع المستلم</div>
+            <div class="e-signature">${t.signaturePlace}</div>
+            <div class="signature-line">${t.receiverSignature}</div>
           </div>
           <div class="signature-box">
-            <div class="e-signature">مكان التوقيع</div>
-            <div class="signature-line">توقيع مسؤول العمليات</div>
+            <div class="e-signature">${t.signaturePlace}</div>
+            <div class="signature-line">${t.opsSignature}</div>
           </div>
         </div>
         
         <div class="footer">
-          شركة المروج للألبان - Al Morooj Dairy Co. SAOC<br/>
-          هاتف: +968 23456789 | فاكس: +968 23456780 | البريد: info@almorooj.com
+          ${isEn ? 'Al Morooj Dairy Co. SAOC' : 'شركة المروج للألبان'} - Al Morooj Dairy Co. SAOC<br/>
+          ${t.phone}: +968 23456789 | ${t.fax}: +968 23456780 | ${t.email}: info@almorooj.com
         </div>
       </body>
       </html>
