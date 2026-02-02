@@ -1575,12 +1575,12 @@ const HR = () => {
       </table>
       <div class="signatures">
         ${createSignatureBox(t.employeeSignature, req.employee_signature)}
-        ${createSignatureBox('توقيع المالية', req.finance_signature, 'finance')}
-        ${createSignatureBox('توقيع المدير العام', req.gm_signature, 'gm')}
+        ${createSignatureBox(t.financeSignature, req.finance_signature, 'finance')}
+        ${createSignatureBox(t.gmSignature, req.gm_signature, 'gm')}
       </div>
     `;
     
-    printDocument(typeMap[req.request_type] || 'طلب سلفة/مصاريف', content);
+    printDocument(typeMap[req.request_type] || (isEn ? 'Advance/Expense Request' : 'طلب سلفة/مصاريف'), content);
   };
 
   // Corrupted code removed - handleCreateAccount function already exists above
