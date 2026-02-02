@@ -1342,18 +1342,18 @@ const HR = () => {
         <div><span class="info-label">التاريخ:</span> ${warning.date}</div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${warning.employee_name}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>نوع الإنذار</strong></td><td>${warningTypes[warning.warning_type] || warning.warning_type}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>سبب الإنذار</strong></td><td>${warning.reason || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>ملاحظات</strong></td><td>${warning.notes || '-'}</td></tr>
+        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${warning.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>نوع الإنذار</strong></td><td>${warningTypes[warning.warning_type] || warning.warning_type}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>سبب الإنذار</strong></td><td>${warning.reason || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>ملاحظات</strong></td><td>${warning.notes || '-'}</td></tr>
       </table>
       <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px;">
         <p><strong>تنبيه:</strong> يرجى الالتزام بقوانين وأنظمة العمل المعمول بها في الشركة. في حالة تكرار المخالفة قد يتم اتخاذ إجراءات تأديبية أخرى.</p>
       </div>
       <div class="signatures">
-        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
-        <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
-        <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+        ${createSignatureBox('توقيع الموظف', warning.employee_signature)}
+        ${createSignatureBox('توقيع المدير المباشر', warning.manager_signature)}
+        ${createSignatureBox('إدارة الموارد البشرية', warning.hr_signature)}
       </div>
     `;
     
@@ -1370,16 +1370,16 @@ const HR = () => {
         <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[excuse.status] || excuse.status}</span></div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${excuse.employee_name}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>نوع العذر</strong></td><td>${excuse.excuse_type || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>من تاريخ</strong></td><td>${excuse.from_date || excuse.excuse_date || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>إلى تاريخ</strong></td><td>${excuse.to_date || excuse.from_date || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>السبب</strong></td><td>${excuse.reason || '-'}</td></tr>
+        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${excuse.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>نوع العذر</strong></td><td>${excuse.excuse_type || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>من تاريخ</strong></td><td>${excuse.from_date || excuse.excuse_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>إلى تاريخ</strong></td><td>${excuse.to_date || excuse.from_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>السبب</strong></td><td>${excuse.reason || '-'}</td></tr>
       </table>
       <div class="signatures">
-        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
-        <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
-        <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+        ${createSignatureBox('توقيع الموظف', excuse.employee_signature)}
+        ${createSignatureBox('توقيع المدير المباشر', excuse.manager_signature)}
+        ${createSignatureBox('إدارة الموارد البشرية', excuse.hr_signature)}
       </div>
     `;
     
@@ -1397,18 +1397,18 @@ const HR = () => {
         <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[extWork.status] || extWork.status}</span></div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${extWork.employee_name}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>نوع العمل</strong></td><td>${workTypes[extWork.work_type] || extWork.work_type}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>من تاريخ</strong></td><td>${extWork.work_date || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>إلى تاريخ</strong></td><td>${extWork.work_date_to || extWork.work_date || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>الموقع</strong></td><td>${extWork.location || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>الغرض</strong></td><td>${extWork.purpose || '-'}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>ملاحظات</strong></td><td>${extWork.notes || '-'}</td></tr>
+        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${extWork.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>نوع العمل</strong></td><td>${workTypes[extWork.work_type] || extWork.work_type}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>من تاريخ</strong></td><td>${extWork.work_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>إلى تاريخ</strong></td><td>${extWork.work_date_to || extWork.work_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>الموقع</strong></td><td>${extWork.location || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>الغرض</strong></td><td>${extWork.purpose || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>ملاحظات</strong></td><td>${extWork.notes || '-'}</td></tr>
       </table>
       <div class="signatures">
-        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
-        <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
-        <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+        ${createSignatureBox('توقيع الموظف', extWork.employee_signature)}
+        ${createSignatureBox('توقيع المدير المباشر', extWork.manager_signature)}
+        ${createSignatureBox('إدارة الموارد البشرية', extWork.hr_signature)}
       </div>
     `;
     
@@ -1427,16 +1427,16 @@ const HR = () => {
         <div><span class="info-label">التاريخ:</span> ${req.request_date || '-'}</div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${req.employee_name}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>نوع الطلب</strong></td><td>${typeMap[req.request_type] || req.request_type}</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>المبلغ المطلوب</strong></td><td style="font-weight: bold; color: #1a5f7a;">${req.amount?.toLocaleString()} ر.ع</td></tr>
-        <tr><td style="background:#f5f5f5;"><strong>السبب</strong></td><td>${req.reason || '-'}</td></tr>
-        ${req.installments ? `<tr><td style="background:#f5f5f5;"><strong>عدد الأقساط</strong></td><td>${req.installments}</td></tr>` : ''}
+        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${req.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>نوع الطلب</strong></td><td>${typeMap[req.request_type] || req.request_type}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>المبلغ المطلوب</strong></td><td style="font-weight: bold; color: #8B5A2B;">${req.amount?.toLocaleString()} ر.ع</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>السبب</strong></td><td>${req.reason || '-'}</td></tr>
+        ${req.installments ? `<tr><td style="background:#faf5f0;"><strong>عدد الأقساط</strong></td><td>${req.installments}</td></tr>` : ''}
       </table>
       <div class="signatures">
-        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
-        <div class="signature-box"><div class="signature-line">توقيع المالية</div></div>
-        <div class="signature-box"><div class="signature-line">توقيع المدير العام</div></div>
+        ${createSignatureBox('توقيع الموظف', req.employee_signature)}
+        ${createSignatureBox('توقيع المالية', req.finance_signature)}
+        ${createSignatureBox('توقيع المدير العام', req.gm_signature)}
       </div>
     `;
     
