@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Badge } from "../components/ui/badge";
-import { Activity, Wrench, AlertTriangle, Truck, Plus, Pencil, CheckCircle, Settings2, Users, Fuel, MapPin, Clock, Printer } from "lucide-react";
+import { Activity, Wrench, AlertTriangle, Truck, Plus, Pencil, CheckCircle, Settings2, Users, MapPin, Clock, Printer } from "lucide-react";
 
 const Operations = () => {
   const { t } = useTranslation();
