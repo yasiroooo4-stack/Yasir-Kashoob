@@ -884,12 +884,13 @@ const Operations = () => {
                     <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
                     <TableHead>{language === "ar" ? "من" : "From"}</TableHead>
                     <TableHead>{language === "ar" ? "إلى" : "To"}</TableHead>
+                    <TableHead className="text-center">{language === "ar" ? "طباعة" : "Print"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {driverTasks.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                         {language === "ar" ? "لا توجد مهام مسجلة" : "No tasks recorded"}
                       </TableCell>
                     </TableRow>
@@ -915,6 +916,17 @@ const Operations = () => {
                           <Badge variant="outline">{task.from_location}</Badge>
                         </TableCell>
                         <TableCell>{task.to_destination}</TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handlePrintMilkDelivery(task)}
+                            title={language === "ar" ? "طباعة إيصال التوصيل" : "Print Delivery Receipt"}
+                            className="text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
