@@ -903,6 +903,8 @@ class EmployeeBase(BaseModel):
     username: Optional[str] = None
     leave_balance: float = 0.0  # رصيد الإجازات المتراكم
     monthly_leave_rate: float = 2.6  # معدل الإجازة الشهرية (افتراضي للموظفين)
+    # التوقيع الإلكتروني - رابط صورة التوقيع
+    signature_url: Optional[str] = None
 
 class EmployeeCreate(EmployeeBase):
     pass
