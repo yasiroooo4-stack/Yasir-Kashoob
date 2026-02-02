@@ -643,6 +643,7 @@ const HR = () => {
       manager_id: employee.manager_id || "",
       manager_name: employee.manager_name || "",
       username: employee.username || "",
+      signature_url: employee.signature_url || null,
     });
     setEmployeeDialogOpen(true);
   };
