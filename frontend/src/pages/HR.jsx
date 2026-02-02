@@ -1401,7 +1401,7 @@ const HR = () => {
       <div class="signatures">
         ${createSignatureBox('توقيع الموظف', excuse.employee_signature)}
         ${createSignatureBox('توقيع المدير المباشر', excuse.manager_signature)}
-        ${createSignatureBox('إدارة الموارد البشرية', excuse.hr_signature)}
+        ${createSignatureBox('إدارة الموارد البشرية', excuse.hr_signature, 'hr')}
       </div>
     `;
     
@@ -1430,7 +1430,7 @@ const HR = () => {
       <div class="signatures">
         ${createSignatureBox('توقيع الموظف', extWork.employee_signature)}
         ${createSignatureBox('توقيع المدير المباشر', extWork.manager_signature)}
-        ${createSignatureBox('إدارة الموارد البشرية', extWork.hr_signature)}
+        ${createSignatureBox('إدارة الموارد البشرية', extWork.hr_signature, 'hr')}
       </div>
     `;
     
@@ -1457,8 +1457,8 @@ const HR = () => {
       </table>
       <div class="signatures">
         ${createSignatureBox('توقيع الموظف', req.employee_signature)}
-        ${createSignatureBox('توقيع المالية', req.finance_signature)}
-        ${createSignatureBox('توقيع المدير العام', req.gm_signature)}
+        ${createSignatureBox('توقيع المالية', req.finance_signature, 'finance')}
+        ${createSignatureBox('توقيع المدير العام', req.gm_signature, 'gm')}
       </div>
     `;
     
