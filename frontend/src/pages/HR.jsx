@@ -5238,6 +5238,36 @@ const HR = () => {
                 rows={2}
               />
             </div>
+            <div className="space-y-2">
+              <Label>{language === "ar" ? "إرفاق مستند" : "Attach Document"}</Label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setWarningForm({ 
+                          ...warningForm, 
+                          attachment: reader.result,
+                          attachment_name: file.name 
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="flex-1"
+                />
+                {warningForm.attachment_name && (
+                  <span className="text-sm text-green-600 flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    {warningForm.attachment_name}
+                  </span>
+                )}
+              </div>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setWarningDialogOpen(false)}>{t("cancel")}</Button>
               <Button type="submit" className="gradient-primary text-white">{t("save")}</Button>
