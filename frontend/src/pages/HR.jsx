@@ -404,6 +404,7 @@ const HR = () => {
     { id: "experience_letter", name: "شهادة خبرة", name_en: "Experience Letter" },
     { id: "mission_letter", name: "خطاب مهمة عمل", name_en: "Mission Letter" },
     { id: "no_objection", name: "شهادة عدم ممانعة", name_en: "No Objection Certificate" },
+    { id: "leave_form", name: "نموذج إجازة", name_en: "Leave Form" },
   ];
 
   useEffect(() => {
