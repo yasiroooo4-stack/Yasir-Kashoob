@@ -545,6 +545,23 @@ const Operations = () => {
     setTimeout(() => printWindow.print(), 500);
   };
 
+  // حذف مهمة سائق
+  const handleDeleteDriverTask = async (taskId) => {
+    if (!window.confirm(language === "ar" ? "هل أنت متأكد من حذف هذه المهمة؟" : "Are you sure you want to delete this task?")) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API}/operations/driver-tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(language === "ar" ? "تم حذف المهمة بنجاح" : "Task deleted successfully");
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || (language === "ar" ? "فشل حذف المهمة" : "Failed to delete task"));
+    }
+  };
+
   // Daily Operation handlers
   const handleDailyOpSubmit = async (e) => {
     e.preventDefault();
