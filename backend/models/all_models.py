@@ -2217,6 +2217,8 @@ class WarningBase(BaseModel):
     reason: str
     date: str
     notes: Optional[str] = None
+    attachment: Optional[str] = None  # Base64 encoded file
+    attachment_name: Optional[str] = None
 
 class WarningCreate(WarningBase):
     pass
