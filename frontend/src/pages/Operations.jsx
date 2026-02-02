@@ -947,7 +947,7 @@ const Operations = () => {
                     <TableHead>{language === "ar" ? "الكمية" : "Quantity"}</TableHead>
                     <TableHead>{language === "ar" ? "من" : "From"}</TableHead>
                     <TableHead>{language === "ar" ? "إلى" : "To"}</TableHead>
-                    <TableHead className="text-center">{language === "ar" ? "طباعة" : "Print"}</TableHead>
+                    <TableHead className="text-center">{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -980,15 +980,26 @@ const Operations = () => {
                         </TableCell>
                         <TableCell>{task.to_destination}</TableCell>
                         <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handlePrintMilkDelivery(task)}
-                            title={language === "ar" ? "طباعة إيصال التوصيل" : "Print Delivery Receipt"}
-                            className="text-amber-700 hover:text-amber-800 hover:bg-amber-50"
-                          >
-                            <Printer className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handlePrintMilkDelivery(task)}
+                              title={language === "ar" ? "طباعة إيصال التوصيل" : "Print Delivery Receipt"}
+                              className="text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteDriverTask(task.id)}
+                              title={language === "ar" ? "حذف المهمة" : "Delete Task"}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
