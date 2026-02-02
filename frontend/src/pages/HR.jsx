@@ -1145,7 +1145,57 @@ const HR = () => {
           
           <div class="letter-body">
             <p><strong>إلى من يهمه الأمر،</strong></p>
-            ${letter.letter_type === 'salary_continuity_certificate' ? `
+            ${letter.letter_type === 'leave_form' ? `
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; width: 30%; background: #f0f0f0;"><strong>اسم الموظف</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.employee_name}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>القسم</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.department || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>المسمى الوظيفي</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.position || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>نوع الإجازة</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.leave_type || 'سنوية'}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>تاريخ البداية</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.start_date || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>تاريخ النهاية</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.end_date || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>عدد الأيام</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.days_count || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 10px; background: #f0f0f0;"><strong>السبب</strong></td>
+                  <td style="border: 1px solid #000; padding: 10px;">${letter.content || letter.purpose || '-'}</td>
+                </tr>
+              </table>
+              <div style="margin-top: 30px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="border: 1px solid #000; padding: 15px; text-align: center; width: 33%;">
+                      <strong>توقيع الموظف</strong><br/><br/><br/>
+                    </td>
+                    <td style="border: 1px solid #000; padding: 15px; text-align: center; width: 33%;">
+                      <strong>توقيع المدير المباشر</strong><br/><br/><br/>
+                    </td>
+                    <td style="border: 1px solid #000; padding: 15px; text-align: center; width: 33%;">
+                      <strong>توقيع الموارد البشرية</strong><br/><br/><br/>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            ` : letter.letter_type === 'salary_continuity_certificate' ? `
               <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
               ${letter.position ? `<p>يعمل لدينا بمسمى وظيفي: <strong>${letter.position}</strong></p>` : ''}
               ${letter.department ? `<p>في قسم: <strong>${letter.department}</strong></p>` : ''}
