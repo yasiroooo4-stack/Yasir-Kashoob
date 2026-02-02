@@ -3329,36 +3329,47 @@ const HR = () => {
                           </TableCell>
                           <TableCell>{getStatusBadge(req.status)}</TableCell>
                           <TableCell>
-                            {req.status === "pending" && (
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-green-600"
-                                  onClick={() => handleExpenseAction(req.id, "approve")}
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-red-600"
-                                  onClick={() => handleExpenseAction(req.id, "reject")}
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
-                            {req.status === "approved" && (
+                            <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="text-blue-600"
-                                onClick={() => handleExpenseAction(req.id, "pay")}
+                                size="icon"
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handlePrintAdvanceRequest({...req, request_type: 'expense', reason: req.description})}
+                                title={language === "ar" ? "طباعة" : "Print"}
                               >
-                                {language === "ar" ? "صرف" : "Pay"}
+                                <Printer className="w-4 h-4" />
                               </Button>
-                            )}
+                              {req.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-green-600"
+                                    onClick={() => handleExpenseAction(req.id, "approve")}
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-600"
+                                    onClick={() => handleExpenseAction(req.id, "reject")}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                              {req.status === "approved" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-blue-600"
+                                  onClick={() => handleExpenseAction(req.id, "pay")}
+                                >
+                                  {language === "ar" ? "صرف" : "Pay"}
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
