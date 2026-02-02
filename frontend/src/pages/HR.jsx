@@ -271,6 +271,9 @@ const HR = () => {
   const [availablePermissions, setAvailablePermissions] = useState([]);
   const [managers, setManagers] = useState([]);
   
+  // التوقيعات الإلكترونية المعتمدة (المدير العام، HR، المالية)
+  const [authorizedSignatures, setAuthorizedSignatures] = useState({});
+  
   // Form data
   const [employeeForm, setEmployeeForm] = useState({
     name: "",
