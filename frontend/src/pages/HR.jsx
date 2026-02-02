@@ -1043,6 +1043,26 @@ const HR = () => {
     }
   };
 
+  // دالة مساعدة لإنشاء مربع التوقيع مع دعم التوقيع الإلكتروني
+  const createSignatureBox = (label, signatureUrl = null) => {
+    if (signatureUrl) {
+      return `
+        <div class="signature-box">
+          <div class="e-signature e-signature-present">
+            <img src="${signatureUrl}" alt="توقيع" />
+          </div>
+          <div class="signature-line">${label}</div>
+        </div>
+      `;
+    }
+    return `
+      <div class="signature-box">
+        <div class="e-signature">مكان التوقيع</div>
+        <div class="signature-line">${label}</div>
+      </div>
+    `;
+  };
+
   // دالة طباعة موحدة مع شعار وبيانات الشركة
   const printDocument = (title, content, options = {}) => {
     const printWindow = window.open('', '_blank');
