@@ -768,3 +768,56 @@ POST   /api/milk-receptions/import       - استيراد
 | 2015 | supplier | 0000 |
 | EMP202348 | employee | - |
 
+
+---
+
+### 2 فبراير 2026 - ميزة التوقيعات الإلكترونية للموظفين ✅
+
+#### الوصف
+تم إضافة نظام متكامل لإدارة التوقيعات الإلكترونية للموظفين، مع دعم التوقيع التلقائي في نماذج الطباعة.
+
+#### APIs الجديدة
+
+| Endpoint | الوصف |
+|----------|-------|
+| `POST /api/hr/employees/{id}/signature` | رفع التوقيع الإلكتروني |
+| `DELETE /api/hr/employees/{id}/signature` | حذف التوقيع |
+| `GET /api/hr/signatures/authorized` | جلب التوقيعات المعتمدة |
+
+#### قيود رفع التوقيع
+- **الأنواع المسموحة:** PNG, JPG, JPEG, GIF, WEBP
+- **الحجم الأقصى:** 2MB
+- **مسار الحفظ:** `/app/uploads/signature_{employee_id}_{uuid}.{ext}`
+
+#### التوقيعات المعتمدة (تُستخدم تلقائياً)
+| النوع | المناصب المعترف بها |
+|-------|---------------------|
+| `gm` | المدير العام، General Manager، GM، CEO |
+| `hr` | مدير الموارد البشرية، HR Manager، HR Director |
+| `finance` | المدير المالي، Finance Manager، CFO |
+
+#### التكامل مع الطباعة
+دالة `createSignatureBox(label, signatureUrl, signatureType)` تبحث تلقائياً عن التوقيع المعتمد إذا لم يتم توفير URL.
+
+**النماذج المدعومة:**
+- نموذج الإجازة: توقيع الموظف، المدير، HR
+- الرسائل الرسمية: HR، المدير العام
+- الإنذارات: الموظف، المدير، HR
+- طلبات العذر: الموظف، المدير، HR
+- العمل الخارجي: الموظف، المدير، HR
+- السلف والمصاريف: الموظف، المالية، المدير العام
+
+#### الملفات المُعدّلة
+- `/app/backend/server.py` - 3 APIs جديدة (~130 سطر)
+- `/app/backend/models/all_models.py` - حقل `signature_url` في `EmployeeBase`
+- `/app/frontend/src/pages/HR.jsx`:
+  - `authorizedSignatures` state
+  - واجهة رفع التوقيع في نموذج الموظف
+  - تحديث `createSignatureBox`
+  - جلب التوقيعات في `fetchData`
+
+#### نتائج الاختبار
+- ✅ Backend: 11/11 اختبارات ناجحة
+- ✅ Code Review: جميع الميزات موجودة
+- ملف الاختبار: `/app/test_reports/iteration_26.json`
+
