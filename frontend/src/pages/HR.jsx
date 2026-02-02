@@ -1043,41 +1043,361 @@ const HR = () => {
     }
   };
 
-  // Print official letter
-  const handlePrintLetter = (letter) => {
-    // Mark as printed in backend
-    axios.post(`${API}/hr/official-letters/${letter.id}/print`).catch(() => {});
-    
-    // Generate printable content with background image
+  // دالة طباعة موحدة مع شعار وبيانات الشركة
+  const printDocument = (title, content, options = {}) => {
     const printWindow = window.open('', '_blank');
-    const letterTypeName = LETTER_TYPES.find(t => t.id === letter.letter_type);
-    const backgroundImage = "https://customer-assets.emergentagent.com/job_dairy-erp/artifacts/rotzc27o_%D9%86%D9%85%D9%88%D8%B0%D8%AC.jpeg";
+    const logoUrl = window.location.origin + '/logo-morooj.png';
+    const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
     
     printWindow.document.write(`
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
       <head>
         <meta charset="UTF-8">
-        <title>رسالة رسمية - ${letter.letter_number}</title>
+        <title>${title}</title>
         <style>
-          @page { size: A4; margin: 0; }
+          @page { size: A4; margin: 10mm; }
+          * { box-sizing: border-box; }
           body { 
-            font-family: 'Arial', sans-serif; 
+            font-family: 'Arial', 'Tahoma', sans-serif; 
             direction: rtl;
             margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background-image: url('${backgroundImage}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.6;
           }
-          .content-wrapper {
-            padding: 180px 60px 100px 60px;
-            min-height: calc(100vh - 280px);
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #1a5f7a;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
           }
-          .letter-info { 
-            text-align: left; 
+          .logo img {
+            width: 80px;
+            height: auto;
+          }
+          .company-info {
+            text-align: center;
+            flex: 1;
+            padding: 0 15px;
+          }
+          .company-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 5px;
+          }
+          .company-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1a5f7a;
+          }
+          .company-name-ar {
+            font-size: 12px;
+            color: #333;
+          }
+          .company-details {
+            font-size: 9px;
+            color: #666;
+            margin-top: 5px;
+          }
+          .document-title {
+            background: linear-gradient(135deg, #1a5f7a, #2d8659);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin: 15px 0;
+          }
+          .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+          }
+          .info-item {
+            margin: 3px 0;
+          }
+          .info-label {
+            font-weight: bold;
+            color: #1a5f7a;
+          }
+          .content {
+            padding: 15px;
+            min-height: 300px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+          }
+          th {
+            background: #1a5f7a;
+            color: white;
+          }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .signatures {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+          }
+          .signature-box {
+            text-align: center;
+            width: 30%;
+          }
+          .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 40px;
+            padding-top: 5px;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 2px solid #1a5f7a;
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+          }
+          .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+          }
+          .status-approved { background: #d4edda; color: #155724; }
+          .status-pending { background: #fff3cd; color: #856404; }
+          .status-rejected { background: #f8d7da; color: #721c24; }
+          @media print {
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="${logoUrl}" alt="Al Morooj Dairy Logo" onerror="this.style.display='none'" />
+          </div>
+          <div class="company-info">
+            <div class="company-header">
+              <div>DHOFAR FOODS AND INVESTMENTS (SAOG)</div>
+              <div>شركة ظفار للأغذية والاستثمار (ش.م.ع.ع)</div>
+            </div>
+            <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
+            <div class="company-name-ar">شركة المروج للألبان</div>
+            <div class="company-details">
+              CR NO: 1249988 | P.O BOX: 1385, PC-211 | VAT: OM1100091687<br/>
+              SALALAH, SULTANATE OF OMAN
+            </div>
+          </div>
+          <div style="text-align: left; font-size: 10px;">
+            <div>التاريخ: ${today}</div>
+            ${options.refNumber ? `<div>المرجع: ${options.refNumber}</div>` : ''}
+          </div>
+        </div>
+        
+        <div class="document-title">${title}</div>
+        
+        ${content}
+        
+        <div class="footer">
+          شركة المروج للألبان - Al Morooj Dairy Co. SAOC<br/>
+          هاتف: +968 23456789 | فاكس: +968 23456780 | البريد: info@almorooj.com
+        </div>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
+  };
+
+  // Print official letter
+  const handlePrintLetter = (letter) => {
+    // Mark as printed in backend
+    if (letter.id) {
+      axios.post(`${API}/hr/official-letters/${letter.id}/print`).catch(() => {});
+    }
+    
+    const letterTypeName = LETTER_TYPES.find(t => t.id === letter.letter_type);
+    
+    let content = '';
+    
+    if (letter.letter_type === 'leave_form') {
+      content = `
+        <table>
+          <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${letter.employee_name}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>القسم</strong></td><td>${letter.department || '-'}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>المسمى الوظيفي</strong></td><td>${letter.position || '-'}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>نوع الإجازة</strong></td><td>${letter.leave_type || 'سنوية'}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>تاريخ البداية</strong></td><td>${letter.start_date || '-'}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>تاريخ النهاية</strong></td><td>${letter.end_date || '-'}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>عدد الأيام</strong></td><td>${letter.days_count || '-'}</td></tr>
+          <tr><td style="background:#f5f5f5;"><strong>السبب</strong></td><td>${letter.content || letter.purpose || '-'}</td></tr>
+        </table>
+        <div class="signatures">
+          <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
+          <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
+          <div class="signature-box"><div class="signature-line">توقيع الموارد البشرية</div></div>
+        </div>
+      `;
+    } else {
+      content = `
+        <div class="content">
+          <p><strong>إلى من يهمه الأمر،</strong></p>
+          <p>نشهد نحن شركة المروج للألبان بأن السيد/ة <strong>${letter.employee_name}</strong></p>
+          ${letter.department ? `<p>القسم: <strong>${letter.department}</strong></p>` : ''}
+          ${letter.position ? `<p>المسمى الوظيفي: <strong>${letter.position}</strong></p>` : ''}
+          ${letter.purpose ? `<p><strong>الغرض:</strong> ${letter.purpose}</p>` : ''}
+          ${letter.content ? `<p>${letter.content}</p>` : ''}
+          <p>وقد أُعطي هذا الخطاب بناءً على طلبه دون أدنى مسؤولية على الشركة.</p>
+          <p style="margin-top: 30px;">وتفضلوا بقبول فائق الاحترام والتقدير،</p>
+        </div>
+        <div class="signatures">
+          <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+          <div class="signature-box"><div class="signature-line">المدير العام</div></div>
+        </div>
+      `;
+    }
+    
+    printDocument(
+      letterTypeName ? (language === 'ar' ? letterTypeName.name : letterTypeName.name_en) : 'رسالة رسمية',
+      content,
+      { refNumber: letter.letter_number }
+    );
+  };
+
+  // طباعة إنذار
+  const handlePrintWarning = (warning) => {
+    const warningTypes = {
+      verbal: 'إنذار شفهي',
+      written: 'إنذار كتابي',
+      final: 'إنذار نهائي'
+    };
+    
+    const content = `
+      <div class="document-info">
+        <div><span class="info-label">رقم الإنذار:</span> ${warning.id?.slice(0,8) || '-'}</div>
+        <div><span class="info-label">التاريخ:</span> ${warning.date}</div>
+      </div>
+      <table>
+        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${warning.employee_name}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>نوع الإنذار</strong></td><td>${warningTypes[warning.warning_type] || warning.warning_type}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>سبب الإنذار</strong></td><td>${warning.reason || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>ملاحظات</strong></td><td>${warning.notes || '-'}</td></tr>
+      </table>
+      <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px;">
+        <p><strong>تنبيه:</strong> يرجى الالتزام بقوانين وأنظمة العمل المعمول بها في الشركة. في حالة تكرار المخالفة قد يتم اتخاذ إجراءات تأديبية أخرى.</p>
+      </div>
+      <div class="signatures">
+        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
+        <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
+        <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+      </div>
+    `;
+    
+    printDocument(warningTypes[warning.warning_type] || 'إنذار موظف', content);
+  };
+
+  // طباعة طلب عذر
+  const handlePrintExcuse = (excuse) => {
+    const statusMap = { approved: 'موافق', pending: 'قيد الانتظار', rejected: 'مرفوض' };
+    const statusClass = excuse.status === 'approved' ? 'status-approved' : excuse.status === 'rejected' ? 'status-rejected' : 'status-pending';
+    
+    const content = `
+      <div class="document-info">
+        <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[excuse.status] || excuse.status}</span></div>
+      </div>
+      <table>
+        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${excuse.employee_name}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>نوع العذر</strong></td><td>${excuse.excuse_type || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>من تاريخ</strong></td><td>${excuse.from_date || excuse.excuse_date || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>إلى تاريخ</strong></td><td>${excuse.to_date || excuse.from_date || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>السبب</strong></td><td>${excuse.reason || '-'}</td></tr>
+      </table>
+      <div class="signatures">
+        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
+        <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
+        <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+      </div>
+    `;
+    
+    printDocument('طلب عذر عن الغياب', content);
+  };
+
+  // طباعة طلب عمل خارجي
+  const handlePrintExternalWork = (extWork) => {
+    const statusMap = { approved: 'موافق', pending: 'قيد الانتظار', rejected: 'مرفوض' };
+    const statusClass = extWork.status === 'approved' ? 'status-approved' : extWork.status === 'rejected' ? 'status-rejected' : 'status-pending';
+    const workTypes = { client_visit: 'زيارة عميل', meeting: 'اجتماع', training: 'تدريب', conference: 'مؤتمر', fieldwork: 'عمل ميداني', other: 'أخرى' };
+    
+    const content = `
+      <div class="document-info">
+        <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[extWork.status] || extWork.status}</span></div>
+      </div>
+      <table>
+        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${extWork.employee_name}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>نوع العمل</strong></td><td>${workTypes[extWork.work_type] || extWork.work_type}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>من تاريخ</strong></td><td>${extWork.work_date || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>إلى تاريخ</strong></td><td>${extWork.work_date_to || extWork.work_date || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>الموقع</strong></td><td>${extWork.location || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>الغرض</strong></td><td>${extWork.purpose || '-'}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>ملاحظات</strong></td><td>${extWork.notes || '-'}</td></tr>
+      </table>
+      <div class="signatures">
+        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
+        <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
+        <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
+      </div>
+    `;
+    
+    printDocument('طلب عمل خارجي', content);
+  };
+
+  // طباعة طلب سلفة/مصاريف
+  const handlePrintAdvanceRequest = (req) => {
+    const statusMap = { approved: 'موافق', pending: 'قيد الانتظار', rejected: 'مرفوض', paid: 'مدفوع' };
+    const statusClass = req.status === 'approved' || req.status === 'paid' ? 'status-approved' : req.status === 'rejected' ? 'status-rejected' : 'status-pending';
+    const typeMap = { advance: 'سلفة', expense: 'مصاريف', loan: 'قرض' };
+    
+    const content = `
+      <div class="document-info">
+        <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[req.status] || req.status}</span></div>
+        <div><span class="info-label">التاريخ:</span> ${req.request_date || '-'}</div>
+      </div>
+      <table>
+        <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${req.employee_name}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>نوع الطلب</strong></td><td>${typeMap[req.request_type] || req.request_type}</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>المبلغ المطلوب</strong></td><td style="font-weight: bold; color: #1a5f7a;">${req.amount?.toLocaleString()} ر.ع</td></tr>
+        <tr><td style="background:#f5f5f5;"><strong>السبب</strong></td><td>${req.reason || '-'}</td></tr>
+        ${req.installments ? `<tr><td style="background:#f5f5f5;"><strong>عدد الأقساط</strong></td><td>${req.installments}</td></tr>` : ''}
+      </table>
+      <div class="signatures">
+        <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
+        <div class="signature-box"><div class="signature-line">توقيع المالية</div></div>
+        <div class="signature-box"><div class="signature-line">توقيع المدير العام</div></div>
+      </div>
+    `;
+    
+    printDocument(typeMap[req.request_type] || 'طلب سلفة/مصاريف', content);
+  };
+
+  const handleCreateAccount = async () => { 
             margin-bottom: 30px;
             font-size: 14px;
           }
