@@ -2415,26 +2415,54 @@ const HR = () => {
                           <TableCell>{req.days_count}</TableCell>
                           <TableCell>{getStatusBadge(req.status)}</TableCell>
                           <TableCell>
-                            {req.status === "pending" && (
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-green-600"
-                                  onClick={() => handleLeaveAction(req.id, "approve")}
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-red-600"
-                                  onClick={() => handleLeaveAction(req.id, "reject")}
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex items-center gap-1">
+                              {/* زر الطباعة - متاح دائماً */}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => {
+                                  // Find employee details
+                                  const emp = employees.find(e => e.id === req.employee_id);
+                                  const leaveData = {
+                                    letter_type: 'leave_form',
+                                    employee_name: req.employee_name,
+                                    department: emp?.department || '',
+                                    position: emp?.position || emp?.job_title || '',
+                                    leave_type: getLeaveTypeName(req.leave_type),
+                                    start_date: req.start_date,
+                                    end_date: req.end_date,
+                                    days_count: req.days_count,
+                                    content: req.reason || '',
+                                    purpose: req.reason || ''
+                                  };
+                                  handlePrintLetter(leaveData);
+                                }}
+                                title={language === "ar" ? "طباعة نموذج الإجازة" : "Print Leave Form"}
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
+                              {req.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-green-600"
+                                    onClick={() => handleLeaveAction(req.id, "approve")}
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-600"
+                                    onClick={() => handleLeaveAction(req.id, "reject")}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
