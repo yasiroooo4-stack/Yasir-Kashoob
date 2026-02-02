@@ -152,7 +152,9 @@ const HR = () => {
     warning_type: "verbal",
     reason: "",
     date: new Date().toISOString().split('T')[0],
-    notes: ""
+    notes: "",
+    attachment: null,
+    attachment_name: ""
   });
   
   // Dialog states
