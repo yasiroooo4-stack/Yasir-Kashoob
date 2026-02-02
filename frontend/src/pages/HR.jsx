@@ -1049,6 +1049,11 @@ const HR = () => {
     const logoUrl = window.location.origin + '/logo-morooj.png';
     const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
     
+    // الألوان البني الفاتح الجديدة
+    const primaryColor = '#8B5A2B'; // بني فاتح
+    const secondaryColor = '#A67C52'; // بني فاتح أكثر
+    const lightBrown = '#D2B48C'; // بني فاتح جداً للخلفيات
+    
     printWindow.document.write(`
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
@@ -1070,7 +1075,7 @@ const HR = () => {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            border-bottom: 2px solid #1a5f7a;
+            border-bottom: 3px solid ${primaryColor};
             padding-bottom: 15px;
             margin-bottom: 20px;
           }
@@ -1093,7 +1098,7 @@ const HR = () => {
           .company-name {
             font-size: 14px;
             font-weight: bold;
-            color: #1a5f7a;
+            color: ${primaryColor};
           }
           .company-name-ar {
             font-size: 12px;
@@ -1105,7 +1110,7 @@ const HR = () => {
             margin-top: 5px;
           }
           .document-title {
-            background: linear-gradient(135deg, #1a5f7a, #2d8659);
+            background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
             color: white;
             padding: 10px 20px;
             text-align: center;
@@ -1119,15 +1124,16 @@ const HR = () => {
             justify-content: space-between;
             margin-bottom: 15px;
             padding: 10px;
-            background: #f5f5f5;
+            background: #faf5f0;
             border-radius: 5px;
+            border: 1px solid ${lightBrown};
           }
           .info-item {
             margin: 3px 0;
           }
           .info-label {
             font-weight: bold;
-            color: #1a5f7a;
+            color: ${primaryColor};
           }
           .content {
             padding: 15px;
@@ -1139,21 +1145,21 @@ const HR = () => {
             margin: 15px 0;
           }
           th, td {
-            border: 1px solid #ddd;
+            border: 1px solid ${lightBrown};
             padding: 8px;
             text-align: right;
           }
           th {
-            background: #1a5f7a;
+            background: ${primaryColor};
             color: white;
           }
-          tr:nth-child(even) { background: #f9f9f9; }
+          tr:nth-child(even) { background: #faf8f5; }
           .signatures {
             display: flex;
             justify-content: space-around;
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px dashed #ccc;
+            border-top: 2px dashed ${lightBrown};
           }
           .signature-box {
             text-align: center;
@@ -1164,10 +1170,30 @@ const HR = () => {
             margin-top: 40px;
             padding-top: 5px;
           }
+          .e-signature {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed ${lightBrown};
+            border-radius: 5px;
+            margin-bottom: 5px;
+            background: #faf8f5;
+            font-style: italic;
+            color: #888;
+          }
+          .e-signature img {
+            max-height: 45px;
+            max-width: 100%;
+          }
+          .e-signature-present {
+            border: none;
+            background: transparent;
+          }
           .footer {
             margin-top: 30px;
             padding-top: 10px;
-            border-top: 2px solid #1a5f7a;
+            border-top: 3px solid ${primaryColor};
             text-align: center;
             font-size: 9px;
             color: #666;
