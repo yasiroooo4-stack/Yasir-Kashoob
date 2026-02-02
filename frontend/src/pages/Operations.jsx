@@ -188,6 +188,332 @@ const Operations = () => {
     }
   };
 
+  // طباعة إيصال توصيل الحليب
+  const handlePrintMilkDelivery = (task) => {
+    const printWindow = window.open('', '_blank');
+    const logoUrl = window.location.origin + '/logo-morooj.png';
+    const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // الألوان البني الفاتح
+    const primaryColor = '#8B5A2B';
+    const secondaryColor = '#A67C52';
+    const lightBrown = '#D2B48C';
+    
+    // تحديد نوع الحليب
+    const transportTypes = {
+      camel_milk: 'حليب إبل',
+      cow_milk: 'حليب أبقار',
+      sheep_milk: 'حليب أغنام'
+    };
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>إيصال توصيل الحليب</title>
+        <style>
+          @page { size: A4; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body { 
+            font-family: 'Arial', 'Tahoma', sans-serif; 
+            direction: rtl;
+            margin: 0;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.6;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid ${primaryColor};
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+          .logo img {
+            width: 80px;
+            height: auto;
+          }
+          .company-info {
+            text-align: center;
+            flex: 1;
+            padding: 0 15px;
+          }
+          .company-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 5px;
+          }
+          .company-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: ${primaryColor};
+          }
+          .company-name-ar {
+            font-size: 12px;
+            color: #333;
+          }
+          .company-details {
+            font-size: 9px;
+            color: #666;
+            margin-top: 5px;
+          }
+          .document-title {
+            background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin: 15px 0;
+          }
+          .delivery-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+          }
+          .info-box {
+            background: #faf5f0;
+            border: 1px solid ${lightBrown};
+            border-radius: 8px;
+            padding: 12px;
+          }
+          .info-box h4 {
+            margin: 0 0 8px 0;
+            color: ${primaryColor};
+            font-size: 13px;
+            border-bottom: 1px solid ${lightBrown};
+            padding-bottom: 5px;
+          }
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+          }
+          .info-label {
+            color: #666;
+            font-size: 11px;
+          }
+          .info-value {
+            font-weight: bold;
+            color: #333;
+          }
+          .quantity-highlight {
+            background: ${primaryColor};
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+          }
+          .quantity-highlight .amount {
+            font-size: 32px;
+            font-weight: bold;
+          }
+          .quantity-highlight .unit {
+            font-size: 14px;
+            opacity: 0.9;
+          }
+          .route-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f6f2;
+            border-radius: 10px;
+          }
+          .route-point {
+            text-align: center;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid ${lightBrown};
+          }
+          .route-point .label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 3px;
+          }
+          .route-point .name {
+            font-size: 14px;
+            font-weight: bold;
+            color: ${primaryColor};
+          }
+          .route-arrow {
+            font-size: 24px;
+            color: ${primaryColor};
+          }
+          .notes-section {
+            background: #fffbf5;
+            border: 1px dashed ${lightBrown};
+            border-radius: 5px;
+            padding: 10px;
+            margin: 15px 0;
+          }
+          .notes-section h4 {
+            margin: 0 0 5px 0;
+            color: ${primaryColor};
+            font-size: 12px;
+          }
+          .signatures {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px dashed ${lightBrown};
+          }
+          .signature-box {
+            text-align: center;
+            width: 30%;
+          }
+          .e-signature {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed ${lightBrown};
+            border-radius: 5px;
+            margin-bottom: 5px;
+            background: #faf8f5;
+            font-style: italic;
+            color: #888;
+            font-size: 10px;
+          }
+          .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 5px;
+            padding-top: 5px;
+            font-size: 11px;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 3px solid ${primaryColor};
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+          }
+          @media print {
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="${logoUrl}" alt="Al Morooj Dairy Logo" onerror="this.style.display='none'" />
+          </div>
+          <div class="company-info">
+            <div class="company-header">
+              <div>DHOFAR FOODS AND INVESTMENTS (SAOG)</div>
+              <div>شركة ظفار للأغذية والاستثمار (ش.م.ع.ع)</div>
+            </div>
+            <div class="company-name">AL MOROOJ DAIRY CO SAOC</div>
+            <div class="company-name-ar">شركة المروج للألبان</div>
+            <div class="company-details">
+              CR NO: 1249988 | P.O BOX: 1385, PC-211 | VAT: OM1100091687<br/>
+              SALALAH, SULTANATE OF OMAN
+            </div>
+          </div>
+          <div style="text-align: left; font-size: 10px;">
+            <div>التاريخ: ${today}</div>
+            <div>رقم الإيصال: ${task.id?.slice(0, 8) || 'N/A'}</div>
+          </div>
+        </div>
+        
+        <div class="document-title">إيصال توصيل الحليب - Milk Delivery Receipt</div>
+        
+        <div class="delivery-info">
+          <div class="info-box">
+            <h4>معلومات السائق</h4>
+            <div class="info-row">
+              <span class="info-label">اسم السائق:</span>
+              <span class="info-value">${task.driver_name || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">رقم السيارة:</span>
+              <span class="info-value">${task.vehicle_plate || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">نوع المركبة:</span>
+              <span class="info-value">${task.vehicle_type === 'truck' ? 'شاحنة' : task.vehicle_type === 'tanker' ? 'صهريج' : task.vehicle_type || '-'}</span>
+            </div>
+          </div>
+          <div class="info-box">
+            <h4>معلومات النقل</h4>
+            <div class="info-row">
+              <span class="info-label">تاريخ النقل:</span>
+              <span class="info-value">${task.transport_date || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">وقت النقل:</span>
+              <span class="info-value">${task.transport_time || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">نوع الحليب:</span>
+              <span class="info-value">${transportTypes[task.transport_type] || task.transport_type || '-'}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="quantity-highlight">
+          <div class="amount">${task.quantity?.toLocaleString() || 0}</div>
+          <div class="unit">لتر من ${transportTypes[task.transport_type] || 'الحليب'}</div>
+        </div>
+        
+        <div class="route-section">
+          <div class="route-point">
+            <div class="label">من مركز</div>
+            <div class="name">${task.from_location || '-'}</div>
+          </div>
+          <div class="route-arrow">←</div>
+          <div class="route-point">
+            <div class="label">إلى</div>
+            <div class="name">${task.to_destination || '-'}</div>
+          </div>
+        </div>
+        
+        ${task.notes ? `
+        <div class="notes-section">
+          <h4>ملاحظات:</h4>
+          <p>${task.notes}</p>
+        </div>
+        ` : ''}
+        
+        <div class="signatures">
+          <div class="signature-box">
+            <div class="e-signature">مكان التوقيع</div>
+            <div class="signature-line">توقيع السائق</div>
+          </div>
+          <div class="signature-box">
+            <div class="e-signature">مكان التوقيع</div>
+            <div class="signature-line">توقيع المستلم</div>
+          </div>
+          <div class="signature-box">
+            <div class="e-signature">مكان التوقيع</div>
+            <div class="signature-line">توقيع مسؤول العمليات</div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          شركة المروج للألبان - Al Morooj Dairy Co. SAOC<br/>
+          هاتف: +968 23456789 | فاكس: +968 23456780 | البريد: info@almorooj.com
+        </div>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
+  };
+
   // Daily Operation handlers
   const handleDailyOpSubmit = async (e) => {
     e.preventDefault();
