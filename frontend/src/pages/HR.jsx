@@ -1085,20 +1085,34 @@ const HR = () => {
     `;
   };
 
-  // دالة طباعة موحدة مع شعار وبيانات الشركة
+  // دالة طباعة موحدة مع شعار وبيانات الشركة - تدعم اللغتين
   const printDocument = (title, content, options = {}) => {
     const printWindow = window.open('', '_blank');
     const logoUrl = window.location.origin + '/logo-morooj.png';
-    const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+    const isEnglish = language === 'en';
+    const today = new Date().toLocaleDateString(isEnglish ? 'en-US' : 'ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dir = isEnglish ? 'ltr' : 'rtl';
+    const textAlign = isEnglish ? 'left' : 'right';
     
     // الألوان البني الفاتح الجديدة
     const primaryColor = '#8B5A2B'; // بني فاتح
     const secondaryColor = '#A67C52'; // بني فاتح أكثر
     const lightBrown = '#D2B48C'; // بني فاتح جداً للخلفيات
     
+    // ترجمة العناوين
+    const translations = {
+      date: isEnglish ? 'Date' : 'التاريخ',
+      ref: isEnglish ? 'Reference' : 'المرجع',
+      phone: isEnglish ? 'Phone' : 'هاتف',
+      fax: isEnglish ? 'Fax' : 'فاكس',
+      email: isEnglish ? 'Email' : 'البريد',
+      signaturePlace: isEnglish ? 'Signature' : 'مكان التوقيع',
+      companyName: isEnglish ? 'Al Morooj Dairy Co. SAOC' : 'شركة المروج للألبان',
+    };
+    
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html dir="rtl" lang="ar">
+      <html dir="${dir}" lang="${isEnglish ? 'en' : 'ar'}">
       <head>
         <meta charset="UTF-8">
         <title>${title}</title>
@@ -1107,7 +1121,7 @@ const HR = () => {
           * { box-sizing: border-box; }
           body { 
             font-family: 'Arial', 'Tahoma', sans-serif; 
-            direction: rtl;
+            direction: ${dir};
             margin: 0;
             padding: 15px;
             font-size: 12px;
@@ -1189,7 +1203,7 @@ const HR = () => {
           th, td {
             border: 1px solid ${lightBrown};
             padding: 8px;
-            text-align: right;
+            text-align: ${textAlign};
           }
           th {
             background: ${primaryColor};
@@ -1273,9 +1287,9 @@ const HR = () => {
               SALALAH, SULTANATE OF OMAN
             </div>
           </div>
-          <div style="text-align: left; font-size: 10px;">
-            <div>التاريخ: ${today}</div>
-            ${options.refNumber ? `<div>المرجع: ${options.refNumber}</div>` : ''}
+          <div style="text-align: ${isEnglish ? 'right' : 'left'}; font-size: 10px;">
+            <div>${translations.date}: ${today}</div>
+            ${options.refNumber ? `<div>${translations.ref}: ${options.refNumber}</div>` : ''}
           </div>
         </div>
         
@@ -1284,8 +1298,8 @@ const HR = () => {
         ${content}
         
         <div class="footer">
-          شركة المروج للألبان - Al Morooj Dairy Co. SAOC<br/>
-          هاتف: +968 23456789 | فاكس: +968 23456780 | البريد: info@almorooj.com
+          ${translations.companyName} - Al Morooj Dairy Co. SAOC<br/>
+          ${translations.phone}: +968 23456789 | ${translations.fax}: +968 23456780 | ${translations.email}: info@almorooj.com
         </div>
       </body>
       </html>
