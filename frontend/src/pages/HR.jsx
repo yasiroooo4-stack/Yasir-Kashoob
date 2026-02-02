@@ -75,6 +75,7 @@ import {
   Link,
   Gift,
   Briefcase,
+  Printer,
 } from "lucide-react";
 import FingerprintManager from "../components/hr/FingerprintManager";
 import SalaryHistoryDialog from "../components/SalaryHistoryDialog";
