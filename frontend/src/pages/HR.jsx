@@ -4105,6 +4105,113 @@ const HR = () => {
               </Select>
             </div>
             
+            {/* Electronic Signature - التوقيع الإلكتروني */}
+            {selectedEmployee && (
+              <div className="space-y-2 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                <Label className="flex items-center gap-2 text-amber-800">
+                  <Pencil className="w-4 h-4" />
+                  {language === "ar" ? "التوقيع الإلكتروني" : "Electronic Signature"}
+                </Label>
+                
+                {employeeForm.signature_url ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center p-4 bg-white rounded-lg border border-amber-300">
+                      <img 
+                        src={`${API}${employeeForm.signature_url}`} 
+                        alt="توقيع الموظف"
+                        className="max-h-20 max-w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => document.getElementById('signature-upload').click()}
+                      >
+                        <Upload className="w-4 h-4 me-1" />
+                        {language === "ar" ? "تغيير التوقيع" : "Change Signature"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem("token");
+                            await axios.delete(`${API}/hr/employees/${selectedEmployee.id}/signature`, {
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            setEmployeeForm({ ...employeeForm, signature_url: null });
+                            toast.success(language === "ar" ? "تم حذف التوقيع" : "Signature deleted");
+                          } catch (error) {
+                            toast.error(error.response?.data?.detail || "Error deleting signature");
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div 
+                      className="flex flex-col items-center justify-center p-6 bg-white rounded-lg border-2 border-dashed border-amber-300 cursor-pointer hover:bg-amber-50 transition-colors"
+                      onClick={() => document.getElementById('signature-upload').click()}
+                    >
+                      <Upload className="w-8 h-8 text-amber-500 mb-2" />
+                      <p className="text-sm text-amber-700 text-center">
+                        {language === "ar" ? "اضغط لرفع صورة التوقيع" : "Click to upload signature image"}
+                      </p>
+                      <p className="text-xs text-amber-500">
+                        PNG, JPG, JPEG (حد أقصى 2MB)
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <input
+                  type="file"
+                  id="signature-upload"
+                  accept=".png,.jpg,.jpeg,.gif,.webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    
+                    if (file.size > 2 * 1024 * 1024) {
+                      toast.error(language === "ar" ? "حجم الملف يجب أن يكون أقل من 2MB" : "File size must be less than 2MB");
+                      return;
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    try {
+                      const token = localStorage.getItem("token");
+                      const res = await axios.post(
+                        `${API}/hr/employees/${selectedEmployee.id}/signature`,
+                        formData,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'multipart/form-data'
+                          }
+                        }
+                      );
+                      setEmployeeForm({ ...employeeForm, signature_url: res.data.signature_url });
+                      toast.success(language === "ar" ? "تم رفع التوقيع بنجاح" : "Signature uploaded successfully");
+                    } catch (error) {
+                      toast.error(error.response?.data?.detail || "Error uploading signature");
+                    }
+                    
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            )}
+            
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEmployeeDialogOpen(false)}>
                 {t("cancel")}
