@@ -1321,7 +1321,7 @@ const HR = () => {
         <div class="signatures">
           ${createSignatureBox('توقيع الموظف', letter.employee_signature)}
           ${createSignatureBox('توقيع المدير المباشر', letter.manager_signature)}
-          ${createSignatureBox('توقيع الموارد البشرية', letter.hr_signature)}
+          ${createSignatureBox('توقيع الموارد البشرية', letter.hr_signature, 'hr')}
         </div>
       `;
     } else {
@@ -1337,8 +1337,8 @@ const HR = () => {
           <p style="margin-top: 30px;">وتفضلوا بقبول فائق الاحترام والتقدير،</p>
         </div>
         <div class="signatures">
-          ${createSignatureBox('إدارة الموارد البشرية', letter.hr_signature)}
-          ${createSignatureBox('المدير العام', letter.gm_signature)}
+          ${createSignatureBox('إدارة الموارد البشرية', letter.hr_signature, 'hr')}
+          ${createSignatureBox('المدير العام', letter.gm_signature, 'gm')}
         </div>
       `;
     }
@@ -1375,7 +1375,7 @@ const HR = () => {
       <div class="signatures">
         ${createSignatureBox('توقيع الموظف', warning.employee_signature)}
         ${createSignatureBox('توقيع المدير المباشر', warning.manager_signature)}
-        ${createSignatureBox('إدارة الموارد البشرية', warning.hr_signature)}
+        ${createSignatureBox('إدارة الموارد البشرية', warning.hr_signature, 'hr')}
       </div>
     `;
     
