@@ -5965,7 +5965,157 @@ async def get_uploaded_file(filename: str):
     
     return StreamingResponse(io.BytesIO(content), media_type=content_type)
 
-# ==================== HR - OFFICIAL HOLIDAYS (العطلات الرسمية) ====================
+# ==================== HR - ELECTRONIC SIGNATURES (التوقيعات الإلكترونية) ====================
+
+@api_router.post("/hr/employees/{employee_id}/signature")
+async def upload_employee_signature(
+    employee_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """رفع التوقيع الإلكتروني للموظف"""
+    # التحقق من وجود الموظف
+    employee = await db.hr_employees.find_one({"id": employee_id})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # التحقق من صلاحيات التعديل
+    can_edit = (
+        current_user["role"] == "admin" or
+        current_user.get("department") in ["admin", "hr", "it"] or
+        "hr_employees_edit" in current_user.get("permissions", []) or
+        current_user["id"] == employee_id  # الموظف يمكنه رفع توقيعه الخاص
+    )
+    if not can_edit:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية تعديل التوقيع")
+    
+    # التحقق من نوع الملف (صور فقط)
+    allowed_types = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    
+    if file_ext not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"نوع الملف غير مدعوم. الأنواع المدعومة: {', '.join(allowed_types)}")
+    
+    # التحقق من حجم الملف (حد أقصى 2MB للتوقيعات)
+    content = await file.read()
+    if len(content) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="حجم التوقيع يجب أن يكون أقل من 2 ميجابايت")
+    
+    # حذف التوقيع القديم إن وجد
+    old_signature = employee.get("signature_url")
+    if old_signature:
+        old_filename = old_signature.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    
+    # إنشاء اسم ملف فريد
+    import uuid as uuid_module
+    unique_filename = f"signature_{employee_id}_{uuid_module.uuid4()}{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    
+    # حفظ الملف
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    # تحديث الموظف بالتوقيع الجديد
+    signature_url = f"/api/uploads/{unique_filename}"
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$set": {"signature_url": signature_url}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="upload_signature",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"رفع التوقيع الإلكتروني للموظف: {employee.get('name')}"
+    )
+    
+    return {"signature_url": signature_url, "message": "تم رفع التوقيع بنجاح"}
+
+@api_router.delete("/hr/employees/{employee_id}/signature")
+async def delete_employee_signature(
+    employee_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حذف التوقيع الإلكتروني للموظف"""
+    # التحقق من وجود الموظف
+    employee = await db.hr_employees.find_one({"id": employee_id})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # التحقق من صلاحيات الحذف
+    can_delete = (
+        current_user["role"] == "admin" or
+        current_user.get("department") in ["admin", "hr", "it"] or
+        "hr_employees_edit" in current_user.get("permissions", []) or
+        current_user["id"] == employee_id
+    )
+    if not can_delete:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية حذف التوقيع")
+    
+    # حذف ملف التوقيع
+    old_signature = employee.get("signature_url")
+    if old_signature:
+        old_filename = old_signature.split("/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    
+    # إزالة التوقيع من قاعدة البيانات
+    await db.hr_employees.update_one(
+        {"id": employee_id},
+        {"$unset": {"signature_url": ""}}
+    )
+    
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_signature",
+        entity_type="employee",
+        entity_id=employee_id,
+        entity_name=employee.get("name"),
+        details=f"حذف التوقيع الإلكتروني للموظف: {employee.get('name')}"
+    )
+    
+    return {"message": "تم حذف التوقيع بنجاح"}
+
+@api_router.get("/hr/signatures/authorized")
+async def get_authorized_signatures(
+    current_user: dict = Depends(get_current_user)
+):
+    """جلب التوقيعات المعتمدة (المدير العام، HR، المالية)"""
+    # البحث عن الموظفين المعتمدين للتوقيع
+    authorized_roles = {
+        "gm": ["المدير العام", "General Manager", "GM", "CEO"],
+        "hr": ["مدير الموارد البشرية", "HR Manager", "HR Director"],
+        "finance": ["المدير المالي", "Finance Manager", "CFO", "Accountant Manager"]
+    }
+    
+    signatures = {}
+    
+    for role_key, positions in authorized_roles.items():
+        # البحث عن موظف بهذه المناصب ولديه توقيع
+        for position in positions:
+            employee = await db.hr_employees.find_one({
+                "position": {"$regex": position, "$options": "i"},
+                "signature_url": {"$exists": True, "$ne": None},
+                "is_active": True
+            })
+            if employee:
+                signatures[role_key] = {
+                    "employee_id": employee["id"],
+                    "employee_name": employee["name"],
+                    "position": employee["position"],
+                    "signature_url": employee["signature_url"]
+                }
+                break
+    
+    return signatures
 
 # Models imported from models/all_models.py:
 # OfficialHolidayBase, OfficialHolidayCreate, OfficialHoliday
