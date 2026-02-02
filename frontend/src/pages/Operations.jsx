@@ -192,7 +192,10 @@ const Operations = () => {
   const handlePrintMilkDelivery = (task) => {
     const printWindow = window.open('', '_blank');
     const logoUrl = window.location.origin + '/logo-morooj.png';
-    const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+    const isEn = language === 'en';
+    const dir = isEn ? 'ltr' : 'rtl';
+    const textAlign = isEn ? 'left' : 'right';
+    const today = new Date().toLocaleDateString(isEn ? 'en-US' : 'ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
     
     // الألوان البني الفاتح
     const primaryColor = '#8B5A2B';
@@ -201,23 +204,51 @@ const Operations = () => {
     
     // تحديد نوع الحليب
     const transportTypes = {
-      camel_milk: 'حليب إبل',
-      cow_milk: 'حليب أبقار',
-      sheep_milk: 'حليب أغنام'
+      camel_milk: isEn ? 'Camel Milk' : 'حليب إبل',
+      cow_milk: isEn ? 'Cow Milk' : 'حليب أبقار',
+      sheep_milk: isEn ? 'Sheep Milk' : 'حليب أغنام'
+    };
+    
+    // ترجمات
+    const t = {
+      title: isEn ? 'Milk Delivery Receipt' : 'إيصال توصيل الحليب',
+      date: isEn ? 'Date' : 'التاريخ',
+      receiptNo: isEn ? 'Receipt No' : 'رقم الإيصال',
+      driverInfo: isEn ? 'Driver Information' : 'معلومات السائق',
+      driverName: isEn ? 'Driver Name' : 'اسم السائق',
+      vehiclePlate: isEn ? 'Vehicle Plate' : 'رقم السيارة',
+      vehicleType: isEn ? 'Vehicle Type' : 'نوع المركبة',
+      truck: isEn ? 'Truck' : 'شاحنة',
+      tanker: isEn ? 'Tanker' : 'صهريج',
+      transportInfo: isEn ? 'Transport Information' : 'معلومات النقل',
+      transportDate: isEn ? 'Transport Date' : 'تاريخ النقل',
+      transportTime: isEn ? 'Transport Time' : 'وقت النقل',
+      milkType: isEn ? 'Milk Type' : 'نوع الحليب',
+      litersOf: isEn ? 'Liters of' : 'لتر من',
+      fromCenter: isEn ? 'From Center' : 'من مركز',
+      to: isEn ? 'To' : 'إلى',
+      notes: isEn ? 'Notes' : 'ملاحظات',
+      driverSignature: isEn ? 'Driver Signature' : 'توقيع السائق',
+      receiverSignature: isEn ? 'Receiver Signature' : 'توقيع المستلم',
+      opsSignature: isEn ? 'Operations Manager' : 'توقيع مسؤول العمليات',
+      signaturePlace: isEn ? 'Signature' : 'مكان التوقيع',
+      phone: isEn ? 'Phone' : 'هاتف',
+      fax: isEn ? 'Fax' : 'فاكس',
+      email: isEn ? 'Email' : 'البريد',
     };
     
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html dir="rtl" lang="ar">
+      <html dir="${dir}" lang="${isEn ? 'en' : 'ar'}">
       <head>
         <meta charset="UTF-8">
-        <title>إيصال توصيل الحليب</title>
+        <title>${t.title}</title>
         <style>
           @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; }
           body { 
             font-family: 'Arial', 'Tahoma', sans-serif; 
-            direction: rtl;
+            direction: ${dir};
             margin: 0;
             padding: 15px;
             font-size: 12px;
