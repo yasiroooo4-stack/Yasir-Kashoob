@@ -1287,19 +1287,19 @@ const HR = () => {
     if (letter.letter_type === 'leave_form') {
       content = `
         <table>
-          <tr><td style="width:35%; background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${letter.employee_name}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>القسم</strong></td><td>${letter.department || '-'}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>المسمى الوظيفي</strong></td><td>${letter.position || '-'}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>نوع الإجازة</strong></td><td>${letter.leave_type || 'سنوية'}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>تاريخ البداية</strong></td><td>${letter.start_date || '-'}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>تاريخ النهاية</strong></td><td>${letter.end_date || '-'}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>عدد الأيام</strong></td><td>${letter.days_count || '-'}</td></tr>
-          <tr><td style="background:#f5f5f5;"><strong>السبب</strong></td><td>${letter.content || letter.purpose || '-'}</td></tr>
+          <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${letter.employee_name}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>القسم</strong></td><td>${letter.department || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>المسمى الوظيفي</strong></td><td>${letter.position || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>نوع الإجازة</strong></td><td>${letter.leave_type || 'سنوية'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>تاريخ البداية</strong></td><td>${letter.start_date || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>تاريخ النهاية</strong></td><td>${letter.end_date || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>عدد الأيام</strong></td><td>${letter.days_count || '-'}</td></tr>
+          <tr><td style="background:#faf5f0;"><strong>السبب</strong></td><td>${letter.content || letter.purpose || '-'}</td></tr>
         </table>
         <div class="signatures">
-          <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
-          <div class="signature-box"><div class="signature-line">توقيع المدير المباشر</div></div>
-          <div class="signature-box"><div class="signature-line">توقيع الموارد البشرية</div></div>
+          ${createSignatureBox('توقيع الموظف', letter.employee_signature)}
+          ${createSignatureBox('توقيع المدير المباشر', letter.manager_signature)}
+          ${createSignatureBox('توقيع الموارد البشرية', letter.hr_signature)}
         </div>
       `;
     } else {
@@ -1315,8 +1315,8 @@ const HR = () => {
           <p style="margin-top: 30px;">وتفضلوا بقبول فائق الاحترام والتقدير،</p>
         </div>
         <div class="signatures">
-          <div class="signature-box"><div class="signature-line">إدارة الموارد البشرية</div></div>
-          <div class="signature-box"><div class="signature-line">المدير العام</div></div>
+          ${createSignatureBox('إدارة الموارد البشرية', letter.hr_signature)}
+          ${createSignatureBox('المدير العام', letter.gm_signature)}
         </div>
       `;
     }
