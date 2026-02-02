@@ -3049,6 +3049,15 @@ const HR = () => {
                           <TableCell>{new Date(request.created_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handlePrintExcuse(request)}
+                                title={language === "ar" ? "طباعة" : "Print"}
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
                               {request.status === "pending" && (
                                 <>
                                   <Button
