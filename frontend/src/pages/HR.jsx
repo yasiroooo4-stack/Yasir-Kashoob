@@ -3225,26 +3225,37 @@ const HR = () => {
                             </Button>
                           </TableCell>
                           <TableCell>
-                            {request.status === "pending" && (
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-green-600"
-                                  onClick={() => handleApproveExternalWork(request.id)}
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-red-600"
-                                  onClick={() => handleRejectExternalWork(request.id)}
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handlePrintExternalWork(request)}
+                                title={language === "ar" ? "طباعة" : "Print"}
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
+                              {request.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-green-600"
+                                    onClick={() => handleApproveExternalWork(request.id)}
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-600"
+                                    onClick={() => handleRejectExternalWork(request.id)}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
