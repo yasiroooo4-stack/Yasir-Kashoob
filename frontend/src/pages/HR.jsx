@@ -2380,6 +2380,15 @@ const HR = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handlePrintWarning(warning)}
+                                title={language === "ar" ? "طباعة" : "Print"}
+                              >
+                                <Printer className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => {
                                   setSelectedWarning(warning);
                                   setWarningForm({
