@@ -1058,12 +1058,20 @@ const HR = () => {
   };
 
   // دالة مساعدة لإنشاء مربع التوقيع مع دعم التوقيع الإلكتروني
-  const createSignatureBox = (label, signatureUrl = null) => {
-    if (signatureUrl) {
+  const createSignatureBox = (label, signatureUrl = null, signatureType = null) => {
+    // محاولة استخدام التوقيع المعتمد إذا كان النوع محدداً
+    let finalSignatureUrl = signatureUrl;
+    if (!finalSignatureUrl && signatureType && authorizedSignatures[signatureType]) {
+      finalSignatureUrl = `${API}${authorizedSignatures[signatureType].signature_url}`;
+    } else if (finalSignatureUrl && finalSignatureUrl.startsWith('/api')) {
+      finalSignatureUrl = `${API}${finalSignatureUrl}`;
+    }
+    
+    if (finalSignatureUrl) {
       return `
         <div class="signature-box">
           <div class="e-signature e-signature-present">
-            <img src="${signatureUrl}" alt="توقيع" />
+            <img src="${finalSignatureUrl}" alt="توقيع" />
           </div>
           <div class="signature-line">${label}</div>
         </div>
