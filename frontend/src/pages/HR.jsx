@@ -3433,6 +3433,35 @@ const HR = () => {
                           <TableCell>{contract.end_date}</TableCell>
                           <TableCell>{contract.monthly_rent} {language === "ar" ? "ر.ع" : "OMR"}</TableCell>
                           <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-blue-600 hover:text-blue-800"
+                              onClick={() => {
+                                const content = `
+                                  <table>
+                                    <tr><td style="width:35%; background:#f5f5f5;"><strong>نوع السيارة</strong></td><td>${contract.car_type}</td></tr>
+                                    <tr><td style="background:#f5f5f5;"><strong>رقم اللوحة</strong></td><td>${contract.plate_number}</td></tr>
+                                    <tr><td style="background:#f5f5f5;"><strong>اسم الموظف</strong></td><td>${contract.employee_name || '-'}</td></tr>
+                                    <tr><td style="background:#f5f5f5;"><strong>تاريخ البداية</strong></td><td>${contract.start_date}</td></tr>
+                                    <tr><td style="background:#f5f5f5;"><strong>تاريخ النهاية</strong></td><td>${contract.end_date}</td></tr>
+                                    <tr><td style="background:#f5f5f5;"><strong>الإيجار الشهري</strong></td><td style="font-weight: bold; color: #1a5f7a;">${contract.monthly_rent} ر.ع</td></tr>
+                                    <tr><td style="background:#f5f5f5;"><strong>الحالة</strong></td><td>${contract.status === 'active' ? 'نشط' : 'منتهي'}</td></tr>
+                                  </table>
+                                  <div class="signatures">
+                                    <div class="signature-box"><div class="signature-line">توقيع الموظف</div></div>
+                                    <div class="signature-box"><div class="signature-line">توقيع المالية</div></div>
+                                    <div class="signature-box"><div class="signature-line">توقيع الإدارة</div></div>
+                                  </div>
+                                `;
+                                printDocument('عقد سيارة', content);
+                              }}
+                              title={language === "ar" ? "طباعة" : "Print"}
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
