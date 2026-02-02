@@ -1430,84 +1430,151 @@ const HR = () => {
       </div>
     `;
     
-    printDocument(warningTypes[warning.warning_type] || 'إنذار موظف', content);
+    printDocument(warningTypes[warning.warning_type] || (isEn ? 'Employee Warning' : 'إنذار موظف'), content);
   };
 
   // طباعة طلب عذر
   const handlePrintExcuse = (excuse) => {
-    const statusMap = { approved: 'موافق', pending: 'قيد الانتظار', rejected: 'مرفوض' };
+    const isEn = language === 'en';
+    const statusMap = { 
+      approved: isEn ? 'Approved' : 'موافق', 
+      pending: isEn ? 'Pending' : 'قيد الانتظار', 
+      rejected: isEn ? 'Rejected' : 'مرفوض' 
+    };
     const statusClass = excuse.status === 'approved' ? 'status-approved' : excuse.status === 'rejected' ? 'status-rejected' : 'status-pending';
+    
+    const t = {
+      status: isEn ? 'Status' : 'الحالة',
+      employeeName: isEn ? 'Employee Name' : 'اسم الموظف',
+      excuseType: isEn ? 'Excuse Type' : 'نوع العذر',
+      fromDate: isEn ? 'From Date' : 'من تاريخ',
+      toDate: isEn ? 'To Date' : 'إلى تاريخ',
+      reason: isEn ? 'Reason' : 'السبب',
+      employeeSignature: isEn ? 'Employee Signature' : 'توقيع الموظف',
+      managerSignature: isEn ? 'Direct Manager Signature' : 'توقيع المدير المباشر',
+      hrSignature: isEn ? 'Human Resources' : 'إدارة الموارد البشرية',
+    };
     
     const content = `
       <div class="document-info">
-        <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[excuse.status] || excuse.status}</span></div>
+        <div><span class="info-label">${t.status}:</span> <span class="status-badge ${statusClass}">${statusMap[excuse.status] || excuse.status}</span></div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${excuse.employee_name}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>نوع العذر</strong></td><td>${excuse.excuse_type || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>من تاريخ</strong></td><td>${excuse.from_date || excuse.excuse_date || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>إلى تاريخ</strong></td><td>${excuse.to_date || excuse.from_date || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>السبب</strong></td><td>${excuse.reason || '-'}</td></tr>
+        <tr><td style="width:35%; background:#faf5f0;"><strong>${t.employeeName}</strong></td><td>${excuse.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.excuseType}</strong></td><td>${excuse.excuse_type || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.fromDate}</strong></td><td>${excuse.from_date || excuse.excuse_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.toDate}</strong></td><td>${excuse.to_date || excuse.from_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.reason}</strong></td><td>${excuse.reason || '-'}</td></tr>
       </table>
       <div class="signatures">
-        ${createSignatureBox('توقيع الموظف', excuse.employee_signature)}
-        ${createSignatureBox('توقيع المدير المباشر', excuse.manager_signature)}
-        ${createSignatureBox('إدارة الموارد البشرية', excuse.hr_signature, 'hr')}
+        ${createSignatureBox(t.employeeSignature, excuse.employee_signature)}
+        ${createSignatureBox(t.managerSignature, excuse.manager_signature)}
+        ${createSignatureBox(t.hrSignature, excuse.hr_signature, 'hr')}
       </div>
     `;
     
-    printDocument('طلب عذر عن الغياب', content);
+    printDocument(isEn ? 'Absence Excuse Request' : 'طلب عذر عن الغياب', content);
   };
 
   // طباعة طلب عمل خارجي
   const handlePrintExternalWork = (extWork) => {
-    const statusMap = { approved: 'موافق', pending: 'قيد الانتظار', rejected: 'مرفوض' };
+    const isEn = language === 'en';
+    const statusMap = { 
+      approved: isEn ? 'Approved' : 'موافق', 
+      pending: isEn ? 'Pending' : 'قيد الانتظار', 
+      rejected: isEn ? 'Rejected' : 'مرفوض' 
+    };
     const statusClass = extWork.status === 'approved' ? 'status-approved' : extWork.status === 'rejected' ? 'status-rejected' : 'status-pending';
-    const workTypes = { client_visit: 'زيارة عميل', meeting: 'اجتماع', training: 'تدريب', conference: 'مؤتمر', fieldwork: 'عمل ميداني', other: 'أخرى' };
+    const workTypes = { 
+      client_visit: isEn ? 'Client Visit' : 'زيارة عميل', 
+      meeting: isEn ? 'Meeting' : 'اجتماع', 
+      training: isEn ? 'Training' : 'تدريب', 
+      conference: isEn ? 'Conference' : 'مؤتمر', 
+      fieldwork: isEn ? 'Field Work' : 'عمل ميداني', 
+      other: isEn ? 'Other' : 'أخرى' 
+    };
+    
+    const t = {
+      status: isEn ? 'Status' : 'الحالة',
+      employeeName: isEn ? 'Employee Name' : 'اسم الموظف',
+      workType: isEn ? 'Work Type' : 'نوع العمل',
+      fromDate: isEn ? 'From Date' : 'من تاريخ',
+      toDate: isEn ? 'To Date' : 'إلى تاريخ',
+      location: isEn ? 'Location' : 'الموقع',
+      purpose: isEn ? 'Purpose' : 'الغرض',
+      notes: isEn ? 'Notes' : 'ملاحظات',
+      employeeSignature: isEn ? 'Employee Signature' : 'توقيع الموظف',
+      managerSignature: isEn ? 'Direct Manager Signature' : 'توقيع المدير المباشر',
+      hrSignature: isEn ? 'Human Resources' : 'إدارة الموارد البشرية',
+    };
     
     const content = `
       <div class="document-info">
-        <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[extWork.status] || extWork.status}</span></div>
+        <div><span class="info-label">${t.status}:</span> <span class="status-badge ${statusClass}">${statusMap[extWork.status] || extWork.status}</span></div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${extWork.employee_name}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>نوع العمل</strong></td><td>${workTypes[extWork.work_type] || extWork.work_type}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>من تاريخ</strong></td><td>${extWork.work_date || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>إلى تاريخ</strong></td><td>${extWork.work_date_to || extWork.work_date || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>الموقع</strong></td><td>${extWork.location || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>الغرض</strong></td><td>${extWork.purpose || '-'}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>ملاحظات</strong></td><td>${extWork.notes || '-'}</td></tr>
+        <tr><td style="width:35%; background:#faf5f0;"><strong>${t.employeeName}</strong></td><td>${extWork.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.workType}</strong></td><td>${workTypes[extWork.work_type] || extWork.work_type}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.fromDate}</strong></td><td>${extWork.work_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.toDate}</strong></td><td>${extWork.work_date_to || extWork.work_date || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.location}</strong></td><td>${extWork.location || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.purpose}</strong></td><td>${extWork.purpose || '-'}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.notes}</strong></td><td>${extWork.notes || '-'}</td></tr>
       </table>
       <div class="signatures">
-        ${createSignatureBox('توقيع الموظف', extWork.employee_signature)}
-        ${createSignatureBox('توقيع المدير المباشر', extWork.manager_signature)}
-        ${createSignatureBox('إدارة الموارد البشرية', extWork.hr_signature, 'hr')}
+        ${createSignatureBox(t.employeeSignature, extWork.employee_signature)}
+        ${createSignatureBox(t.managerSignature, extWork.manager_signature)}
+        ${createSignatureBox(t.hrSignature, extWork.hr_signature, 'hr')}
       </div>
     `;
     
-    printDocument('طلب عمل خارجي', content);
+    printDocument(isEn ? 'External Work Request' : 'طلب عمل خارجي', content);
   };
 
   // طباعة طلب سلفة/مصاريف
   const handlePrintAdvanceRequest = (req) => {
-    const statusMap = { approved: 'موافق', pending: 'قيد الانتظار', rejected: 'مرفوض', paid: 'مدفوع' };
+    const isEn = language === 'en';
+    const statusMap = { 
+      approved: isEn ? 'Approved' : 'موافق', 
+      pending: isEn ? 'Pending' : 'قيد الانتظار', 
+      rejected: isEn ? 'Rejected' : 'مرفوض', 
+      paid: isEn ? 'Paid' : 'مدفوع' 
+    };
     const statusClass = req.status === 'approved' || req.status === 'paid' ? 'status-approved' : req.status === 'rejected' ? 'status-rejected' : 'status-pending';
-    const typeMap = { advance: 'سلفة', expense: 'مصاريف', loan: 'قرض' };
+    const typeMap = { 
+      advance: isEn ? 'Advance' : 'سلفة', 
+      expense: isEn ? 'Expense' : 'مصاريف', 
+      loan: isEn ? 'Loan' : 'قرض' 
+    };
+    
+    const t = {
+      status: isEn ? 'Status' : 'الحالة',
+      date: isEn ? 'Date' : 'التاريخ',
+      employeeName: isEn ? 'Employee Name' : 'اسم الموظف',
+      requestType: isEn ? 'Request Type' : 'نوع الطلب',
+      amount: isEn ? 'Amount Requested' : 'المبلغ المطلوب',
+      reason: isEn ? 'Reason' : 'السبب',
+      installments: isEn ? 'Installments' : 'عدد الأقساط',
+      currency: isEn ? 'OMR' : 'ر.ع',
+      employeeSignature: isEn ? 'Employee Signature' : 'توقيع الموظف',
+      financeSignature: isEn ? 'Finance Signature' : 'توقيع المالية',
+      gmSignature: isEn ? 'General Manager' : 'توقيع المدير العام',
+    };
     
     const content = `
       <div class="document-info">
-        <div><span class="info-label">الحالة:</span> <span class="status-badge ${statusClass}">${statusMap[req.status] || req.status}</span></div>
-        <div><span class="info-label">التاريخ:</span> ${req.request_date || '-'}</div>
+        <div><span class="info-label">${t.status}:</span> <span class="status-badge ${statusClass}">${statusMap[req.status] || req.status}</span></div>
+        <div><span class="info-label">${t.date}:</span> ${req.request_date || '-'}</div>
       </div>
       <table>
-        <tr><td style="width:35%; background:#faf5f0;"><strong>اسم الموظف</strong></td><td>${req.employee_name}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>نوع الطلب</strong></td><td>${typeMap[req.request_type] || req.request_type}</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>المبلغ المطلوب</strong></td><td style="font-weight: bold; color: #8B5A2B;">${req.amount?.toLocaleString()} ر.ع</td></tr>
-        <tr><td style="background:#faf5f0;"><strong>السبب</strong></td><td>${req.reason || '-'}</td></tr>
-        ${req.installments ? `<tr><td style="background:#faf5f0;"><strong>عدد الأقساط</strong></td><td>${req.installments}</td></tr>` : ''}
+        <tr><td style="width:35%; background:#faf5f0;"><strong>${t.employeeName}</strong></td><td>${req.employee_name}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.requestType}</strong></td><td>${typeMap[req.request_type] || req.request_type}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.amount}</strong></td><td style="font-weight: bold; color: #8B5A2B;">${req.amount?.toLocaleString()} ${t.currency}</td></tr>
+        <tr><td style="background:#faf5f0;"><strong>${t.reason}</strong></td><td>${req.reason || '-'}</td></tr>
+        ${req.installments ? `<tr><td style="background:#faf5f0;"><strong>${t.installments}</strong></td><td>${req.installments}</td></tr>` : ''}
       </table>
       <div class="signatures">
-        ${createSignatureBox('توقيع الموظف', req.employee_signature)}
+        ${createSignatureBox(t.employeeSignature, req.employee_signature)}
         ${createSignatureBox('توقيع المالية', req.finance_signature, 'finance')}
         ${createSignatureBox('توقيع المدير العام', req.gm_signature, 'gm')}
       </div>
