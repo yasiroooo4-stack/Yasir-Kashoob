@@ -479,6 +479,14 @@ const HR = () => {
       setWarnings(warningsRes.data || []);
       setOfficialHolidays(holidaysRes.data || []);
       setExternalWorkRequests(externalWorkRes.data || []);
+      
+      // جلب التوقيعات المعتمدة
+      try {
+        const signaturesRes = await axios.get(`${API}/hr/signatures/authorized`);
+        setAuthorizedSignatures(signaturesRes.data || {});
+      } catch (sigError) {
+        console.log("No authorized signatures found");
+      }
     } catch (error) {
       console.error("Error fetching HR data:", error);
     } finally {
