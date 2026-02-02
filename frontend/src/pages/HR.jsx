@@ -3743,6 +3743,15 @@ const HR = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-blue-600 hover:text-blue-800"
+                            onClick={() => handlePrintAdvanceRequest({...loan, request_type: loan.loan_type, request_date: loan.created_at?.split('T')[0]})}
+                            title={language === "ar" ? "طباعة" : "Print"}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
                           {loan.status === "pending" && (
                             <>
                               <Button size="icon" variant="ghost" className="text-green-600" onClick={async () => { await axios.put(`${API}/hr/loans/${loan.id}/approve?approved=true`); fetchData(); toast.success(language === "ar" ? "تمت الموافقة" : "Approved"); }}>
