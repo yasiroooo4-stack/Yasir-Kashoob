@@ -1529,12 +1529,52 @@ const Operations = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{language === "ar" ? "رقم السيارة" : "Vehicle Plate"} *</Label>
-                <Input 
+                <Select 
                   value={driverTaskForm.vehicle_plate} 
-                  onChange={(e) => setDriverTaskForm({...driverTaskForm, vehicle_plate: e.target.value})}
-                  placeholder="ABC 1234"
-                  required
-                />
+                  onValueChange={(v) => {
+                    const selectedVehicle = vehicles.find(veh => veh.plate_number === v);
+                    setDriverTaskForm({
+                      ...driverTaskForm, 
+                      vehicle_plate: v,
+                      vehicle_type: selectedVehicle?.vehicle_type || driverTaskForm.vehicle_type
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "ar" ? "اختر السيارة" : "Select Vehicle"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.filter(v => v.status === 'available' || v.status === 'operational').length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        {language === "ar" ? "لا توجد سيارات متاحة" : "No vehicles available"}
+                      </SelectItem>
+                    ) : (
+                      vehicles
+                        .filter(v => v.status === 'available' || v.status === 'operational' || !v.status)
+                        .map((veh) => (
+                          <SelectItem key={veh.id} value={veh.plate_number}>
+                            {veh.plate_number} - {veh.brand} {veh.model} ({
+                              veh.vehicle_type === 'truck' ? (language === "ar" ? "شاحنة" : "Truck") :
+                              veh.vehicle_type === 'tanker' ? (language === "ar" ? "صهريج" : "Tanker") :
+                              veh.vehicle_type === 'pickup' ? (language === "ar" ? "بيك آب" : "Pickup") :
+                              veh.vehicle_type
+                            })
+                          </SelectItem>
+                        ))
+                    )}
+                    {/* خيار إدخال يدوي */}
+                    <SelectItem value="manual">
+                      {language === "ar" ? "إدخال يدوي..." : "Manual entry..."}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {driverTaskForm.vehicle_plate === 'manual' && (
+                  <Input 
+                    placeholder={language === "ar" ? "أدخل رقم السيارة" : "Enter plate number"}
+                    onChange={(e) => setDriverTaskForm({...driverTaskForm, vehicle_plate: e.target.value})}
+                    className="mt-2"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label>{language === "ar" ? "نوع السيارة" : "Vehicle Type"}</Label>
