@@ -602,6 +602,7 @@ const HR = () => {
       manager_id: "",
       manager_name: "",
       username: "",
+      signature_url: null,
     });
     setSelectedEmployee(null);
   };
