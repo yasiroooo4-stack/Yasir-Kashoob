@@ -1,0 +1,27 @@
+{
+  "name": "المروج - تتبع الموقع",
+  "short_name": "تتبع الموقع",
+  "description": "تطبيق تتبع موقع الموظفين - شركة المروج للألبان",
+  "start_url": "/employee-app",
+  "display": "standalone",
+  "background_color": "#047857",
+  "theme_color": "#047857",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "ar",
+  "dir": "rtl"
+}
