@@ -2706,3 +2706,60 @@ WAREHOUSE_TYPES = [
     {"id": "sub", "name_ar": "مخزن فرعي", "name_en": "Sub Warehouse"},
 ]
 
+
+
+# ==================== EMPLOYEE TRACKING MODELS ====================
+
+class EmployeeLocationUpdate(BaseModel):
+    """تحديث موقع الموظف"""
+    model_config = ConfigDict(extra="ignore")
+    latitude: float
+    longitude: float
+    accuracy: Optional[float] = None  # دقة GPS بالمتر
+    timestamp: Optional[str] = None
+
+class EmployeeLocation(BaseModel):
+    """سجل موقع الموظف"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: str
+    employee_code: Optional[str] = None
+    phone: Optional[str] = None
+    latitude: float
+    longitude: float
+    accuracy: Optional[float] = None
+    distance_from_work: Optional[float] = None  # المسافة من مقر العمل بالمتر
+    is_within_range: bool = True  # هل داخل نطاق العمل
+    work_location_name: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class TrackingSettings(BaseModel):
+    """إعدادات التتبع"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    enabled: bool = True  # تفعيل التتبع
+    update_interval_seconds: int = 60  # الفترة بين التحديثات (ثانية)
+    work_radius_meters: int = 500  # نطاق العمل بالمتر
+    alert_on_exit: bool = True  # تنبيه عند الخروج من النطاق
+    work_locations: List[dict] = Field(default_factory=list)  # مواقع العمل [{name, lat, lng, radius}]
+    updated_at: Optional[str] = None
+    updated_by: Optional[str] = None
+
+class TrackingAlert(BaseModel):
+    """تنبيهات التتبع"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    employee_id: str
+    employee_name: str
+    employee_code: Optional[str] = None
+    alert_type: str  # exit_range, enter_range, offline
+    message: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    distance_from_work: Optional[float] = None
+    is_read: bool = False
+    is_dismissed: bool = False  # تم تجاهله
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    read_at: Optional[str] = None
+    dismissed_at: Optional[str] = None
