@@ -331,6 +331,9 @@ function App() {
               {/* Supplier App (PWA) - Public Route */}
               <Route path="/supplier-app" element={<SupplierApp />} />
               
+              {/* Employee Tracking - Public Route */}
+              <Route path="/employee-tracking" element={<EmployeeTracking />} />
+              
               <Route path="/" element={
                 user ? (
                   <ErrorBoundary>
