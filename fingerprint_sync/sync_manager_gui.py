@@ -78,7 +78,7 @@ class SyncManagerApp:
     def load_config(self):
         """تحميل ملف التكوين"""
         default_config = {
-            'api_url': 'https://erp-hub-11.preview.emergentagent.com',
+            'api_url': 'https://milk-delivery-ops.preview.emergentagent.com',
             'username': 'yasir',
             'password': 'admin123',
             'sync_interval': 3600,  # ساعة واحدة (60 دقيقة)
