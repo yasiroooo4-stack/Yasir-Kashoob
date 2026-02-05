@@ -430,7 +430,7 @@ const Settings = ({ embedded = false }) => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        <TabsList className="grid w-full max-w-4xl grid-cols-6">
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
             {t("profile_settings")}
@@ -442,6 +442,10 @@ const Settings = ({ embedded = false }) => {
           <TabsTrigger value="appearance" className="gap-2">
             <Palette className="w-4 h-4" />
             {language === "ar" ? "المظهر" : "Appearance"}
+          </TabsTrigger>
+          <TabsTrigger value="tracking" className="gap-2">
+            <MapPin className="w-4 h-4" />
+            {language === "ar" ? "تتبع الموظفين" : "Tracking"}
           </TabsTrigger>
           <TabsTrigger value="centers" className="gap-2">
             <Building className="w-4 h-4" />
