@@ -2,16 +2,22 @@
 Employee Tracking Routes - مسارات تتبع الموظفين
 نظام GPS لتتبع مواقع الموظفين في الوقت الفعلي
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
 import uuid
+import os
+import base64
 
 router = APIRouter(prefix="/api/tracking", tags=["Employee Tracking"])
 
 # Database reference (will be set from main server)
 db = None
+
+# Directory for verification photos
+VERIFICATION_PHOTOS_DIR = "/app/backend/uploads/verification_photos"
+os.makedirs(VERIFICATION_PHOTOS_DIR, exist_ok=True)
 
 def set_database(database):
     global db
