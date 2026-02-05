@@ -821,3 +821,75 @@ POST   /api/milk-receptions/import       - استيراد
 - ✅ Code Review: جميع الميزات موجودة
 - ملف الاختبار: `/app/test_reports/iteration_26.json`
 
+
+---
+
+### 2 فبراير 2026 - تحسينات مهام السائقين ونماذج الطباعة ✅
+
+#### 1. ترجمة نماذج الطباعة تلقائياً ✅
+تم تحديث جميع دوال الطباعة لتدعم اللغتين العربية والإنجليزية:
+
+**الدوال المُحدّثة في HR.jsx:**
+- `printDocument` - القالب الأساسي مع دعم RTL/LTR
+- `handlePrintLetter` - نموذج الإجازة والرسائل الرسمية
+- `handlePrintWarning` - نموذج الإنذارات
+- `handlePrintExcuse` - نموذج طلب العذر
+- `handlePrintExternalWork` - نموذج العمل الخارجي
+- `handlePrintAdvanceRequest` - نموذج السلف والمصاريف
+
+**الدوال المُحدّثة في Operations.jsx:**
+- `handlePrintMilkDelivery` - إيصال توصيل الحليب
+
+**التغييرات:**
+- `direction: rtl/ltr` حسب اللغة
+- `text-align: right/left` حسب اللغة
+- ترجمة جميع العناوين والتسميات
+- تاريخ بصيغة محلية (`ar-SA` / `en-US`)
+
+#### 2. ربط مهام السائقين بأسطول المركبات ✅
+تم تحديث حقل "رقم السيارة" ليعرض قائمة من أسطول المركبات:
+
+**الميزات:**
+- عرض المركبات المتاحة (`status: available/operational`)
+- عرض معلومات المركبة (رقم اللوحة، الماركة، الموديل، النوع)
+- تعبئة تلقائية لنوع المركبة عند الاختيار
+- خيار "إدخال يدوي" للمركبات غير المسجلة
+
+**الكود:**
+```jsx
+<Select onValueChange={(v) => {
+  const selectedVehicle = vehicles.find(veh => veh.plate_number === v);
+  setDriverTaskForm({
+    ...driverTaskForm, 
+    vehicle_plate: v,
+    vehicle_type: selectedVehicle?.vehicle_type || ...
+  });
+}}>
+```
+
+#### 3. أيقونات الحيوانات بدلاً من البترول ✅
+تم استبدال أيقونة `Fuel` بأيقونات SVG مخصصة للحيوانات:
+
+| نوع الحليب | الأيقونة | اللون |
+|-----------|---------|-------|
+| حليب إبل | 🐪 Camel SVG | Amber |
+| حليب أبقار | 🐄 Cow SVG | Blue |
+| حليب أغنام | 🐑 Sheep SVG | Pink |
+
+#### 4. زر حذف مهام السائقين ✅
+تم إضافة زر حذف في عمود "الإجراءات":
+
+**الميزات:**
+- تأكيد قبل الحذف (`window.confirm`)
+- رسالة نجاح بعد الحذف
+- تحديث الجدول والإحصائيات بعد الحذف
+
+**API:**
+- `DELETE /api/operations/driver-tasks/{task_id}`
+- يتطلب صلاحية: `admin` أو `operations_manager`
+
+#### نتائج الاختبار
+- ✅ Backend: 9/9 اختبارات ناجحة
+- ✅ Frontend: جميع الميزات تعمل
+- ملف الاختبار: `/app/test_reports/iteration_27.json`
+
