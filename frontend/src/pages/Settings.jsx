@@ -680,6 +680,19 @@ const Settings = ({ embedded = false }) => {
           </Card>
         </TabsContent>
 
+        {/* Employee Tracking Tab */}
+        <TabsContent value="tracking">
+          {user?.role === "admin" ? (
+            <EmployeeTrackingAdmin />
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                {language === "ar" ? "هذه الميزة متاحة للمدير فقط" : "This feature is available for admin only"}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* Centers Tab */}
         <TabsContent value="centers">
           <Card>
