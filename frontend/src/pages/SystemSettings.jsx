@@ -67,12 +67,14 @@ import {
   Clock,
   Monitor,
   Activity,
+  Navigation,
 } from "lucide-react";
 
 // Lazy load additional settings components
 const AppearanceSettings = lazy(() => import("./ThemeSettings"));
 const NotificationSettings = lazy(() => import("./NotificationSettings"));
 const CCTVSystem = lazy(() => import("./CCTVSystem"));
+const EmployeeTrackingAdmin = lazy(() => import("../components/EmployeeTrackingAdmin"));
 
 // Fingerprint Sync Settings Component
 const FingerprintSyncSettings = ({ language, t }) => {
