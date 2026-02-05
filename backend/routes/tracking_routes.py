@@ -385,6 +385,73 @@ async def clear_all_alerts():
     return {"success": True, "message": "تم حذف التنبيهات المقروءة"}
 
 
+# ==================== PHOTO VERIFICATION ====================
+
+@router.post("/verify-photo")
+async def upload_verification_photo(
+    photo: UploadFile = File(...),
+    employee_id: str = Form(...),
+    timestamp: str = Form(None)
+):
+    """
+    رفع صورة التحقق من الموظف
+    """
+    try:
+        # Get employee info
+        employee = await db.hr_employees.find_one({"id": employee_id})
+        if not employee:
+            employee = await db.hr_employees.find_one({"employee_code": employee_id})
+        
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        
+        # Create filename
+        date_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        filename = f"{employee.get('employee_code', employee_id)}_{date_str}.jpg"
+        filepath = os.path.join(VERIFICATION_PHOTOS_DIR, filename)
+        
+        # Save photo
+        contents = await photo.read()
+        with open(filepath, "wb") as f:
+            f.write(contents)
+        
+        # Save verification record
+        verification_record = {
+            "id": str(uuid.uuid4()),
+            "employee_id": employee.get("id"),
+            "employee_name": employee.get("name"),
+            "employee_code": employee.get("employee_code"),
+            "photo_filename": filename,
+            "photo_path": filepath,
+            "timestamp": timestamp or datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.tracking_verifications.insert_one(verification_record)
+        
+        return {
+            "success": True,
+            "message": "تم حفظ صورة التحقق بنجاح",
+            "filename": filename
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save photo: {str(e)}")
+
+
+@router.get("/verifications/{employee_id}")
+async def get_employee_verifications(employee_id: str, limit: int = 10):
+    """
+    جلب سجل صور التحقق لموظف
+    """
+    verifications = await db.tracking_verifications.find(
+        {"employee_id": employee_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    return verifications
+
+
 # ==================== REQUEST LOCATION ====================
 
 @router.post("/request-location/{employee_id}")
