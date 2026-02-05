@@ -2807,7 +2807,8 @@ const HR = () => {
                                     end_date: req.end_date,
                                     days_count: req.days_count,
                                     content: req.reason || '',
-                                    purpose: req.reason || ''
+                                    purpose: req.reason || '',
+                                    status: req.status
                                   };
                                   handlePrintLetter(leaveData);
                                 }}
