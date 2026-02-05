@@ -135,34 +135,60 @@ const EmployeeTrackingAdmin = () => {
 
   // Initialize map
   useEffect(() => {
-    if (activeTab === "map" && mapRef.current && !mapInstanceRef.current && typeof window !== 'undefined') {
+    let isMounted = true;
+    
+    if (activeTab === "map" && mapRef.current && typeof window !== 'undefined') {
+      // Clean up existing map if any
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          console.log("Map cleanup error:", e);
+        }
+        mapInstanceRef.current = null;
+      }
+      
       import('leaflet').then((L) => {
+        if (!isMounted || !mapRef.current) return;
+        
         // Default center (Oman)
         const defaultCenter = [17.0234, 54.0900];
         
-        mapInstanceRef.current = L.map(mapRef.current).setView(defaultCenter, 10);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(mapInstanceRef.current);
+        try {
+          mapInstanceRef.current = L.map(mapRef.current, { 
+            center: defaultCenter, 
+            zoom: 10 
+          });
+          
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(mapInstanceRef.current);
 
-        // Add work locations circles
-        settings.work_locations?.forEach(loc => {
-          if (loc.lat && loc.lng) {
-            L.circle([loc.lat, loc.lng], {
-              color: '#2563eb',
-              fillColor: '#3b82f6',
-              fillOpacity: 0.2,
-              radius: loc.radius || settings.work_radius_meters
-            }).addTo(mapInstanceRef.current).bindPopup(`<b>${loc.name}</b><br/>نطاق: ${loc.radius || settings.work_radius_meters}م`);
-          }
-        });
+          // Add work locations circles
+          settings.work_locations?.forEach(loc => {
+            if (loc.lat && loc.lng && mapInstanceRef.current) {
+              L.circle([loc.lat, loc.lng], {
+                color: '#2563eb',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.2,
+                radius: loc.radius || settings.work_radius_meters
+              }).addTo(mapInstanceRef.current).bindPopup(`<b>${loc.name}</b><br/>نطاق: ${loc.radius || settings.work_radius_meters}م`);
+            }
+          });
+        } catch (e) {
+          console.error("Map initialization error:", e);
+        }
       });
     }
     
     return () => {
+      isMounted = false;
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          console.log("Map cleanup error:", e);
+        }
         mapInstanceRef.current = null;
       }
     };
