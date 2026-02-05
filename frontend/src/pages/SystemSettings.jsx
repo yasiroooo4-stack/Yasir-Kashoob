@@ -1099,6 +1099,17 @@ const SystemSettings = () => {
           </Card>
         </TabsContent>
 
+        {/* Employee Tracking Tab */}
+        <TabsContent value="tracking">
+          <Suspense fallback={
+            <div className="flex justify-center items-center p-12">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          }>
+            <EmployeeTrackingAdmin />
+          </Suspense>
+        </TabsContent>
+
         {/* Allowed Locations Tab */}
         <TabsContent value="locations">
           <AllowedLocationsSettings language={language} t={t} />
