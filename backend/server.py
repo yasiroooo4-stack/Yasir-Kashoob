@@ -16226,6 +16226,11 @@ app.include_router(driver_schedule_router, prefix="/api")
 from routes.tasks_routes import router as tasks_router
 app.include_router(tasks_router, prefix="/api")
 
+# Include Employee Tracking router
+from routes.tracking_routes import router as tracking_router, set_database as set_tracking_db
+set_tracking_db(db)
+app.include_router(tracking_router)
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
