@@ -20,6 +20,14 @@ const EmployeeApp = () => {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   
+  // Face verification states
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [pendingEmployee, setPendingEmployee] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  
   const intervalRef = useRef(null);
 
   // Check if app is installed
