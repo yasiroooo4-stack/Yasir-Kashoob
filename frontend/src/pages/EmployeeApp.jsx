@@ -77,6 +77,93 @@ const EmployeeApp = () => {
     }
   };
 
+  // Camera functions for face verification
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: 640, height: 480 } 
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch (err) {
+      setError('فشل في فتح الكاميرا. يرجى السماح بالوصول للكاميرا.');
+      console.error('Camera error:', err);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0);
+      
+      const photoData = canvas.toDataURL('image/jpeg', 0.8);
+      setCapturedPhoto(photoData);
+      stopCamera();
+    }
+  };
+
+  const confirmPhotoAndLogin = async () => {
+    if (pendingEmployee && capturedPhoto) {
+      try {
+        // Upload photo with location data
+        const formData = new FormData();
+        
+        // Convert base64 to blob
+        const response = await fetch(capturedPhoto);
+        const blob = await response.blob();
+        formData.append('photo', blob, 'face_verification.jpg');
+        formData.append('employee_id', pendingEmployee.id);
+        formData.append('timestamp', new Date().toISOString());
+        
+        // Upload verification photo
+        await axios.post(`${API}/tracking/verify-photo`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        // Complete login
+        setEmployee(pendingEmployee);
+        setIsLoggedIn(true);
+        localStorage.setItem('tracking_employee', JSON.stringify(pendingEmployee));
+        localStorage.setItem('tracking_last_photo', capturedPhoto);
+        toast.success('تم تسجيل الدخول والتحقق بنجاح');
+        
+        // Reset
+        setPendingEmployee(null);
+        setCapturedPhoto(null);
+      } catch (error) {
+        console.log('Photo upload failed, continuing anyway');
+        // Even if upload fails, allow login
+        setEmployee(pendingEmployee);
+        setIsLoggedIn(true);
+        localStorage.setItem('tracking_employee', JSON.stringify(pendingEmployee));
+        toast.success('تم تسجيل الدخول بنجاح');
+        setPendingEmployee(null);
+        setCapturedPhoto(null);
+      }
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    startCamera();
+  };
+
   // Login with employee code and phone
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -94,10 +181,9 @@ const EmployeeApp = () => {
       );
       
       if (found) {
-        setEmployee(found);
-        setIsLoggedIn(true);
-        localStorage.setItem('tracking_employee', JSON.stringify(found));
-        toast.success('تم تسجيل الدخول بنجاح');
+        // Store pending employee and show camera for face verification
+        setPendingEmployee(found);
+        startCamera();
       } else {
         setError('رقم الموظف أو الهاتف غير صحيح');
       }
@@ -114,6 +200,7 @@ const EmployeeApp = () => {
     setEmployee(null);
     setIsLoggedIn(false);
     localStorage.removeItem('tracking_employee');
+    localStorage.removeItem('tracking_last_photo');
   };
 
   // Send location to server
