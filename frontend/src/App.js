@@ -71,6 +71,7 @@ import PermissionsManagement from "./pages/PermissionsManagement";
 import WarehouseManagement from "./pages/WarehouseManagement";
 import ExtraPayApprovals from "./pages/ExtraPayApprovals";
 import TasksManagement from "./pages/TasksManagement";
+import EmployeeTracking from "./pages/EmployeeTracking";
 
 // Layout
 import Layout from "./components/Layout";
