@@ -31,8 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { User, Lock, Building, Activity, Settings as SettingsIcon, Plus, Pencil, Trash2, Palette, Sun, Moon, Sparkles } from "lucide-react";
+import { User, Lock, Building, Activity, Settings as SettingsIcon, Plus, Pencil, Trash2, Palette, Sun, Moon, Sparkles, MapPin } from "lucide-react";
 import { Switch } from "../components/ui/switch";
+import EmployeeTrackingAdmin from "../components/EmployeeTrackingAdmin";
 
 // Theme configurations
 const THEMES = [
