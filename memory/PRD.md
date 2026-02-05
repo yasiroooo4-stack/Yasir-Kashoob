@@ -953,3 +953,80 @@ const leaveData = {
 
 ### مهام قادمة
 1. **(P1)** ميزة "النسخ الاحتياطي" للمهام - قد تحتاج توضيح من المستخدم
+
+---
+
+### 5 فبراير 2026 - نظام تتبع موقع الموظفين GPS ✅
+
+#### الوصف
+نظام متكامل لتتبع مواقع الموظفين في الوقت الفعلي باستخدام GPS، مع تنبيهات تلقائية عند الخروج من نطاق العمل.
+
+#### الميزات المُنجزة
+
+**1. صفحة الموظف `/employee-tracking`:**
+- واجهة بسيطة لمشاركة الموقع
+- عرض حالة الاتصال والمسافة من مقر العمل
+- تحديث الموقع تلقائياً كل فترة محددة
+- عرض إذا كان الموظف داخل/خارج نطاق العمل
+
+**2. لوحة تحكم المدير (في إعدادات النظام):**
+- **تبويب الخريطة:** عرض مواقع الموظفين على خريطة Leaflet
+- **تبويب الموظفين:** قائمة بجميع الموظفين مع أرقام هواتفهم وحالتهم
+- **تبويب التنبيهات:** تنبيهات عند خروج موظف من نطاق العمل
+- **تبويب الإعدادات:**
+  - تفعيل/تعطيل التتبع
+  - ضبط فترة التحديث (30-300 ثانية)
+  - ضبط نطاق العمل الافتراضي (100-2000 متر)
+  - إضافة/حذف مواقع العمل
+
+**3. زر "طلب موقع":**
+- المدير يضغط على الزر بجانب اسم الموظف
+- يُنشأ رابط تتبع للموظف
+
+#### APIs الجديدة
+
+| Endpoint | الوصف |
+|----------|-------|
+| `GET /api/tracking/settings` | جلب إعدادات التتبع |
+| `PUT /api/tracking/settings` | تحديث الإعدادات |
+| `POST /api/tracking/location` | إرسال موقع موظف |
+| `GET /api/tracking/employees` | مواقع الموظفين المتصلين |
+| `GET /api/tracking/employees/all` | جميع الموظفين مع هواتفهم |
+| `GET /api/tracking/history/{id}` | سجل تحركات موظف |
+| `GET /api/tracking/alerts` | التنبيهات |
+| `GET /api/tracking/alerts/count` | عدد التنبيهات غير المقروءة |
+| `PUT /api/tracking/alerts/{id}/dismiss` | تجاهل تنبيه |
+| `POST /api/tracking/settings/work-location` | إضافة موقع عمل |
+| `DELETE /api/tracking/settings/work-location/{id}` | حذف موقع عمل |
+| `POST /api/tracking/request-location/{id}` | طلب موقع موظف |
+| `GET /api/tracking/reports/attendance-by-location` | تقرير الحضور بالموقع |
+
+#### Collections الجديدة في MongoDB
+
+| Collection | الوصف |
+|------------|-------|
+| `tracking_settings` | إعدادات التتبع |
+| `employee_locations` | سجل المواقع |
+| `employee_current_locations` | المواقع الحالية |
+| `tracking_alerts` | التنبيهات |
+| `location_requests` | طلبات الموقع |
+
+#### الملفات الجديدة
+- `/app/backend/routes/tracking_routes.py` - APIs التتبع
+- `/app/backend/models/all_models.py` - Models جديدة للتتبع
+- `/app/frontend/src/pages/EmployeeTracking.jsx` - صفحة الموظف
+- `/app/frontend/src/components/EmployeeTrackingAdmin.jsx` - لوحة تحكم المدير
+
+#### Dependencies الجديدة
+- `leaflet` - مكتبة الخرائط
+- `react-leaflet` - تكامل Leaflet مع React
+
+#### نتائج الاختبار
+- ✅ Backend: 15/15 اختبارات ناجحة (100%)
+- ✅ Frontend: جميع المكونات تعمل
+- ملف الاختبار: `/app/test_reports/iteration_29.json`
+
+#### ملاحظات تقنية
+- الخريطة تستخدم OpenStreetMap (مجاني)
+- حساب المسافة باستخدام صيغة Haversine
+- التنبيهات لا تتكرر خلال ساعة للموظف نفسه
