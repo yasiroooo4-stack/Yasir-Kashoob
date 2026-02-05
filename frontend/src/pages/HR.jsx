@@ -1319,8 +1319,17 @@ const HR = () => {
     const letterTypeName = LETTER_TYPES.find(t => t.id === letter.letter_type);
     const isEn = language === 'en';
     
+    // ترجمة الحالات
+    const statusMap = { 
+      approved: isEn ? 'Approved' : 'موافق', 
+      pending: isEn ? 'Pending' : 'قيد الانتظار', 
+      rejected: isEn ? 'Rejected' : 'مرفوض' 
+    };
+    const statusClass = letter.status === 'approved' ? 'status-approved' : letter.status === 'rejected' ? 'status-rejected' : 'status-pending';
+    
     // الترجمات
     const t = {
+      status: isEn ? 'Status' : 'الحالة',
       employeeName: isEn ? 'Employee Name' : 'اسم الموظف',
       department: isEn ? 'Department' : 'القسم',
       position: isEn ? 'Position' : 'المسمى الوظيفي',
@@ -1345,6 +1354,9 @@ const HR = () => {
     
     if (letter.letter_type === 'leave_form') {
       content = `
+        <div class="document-info">
+          <div><span class="info-label">${t.status}:</span> <span class="status-badge ${statusClass}">${statusMap[letter.status] || letter.status || (isEn ? 'Pending' : 'قيد الانتظار')}</span></div>
+        </div>
         <table>
           <tr><td style="width:35%; background:#faf5f0;"><strong>${t.employeeName}</strong></td><td>${letter.employee_name}</td></tr>
           <tr><td style="background:#faf5f0;"><strong>${t.department}</strong></td><td>${letter.department || '-'}</td></tr>
