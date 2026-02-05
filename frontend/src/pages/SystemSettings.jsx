@@ -824,6 +824,9 @@ const SystemSettings = () => {
               <TabsTrigger value="alerts" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
                 <Bell className="w-4 h-4" /><span className="hidden sm:inline">{t("التنبيهات", "Alerts")}</span>
               </TabsTrigger>
+              <TabsTrigger value="tracking" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
+                <Navigation className="w-4 h-4" /><span className="hidden sm:inline">{t("تتبع الموظفين", "Tracking")}</span>
+              </TabsTrigger>
             </>
           )}
           <TabsTrigger value="appearance" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
