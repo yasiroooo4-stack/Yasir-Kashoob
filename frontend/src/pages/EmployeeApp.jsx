@@ -427,8 +427,123 @@ const EmployeeApp = () => {
       borderRadius: '10px',
       marginBottom: '16px',
       textAlign: 'center'
+    },
+    cameraContainer: {
+      position: 'relative',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      marginBottom: '16px'
+    },
+    video: {
+      width: '100%',
+      borderRadius: '16px',
+      transform: 'scaleX(-1)'
+    },
+    capturedImage: {
+      width: '100%',
+      borderRadius: '16px',
+      transform: 'scaleX(-1)'
+    },
+    cameraOverlay: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '200px',
+      height: '250px',
+      border: '3px dashed rgba(255,255,255,0.7)',
+      borderRadius: '50%',
+      pointerEvents: 'none'
+    },
+    captureButton: {
+      width: '70px',
+      height: '70px',
+      borderRadius: '50%',
+      background: 'white',
+      border: '4px solid #047857',
+      cursor: 'pointer',
+      margin: '0 auto',
+      display: 'block'
     }
   };
+
+  // Face Verification Screen
+  if (showCamera || capturedPhoto) {
+    return (
+      <div style={styles.container}>
+        <Toaster position="top-center" richColors />
+        <div style={styles.card}>
+          <h1 style={styles.title}>📸 التحقق من الهوية</h1>
+          <p style={styles.subtitle}>
+            {pendingEmployee?.name}<br/>
+            <span style={{ fontSize: '12px', color: '#999' }}>{pendingEmployee?.employee_code}</span>
+          </p>
+          
+          {showCamera && !capturedPhoto && (
+            <>
+              <div style={styles.cameraContainer}>
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  style={styles.video}
+                />
+                <div style={styles.cameraOverlay}></div>
+              </div>
+              <p style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+                ضع وجهك داخل الإطار واضغط الزر
+              </p>
+              <button 
+                onClick={capturePhoto}
+                style={styles.captureButton}
+                title="التقاط الصورة"
+              />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+            </>
+          )}
+          
+          {capturedPhoto && (
+            <>
+              <div style={styles.cameraContainer}>
+                <img 
+                  src={capturedPhoto} 
+                  alt="صورة التحقق" 
+                  style={styles.capturedImage}
+                />
+              </div>
+              <p style={{ textAlign: 'center', color: '#047857', fontSize: '14px', marginBottom: '16px' }}>
+                ✓ تم التقاط الصورة بنجاح
+              </p>
+              <button 
+                onClick={confirmPhotoAndLogin}
+                style={styles.button}
+              >
+                ✓ تأكيد والدخول
+              </button>
+              <button 
+                onClick={retakePhoto}
+                style={styles.buttonOutline}
+              >
+                🔄 إعادة التقاط
+              </button>
+            </>
+          )}
+          
+          <button 
+            onClick={() => {
+              stopCamera();
+              setCapturedPhoto(null);
+              setPendingEmployee(null);
+            }}
+            style={{ ...styles.buttonDanger, marginTop: '16px' }}
+          >
+            إلغاء
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Login Screen
   if (!isLoggedIn) {
@@ -481,6 +596,10 @@ const EmployeeApp = () => {
               {loading ? 'جاري الدخول...' : 'دخول'}
             </button>
           </form>
+          
+          <p style={{ textAlign: 'center', color: '#999', fontSize: '11px', marginTop: '16px' }}>
+            📸 سيُطلب منك التقاط صورة للتحقق
+          </p>
         </div>
       </div>
     );
