@@ -183,6 +183,72 @@ const Layout = () => {
     fetchSettings();
   }, []);
 
+  // Auto-send employee location for tracking
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    let locationInterval = null;
+    
+    const sendLocation = async (position) => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        
+        await axios.post(`${API}/tracking/location`, {
+          employee_id: user.employee_id || user.id,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        
+        console.log("📍 Location sent successfully");
+      } catch (error) {
+        // Silent fail - don't disturb user
+        console.log("Could not send location");
+      }
+    };
+    
+    const startLocationTracking = async () => {
+      // Check if tracking is enabled
+      try {
+        const res = await axios.get(`${API}/tracking/settings`);
+        const settings = res.data;
+        
+        if (!settings?.enabled) return;
+        
+        const intervalSeconds = settings?.update_interval_seconds || 60;
+        
+        // Get initial location
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            sendLocation,
+            (err) => console.log("Location error:", err.message),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+          );
+          
+          // Set up interval for continuous tracking
+          locationInterval = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(
+              sendLocation,
+              (err) => console.log("Location error:", err.message),
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+            );
+          }, intervalSeconds * 1000);
+        }
+      } catch (error) {
+        console.log("Could not start location tracking");
+      }
+    };
+    
+    startLocationTracking();
+    
+    return () => {
+      if (locationInterval) {
+        clearInterval(locationInterval);
+      }
+    };
+  }, [user?.id, user?.employee_id]);
+
   // Update background
   const updateBackground = async (bgId, bgUrl) => {
     try {
