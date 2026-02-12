@@ -125,6 +125,10 @@ const SupplierManagement = () => {
   useEffect(() => {
     fetchFeedRequests();
     fetchMessages();
+    fetchRegistrationSettings();
+    fetchRegistrationRequests();
+    fetchRegistrationStats();
+    fetchEmployees();
   }, []);
 
   const fetchFeedRequests = async () => {
