@@ -206,7 +206,7 @@ const SupplierRegistration = () => {
     e.preventDefault();
     
     if (!form.civil_id || !form.phone || !form.name || !form.milk_type || !form.expected_quantity) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة');
+      toast.error(t.fillAllFields);
       return;
     }
     
@@ -232,10 +232,10 @@ const SupplierRegistration = () => {
       
       setRegistrationResult(res.data);
       setSubmitted(true);
-      toast.success('تم تقديم طلبك بنجاح');
+      toast.success(t.successSubmit);
       
     } catch (error) {
-      const msg = error.response?.data?.detail || 'حدث خطأ أثناء التسجيل';
+      const msg = error.response?.data?.detail || t.errorSubmit;
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -246,7 +246,7 @@ const SupplierRegistration = () => {
     e.preventDefault();
     
     if (!checkCivilId) {
-      toast.error('يرجى إدخال الرقم المدني');
+      toast.error(t.enterCivilId);
       return;
     }
     
@@ -254,7 +254,7 @@ const SupplierRegistration = () => {
       const res = await axios.get(`${API}/supplier-registration/check/${checkCivilId}`);
       setCheckResult(res.data);
     } catch (error) {
-      toast.error('حدث خطأ أثناء البحث');
+      toast.error(t.errorSearch);
     }
   };
 
@@ -262,7 +262,7 @@ const SupplierRegistration = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
+        toast.error(t.fileSizeError);
         return;
       }
       setDocument(file);
