@@ -344,6 +344,9 @@ function App() {
               {/* Employee Mobile App - Public Route */}
               <Route path="/employee-app" element={<EmployeeApp />} />
               
+              {/* Mobile Tracking App (Capacitor) - Public Route */}
+              <Route path="/mobile-tracking" element={<MobileTrackingApp />} />
+              
               <Route path="/" element={
                 user ? (
                   <ErrorBoundary>
