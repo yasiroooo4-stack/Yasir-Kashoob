@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast, Toaster } from "sonner";
 
 // Capacitor imports
-let Geolocation, App, LocalNotifications;
+let Geolocation, App, LocalNotifications, BackgroundGeolocation;
 let isCapacitor = false;
 
 // Check if running in Capacitor
@@ -16,6 +16,15 @@ try {
     Geolocation = capacitorGeolocation.Geolocation;
     App = capacitorApp.App;
     LocalNotifications = capacitorNotifications.LocalNotifications;
+    
+    // Try to load background geolocation
+    try {
+      const bgGeo = require('@capacitor-community/background-geolocation');
+      BackgroundGeolocation = bgGeo.BackgroundGeolocation;
+      console.log('Background geolocation loaded');
+    } catch (e) {
+      console.log('Background geolocation not available');
+    }
   }
 } catch (e) {
   console.log('Not running in Capacitor');
