@@ -267,6 +267,9 @@ const EmployeeTrackingAdmin = () => {
             const firstLetter = emp.employee_name?.charAt(0) || '?';
             const shortName = emp.employee_name?.split(' ').slice(0, 2).join(' ') || 'موظف';
             const civilId = emp.civil_id || emp.employee_code || '';
+            const isOnline = emp.isOnline;
+            const bgColor = emp.is_within_range ? '#22c55e' : '#ef4444';
+            const borderColor = isOnline ? bgColor : '#9ca3af';
             
             const icon = L.divIcon({
               className: 'custom-marker-with-name',
@@ -276,13 +279,14 @@ const EmployeeTrackingAdmin = () => {
                   flex-direction: column;
                   align-items: center;
                   transform: translateX(-50%);
+                  opacity: ${isOnline ? '1' : '0.7'};
                 ">
                   <div style="
-                    background: ${emp.is_within_range ? '#22c55e' : '#ef4444'};
+                    background: ${isOnline ? bgColor : '#6b7280'};
                     width: 50px;
                     height: 50px;
                     border-radius: 50%;
-                    border: 3px solid white;
+                    border: 3px solid ${isOnline ? 'white' : '#d1d5db'};
                     box-shadow: 0 2px 10px rgba(0,0,0,0.4);
                     display: flex;
                     align-items: center;
