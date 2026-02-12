@@ -1,8 +1,26 @@
 {
   "appId": "com.almorooj.tracking",
-  "appName": "Almorooj Tracking",
+  "appName": "المروج - تتبع الموقع",
   "webDir": "build",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "Geolocation": {
+      "androidPermissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#8B5A2B"
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#8B5A2B"
   }
 }
