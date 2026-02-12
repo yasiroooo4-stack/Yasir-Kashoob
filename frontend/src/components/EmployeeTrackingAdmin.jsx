@@ -284,136 +284,135 @@ const EmployeeTrackingAdmin = () => {
         if (emp.latitude && emp.longitude) {
           boundsArray.push([emp.latitude, emp.longitude]);
             
-            // Get employee photo or first letter
-            const photoUrl = emp.photo_url;
-            const empName = emp.employee_name || emp.name || 'موظف';
-            const firstLetter = empName.charAt(0) || '?';
-            const shortName = empName.split(' ').slice(0, 2).join(' ');
-            const civilId = emp.civil_id || emp.employee_code || '';
-            const isOnline = emp.isOnline;
-            const bgColor = emp.is_within_range ? '#22c55e' : '#ef4444';
-            const distance = emp.distance_from_work || 0;
-            
-            const icon = L.divIcon({
-              className: 'custom-marker-with-name',
-              html: `
+          // Get employee photo or first letter
+          const photoUrl = emp.photo_url;
+          const empName = emp.employee_name || emp.name || 'موظف';
+          const firstLetter = empName.charAt(0) || '?';
+          const shortName = empName.split(' ').slice(0, 2).join(' ');
+          const civilId = emp.civil_id || emp.employee_code || '';
+          const isOnline = emp.isOnline;
+          const bgColor = emp.is_within_range ? '#22c55e' : '#ef4444';
+          const distance = emp.distance_from_work || 0;
+          
+          const icon = L.divIcon({
+            className: 'custom-marker-with-name',
+            html: `
+              <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transform: translateX(-50%);
+                opacity: ${isOnline ? '1' : '0.7'};
+              ">
                 <div style="
+                  background: ${isOnline ? bgColor : '#6b7280'};
+                  width: 50px;
+                  height: 50px;
+                  border-radius: 50%;
+                  border: 3px solid ${isOnline ? 'white' : '#d1d5db'};
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
                   display: flex;
-                  flex-direction: column;
                   align-items: center;
-                  transform: translateX(-50%);
-                  opacity: ${isOnline ? '1' : '0.7'};
+                  justify-content: center;
+                  font-size: 18px;
+                  color: white;
+                  font-weight: bold;
+                  overflow: hidden;
                 ">
-                  <div style="
-                    background: ${isOnline ? bgColor : '#6b7280'};
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    border: 3px solid ${isOnline ? 'white' : '#d1d5db'};
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 18px;
-                    color: white;
-                    font-weight: bold;
-                    overflow: hidden;
-                  ">
-                    ${photoUrl 
-                      ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${firstLetter}</span>`
-                      : firstLetter
-                    }
-                  </div>
-                  <div style="
-                    background: rgba(0,0,0,0.85);
-                    color: white;
-                    padding: 4px 10px;
-                    border-radius: 12px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    margin-top: 4px;
-                    white-space: nowrap;
-                    max-width: 150px;
-                    text-align: center;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                  ">
-                    ${shortName}
-                    <div style="font-size: 10px; color: #aaa; margin-top: 2px;">${civilId}</div>
+                  ${photoUrl 
+                    ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${firstLetter}</span>`
+                    : firstLetter
+                  }
+                </div>
+                <div style="
+                  background: rgba(0,0,0,0.85);
+                  color: white;
+                  padding: 4px 10px;
+                  border-radius: 12px;
+                  font-size: 12px;
+                  font-weight: bold;
+                  margin-top: 4px;
+                  white-space: nowrap;
+                  max-width: 150px;
+                  text-align: center;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                ">
+                  ${shortName}
+                  <div style="font-size: 10px; color: #aaa; margin-top: 2px;">${civilId}</div>
+                </div>
+              </div>
+            `,
+            iconSize: [150, 90],
+            iconAnchor: [75, 45]
+          });
+          
+          const marker = L.marker([emp.latitude, emp.longitude], { icon })
+            .addTo(mapInstanceRef.current)
+            .bindPopup(`
+              <div style="text-align: right; direction: rtl; min-width: 220px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
+                  ${photoUrl 
+                    ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};" onerror="this.style.display='none'" />`
+                    : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};">${firstLetter}</div>`
+                  }
+                  <div>
+                    <b style="font-size: 16px; color: #333;">${empName}</b><br/>
+                    <span style="color: #666; font-size: 13px;">كود: ${emp.employee_code || '-'}</span><br/>
+                    <span style="color: #666; font-size: 13px;">هوية: ${civilId || '-'}</span>
                   </div>
                 </div>
-              `,
-              iconSize: [150, 90],
-              iconAnchor: [75, 45]
-            });
-            
-            const marker = L.marker([emp.latitude, emp.longitude], { icon })
-              .addTo(mapInstanceRef.current)
-              .bindPopup(`
-                <div style="text-align: right; direction: rtl; min-width: 220px;">
-                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
-                    ${photoUrl 
-                      ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};" onerror="this.style.display='none'" />`
-                      : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};">${firstLetter}</div>`
-                    }
-                    <div>
-                      <b style="font-size: 16px; color: #333;">${empName}</b><br/>
-                      <span style="color: #666; font-size: 13px;">كود: ${emp.employee_code || '-'}</span><br/>
-                      <span style="color: #666; font-size: 13px;">هوية: ${civilId || '-'}</span>
-                    </div>
+                <div style="
+                  padding: 8px 12px;
+                  border-radius: 8px;
+                  background: ${emp.is_within_range ? '#dcfce7' : '#fee2e2'};
+                  color: ${emp.is_within_range ? '#16a34a' : '#dc2626'};
+                  font-weight: bold;
+                  text-align: center;
+                  margin-bottom: 8px;
+                  font-size: 14px;
+                ">
+                  ${emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل'}
+                </div>
+                <div style="
+                  padding: 6px 10px;
+                  border-radius: 6px;
+                  background: ${isOnline ? '#dcfce7' : '#f3f4f6'};
+                  color: ${isOnline ? '#16a34a' : '#666'};
+                  text-align: center;
+                  margin-bottom: 8px;
+                  font-size: 12px;
+                ">
+                  ${isOnline ? '🟢 متصل الآن' : '⚪ غير متصل'}
+                </div>
+                <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>المسافة:</span>
+                    <b style="color: #333;">${distance < 1000 
+                      ? `${Math.round(distance)} متر`
+                      : `${(distance / 1000).toFixed(1)} كم`
+                    }</b>
                   </div>
-                  <div style="
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    background: ${emp.is_within_range ? '#dcfce7' : '#fee2e2'};
-                    color: ${emp.is_within_range ? '#16a34a' : '#dc2626'};
-                    font-weight: bold;
-                    text-align: center;
-                    margin-bottom: 8px;
-                    font-size: 14px;
-                  ">
-                    ${emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل'}
-                  </div>
-                  <div style="
-                    padding: 6px 10px;
-                    border-radius: 6px;
-                    background: ${isOnline ? '#dcfce7' : '#f3f4f6'};
-                    color: ${isOnline ? '#16a34a' : '#666'};
-                    text-align: center;
-                    margin-bottom: 8px;
-                    font-size: 12px;
-                  ">
-                    ${isOnline ? '🟢 متصل الآن' : '⚪ غير متصل'}
-                  </div>
-                  <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                      <span>المسافة:</span>
-                      <b style="color: #333;">${distance < 1000 
-                        ? `${Math.round(distance)} متر`
-                        : `${(distance / 1000).toFixed(1)} كم`
-                      }</b>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                      <span>آخر تحديث:</span>
-                      <b style="color: #333;">${emp.created_at ? new Date(emp.created_at).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'}) : '-'}</b>
-                    </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>آخر تحديث:</span>
+                    <b style="color: #333;">${emp.created_at ? new Date(emp.created_at).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'}) : '-'}</b>
                   </div>
                 </div>
-              `);
-            
-            markersRef.current[emp.employee_id] = marker;
-          }
-        });
-        
-        // Fit bounds if there are markers
-        if (boundsArray.length > 0) {
-          try {
-            mapInstanceRef.current.fitBounds(boundsArray, { padding: [50, 50], maxZoom: 15 });
-          } catch(e) {
-            console.log("Fit bounds error:", e);
-          }
+              </div>
+            `);
+          
+          markersRef.current[emp.employee_id] = marker;
         }
       });
-    }
+      
+      // Fit bounds if there are markers
+      if (boundsArray.length > 0) {
+        try {
+          mapInstanceRef.current.fitBounds(boundsArray, { padding: [50, 50], maxZoom: 15 });
+        } catch(e) {
+          console.log("Fit bounds error:", e);
+        }
+      }
+    });
   }, [trackedEmployees, allEmployees, activeTab]);
 
   // Save settings
