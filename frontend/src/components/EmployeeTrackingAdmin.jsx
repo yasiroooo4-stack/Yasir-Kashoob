@@ -227,12 +227,13 @@ const EmployeeTrackingAdmin = () => {
   useEffect(() => {
     console.log("Marker update effect triggered", {
       hasMap: !!mapInstanceRef.current,
+      mapReady,
       activeTab,
       trackedCount: trackedEmployees.length,
       allCount: allEmployees.length
     });
     
-    if (!mapInstanceRef.current || activeTab !== "map") {
+    if (!mapInstanceRef.current || !mapReady || activeTab !== "map") {
       console.log("Skipping marker update - map not ready or wrong tab");
       return;
     }
