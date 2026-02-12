@@ -16231,6 +16231,11 @@ from routes.tracking_routes import router as tracking_router, set_database as se
 set_tracking_db(db)
 app.include_router(tracking_router)
 
+# Include Supplier Registration router
+from routes.supplier_registration_routes import router as supplier_reg_router, set_database as set_supplier_reg_db
+set_supplier_reg_db(db)
+app.include_router(supplier_reg_router)
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
