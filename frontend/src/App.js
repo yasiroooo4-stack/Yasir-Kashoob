@@ -58,6 +58,7 @@ import Treasury from "./pages/Treasury";
 import Analytics from "./pages/Analytics";
 import SupplierPortal from "./pages/SupplierPortal";
 import SupplierManagement from "./pages/SupplierManagement";
+import SupplierRegistration from "./pages/SupplierRegistration";
 import SystemSettings from "./pages/SystemSettings";
 import EmployeeScheduling from "./pages/EmployeeScheduling";
 import DriverSchedule from "./pages/DriverSchedule";
