@@ -102,6 +102,23 @@ const SupplierManagement = () => {
   const [viewRequestDialogOpen, setViewRequestDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
 
+  // Supplier Registration State
+  const [registrationSettings, setRegistrationSettings] = useState({
+    is_open: false,
+    start_date: "",
+    end_date: "",
+    assigned_employee_id: "",
+    assigned_employee_name: "",
+    milk_types: ["أبقار", "أغنام", "إبل"]
+  });
+  const [registrationRequests, setRegistrationRequests] = useState([]);
+  const [registrationStats, setRegistrationStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [employees, setEmployees] = useState([]);
+  const [viewRegistrationDialog, setViewRegistrationDialog] = useState(false);
+  const [selectedRegistration, setSelectedRegistration] = useState(null);
+  const [rejectRegistrationDialog, setRejectRegistrationDialog] = useState(false);
+  const [registrationRejectReason, setRegistrationRejectReason] = useState("");
+
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
