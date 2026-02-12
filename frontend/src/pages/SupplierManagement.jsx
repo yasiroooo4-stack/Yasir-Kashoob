@@ -635,6 +635,15 @@ const SupplierManagement = () => {
                                   <X className="w-4 h-4 me-1" />
                                   {t("رفض", "Reject")}
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openDeleteDialog("feed", request)}
+                                  disabled={loading}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
