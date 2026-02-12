@@ -222,8 +222,8 @@ const SupplierRegistration = () => {
       formData.append('address', form.address || '');
       formData.append('notes', form.notes || '');
       
-      if (document) {
-        formData.append('document', document);
+      if (attachedFile) {
+        formData.append('document', attachedFile);
       }
       
       const res = await axios.post(`${API}/supplier-registration/submit`, formData, {
