@@ -25,9 +25,9 @@
 
         </activity>
 
-        <!-- Background Location Service -->
+        <!-- Background Location Service from plugin -->
         <service
-            android:name=".LocationService"
+            android:name="com.equimaps.capacitor_background_geolocation.BackgroundGeolocationService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />
