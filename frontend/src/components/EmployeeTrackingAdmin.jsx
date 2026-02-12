@@ -651,6 +651,26 @@ const EmployeeTrackingAdmin = () => {
               style={{ height: "500px", width: "100%", borderRadius: "8px" }}
               className="border"
             />
+            {/* Info message when no employees are tracking */}
+            {trackedEmployees.length === 0 && (
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-center">
+                <p className="font-medium">
+                  {language === "ar" 
+                    ? "⚠️ لا يوجد موظفين متصلين حالياً" 
+                    : "⚠️ No employees are currently connected"}
+                </p>
+                <p className="text-sm mt-1">
+                  {language === "ar" 
+                    ? "لرؤية الموظفين على الخريطة، يجب عليهم فتح تطبيق التتبع وتفعيل مشاركة الموقع" 
+                    : "To see employees on the map, they must open the tracking app and enable location sharing"}
+                </p>
+                <p className="text-sm mt-2 text-amber-600">
+                  {language === "ar" 
+                    ? `الموظفين المسجلين: ${allEmployees.length} | يظهرون عند تفعيل التتبع` 
+                    : `Registered employees: ${allEmployees.length} | They appear when tracking is enabled`}
+                </p>
+              </div>
+            )}
             <div className="flex items-center gap-4 mt-3 text-sm">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
