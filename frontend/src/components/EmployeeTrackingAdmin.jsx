@@ -218,52 +218,66 @@ const EmployeeTrackingAdmin = () => {
 
   // Update markers when employees change - show all employees with location
   useEffect(() => {
-    if (mapInstanceRef.current && activeTab === "map") {
-      import('leaflet').then((L) => {
-        // Clear old markers
-        Object.values(markersRef.current).forEach(marker => {
-          try { marker.remove(); } catch(e) {}
-        });
-        markersRef.current = {};
-        
-        // Combine tracked employees with employees who have last_location
-        const employeesToShow = [];
-        
-        // Add currently tracked employees (online now)
-        trackedEmployees.forEach(emp => {
-          if (emp.latitude && emp.longitude) {
-            employeesToShow.push({
-              ...emp,
-              isOnline: true
-            });
-          }
-        });
-        
-        // Add employees with last_location who are not currently tracked
-        const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
-        allEmployees.forEach(emp => {
-          if (emp.last_location && emp.last_location.latitude && !trackedIds.has(emp.id)) {
-            employeesToShow.push({
-              employee_id: emp.id,
-              employee_name: emp.name,
-              employee_code: emp.employee_code,
-              photo_url: emp.photo_url,
-              civil_id: emp.civil_id || emp.national_id,
-              latitude: emp.last_location.latitude,
-              longitude: emp.last_location.longitude,
-              distance_from_work: emp.last_location.distance_from_work,
-              is_within_range: emp.last_location.is_within_range,
-              created_at: emp.last_location.last_updated,
-              isOnline: false
-            });
-          }
-        });
-        
-        console.log("Employees to show on map:", employeesToShow.length, employeesToShow);
-        
-        if (employeesToShow.length === 0) return;
-        
-        const boundsArray = [];
+    console.log("Marker update effect triggered", {
+      hasMap: !!mapInstanceRef.current,
+      activeTab,
+      trackedCount: trackedEmployees.length,
+      allCount: allEmployees.length
+    });
+    
+    if (!mapInstanceRef.current || activeTab !== "map") {
+      console.log("Skipping marker update - map not ready or wrong tab");
+      return;
+    }
+    
+    import('leaflet').then((L) => {
+      // Clear old markers
+      Object.values(markersRef.current).forEach(marker => {
+        try { marker.remove(); } catch(e) {}
+      });
+      markersRef.current = {};
+      
+      // Combine tracked employees with employees who have last_location
+      const employeesToShow = [];
+      
+      // Add currently tracked employees (online now)
+      trackedEmployees.forEach(emp => {
+        if (emp.latitude && emp.longitude) {
+          employeesToShow.push({
+            ...emp,
+            isOnline: true
+          });
+        }
+      });
+      
+      // Add employees with last_location who are not currently tracked
+      const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
+      allEmployees.forEach(emp => {
+        if (emp.last_location && emp.last_location.latitude && !trackedIds.has(emp.id)) {
+          employeesToShow.push({
+            employee_id: emp.id,
+            employee_name: emp.name,
+            employee_code: emp.employee_code,
+            photo_url: emp.photo_url,
+            civil_id: emp.civil_id || emp.national_id,
+            latitude: emp.last_location.latitude,
+            longitude: emp.last_location.longitude,
+            distance_from_work: emp.last_location.distance_from_work,
+            is_within_range: emp.last_location.is_within_range,
+            created_at: emp.last_location.last_updated,
+            isOnline: false
+          });
+        }
+      });
+      
+      console.log("Employees to show on map:", employeesToShow.length, employeesToShow);
+      
+      if (employeesToShow.length === 0) {
+        console.log("No employees to show on map");
+        return;
+      }
+      
+      const boundsArray = [];
         
         // Add markers for all employees
         employeesToShow.forEach(emp => {
