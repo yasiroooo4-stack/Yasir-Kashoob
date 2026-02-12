@@ -1225,6 +1225,140 @@ const SupplierManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Registration Dialog */}
+      <Dialog open={viewRegistrationDialog} onOpenChange={setViewRegistrationDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              {t("تفاصيل طلب التسجيل", "Registration Details")}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRegistration && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 border-b pb-4">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-7 h-7 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg">{selectedRegistration.name}</p>
+                  <p className="text-sm text-muted-foreground">#{selectedRegistration.registration_number}</p>
+                </div>
+                <Badge variant={
+                  selectedRegistration.status === "approved" ? "default" :
+                  selectedRegistration.status === "rejected" ? "destructive" : "secondary"
+                } className={selectedRegistration.status === "approved" ? "bg-green-500" : ""}>
+                  {selectedRegistration.status_message}
+                </Badge>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t("الرقم المدني", "Civil ID")}</p>
+                  <p className="font-bold">{selectedRegistration.civil_id}</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t("رقم الهاتف", "Phone")}</p>
+                  <p className="font-bold">{selectedRegistration.phone}</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t("نوع الحليب", "Milk Type")}</p>
+                  <p className="font-bold">{selectedRegistration.milk_type}</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t("الكمية المتوقعة", "Expected Quantity")}</p>
+                  <p className="font-bold">{selectedRegistration.expected_quantity} {t("لتر/يوم", "L/day")}</p>
+                </div>
+              </div>
+              
+              {selectedRegistration.address && (
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t("العنوان", "Address")}</p>
+                  <p className="font-bold">{selectedRegistration.address}</p>
+                </div>
+              )}
+              
+              {selectedRegistration.notes && (
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t("ملاحظات", "Notes")}</p>
+                  <p className="font-bold">{selectedRegistration.notes}</p>
+                </div>
+              )}
+              
+              <div className="text-sm text-muted-foreground">
+                <p>{t("تاريخ التقديم", "Submitted")}: {new Date(selectedRegistration.created_at).toLocaleString('ar-SA')}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewRegistrationDialog(false)}>
+              {t("إغلاق", "Close")}
+            </Button>
+            {selectedRegistration?.status === "pending" && (
+              <>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    setRejectRegistrationDialog(true);
+                  }}
+                >
+                  <X className="w-4 h-4 me-2" />
+                  {t("رفض", "Reject")}
+                </Button>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700" 
+                  onClick={() => handleApproveRegistration(selectedRegistration.id)}
+                >
+                  <Check className="w-4 h-4 me-2" />
+                  {t("موافقة", "Approve")}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Registration Dialog */}
+      <Dialog open={rejectRegistrationDialog} onOpenChange={setRejectRegistrationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <XCircle className="w-5 h-5" />
+              {t("رفض طلب التسجيل", "Reject Registration")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedRegistration && (
+              <div className="bg-muted p-4 rounded-lg">
+                <p><strong>{t("الاسم", "Name")}:</strong> {selectedRegistration.name}</p>
+                <p><strong>{t("رقم الطلب", "Request #")}:</strong> {selectedRegistration.registration_number}</p>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>{t("سبب الرفض", "Rejection Reason")}</Label>
+              <Textarea
+                value={registrationRejectReason}
+                onChange={(e) => setRegistrationRejectReason(e.target.value)}
+                placeholder={t("أدخل سبب الرفض...", "Enter rejection reason...")}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setRejectRegistrationDialog(false);
+              setRegistrationRejectReason("");
+            }}>
+              {t("إلغاء", "Cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleRejectRegistration}>
+              <X className="w-4 h-4 me-2" />
+              {t("تأكيد الرفض", "Confirm Rejection")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
