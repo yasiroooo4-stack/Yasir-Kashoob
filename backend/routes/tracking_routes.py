@@ -96,6 +96,101 @@ async def check_within_work_range(lat: float, lng: float, settings: dict) -> tup
 
 # ==================== LOCATION UPDATES ====================
 
+async def record_location_attendance(employee: dict, is_within: bool, timestamp: str):
+    """
+    تسجيل دخول/خروج الموظف من موقع العمل في سجل الحضور
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    employee_id = employee.get("id")
+    
+    # Get or create today's location attendance record
+    location_attendance = await db.location_attendance.find_one({
+        "employee_id": employee_id,
+        "date": today
+    })
+    
+    if not location_attendance:
+        # Create new record
+        location_attendance = {
+            "id": str(uuid.uuid4()),
+            "employee_id": employee_id,
+            "employee_name": employee.get("name"),
+            "employee_code": employee.get("employee_code"),
+            "date": today,
+            "location_check_in": None,  # وقت دخول الموقع
+            "location_check_out": None,  # وقت خروج الموقع
+            "total_time_at_location": 0,  # إجمالي وقت التواجد بالثواني
+            "current_session_start": None,  # بداية الجلسة الحالية
+            "is_currently_at_location": False,
+            "sessions": [],  # قائمة بجلسات الدخول والخروج
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.location_attendance.insert_one(location_attendance)
+    
+    # Get current state
+    was_at_location = location_attendance.get("is_currently_at_location", False)
+    
+    if is_within and not was_at_location:
+        # Employee entered work location
+        update_data = {
+            "is_currently_at_location": True,
+            "current_session_start": timestamp,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Set first check-in if not set
+        if not location_attendance.get("location_check_in"):
+            update_data["location_check_in"] = timestamp
+        
+        await db.location_attendance.update_one(
+            {"id": location_attendance.get("id")},
+            {"$set": update_data}
+        )
+        
+        return {"event": "check_in", "time": timestamp}
+    
+    elif not is_within and was_at_location:
+        # Employee left work location
+        session_start = location_attendance.get("current_session_start")
+        session_duration = 0
+        
+        if session_start:
+            try:
+                start_time = datetime.fromisoformat(session_start.replace("Z", "+00:00"))
+                end_time = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                session_duration = int((end_time - start_time).total_seconds())
+            except:
+                pass
+        
+        # Add session to history
+        new_session = {
+            "check_in": session_start,
+            "check_out": timestamp,
+            "duration_seconds": session_duration
+        }
+        
+        # Calculate new total time
+        new_total_time = location_attendance.get("total_time_at_location", 0) + session_duration
+        
+        await db.location_attendance.update_one(
+            {"id": location_attendance.get("id")},
+            {
+                "$set": {
+                    "is_currently_at_location": False,
+                    "current_session_start": None,
+                    "location_check_out": timestamp,
+                    "total_time_at_location": new_total_time,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                },
+                "$push": {"sessions": new_session}
+            }
+        )
+        
+        return {"event": "check_out", "time": timestamp, "session_duration": session_duration}
+    
+    return {"event": "none", "is_at_location": is_within}
+
+
 @router.post("/location")
 async def update_employee_location(location_data: dict):
     """
@@ -122,6 +217,11 @@ async def update_employee_location(location_data: dict):
     settings = await get_tracking_settings()
     is_within, distance, location_name = await check_within_work_range(latitude, longitude, settings)
     
+    timestamp = datetime.now(timezone.utc).isoformat()
+    
+    # Record location-based attendance
+    attendance_event = await record_location_attendance(employee, is_within, timestamp)
+    
     # Create location record
     location_record = {
         "id": str(uuid.uuid4()),
@@ -135,7 +235,8 @@ async def update_employee_location(location_data: dict):
         "distance_from_work": round(distance, 2) if distance else 0,
         "is_within_range": is_within,
         "work_location_name": location_name,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "attendance_event": attendance_event.get("event"),
+        "created_at": timestamp
     }
     
     # Save to history
@@ -171,7 +272,7 @@ async def update_employee_location(location_data: dict):
                 "distance_from_work": round(distance, 2),
                 "is_read": False,
                 "is_dismissed": False,
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": timestamp
             }
             await db.tracking_alerts.insert_one(alert)
     
