@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Almorooj Tracking</string>
+    <string name="title_activity_main">Almorooj Tracking</string>
+    <string name="package_name">com.almorooj.tracking</string>
+    <string name="custom_url_scheme">com.almorooj.tracking</string>
+</resources>
