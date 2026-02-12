@@ -466,11 +466,17 @@ const SupplierRegistration = () => {
 
   if (loading) {
     return (
-      <div style={styles.container}>
+      <div style={{...styles.container, direction: lang === 'ar' ? 'rtl' : 'ltr'}}>
+        <button 
+          style={styles.langSwitch} 
+          onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+        >
+          {lang === 'ar' ? '🌐 English' : '🌐 العربية'}
+        </button>
         <div style={styles.card}>
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div style={{ fontSize: '40px', marginBottom: '16px' }}>⏳</div>
-            <p>جاري التحميل...</p>
+            <p>{t.loading}</p>
           </div>
         </div>
       </div>
@@ -480,36 +486,42 @@ const SupplierRegistration = () => {
   // Registration Closed
   if (!registrationStatus?.is_open && !submitted) {
     return (
-      <div style={styles.container}>
+      <div style={{...styles.container, direction: lang === 'ar' ? 'rtl' : 'ltr'}}>
         <Toaster position="top-center" richColors />
+        <button 
+          style={styles.langSwitch} 
+          onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+        >
+          {lang === 'ar' ? '🌐 English' : '🌐 العربية'}
+        </button>
         <div style={styles.card}>
           <CompanyLogo />
-          <h1 style={styles.title}>المروج للألبان</h1>
-          <p style={styles.subtitle}>تسجيل الموردين الجدد</p>
+          <h1 style={styles.title}>{t.companyName}</h1>
+          <p style={styles.subtitle}>{t.pageTitle}</p>
           
           <div style={styles.closedBanner}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔒</div>
-            <h3 style={{ margin: '0 0 10px' }}>التسجيل مغلق حالياً</h3>
+            <h3 style={{ margin: '0 0 10px' }}>{t.registrationClosed}</h3>
             <p style={{ margin: 0, fontSize: '14px' }}>
-              يرجى المحاولة لاحقاً أو التواصل مع الإدارة
+              {t.tryLater}
             </p>
           </div>
           
           {/* Check existing registration */}
           <div style={{ marginTop: '24px' }}>
             <p style={{ textAlign: 'center', color: '#666', marginBottom: '12px' }}>
-              هل سبق وقدمت طلباً؟
+              {t.alreadyApplied}
             </p>
             <form onSubmit={handleCheck}>
               <input
                 type="text"
-                placeholder="أدخل الرقم المدني للتحقق"
+                placeholder={t.civilIdPlaceholder}
                 value={checkCivilId}
                 onChange={(e) => setCheckCivilId(e.target.value)}
                 style={styles.input}
               />
               <button type="submit" style={styles.buttonOutline}>
-                التحقق من حالة الطلب
+                {t.checkStatus}
               </button>
             </form>
             
@@ -517,23 +529,25 @@ const SupplierRegistration = () => {
               <div style={{ marginTop: '16px', padding: '16px', background: '#f3f4f6', borderRadius: '10px' }}>
                 {checkResult.found ? (
                   <>
-                    <p><strong>رقم الطلب:</strong> {checkResult.registration_number}</p>
-                    <p><strong>الاسم:</strong> {checkResult.name}</p>
-                    <p><strong>الحالة:</strong> 
+                    <p><strong>{t.registrationNumber}:</strong> {checkResult.registration_number}</p>
+                    <p><strong>{t.name}:</strong> {checkResult.name}</p>
+                    <p><strong>{t.status}:</strong> 
                       <span style={{
                         ...styles.statusBadge,
-                        marginRight: '8px',
+                        marginRight: lang === 'ar' ? '8px' : '0',
+                        marginLeft: lang === 'en' ? '8px' : '0',
                         background: checkResult.status === 'approved' ? '#dcfce7' : 
                                    checkResult.status === 'rejected' ? '#fee2e2' : '#fef3c7',
                         color: checkResult.status === 'approved' ? '#16a34a' : 
                                checkResult.status === 'rejected' ? '#dc2626' : '#92400e'
                       }}>
-                        {checkResult.status_message}
+                        {checkResult.status === 'approved' ? t.approved : 
+                         checkResult.status === 'rejected' ? t.rejected : t.pending}
                       </span>
                     </p>
                   </>
                 ) : (
-                  <p style={{ color: '#666' }}>{checkResult.message}</p>
+                  <p style={{ color: '#666' }}>{t.notFound}</p>
                 )}
               </div>
             )}
