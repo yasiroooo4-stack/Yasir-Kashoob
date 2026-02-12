@@ -256,6 +256,58 @@ const SupplierManagement = () => {
     toast.success(t("تم نسخ الرابط", "Link copied"));
   };
 
+  // Delete Functions
+  const openDeleteDialog = (type, item) => {
+    setDeleteType(type);
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      setLoading(true);
+      let endpoint = "";
+      let successMsg = "";
+      
+      switch (deleteType) {
+        case "feed":
+          endpoint = `${API}/admin/supplier-feed-requests/${itemToDelete.id}`;
+          successMsg = t("تم حذف طلب العلف", "Feed request deleted");
+          break;
+        case "message":
+          endpoint = `${API}/admin/supplier-messages/${itemToDelete.id}`;
+          successMsg = t("تم حذف الرسالة", "Message deleted");
+          break;
+        case "registration":
+          endpoint = `${API}/supplier-registration/requests/${itemToDelete.id}`;
+          successMsg = t("تم حذف طلب التسجيل", "Registration request deleted");
+          break;
+        default:
+          return;
+      }
+      
+      await axios.delete(endpoint, { headers });
+      toast.success(successMsg);
+      
+      // Refresh the appropriate list
+      if (deleteType === "feed") fetchFeedRequests();
+      else if (deleteType === "message") fetchMessages();
+      else if (deleteType === "registration") {
+        fetchRegistrationRequests();
+        fetchRegistrationStats();
+      }
+      
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+      setDeleteType("");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("فشل في الحذف", "Delete failed"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleApproveRequest = async (requestId) => {
     try {
       setLoading(true);
