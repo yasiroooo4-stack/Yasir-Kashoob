@@ -218,16 +218,18 @@ const EmployeeTrackingAdmin = () => {
 
   // Update markers when employees change - show all employees with location
   useEffect(() => {
-    if (mapInstanceRef.current) {
+    if (mapInstanceRef.current && activeTab === "map") {
       import('leaflet').then((L) => {
         // Clear old markers
-        Object.values(markersRef.current).forEach(marker => marker.remove());
+        Object.values(markersRef.current).forEach(marker => {
+          try { marker.remove(); } catch(e) {}
+        });
         markersRef.current = {};
         
         // Combine tracked employees with employees who have last_location
         const employeesToShow = [];
         
-        // Add currently tracked employees
+        // Add currently tracked employees (online now)
         trackedEmployees.forEach(emp => {
           if (emp.latitude && emp.longitude) {
             employeesToShow.push({
@@ -257,19 +259,26 @@ const EmployeeTrackingAdmin = () => {
           }
         });
         
+        console.log("Employees to show on map:", employeesToShow.length, employeesToShow);
+        
         if (employeesToShow.length === 0) return;
+        
+        const boundsArray = [];
         
         // Add markers for all employees
         employeesToShow.forEach(emp => {
           if (emp.latitude && emp.longitude) {
+            boundsArray.push([emp.latitude, emp.longitude]);
+            
             // Get employee photo or first letter
             const photoUrl = emp.photo_url;
-            const firstLetter = emp.employee_name?.charAt(0) || '?';
-            const shortName = emp.employee_name?.split(' ').slice(0, 2).join(' ') || 'موظف';
+            const empName = emp.employee_name || emp.name || 'موظف';
+            const firstLetter = empName.charAt(0) || '?';
+            const shortName = empName.split(' ').slice(0, 2).join(' ');
             const civilId = emp.civil_id || emp.employee_code || '';
             const isOnline = emp.isOnline;
             const bgColor = emp.is_within_range ? '#22c55e' : '#ef4444';
-            const borderColor = isOnline ? bgColor : '#9ca3af';
+            const distance = emp.distance_from_work || 0;
             
             const icon = L.divIcon({
               className: 'custom-marker-with-name',
@@ -329,11 +338,11 @@ const EmployeeTrackingAdmin = () => {
                 <div style="text-align: right; direction: rtl; min-width: 220px;">
                   <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
                     ${photoUrl 
-                      ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};" />`
+                      ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};" onerror="this.style.display='none'" />`
                       : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};">${firstLetter}</div>`
                     }
                     <div>
-                      <b style="font-size: 16px; color: #333;">${emp.employee_name}</b><br/>
+                      <b style="font-size: 16px; color: #333;">${empName}</b><br/>
                       <span style="color: #666; font-size: 13px;">كود: ${emp.employee_code || '-'}</span><br/>
                       <span style="color: #666; font-size: 13px;">هوية: ${civilId || '-'}</span>
                     </div>
@@ -350,12 +359,23 @@ const EmployeeTrackingAdmin = () => {
                   ">
                     ${emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل'}
                   </div>
+                  <div style="
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    background: ${isOnline ? '#dcfce7' : '#f3f4f6'};
+                    color: ${isOnline ? '#16a34a' : '#666'};
+                    text-align: center;
+                    margin-bottom: 8px;
+                    font-size: 12px;
+                  ">
+                    ${isOnline ? '🟢 متصل الآن' : '⚪ غير متصل'}
+                  </div>
                   <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                       <span>المسافة:</span>
-                      <b style="color: #333;">${emp.distance_from_work < 1000 
-                        ? `${Math.round(emp.distance_from_work)} متر`
-                        : `${(emp.distance_from_work / 1000).toFixed(1)} كم`
+                      <b style="color: #333;">${distance < 1000 
+                        ? `${Math.round(distance)} متر`
+                        : `${(distance / 1000).toFixed(1)} كم`
                       }</b>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
@@ -371,17 +391,16 @@ const EmployeeTrackingAdmin = () => {
         });
         
         // Fit bounds if there are markers
-        if (trackedEmployees.length > 0) {
-          const bounds = trackedEmployees
-            .filter(e => e.latitude && e.longitude)
-            .map(e => [e.latitude, e.longitude]);
-          if (bounds.length > 0) {
-            mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+        if (boundsArray.length > 0) {
+          try {
+            mapInstanceRef.current.fitBounds(boundsArray, { padding: [50, 50], maxZoom: 15 });
+          } catch(e) {
+            console.log("Fit bounds error:", e);
           }
         }
       });
     }
-  }, [trackedEmployees]);
+  }, [trackedEmployees, allEmployees, activeTab]);
 
   // Save settings
   const saveSettings = async () => {

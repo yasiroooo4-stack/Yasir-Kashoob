@@ -85,36 +85,76 @@ const EmployeeApp = () => {
     // Wait for video element to be rendered
     setTimeout(async () => {
       try {
-        const constraints = {
-          video: {
-            facingMode: 'user',
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-          },
-          audio: false
-        };
+        // First check if mediaDevices is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Camera API not supported');
+        }
         
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Try multiple camera configurations
+        let stream = null;
+        const constraints = [
+          // Try front camera first
+          { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+          // Fallback to any camera
+          { video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+          // Minimal constraints
+          { video: true, audio: false }
+        ];
+        
+        for (const constraint of constraints) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(constraint);
+            break;
+          } catch (e) {
+            console.log('Constraint failed:', constraint, e);
+          }
+        }
+        
+        if (!stream) {
+          throw new Error('No camera available');
+        }
+        
         streamRef.current = stream;
         
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current.play().catch(e => console.log('Play error:', e));
-          };
-        }
+        // Wait a bit more and try to connect video
+        const connectVideo = () => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.onloadedmetadata = () => {
+              videoRef.current.play()
+                .then(() => console.log('Video playing'))
+                .catch(e => {
+                  console.log('Play error:', e);
+                  // Try muted autoplay
+                  videoRef.current.muted = true;
+                  videoRef.current.play().catch(e2 => console.log('Muted play error:', e2));
+                });
+            };
+          } else {
+            // Retry after a short delay
+            setTimeout(connectVideo, 100);
+          }
+        };
+        
+        connectVideo();
+        
       } catch (err) {
         console.error('Camera error:', err);
         setShowCamera(false);
-        if (err.name === 'NotAllowedError') {
+        
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
           setError('يرجى السماح بالوصول للكاميرا من إعدادات المتصفح');
-        } else if (err.name === 'NotFoundError') {
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
           setError('لم يتم العثور على كاميرا في جهازك');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setError('الكاميرا مستخدمة من تطبيق آخر');
+        } else if (err.message === 'Camera API not supported') {
+          setError('المتصفح لا يدعم الكاميرا. يرجى استخدام HTTPS أو متصفح حديث');
         } else {
           setError('فشل في فتح الكاميرا: ' + err.message);
         }
       }
-    }, 100);
+    }, 200);
   };
 
   const stopCamera = () => {
