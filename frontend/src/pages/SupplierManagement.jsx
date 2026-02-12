@@ -1452,6 +1452,68 @@ const SupplierManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              {t("تأكيد الحذف", "Confirm Delete")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-center">
+              <Trash2 className="w-12 h-12 text-red-500 mx-auto mb-3" />
+              <p className="text-lg font-medium text-red-800 dark:text-red-200">
+                {deleteType === "feed" && t("هل تريد حذف طلب العلف؟", "Delete this feed request?")}
+                {deleteType === "message" && t("هل تريد حذف هذه الرسالة؟", "Delete this message?")}
+                {deleteType === "registration" && t("هل تريد حذف طلب التسجيل؟", "Delete this registration request?")}
+              </p>
+              <p className="text-sm text-red-600 dark:text-red-300 mt-2">
+                {t("هذا الإجراء لا يمكن التراجع عنه", "This action cannot be undone")}
+              </p>
+            </div>
+            {itemToDelete && (
+              <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
+                {deleteType === "feed" && (
+                  <>
+                    <p><strong>{t("المورد", "Supplier")}:</strong> {itemToDelete.supplier_name}</p>
+                    <p><strong>{t("نوع العلف", "Feed Type")}:</strong> {itemToDelete.feed_type}</p>
+                    <p><strong>{t("الكمية", "Quantity")}:</strong> {itemToDelete.quantity} {t("كجم", "kg")}</p>
+                  </>
+                )}
+                {deleteType === "message" && (
+                  <>
+                    <p><strong>{t("المورد", "Supplier")}:</strong> {itemToDelete.supplier_name}</p>
+                    <p><strong>{t("الموضوع", "Subject")}:</strong> {itemToDelete.subject}</p>
+                  </>
+                )}
+                {deleteType === "registration" && (
+                  <>
+                    <p><strong>{t("رقم الطلب", "Request #")}:</strong> {itemToDelete.registration_number}</p>
+                    <p><strong>{t("الاسم", "Name")}:</strong> {itemToDelete.name}</p>
+                    <p><strong>{t("الرقم المدني", "Civil ID")}:</strong> {itemToDelete.civil_id}</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setDeleteDialogOpen(false);
+              setItemToDelete(null);
+              setDeleteType("");
+            }}>
+              {t("إلغاء", "Cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              <Trash2 className="w-4 h-4 me-2" />
+              {t("تأكيد الحذف", "Confirm Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
