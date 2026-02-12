@@ -615,7 +615,19 @@ const EmployeeApp = () => {
             <span style={{ fontSize: '12px', color: '#999' }}>{pendingEmployee?.employee_code}</span>
           </p>
           
-          {showCamera && !capturedPhoto && (
+          {error && (
+            <div style={styles.error}>
+              {error}
+              <button 
+                onClick={() => { setError(null); startCamera(); }}
+                style={{ ...styles.buttonOutline, marginTop: '12px', padding: '10px' }}
+              >
+                إعادة المحاولة
+              </button>
+            </div>
+          )}
+          
+          {showCamera && !capturedPhoto && !error && (
             <>
               <div style={styles.cameraContainer}>
                 <video 
@@ -631,6 +643,7 @@ const EmployeeApp = () => {
                     transform: 'scaleX(-1)',
                     background: '#1a1a1a'
                   }}
+                  data-testid="camera-video"
                 />
                 <div style={styles.cameraOverlay}></div>
               </div>
@@ -641,6 +654,7 @@ const EmployeeApp = () => {
                 onClick={capturePhoto}
                 style={styles.captureButton}
                 title="التقاط الصورة"
+                data-testid="capture-photo-btn"
               >
                 📷
               </button>
