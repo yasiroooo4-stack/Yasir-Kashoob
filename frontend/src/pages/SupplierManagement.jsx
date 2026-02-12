@@ -724,6 +724,211 @@ const SupplierManagement = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Registration Tab */}
+        <TabsContent value="registration">
+          {/* Registration Settings Card */}
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  {t("إعدادات التسجيل", "Registration Settings")}
+                </CardTitle>
+                <div className="flex items-center gap-4">
+                  <Button variant="outline" size="sm" onClick={copyRegistrationLink}>
+                    <Copy className="w-4 h-4 me-2" />
+                    {t("نسخ الرابط", "Copy Link")}
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm ${registrationSettings.is_open ? "text-green-600" : "text-red-600"}`}>
+                      {registrationSettings.is_open ? t("مفتوح", "Open") : t("مغلق", "Closed")}
+                    </span>
+                    <Switch
+                      checked={registrationSettings.is_open}
+                      onCheckedChange={handleToggleRegistration}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <Label>{t("تاريخ البداية", "Start Date")}</Label>
+                  <Input
+                    type="date"
+                    value={registrationSettings.start_date?.split('T')[0] || ""}
+                    onChange={(e) => setRegistrationSettings({...registrationSettings, start_date: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>{t("تاريخ النهاية", "End Date")}</Label>
+                  <Input
+                    type="date"
+                    value={registrationSettings.end_date?.split('T')[0] || ""}
+                    onChange={(e) => setRegistrationSettings({...registrationSettings, end_date: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>{t("الموظف المسؤول", "Assigned Employee")}</Label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={registrationSettings.assigned_employee_id || ""}
+                    onChange={(e) => {
+                      const emp = employees.find(em => em.id === e.target.value);
+                      setRegistrationSettings({
+                        ...registrationSettings,
+                        assigned_employee_id: e.target.value,
+                        assigned_employee_name: emp?.name || ""
+                      });
+                    }}
+                  >
+                    <option value="">{t("اختر موظف", "Select Employee")}</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <a 
+                  href="/supplier-registration" 
+                  target="_blank" 
+                  className="text-primary hover:underline flex items-center gap-1"
+                >
+                  <Link className="w-4 h-4" />
+                  {t("فتح صفحة التسجيل", "Open Registration Page")}
+                </a>
+                <Button onClick={handleSaveRegistrationSettings}>
+                  {t("حفظ الإعدادات", "Save Settings")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Registration Stats */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-3xl font-bold">{registrationStats.total}</p>
+                <p className="text-sm text-muted-foreground">{t("إجمالي الطلبات", "Total")}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-yellow-300">
+              <CardContent className="p-4 text-center">
+                <p className="text-3xl font-bold text-yellow-600">{registrationStats.pending}</p>
+                <p className="text-sm text-muted-foreground">{t("قيد الانتظار", "Pending")}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-green-300">
+              <CardContent className="p-4 text-center">
+                <p className="text-3xl font-bold text-green-600">{registrationStats.approved}</p>
+                <p className="text-sm text-muted-foreground">{t("مقبول", "Approved")}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-red-300">
+              <CardContent className="p-4 text-center">
+                <p className="text-3xl font-bold text-red-600">{registrationStats.rejected}</p>
+                <p className="text-sm text-muted-foreground">{t("مرفوض", "Rejected")}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Registration Requests Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("طلبات التسجيل", "Registration Requests")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("رقم الطلب", "Request #")}</TableHead>
+                      <TableHead>{t("الاسم", "Name")}</TableHead>
+                      <TableHead>{t("الرقم المدني", "Civil ID")}</TableHead>
+                      <TableHead>{t("الهاتف", "Phone")}</TableHead>
+                      <TableHead>{t("نوع الحليب", "Milk Type")}</TableHead>
+                      <TableHead>{t("الكمية", "Quantity")}</TableHead>
+                      <TableHead>{t("الحالة", "Status")}</TableHead>
+                      <TableHead>{t("التاريخ", "Date")}</TableHead>
+                      <TableHead>{t("الإجراءات", "Actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {registrationRequests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          {t("لا توجد طلبات تسجيل", "No registration requests")}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      registrationRequests.map((req) => (
+                        <TableRow key={req.id}>
+                          <TableCell className="font-medium">{req.registration_number}</TableCell>
+                          <TableCell>{req.name}</TableCell>
+                          <TableCell>{req.civil_id}</TableCell>
+                          <TableCell>{req.phone}</TableCell>
+                          <TableCell>{req.milk_type}</TableCell>
+                          <TableCell>{req.expected_quantity} {t("لتر", "L")}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              req.status === "approved" ? "default" :
+                              req.status === "rejected" ? "destructive" : "secondary"
+                            } className={req.status === "approved" ? "bg-green-500" : ""}>
+                              {req.status === "approved" ? t("مقبول", "Approved") :
+                               req.status === "rejected" ? t("مرفوض", "Rejected") :
+                               t("قيد الانتظار", "Pending")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(req.created_at).toLocaleDateString('ar-SA')}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRegistration(req);
+                                  setViewRegistrationDialog(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              {req.status === "pending" && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-green-600 hover:text-green-700"
+                                    onClick={() => handleApproveRegistration(req.id)}
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => {
+                                      setSelectedRegistration(req);
+                                      setRejectRegistrationDialog(true);
+                                    }}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Reject Request Dialog */}
