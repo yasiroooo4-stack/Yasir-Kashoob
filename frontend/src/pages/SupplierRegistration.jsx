@@ -182,7 +182,7 @@ const SupplierRegistration = () => {
     notes: ''
   });
   
-  const [document, setDocument] = useState(null);
+  const [attachedFile, setAttachedFile] = useState(null);
   const [checkCivilId, setCheckCivilId] = useState('');
   const fileInputRef = useRef(null);
 
