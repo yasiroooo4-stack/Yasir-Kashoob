@@ -169,6 +169,7 @@ const EmployeeTrackingAdmin = () => {
           console.log("Map cleanup error:", e);
         }
         mapInstanceRef.current = null;
+        setMapReady(false);
       }
       
       import('leaflet').then((L) => {
@@ -198,6 +199,10 @@ const EmployeeTrackingAdmin = () => {
               }).addTo(mapInstanceRef.current).bindPopup(`<b>${loc.name}</b><br/>نطاق: ${loc.radius || settings.work_radius_meters}م`);
             }
           });
+          
+          // Mark map as ready
+          setMapReady(true);
+          console.log("Map initialized successfully");
         } catch (e) {
           console.error("Map initialization error:", e);
         }
@@ -213,6 +218,7 @@ const EmployeeTrackingAdmin = () => {
           console.log("Map cleanup error:", e);
         }
         mapInstanceRef.current = null;
+        setMapReady(false);
       }
     };
   }, [activeTab, settings.work_locations, settings.work_radius_meters]);
