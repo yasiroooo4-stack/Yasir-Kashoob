@@ -424,6 +424,24 @@ const SupplierRegistration = () => {
       cursor: 'pointer',
       marginTop: '10px'
     },
+    langSwitch: {
+      position: 'absolute',
+      top: '10px',
+      left: lang === 'ar' ? '10px' : 'auto',
+      right: lang === 'ar' ? 'auto' : '10px',
+      background: 'rgba(255,255,255,0.9)',
+      border: 'none',
+      borderRadius: '20px',
+      padding: '8px 16px',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+      color: '#8B5A2B',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px'
+    },
     closedBanner: {
       background: '#fee2e2',
       color: '#dc2626',
