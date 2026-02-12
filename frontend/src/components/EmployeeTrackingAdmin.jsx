@@ -231,6 +231,7 @@ const EmployeeTrackingAdmin = () => {
             const photoUrl = emp.photo_url;
             const firstLetter = emp.employee_name?.charAt(0) || '?';
             const shortName = emp.employee_name?.split(' ').slice(0, 2).join(' ') || 'موظف';
+            const civilId = emp.civil_id || emp.employee_code || '';
             
             const icon = L.divIcon({
               className: 'custom-marker-with-name',
@@ -243,74 +244,85 @@ const EmployeeTrackingAdmin = () => {
                 ">
                   <div style="
                     background: ${emp.is_within_range ? '#22c55e' : '#ef4444'};
-                    width: 40px;
-                    height: 40px;
+                    width: 50px;
+                    height: 50px;
                     border-radius: 50%;
                     border: 3px solid white;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 14px;
+                    font-size: 18px;
                     color: white;
                     font-weight: bold;
                     overflow: hidden;
                   ">
                     ${photoUrl 
-                      ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" />`
+                      ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${firstLetter}</span>`
                       : firstLetter
                     }
                   </div>
                   <div style="
-                    background: rgba(0,0,0,0.75);
+                    background: rgba(0,0,0,0.85);
                     color: white;
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-size: 11px;
+                    padding: 4px 10px;
+                    border-radius: 12px;
+                    font-size: 12px;
                     font-weight: bold;
                     margin-top: 4px;
                     white-space: nowrap;
-                    max-width: 120px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
+                    max-width: 150px;
                     text-align: center;
-                  ">${shortName}</div>
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                  ">
+                    ${shortName}
+                    <div style="font-size: 10px; color: #aaa; margin-top: 2px;">${civilId}</div>
+                  </div>
                 </div>
               `,
-              iconSize: [120, 70],
-              iconAnchor: [60, 35]
+              iconSize: [150, 90],
+              iconAnchor: [75, 45]
             });
             
             const marker = L.marker([emp.latitude, emp.longitude], { icon })
               .addTo(mapInstanceRef.current)
               .bindPopup(`
-                <div style="text-align: right; direction: rtl; min-width: 180px;">
-                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div style="text-align: right; direction: rtl; min-width: 220px;">
+                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
                     ${photoUrl 
-                      ? `<img src="${photoUrl}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #ddd;" />`
-                      : `<div style="width:50px;height:50px;border-radius:50%;background:#047857;color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;">${firstLetter}</div>`
+                      ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};" />`
+                      : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};">${firstLetter}</div>`
                     }
                     <div>
-                      <b style="font-size: 14px;">${emp.employee_name}</b><br/>
-                      <span style="color: #666; font-size: 12px;">${emp.employee_code || ''}</span>
+                      <b style="font-size: 16px; color: #333;">${emp.employee_name}</b><br/>
+                      <span style="color: #666; font-size: 13px;">كود: ${emp.employee_code || '-'}</span><br/>
+                      <span style="color: #666; font-size: 13px;">هوية: ${civilId || '-'}</span>
                     </div>
                   </div>
                   <div style="
-                    padding: 6px 10px;
-                    border-radius: 6px;
+                    padding: 8px 12px;
+                    border-radius: 8px;
                     background: ${emp.is_within_range ? '#dcfce7' : '#fee2e2'};
                     color: ${emp.is_within_range ? '#16a34a' : '#dc2626'};
                     font-weight: bold;
                     text-align: center;
-                    margin-bottom: 6px;
+                    margin-bottom: 8px;
+                    font-size: 14px;
                   ">
-                    ${emp.is_within_range ? '✓ داخل النطاق' : '✗ خارج النطاق'}
+                    ${emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل'}
                   </div>
-                  <div style="font-size: 12px; color: #666;">
-                    المسافة: <b>${emp.distance_from_work < 1000 
-                      ? `${Math.round(emp.distance_from_work)} متر`
-                      : `${(emp.distance_from_work / 1000).toFixed(1)} كم`
-                    }</b>
+                  <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                      <span>المسافة:</span>
+                      <b style="color: #333;">${emp.distance_from_work < 1000 
+                        ? `${Math.round(emp.distance_from_work)} متر`
+                        : `${(emp.distance_from_work / 1000).toFixed(1)} كم`
+                      }</b>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>آخر تحديث:</span>
+                      <b style="color: #333;">${emp.created_at ? new Date(emp.created_at).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'}) : '-'}</b>
+                    </div>
                   </div>
                 </div>
               `);
