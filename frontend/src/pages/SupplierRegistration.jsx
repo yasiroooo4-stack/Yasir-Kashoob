@@ -560,45 +560,51 @@ const SupplierRegistration = () => {
   // Success / Receipt
   if (submitted && registrationResult) {
     return (
-      <div style={styles.container}>
+      <div style={{...styles.container, direction: lang === 'ar' ? 'rtl' : 'ltr'}}>
         <Toaster position="top-center" richColors />
+        <button 
+          style={styles.langSwitch} 
+          onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+        >
+          {lang === 'ar' ? '🌐 English' : '🌐 العربية'}
+        </button>
         <div style={styles.card}>
           <div id="receipt-content">
             <div style={styles.receipt}>
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <CompanyLogo />
-                <h2 style={{ color: '#8B5A2B', margin: '10px 0' }}>المروج للألبان</h2>
+                <h2 style={{ color: '#8B5A2B', margin: '10px 0' }}>{t.companyName}</h2>
                 <p style={{ color: '#666', margin: 0 }}>Almorooj Dairy</p>
               </div>
               
               <h3 style={{ textAlign: 'center', color: '#8B5A2B', borderBottom: '2px solid #8B5A2B', paddingBottom: '10px' }}>
-                إيصال تسجيل مورد
+                {t.receiptTitle}
               </h3>
               
               <div style={{ margin: '20px 0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>رقم الطلب:</span>
+                  <span style={{ color: '#666' }}>{t.registrationNumber}:</span>
                   <span style={{ fontWeight: 'bold' }}>{registrationResult.registration_number}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>الاسم:</span>
+                  <span style={{ color: '#666' }}>{t.name}:</span>
                   <span style={{ fontWeight: 'bold' }}>{form.name}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>الرقم المدني:</span>
+                  <span style={{ color: '#666' }}>{t.civilId}:</span>
                   <span style={{ fontWeight: 'bold' }}>{form.civil_id}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>نوع الحليب:</span>
+                  <span style={{ color: '#666' }}>{t.milkType}:</span>
                   <span style={{ fontWeight: 'bold' }}>{form.milk_type}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>الكمية المتوقعة:</span>
-                  <span style={{ fontWeight: 'bold' }}>{form.expected_quantity} لتر/يوم</span>
+                  <span style={{ color: '#666' }}>{t.expectedQuantity}:</span>
+                  <span style={{ fontWeight: 'bold' }}>{form.expected_quantity} {t.litersPerDay}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>تاريخ التقديم:</span>
-                  <span style={{ fontWeight: 'bold' }}>{new Date().toLocaleDateString('ar-SA')}</span>
+                  <span style={{ color: '#666' }}>{t.submissionDate}:</span>
+                  <span style={{ fontWeight: 'bold' }}>{new Date().toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
                 </div>
               </div>
               
@@ -611,17 +617,17 @@ const SupplierRegistration = () => {
                 fontSize: '18px',
                 fontWeight: 'bold'
               }}>
-                ⏳ قيد الإجراءات
+                ⏳ {t.pending}
               </div>
               
               <p style={{ textAlign: 'center', color: '#666', fontSize: '12px', marginTop: '20px' }}>
-                سيتم التواصل معكم عبر الهاتف {form.phone} عند اكتمال الإجراءات
+                {t.contactVia} {form.phone} {t.whenComplete}
               </p>
             </div>
           </div>
           
           <button onClick={printReceipt} style={styles.button}>
-            🖨️ طباعة الإيصال
+            🖨️ {t.printReceipt}
           </button>
           
           <button 
@@ -633,7 +639,7 @@ const SupplierRegistration = () => {
             }} 
             style={styles.buttonOutline}
           >
-            تسجيل مورد آخر
+            {t.registerAnother}
           </button>
         </div>
       </div>
