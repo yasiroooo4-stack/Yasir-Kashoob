@@ -591,6 +591,108 @@ async def request_employee_location(employee_id: str):
     }
 
 
+# ==================== LOCATION ATTENDANCE ====================
+
+@router.get("/location-attendance")
+async def get_location_attendance(date: Optional[str] = None, employee_id: Optional[str] = None):
+    """
+    جلب سجل حضور الموقع
+    """
+    query = {}
+    
+    if date:
+        query["date"] = date
+    else:
+        query["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    records = await db.location_attendance.find(
+        query,
+        {"_id": 0}
+    ).sort("employee_name", 1).to_list(1000)
+    
+    # Format durations
+    for record in records:
+        total_seconds = record.get("total_time_at_location", 0)
+        
+        # If currently at location, add current session time
+        if record.get("is_currently_at_location") and record.get("current_session_start"):
+            try:
+                start = datetime.fromisoformat(record["current_session_start"].replace("Z", "+00:00"))
+                now = datetime.now(timezone.utc)
+                total_seconds += int((now - start).total_seconds())
+            except:
+                pass
+        
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        record["total_time_formatted"] = f"{hours}:{minutes:02d}"
+        record["total_time_hours"] = round(total_seconds / 3600, 2)
+    
+    return records
+
+
+@router.get("/location-attendance/summary")
+async def get_location_attendance_summary(
+    start_date: str,
+    end_date: str,
+    employee_id: Optional[str] = None
+):
+    """
+    ملخص حضور الموقع لفترة
+    """
+    query = {
+        "date": {"$gte": start_date, "$lte": end_date}
+    }
+    
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    records = await db.location_attendance.find(
+        query,
+        {"_id": 0}
+    ).to_list(10000)
+    
+    # Group by employee
+    employee_summary = {}
+    
+    for record in records:
+        emp_id = record.get("employee_id")
+        if emp_id not in employee_summary:
+            employee_summary[emp_id] = {
+                "employee_id": emp_id,
+                "employee_name": record.get("employee_name"),
+                "employee_code": record.get("employee_code"),
+                "total_days": 0,
+                "total_time_seconds": 0,
+                "days_present": [],
+                "average_daily_hours": 0
+            }
+        
+        employee_summary[emp_id]["total_days"] += 1
+        employee_summary[emp_id]["total_time_seconds"] += record.get("total_time_at_location", 0)
+        employee_summary[emp_id]["days_present"].append(record.get("date"))
+    
+    # Calculate averages and format
+    for emp_id, data in employee_summary.items():
+        total_hours = data["total_time_seconds"] / 3600
+        data["total_time_hours"] = round(total_hours, 2)
+        data["average_daily_hours"] = round(total_hours / data["total_days"], 2) if data["total_days"] > 0 else 0
+        
+        hours = data["total_time_seconds"] // 3600
+        minutes = (data["total_time_seconds"] % 3600) // 60
+        data["total_time_formatted"] = f"{hours}:{minutes:02d}"
+    
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "employees": list(employee_summary.values()),
+        "total_employees": len(employee_summary)
+    }
+
+
 # ==================== REPORTS ====================
 
 @router.get("/reports/attendance-by-location")
