@@ -79,25 +79,51 @@ const EmployeeApp = () => {
 
   // Camera functions for face verification
   const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: 640, height: 480 } 
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+    setShowCamera(true);
+    setError(null);
+    
+    // Wait for video element to be rendered
+    setTimeout(async () => {
+      try {
+        const constraints = {
+          video: {
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        };
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play().catch(e => console.log('Play error:', e));
+          };
+        }
+      } catch (err) {
+        console.error('Camera error:', err);
+        setShowCamera(false);
+        if (err.name === 'NotAllowedError') {
+          setError('يرجى السماح بالوصول للكاميرا من إعدادات المتصفح');
+        } else if (err.name === 'NotFoundError') {
+          setError('لم يتم العثور على كاميرا في جهازك');
+        } else {
+          setError('فشل في فتح الكاميرا: ' + err.message);
+        }
       }
-      setShowCamera(true);
-    } catch (err) {
-      setError('فشل في فتح الكاميرا. يرجى السماح بالوصول للكاميرا.');
-      console.error('Camera error:', err);
-    }
+    }, 100);
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setShowCamera(false);
   };
@@ -108,9 +134,14 @@ const EmployeeApp = () => {
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0);
+      // Set canvas size to video size
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      
+      // Draw video frame to canvas (flip horizontally for selfie)
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
       
       const photoData = canvas.toDataURL('image/jpeg', 0.8);
       setCapturedPhoto(photoData);
