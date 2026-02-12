@@ -71,7 +71,11 @@ const EmployeeTrackingAdmin = () => {
   const markersRef = useRef({});
   
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("map"); // map, employees, alerts, settings
+  const [activeTab, setActiveTab] = useState("map"); // map, employees, alerts, attendance, settings
+  
+  // Location attendance data
+  const [locationAttendance, setLocationAttendance] = useState([]);
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   
   // Data states
   const [trackedEmployees, setTrackedEmployees] = useState([]);
