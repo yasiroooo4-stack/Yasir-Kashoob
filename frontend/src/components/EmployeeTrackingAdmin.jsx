@@ -95,6 +95,7 @@ const EmployeeTrackingAdmin = () => {
   const [historyDialog, setHistoryDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [locationHistory, setLocationHistory] = useState([]);
+  const [mapReady, setMapReady] = useState(false); // Track map initialization
   
   // New location form
   const [newLocation, setNewLocation] = useState({
