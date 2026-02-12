@@ -788,6 +788,15 @@ const SupplierManagement = () => {
                                   {t("رد", "Reply")}
                                 </Button>
                               )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openDeleteDialog("message", message)}
+                                disabled={loading}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
