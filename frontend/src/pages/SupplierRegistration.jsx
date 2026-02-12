@@ -569,8 +569,31 @@ const SupplierRegistration = () => {
           {lang === 'ar' ? '🌐 English' : '🌐 العربية'}
         </button>
         <div style={styles.card}>
+          {/* Success Animation */}
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ 
+              width: '80px', 
+              height: '80px', 
+              margin: '0 auto 16px',
+              background: '#dcfce7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '40px'
+            }}>
+              ✓
+            </div>
+            <h2 style={{ color: '#16a34a', margin: '0 0 8px' }}>
+              {lang === 'ar' ? 'تم استلام طلبك بنجاح!' : 'Application Received Successfully!'}
+            </h2>
+            <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>
+              {lang === 'ar' ? 'احتفظ برقم الطلب للمراجعة' : 'Keep your application number for reference'}
+            </p>
+          </div>
+
           <div id="receipt-content">
-            <div style={styles.receipt}>
+            <div style={{...styles.receipt, background: '#fafafa'}}>
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <CompanyLogo />
                 <h2 style={{ color: '#8B5A2B', margin: '10px 0' }}>{t.companyName}</h2>
@@ -581,11 +604,24 @@ const SupplierRegistration = () => {
                 {t.receiptTitle}
               </h3>
               
-              <div style={{ margin: '20px 0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                  <span style={{ color: '#666' }}>{t.registrationNumber}:</span>
-                  <span style={{ fontWeight: 'bold' }}>{registrationResult.registration_number}</span>
+              {/* Large Registration Number */}
+              <div style={{ 
+                background: '#8B5A2B', 
+                color: 'white', 
+                padding: '20px', 
+                borderRadius: '12px',
+                textAlign: 'center',
+                margin: '20px 0'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>
+                  {t.registrationNumber}
                 </div>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', letterSpacing: '2px' }}>
+                  {registrationResult.registration_number}
+                </div>
+              </div>
+              
+              <div style={{ margin: '20px 0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
                   <span style={{ color: '#666' }}>{t.name}:</span>
                   <span style={{ fontWeight: 'bold' }}>{form.name}</span>
@@ -595,6 +631,10 @@ const SupplierRegistration = () => {
                   <span style={{ fontWeight: 'bold' }}>{form.civil_id}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+                  <span style={{ color: '#666' }}>{t.phone}:</span>
+                  <span style={{ fontWeight: 'bold' }}>{form.phone}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
                   <span style={{ color: '#666' }}>{t.milkType}:</span>
                   <span style={{ fontWeight: 'bold' }}>{form.milk_type}</span>
                 </div>
@@ -602,9 +642,19 @@ const SupplierRegistration = () => {
                   <span style={{ color: '#666' }}>{t.expectedQuantity}:</span>
                   <span style={{ fontWeight: 'bold' }}>{form.expected_quantity} {t.litersPerDay}</span>
                 </div>
+                {form.address && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+                    <span style={{ color: '#666' }}>{t.address}:</span>
+                    <span style={{ fontWeight: 'bold' }}>{form.address}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
                   <span style={{ color: '#666' }}>{t.submissionDate}:</span>
                   <span style={{ fontWeight: 'bold' }}>{new Date().toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                  <span style={{ color: '#666' }}>{lang === 'ar' ? 'الوقت:' : 'Time:'}</span>
+                  <span style={{ fontWeight: 'bold' }}>{new Date().toLocaleTimeString(lang === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               </div>
               
@@ -615,19 +665,32 @@ const SupplierRegistration = () => {
                 textAlign: 'center', 
                 borderRadius: '10px',
                 fontSize: '18px',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                marginBottom: '16px'
               }}>
                 ⏳ {t.pending}
               </div>
               
-              <p style={{ textAlign: 'center', color: '#666', fontSize: '12px', marginTop: '20px' }}>
+              <p style={{ textAlign: 'center', color: '#666', fontSize: '12px', margin: '0' }}>
                 {t.contactVia} {form.phone} {t.whenComplete}
               </p>
             </div>
           </div>
           
-          <button onClick={printReceipt} style={styles.button}>
+          <button onClick={printReceipt} style={styles.button} data-testid="print-receipt-btn">
             🖨️ {t.printReceipt}
+          </button>
+          
+          <button 
+            onClick={() => {
+              // Copy registration number to clipboard
+              navigator.clipboard.writeText(registrationResult.registration_number);
+              toast.success(lang === 'ar' ? 'تم نسخ رقم الطلب' : 'Application number copied');
+            }}
+            style={{...styles.buttonOutline, background: '#f0fdf4', borderColor: '#22c55e', color: '#16a34a'}}
+            data-testid="copy-number-btn"
+          >
+            📋 {lang === 'ar' ? 'نسخ رقم الطلب' : 'Copy Application Number'}
           </button>
           
           <button 
@@ -638,6 +701,7 @@ const SupplierRegistration = () => {
               setDocument(null);
             }} 
             style={styles.buttonOutline}
+            data-testid="register-another-btn"
           >
             {t.registerAnother}
           </button>
