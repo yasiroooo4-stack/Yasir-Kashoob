@@ -648,12 +648,18 @@ const SupplierRegistration = () => {
 
   // Registration Form
   return (
-    <div style={styles.container}>
+    <div style={{...styles.container, direction: lang === 'ar' ? 'rtl' : 'ltr'}}>
       <Toaster position="top-center" richColors />
+      <button 
+        style={styles.langSwitch} 
+        onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+      >
+        {lang === 'ar' ? '🌐 English' : '🌐 العربية'}
+      </button>
       <div style={styles.card}>
         <CompanyLogo />
-        <h1 style={styles.title}>المروج للألبان</h1>
-        <p style={styles.subtitle}>تسجيل الموردين الجدد</p>
+        <h1 style={styles.title}>{t.companyName}</h1>
+        <p style={styles.subtitle}>{t.pageTitle}</p>
         
         {registrationStatus?.message && (
           <div style={{ 
@@ -675,13 +681,13 @@ const SupplierRegistration = () => {
             style={{ ...styles.tab, ...(activeTab === 'register' ? styles.tabActive : styles.tabInactive) }}
             onClick={() => setActiveTab('register')}
           >
-            تسجيل جديد
+            {t.newRegistration}
           </button>
           <button 
             style={{ ...styles.tab, ...(activeTab === 'check' ? styles.tabActive : styles.tabInactive) }}
             onClick={() => setActiveTab('check')}
           >
-            متابعة طلب
+            {t.followUp}
           </button>
         </div>
         
@@ -690,14 +696,14 @@ const SupplierRegistration = () => {
             <div>
               <label style={styles.label}>
                 <span style={styles.required}>*</span>
-                الرقم المدني
+                {t.civilId}
               </label>
               <input
                 type="text"
                 value={form.civil_id}
                 onChange={(e) => setForm({ ...form, civil_id: e.target.value })}
                 style={styles.input}
-                placeholder="أدخل الرقم المدني"
+                placeholder={t.enterCivilId}
                 required
               />
             </div>
@@ -705,14 +711,14 @@ const SupplierRegistration = () => {
             <div>
               <label style={styles.label}>
                 <span style={styles.required}>*</span>
-                الاسم الكامل
+                {t.fullName}
               </label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 style={styles.input}
-                placeholder="أدخل الاسم الكامل"
+                placeholder={t.enterFullName}
                 required
               />
             </div>
@@ -720,14 +726,14 @@ const SupplierRegistration = () => {
             <div>
               <label style={styles.label}>
                 <span style={styles.required}>*</span>
-                رقم الهاتف
+                {t.phone}
               </label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 style={styles.input}
-                placeholder="مثال: 99123456"
+                placeholder={t.phonePlaceholder}
                 required
               />
             </div>
@@ -735,7 +741,7 @@ const SupplierRegistration = () => {
             <div>
               <label style={styles.label}>
                 <span style={styles.required}>*</span>
-                نوع الحليب
+                {t.milkType}
               </label>
               <select
                 value={form.milk_type}
@@ -743,42 +749,42 @@ const SupplierRegistration = () => {
                 style={styles.select}
                 required
               >
-                <option value="">اختر نوع الحليب</option>
-                {(registrationStatus?.milk_types || ['أبقار', 'أغنام', 'إبل']).map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
+                <option value="">{t.selectMilkType}</option>
+                <option value={lang === 'ar' ? 'أبقار' : 'Cow'}>{t.cows}</option>
+                <option value={lang === 'ar' ? 'أغنام' : 'Sheep'}>{t.sheep}</option>
+                <option value={lang === 'ar' ? 'إبل' : 'Camel'}>{t.camels}</option>
               </select>
             </div>
             
             <div>
               <label style={styles.label}>
                 <span style={styles.required}>*</span>
-                الكمية المتوقعة (لتر/يوم)
+                {t.expectedQuantity}
               </label>
               <input
                 type="number"
                 value={form.expected_quantity}
                 onChange={(e) => setForm({ ...form, expected_quantity: e.target.value })}
                 style={styles.input}
-                placeholder="مثال: 50"
+                placeholder={t.quantityPlaceholder}
                 min="1"
                 required
               />
             </div>
             
             <div>
-              <label style={styles.label}>العنوان</label>
+              <label style={styles.label}>{t.address}</label>
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 style={styles.input}
-                placeholder="الولاية / القرية"
+                placeholder={t.addressPlaceholder}
               />
             </div>
             
             <div>
-              <label style={styles.label}>إرفاق المستندات</label>
+              <label style={styles.label}>{t.attachDocs}</label>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -795,19 +801,19 @@ const SupplierRegistration = () => {
                 ) : (
                   <>
                     <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>📎</span>
-                    <span style={{ color: '#666' }}>اضغط لإرفاق ملف (PDF, صورة)</span>
+                    <span style={{ color: '#666' }}>{t.clickToAttach}</span>
                   </>
                 )}
               </div>
             </div>
             
             <div>
-              <label style={styles.label}>ملاحظات إضافية</label>
+              <label style={styles.label}>{t.additionalNotes}</label>
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }}
-                placeholder="أي معلومات إضافية..."
+                placeholder={t.anyAdditionalInfo}
               />
             </div>
             
@@ -816,43 +822,43 @@ const SupplierRegistration = () => {
               style={{ ...styles.button, opacity: submitting ? 0.7 : 1 }}
               disabled={submitting}
             >
-              {submitting ? '⏳ جاري التسجيل...' : '✓ تقديم الطلب'}
+              {submitting ? `⏳ ${t.submitting}` : `✓ ${t.submit}`}
             </button>
           </form>
         ) : (
           <form onSubmit={handleCheck}>
             <div>
-              <label style={styles.label}>الرقم المدني</label>
+              <label style={styles.label}>{t.civilId}</label>
               <input
                 type="text"
                 value={checkCivilId}
                 onChange={(e) => setCheckCivilId(e.target.value)}
                 style={styles.input}
-                placeholder="أدخل الرقم المدني للتحقق"
+                placeholder={t.civilIdPlaceholder}
                 required
               />
             </div>
             
             <button type="submit" style={styles.button}>
-              🔍 التحقق من حالة الطلب
+              🔍 {t.checkStatus}
             </button>
             
             {checkResult && (
               <div style={{ marginTop: '20px', padding: '20px', background: '#f3f4f6', borderRadius: '10px' }}>
                 {checkResult.found ? (
                   <>
-                    <h3 style={{ margin: '0 0 16px', color: '#8B5A2B' }}>تفاصيل الطلب</h3>
+                    <h3 style={{ margin: '0 0 16px', color: '#8B5A2B' }}>{t.requestDetails}</h3>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #ddd' }}>
-                      <span>رقم الطلب:</span>
+                      <span>{t.registrationNumber}:</span>
                       <strong>{checkResult.registration_number}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #ddd' }}>
-                      <span>الاسم:</span>
+                      <span>{t.name}:</span>
                       <strong>{checkResult.name}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #ddd' }}>
-                      <span>تاريخ التقديم:</span>
-                      <strong>{new Date(checkResult.created_at).toLocaleDateString('ar-SA')}</strong>
+                      <span>{t.submissionDate}:</span>
+                      <strong>{new Date(checkResult.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}</strong>
                     </div>
                     <div style={{ 
                       marginTop: '16px',
@@ -866,13 +872,14 @@ const SupplierRegistration = () => {
                              checkResult.status === 'rejected' ? '#dc2626' : '#92400e'
                     }}>
                       {checkResult.status === 'approved' ? '✓ ' : checkResult.status === 'rejected' ? '✗ ' : '⏳ '}
-                      {checkResult.status_message}
+                      {checkResult.status === 'approved' ? t.approved : 
+                       checkResult.status === 'rejected' ? t.rejected : t.pending}
                     </div>
                   </>
                 ) : (
                   <div style={{ textAlign: 'center', color: '#666' }}>
                     <span style={{ fontSize: '40px', display: 'block', marginBottom: '10px' }}>🔍</span>
-                    {checkResult.message}
+                    {t.notFound}
                   </div>
                 )}
               </div>
