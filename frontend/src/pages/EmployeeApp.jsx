@@ -660,7 +660,9 @@ const EmployeeApp = () => {
     <div style={styles.container}>
       <Toaster position="top-center" richColors />
       <div style={styles.card}>
-        <div style={styles.logo}>📍</div>
+        <div style={styles.logo}>
+          <img src="/almorooj-logo.png" alt="المروج" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </div>
         <h1 style={styles.title}>مرحباً {employee?.name?.split(' ')[0]}</h1>
         <p style={styles.subtitle}>{employee?.employee_code} • {employee?.department}</p>
         
