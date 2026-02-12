@@ -132,12 +132,28 @@ const EmployeeTrackingAdmin = () => {
     }
   }, []);
 
+  // Fetch location attendance
+  const fetchLocationAttendance = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/tracking/location-attendance?date=${attendanceDate}`);
+      setLocationAttendance(res.data);
+    } catch (error) {
+      console.error("Error fetching location attendance:", error);
+    }
+  }, [attendanceDate]);
+
   useEffect(() => {
     fetchData();
     // Auto refresh every 30 seconds
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  useEffect(() => {
+    if (activeTab === "attendance") {
+      fetchLocationAttendance();
+    }
+  }, [activeTab, attendanceDate, fetchLocationAttendance]);
 
   // Initialize map
   useEffect(() => {
