@@ -358,12 +358,6 @@ const EmployeeApp = () => {
       width: '80px',
       height: '80px',
       margin: '0 auto 16px',
-      background: '#d4a574',
-      borderRadius: '50%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '32px'
     },
     title: {
       textAlign: 'center',
