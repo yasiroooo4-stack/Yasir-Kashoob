@@ -646,6 +646,14 @@ const SupplierManagement = () => {
                                   <Eye className="w-4 h-4 me-1" />
                                   {t("عرض", "View")}
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => openDeleteDialog("feed", request)}
+                                  disabled={loading}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                                 <span className="text-sm text-muted-foreground">
                                   {request.approved_by_name && `${t("بواسطة", "By")}: ${request.approved_by_name}`}
                                 </span>
