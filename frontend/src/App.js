@@ -331,6 +331,9 @@ function App() {
               {/* Supplier Portal - Public Route */}
               <Route path="/supplier-portal" element={<SupplierPortal />} />
               
+              {/* Supplier Registration - Public Route */}
+              <Route path="/supplier-registration" element={<SupplierRegistration />} />
+              
               {/* Supplier App (PWA) - Public Route */}
               <Route path="/supplier-app" element={<SupplierApp />} />
               
