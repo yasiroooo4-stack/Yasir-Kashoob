@@ -58,6 +58,7 @@ import {
   Settings,
   Link,
   Copy,
+  Trash2,
 } from "lucide-react";
 import { Switch } from "../components/ui/switch";
 
