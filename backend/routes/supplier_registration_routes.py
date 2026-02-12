@@ -181,7 +181,35 @@ async def submit_registration(
     # Check if civil_id already registered
     existing = await db.supplier_registrations.find_one({"civil_id": civil_id})
     if existing:
-        raise HTTPException(status_code=400, detail="هذا الرقم المدني مسجل مسبقاً")
+        # Check if rejected and 24 hours passed
+        if existing.get("status") == "rejected":
+            rejected_at = existing.get("rejected_at")
+            if rejected_at:
+                try:
+                    rejected_time = datetime.fromisoformat(rejected_at.replace("Z", "+00:00"))
+                    hours_since_rejection = (datetime.now(timezone.utc) - rejected_time).total_seconds() / 3600
+                    
+                    if hours_since_rejection < 24:
+                        remaining_hours = int(24 - hours_since_rejection)
+                        raise HTTPException(
+                            status_code=400, 
+                            detail=f"تم رفض طلبك مسبقاً. يمكنك إعادة التسجيل بعد {remaining_hours} ساعة"
+                        )
+                    else:
+                        # Allow re-registration after 24 hours - delete old record
+                        await db.supplier_registrations.delete_one({"id": existing["id"]})
+                except ValueError:
+                    # If date parsing fails, allow re-registration
+                    await db.supplier_registrations.delete_one({"id": existing["id"]})
+            else:
+                # No rejected_at date, allow re-registration
+                await db.supplier_registrations.delete_one({"id": existing["id"]})
+        elif existing.get("status") == "pending":
+            raise HTTPException(status_code=400, detail="لديك طلب قيد المراجعة بالفعل")
+        elif existing.get("status") == "approved":
+            raise HTTPException(status_code=400, detail="هذا الرقم المدني مسجل ومقبول مسبقاً")
+        else:
+            raise HTTPException(status_code=400, detail="هذا الرقم المدني مسجل مسبقاً")
     
     # Generate registration number
     count = await db.supplier_registrations.count_documents({})
