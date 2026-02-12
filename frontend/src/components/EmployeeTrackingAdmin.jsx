@@ -278,11 +278,11 @@ const EmployeeTrackingAdmin = () => {
       }
       
       const boundsArray = [];
-        
-        // Add markers for all employees
-        employeesToShow.forEach(emp => {
-          if (emp.latitude && emp.longitude) {
-            boundsArray.push([emp.latitude, emp.longitude]);
+      
+      // Add markers for all employees
+      employeesToShow.forEach(emp => {
+        if (emp.latitude && emp.longitude) {
+          boundsArray.push([emp.latitude, emp.longitude]);
             
             // Get employee photo or first letter
             const photoUrl = emp.photo_url;
