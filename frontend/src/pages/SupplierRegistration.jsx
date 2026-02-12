@@ -167,7 +167,7 @@ const SupplierRegistration = () => {
           .receipt { max-width: 600px; margin: 0 auto; border: 3px solid #8B5A2B; padding: 30px; }
           .header { text-align: center; margin-bottom: 30px; }
           .logo { font-size: 60px; margin-bottom: 10px; }
-          .company-name { font-size: 24px; color: #047857; font-weight: bold; }
+          .company-name { font-size: 24px; color: #8B5A2B; font-weight: bold; }
           .title { font-size: 20px; margin: 20px 0; color: #8B5A2B; }
           .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
           .label { color: #666; }
@@ -186,11 +186,11 @@ const SupplierRegistration = () => {
     printWindow.print();
   };
 
-  // Styles
+  // Styles - Brown theme
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+      background: 'linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%)',
       padding: '20px',
       fontFamily: 'Arial, sans-serif',
       direction: 'rtl'
