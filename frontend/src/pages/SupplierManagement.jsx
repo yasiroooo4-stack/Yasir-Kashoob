@@ -54,7 +54,12 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  UserPlus,
+  Settings,
+  Link,
+  Copy,
 } from "lucide-react";
+import { Switch } from "../components/ui/switch";
 
 const SupplierManagement = () => {
   const { language } = useLanguage();
