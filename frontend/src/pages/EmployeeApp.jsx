@@ -341,7 +341,7 @@ const EmployeeApp = () => {
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+      background: 'linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%)',
       padding: '20px',
       fontFamily: 'Arial, sans-serif',
       direction: 'rtl'
@@ -367,7 +367,7 @@ const EmployeeApp = () => {
     },
     title: {
       textAlign: 'center',
-      color: '#047857',
+      color: '#8B5A2B',
       marginBottom: '8px',
       fontSize: '24px',
       fontWeight: 'bold'
@@ -391,7 +391,7 @@ const EmployeeApp = () => {
     button: {
       width: '100%',
       padding: '14px',
-      background: '#047857',
+      background: '#8B5A2B',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
@@ -404,8 +404,8 @@ const EmployeeApp = () => {
       width: '100%',
       padding: '14px',
       background: 'white',
-      color: '#047857',
-      border: '2px solid #047857',
+      color: '#8B5A2B',
+      border: '2px solid #8B5A2B',
       borderRadius: '12px',
       fontSize: '16px',
       fontWeight: 'bold',
@@ -492,7 +492,7 @@ const EmployeeApp = () => {
       height: '70px',
       borderRadius: '50%',
       background: 'white',
-      border: '4px solid #047857',
+      border: '4px solid #8B5A2B',
       cursor: 'pointer',
       margin: '0 auto',
       display: 'flex',
@@ -566,7 +566,7 @@ const EmployeeApp = () => {
                   style={styles.capturedImage}
                 />
               </div>
-              <p style={{ textAlign: 'center', color: '#047857', fontSize: '14px', marginBottom: '16px' }}>
+              <p style={{ textAlign: 'center', color: '#8B5A2B', fontSize: '14px', marginBottom: '16px' }}>
                 ✓ تم التقاط الصورة بنجاح
               </p>
               <button 
