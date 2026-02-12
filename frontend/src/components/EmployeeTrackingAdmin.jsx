@@ -421,7 +421,7 @@ const EmployeeTrackingAdmin = () => {
         }
       }
     });
-  }, [trackedEmployees, allEmployees, activeTab]);
+  }, [trackedEmployees, allEmployees, activeTab, mapReady]);
 
   // Save settings
   const saveSettings = async () => {
