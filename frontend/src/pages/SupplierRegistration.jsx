@@ -860,8 +860,8 @@ const SupplierRegistration = () => {
                 style={styles.fileButton}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {document ? (
-                  <span style={{ color: '#8B5A2B' }}>✓ {document.name}</span>
+                {attachedFile ? (
+                  <span style={{ color: '#8B5A2B' }}>✓ {attachedFile.name}</span>
                 ) : (
                   <>
                     <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>📎</span>
