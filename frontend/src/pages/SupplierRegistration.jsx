@@ -205,7 +205,7 @@ const SupplierRegistration = () => {
     },
     title: {
       textAlign: 'center',
-      color: '#047857',
+      color: '#8B5A2B',
       marginBottom: '8px',
       fontSize: '24px',
       fontWeight: 'bold'
@@ -232,7 +232,7 @@ const SupplierRegistration = () => {
       transition: 'all 0.2s'
     },
     tabActive: {
-      background: '#047857',
+      background: '#8B5A2B',
       color: 'white'
     },
     tabInactive: {
