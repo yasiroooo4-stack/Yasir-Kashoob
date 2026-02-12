@@ -74,6 +74,7 @@ import ExtraPayApprovals from "./pages/ExtraPayApprovals";
 import TasksManagement from "./pages/TasksManagement";
 import EmployeeTracking from "./pages/EmployeeTracking";
 import EmployeeApp from "./pages/EmployeeApp";
+import MobileTrackingApp from "./pages/MobileTrackingApp";
 
 // Layout
 import Layout from "./components/Layout";
