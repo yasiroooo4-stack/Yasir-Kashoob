@@ -265,7 +265,7 @@ const SupplierRegistration = () => {
         toast.error(t.fileSizeError);
         return;
       }
-      setDocument(file);
+      setAttachedFile(file);
     }
   };
 
