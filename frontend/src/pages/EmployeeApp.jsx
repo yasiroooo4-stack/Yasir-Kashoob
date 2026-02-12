@@ -599,7 +599,9 @@ const EmployeeApp = () => {
       <div style={styles.container}>
         <Toaster position="top-center" richColors />
         <div style={styles.card}>
-          <div style={styles.logo}>🐄</div>
+          <div style={styles.logo}>
+            <img src="/almorooj-logo.png" alt="المروج" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <h1 style={styles.title}>المروج للألبان</h1>
           <p style={styles.subtitle}>تطبيق تتبع الموقع للموظفين</p>
           
