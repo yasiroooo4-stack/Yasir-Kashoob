@@ -480,11 +480,12 @@ const EmployeeApp = () => {
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: '200px',
-      height: '250px',
-      border: '3px dashed rgba(255,255,255,0.7)',
+      width: '180px',
+      height: '220px',
+      border: '3px solid rgba(255,255,255,0.8)',
       borderRadius: '50%',
-      pointerEvents: 'none'
+      pointerEvents: 'none',
+      boxShadow: '0 0 0 2000px rgba(0,0,0,0.3)'
     },
     captureButton: {
       width: '70px',
@@ -494,7 +495,20 @@ const EmployeeApp = () => {
       border: '4px solid #047857',
       cursor: 'pointer',
       margin: '0 auto',
-      display: 'block'
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '24px'
+    },
+    loadingCamera: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '300px',
+      background: '#1a1a1a',
+      borderRadius: '16px',
+      color: 'white'
     }
   };
 
@@ -504,7 +518,7 @@ const EmployeeApp = () => {
       <div style={styles.container}>
         <Toaster position="top-center" richColors />
         <div style={styles.card}>
-          <h1 style={styles.title}>📸 التحقق من الهوية</h1>
+          <h1 style={{...styles.title, fontSize: '20px'}}>📸 التحقق من الهوية</h1>
           <p style={styles.subtitle}>
             {pendingEmployee?.name}<br/>
             <span style={{ fontSize: '12px', color: '#999' }}>{pendingEmployee?.employee_code}</span>
@@ -518,18 +532,27 @@ const EmployeeApp = () => {
                   autoPlay 
                   playsInline 
                   muted 
-                  style={styles.video}
+                  style={{
+                    width: '100%',
+                    height: '300px',
+                    objectFit: 'cover',
+                    borderRadius: '16px',
+                    transform: 'scaleX(-1)',
+                    background: '#1a1a1a'
+                  }}
                 />
                 <div style={styles.cameraOverlay}></div>
               </div>
-              <p style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+              <p style={{ textAlign: 'center', color: '#666', fontSize: '14px', margin: '12px 0' }}>
                 ضع وجهك داخل الإطار واضغط الزر
               </p>
               <button 
                 onClick={capturePhoto}
                 style={styles.captureButton}
                 title="التقاط الصورة"
-              />
+              >
+                📷
+              </button>
               <canvas ref={canvasRef} style={{ display: 'none' }} />
             </>
           )}
