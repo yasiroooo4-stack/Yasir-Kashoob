@@ -380,3 +380,32 @@ async def get_registration_stats():
         "approved": approved,
         "rejected": rejected
     }
+
+
+@router.delete("/requests/{registration_id}")
+async def delete_registration_request(registration_id: str):
+    """حذف طلب تسجيل"""
+    # Find the request first
+    request = await db.supplier_registrations.find_one(
+        {"$or": [{"id": registration_id}, {"registration_number": registration_id}]}
+    )
+    
+    if not request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    # Delete the request
+    result = await db.supplier_registrations.delete_one({"id": request.get("id")})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="فشل في حذف الطلب")
+    
+    # Delete associated document if exists
+    if request.get("document_path"):
+        try:
+            document_path = request.get("document_path")
+            if os.path.exists(document_path):
+                os.remove(document_path)
+        except:
+            pass
+    
+    return {"success": True, "message": "تم حذف الطلب بنجاح"}
