@@ -47,7 +47,9 @@ import {
   XCircle,
   Phone,
   ExternalLink,
-  Eye
+  Eye,
+  Calendar,
+  Timer,
 } from "lucide-react";
 
 // Leaflet CSS (loaded dynamically)
