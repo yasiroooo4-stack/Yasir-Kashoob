@@ -242,10 +242,11 @@ async def update_employee_location(location_data: dict):
     # Save to history
     await db.employee_locations.insert_one(location_record)
     
-    # Update current location (upsert)
+    # Update current location (upsert) - exclude _id and id to avoid immutable field error
+    current_location_data = {k: v for k, v in location_record.items() if k not in ["_id", "id"]}
     await db.employee_current_locations.update_one(
         {"employee_id": employee.get("id")},
-        {"$set": location_record},
+        {"$set": current_location_data},
         upsert=True
     )
     
