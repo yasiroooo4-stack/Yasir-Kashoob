@@ -1,0 +1,8 @@
+{
+  "appId": "com.almorooj.tracking",
+  "appName": "Almorooj Tracking",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  }
+}
