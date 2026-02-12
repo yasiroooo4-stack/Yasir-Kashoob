@@ -299,6 +299,15 @@ async def get_tracked_employees():
     # Remove MongoDB _id
     for loc in locations:
         loc.pop("_id", None)
+        
+        # Get employee photo
+        employee = await db.hr_employees.find_one(
+            {"id": loc.get("employee_id")},
+            {"_id": 0, "photo_url": 1, "signature_url": 1, "civil_id": 1, "national_id": 1}
+        )
+        if employee:
+            loc["photo_url"] = employee.get("photo_url")
+            loc["civil_id"] = employee.get("civil_id") or employee.get("national_id")
     
     return locations
 
@@ -310,7 +319,7 @@ async def get_all_employees_with_phones():
     """
     employees = await db.hr_employees.find(
         {"status": {"$ne": "terminated"}},
-        {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "phone": 1, "department": 1, "position": 1}
+        {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "phone": 1, "department": 1, "position": 1, "photo_url": 1, "civil_id": 1, "national_id": 1}
     ).to_list(1000)
     
     # Get current locations
@@ -331,6 +340,9 @@ async def get_all_employees_with_phones():
             }
         else:
             emp["last_location"] = None
+        
+        # Add civil_id field
+        emp["civil_id"] = emp.get("civil_id") or emp.get("national_id")
     
     return employees
 
