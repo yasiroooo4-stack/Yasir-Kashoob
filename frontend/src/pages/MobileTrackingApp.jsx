@@ -241,34 +241,68 @@ const MobileTrackingApp = () => {
       const pos = await getCurrentPosition();
       await sendLocation(pos.latitude, pos.longitude, pos.accuracy);
       
-      // Set up interval for continuous tracking
-      const interval = (settings?.update_interval_seconds || 60) * 1000;
-      intervalRef.current = setInterval(async () => {
-        try {
-          const pos = await getCurrentPosition();
-          await sendLocation(pos.latitude, pos.longitude, pos.accuracy);
-        } catch (e) {
-          console.log('Location error:', e);
-        }
-      }, interval);
-      
-      // For Capacitor, also use watch position for better background tracking
-      if (isCapacitor && Geolocation) {
-        watchIdRef.current = await Geolocation.watchPosition(
-          { enableHighAccuracy: true },
-          (position, err) => {
-            if (position) {
-              sendLocation(
-                position.coords.latitude,
-                position.coords.longitude,
-                position.coords.accuracy
-              );
+      // Use Background Geolocation for Capacitor if available
+      if (isCapacitor && BackgroundGeolocation) {
+        console.log('Starting background geolocation');
+        
+        // Configure background geolocation
+        await BackgroundGeolocation.addWatcher(
+          {
+            backgroundMessage: "تتبع الموقع يعمل في الخلفية",
+            backgroundTitle: "المروج للألبان",
+            requestPermissions: true,
+            stale: false,
+            distanceFilter: 50, // Update every 50 meters
+          },
+          async (location, error) => {
+            if (error) {
+              console.log('Background location error:', error);
+              return;
+            }
+            
+            if (location) {
+              console.log('Background location update:', location);
+              await sendLocation(location.latitude, location.longitude, location.accuracy);
             }
           }
-        );
+        ).then(watcher_id => {
+          watchIdRef.current = watcher_id;
+          console.log('Background watcher started:', watcher_id);
+        });
+        
+        toast.success('تم تشغيل التتبع في الخلفية');
+        
+      } else {
+        // Fallback for web or Capacitor without background plugin
+        // Set up interval for continuous tracking
+        const interval = (settings?.update_interval_seconds || 60) * 1000;
+        intervalRef.current = setInterval(async () => {
+          try {
+            const pos = await getCurrentPosition();
+            await sendLocation(pos.latitude, pos.longitude, pos.accuracy);
+          } catch (e) {
+            console.log('Location error:', e);
+          }
+        }, interval);
+        
+        // For Capacitor, also use watch position for better tracking
+        if (isCapacitor && Geolocation) {
+          watchIdRef.current = await Geolocation.watchPosition(
+            { enableHighAccuracy: true },
+            (position, err) => {
+              if (position) {
+                sendLocation(
+                  position.coords.latitude,
+                  position.coords.longitude,
+                  position.coords.accuracy
+                );
+              }
+            }
+          );
+        }
+        
+        toast.success('تم تشغيل التتبع');
       }
-      
-      toast.success('تم تشغيل التتبع');
       
     } catch (error) {
       console.error('Start tracking error:', error);
@@ -283,12 +317,17 @@ const MobileTrackingApp = () => {
 
   // Stop tracking
   const stopTracking = useCallback(() => {
+    // Clear interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     
-    if (isCapacitor && Geolocation && watchIdRef.current) {
+    // Stop background geolocation watcher
+    if (isCapacitor && BackgroundGeolocation && watchIdRef.current) {
+      BackgroundGeolocation.removeWatcher({ id: watchIdRef.current });
+      watchIdRef.current = null;
+    } else if (isCapacitor && Geolocation && watchIdRef.current) {
       Geolocation.clearWatch({ id: watchIdRef.current });
       watchIdRef.current = null;
     }
