@@ -439,7 +439,7 @@ const SupplierManagement = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-2xl">
           <TabsTrigger value="feed-requests" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
             {t("طلبات الأعلاف", "Feed Requests")}
@@ -452,6 +452,13 @@ const SupplierManagement = () => {
             {t("الرسائل", "Messages")}
             {unreadMessages > 0 && (
               <Badge variant="destructive" className="ms-1">{unreadMessages}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="registration" className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4" />
+            {t("تسجيل الموردين", "Registration")}
+            {registrationStats.pending > 0 && (
+              <Badge variant="destructive" className="ms-1">{registrationStats.pending}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
