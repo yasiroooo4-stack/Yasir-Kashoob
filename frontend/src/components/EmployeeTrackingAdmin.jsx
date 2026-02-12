@@ -216,16 +216,51 @@ const EmployeeTrackingAdmin = () => {
     };
   }, [activeTab, settings.work_locations, settings.work_radius_meters]);
 
-  // Update markers when employees change
+  // Update markers when employees change - show all employees with location
   useEffect(() => {
-    if (mapInstanceRef.current && trackedEmployees.length > 0) {
+    if (mapInstanceRef.current) {
       import('leaflet').then((L) => {
         // Clear old markers
         Object.values(markersRef.current).forEach(marker => marker.remove());
         markersRef.current = {};
         
-        // Add new markers with employee name labels
+        // Combine tracked employees with employees who have last_location
+        const employeesToShow = [];
+        
+        // Add currently tracked employees
         trackedEmployees.forEach(emp => {
+          if (emp.latitude && emp.longitude) {
+            employeesToShow.push({
+              ...emp,
+              isOnline: true
+            });
+          }
+        });
+        
+        // Add employees with last_location who are not currently tracked
+        const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
+        allEmployees.forEach(emp => {
+          if (emp.last_location && emp.last_location.latitude && !trackedIds.has(emp.id)) {
+            employeesToShow.push({
+              employee_id: emp.id,
+              employee_name: emp.name,
+              employee_code: emp.employee_code,
+              photo_url: emp.photo_url,
+              civil_id: emp.civil_id || emp.national_id,
+              latitude: emp.last_location.latitude,
+              longitude: emp.last_location.longitude,
+              distance_from_work: emp.last_location.distance_from_work,
+              is_within_range: emp.last_location.is_within_range,
+              created_at: emp.last_location.last_updated,
+              isOnline: false
+            });
+          }
+        });
+        
+        if (employeesToShow.length === 0) return;
+        
+        // Add markers for all employees
+        employeesToShow.forEach(emp => {
           if (emp.latitude && emp.longitude) {
             // Get employee photo or first letter
             const photoUrl = emp.photo_url;
