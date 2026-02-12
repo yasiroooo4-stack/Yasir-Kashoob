@@ -85,17 +85,44 @@ const EmployeeApp = () => {
     // Wait for video element to be rendered
     setTimeout(async () => {
       try {
+        // Check if running on HTTPS or localhost
+        const isSecure = window.location.protocol === 'https:' || 
+                         window.location.hostname === 'localhost' ||
+                         window.location.hostname === '127.0.0.1';
+        
+        if (!isSecure) {
+          console.warn('Camera requires HTTPS. Current protocol:', window.location.protocol);
+        }
+        
         // First check if mediaDevices is available
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Camera API not supported');
+          // Try legacy API
+          const getUserMedia = navigator.getUserMedia || 
+                               navigator.webkitGetUserMedia || 
+                               navigator.mozGetUserMedia;
+          if (!getUserMedia) {
+            throw new Error('Camera API not supported');
+          }
+        }
+        
+        // Request camera permission explicitly first
+        try {
+          const permissionStatus = await navigator.permissions?.query({ name: 'camera' });
+          console.log('Camera permission status:', permissionStatus?.state);
+        } catch (e) {
+          console.log('Permission API not available');
         }
         
         // Try multiple camera configurations
         let stream = null;
         const constraints = [
-          // Try front camera first
+          // Try front camera first (mobile)
           { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
-          // Fallback to any camera
+          // Try front camera with exact
+          { video: { facingMode: { exact: 'user' } }, audio: false },
+          // Fallback to environment camera
+          { video: { facingMode: 'environment' }, audio: false },
+          // Any camera with size
           { video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
           // Minimal constraints
           { video: true, audio: false }
@@ -103,10 +130,12 @@ const EmployeeApp = () => {
         
         for (const constraint of constraints) {
           try {
+            console.log('Trying camera constraint:', constraint);
             stream = await navigator.mediaDevices.getUserMedia(constraint);
+            console.log('Camera stream obtained with:', constraint);
             break;
           } catch (e) {
-            console.log('Constraint failed:', constraint, e);
+            console.log('Constraint failed:', constraint.video, e.name, e.message);
           }
         }
         
@@ -116,45 +145,73 @@ const EmployeeApp = () => {
         
         streamRef.current = stream;
         
-        // Wait a bit more and try to connect video
+        // Log stream info
+        const videoTrack = stream.getVideoTracks()[0];
+        console.log('Video track:', videoTrack?.label, videoTrack?.getSettings());
+        
+        // Connect video with retries
+        let retryCount = 0;
+        const maxRetries = 10;
+        
         const connectVideo = () => {
           if (videoRef.current) {
+            console.log('Connecting video stream to element');
             videoRef.current.srcObject = stream;
+            
             videoRef.current.onloadedmetadata = () => {
+              console.log('Video metadata loaded, dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
               videoRef.current.play()
-                .then(() => console.log('Video playing'))
+                .then(() => {
+                  console.log('Video playing successfully');
+                  setError(null);
+                })
                 .catch(e => {
-                  console.log('Play error:', e);
-                  // Try muted autoplay
+                  console.log('Play error, trying muted:', e);
                   videoRef.current.muted = true;
-                  videoRef.current.play().catch(e2 => console.log('Muted play error:', e2));
+                  return videoRef.current.play();
+                })
+                .catch(e2 => {
+                  console.log('Muted play also failed:', e2);
+                  setError('فشل في تشغيل الكاميرا. يرجى إعادة المحاولة');
                 });
             };
-          } else {
-            // Retry after a short delay
+            
+            videoRef.current.onerror = (e) => {
+              console.error('Video element error:', e);
+            };
+          } else if (retryCount < maxRetries) {
+            retryCount++;
+            console.log('Video element not ready, retry', retryCount);
             setTimeout(connectVideo, 100);
+          } else {
+            console.error('Video element not found after retries');
+            setError('فشل في تهيئة الكاميرا');
           }
         };
         
         connectVideo();
         
       } catch (err) {
-        console.error('Camera error:', err);
+        console.error('Camera error:', err.name, err.message);
         setShowCamera(false);
         
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setError('يرجى السماح بالوصول للكاميرا من إعدادات المتصفح');
+          setError('يرجى السماح بالوصول للكاميرا من إعدادات المتصفح. اضغط على أيقونة القفل بجانب عنوان الموقع');
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
           setError('لم يتم العثور على كاميرا في جهازك');
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-          setError('الكاميرا مستخدمة من تطبيق آخر');
+          setError('الكاميرا مستخدمة من تطبيق آخر. أغلق التطبيقات الأخرى وحاول مرة أخرى');
+        } else if (err.name === 'OverconstrainedError') {
+          setError('الكاميرا لا تدعم الإعدادات المطلوبة');
         } else if (err.message === 'Camera API not supported') {
-          setError('المتصفح لا يدعم الكاميرا. يرجى استخدام HTTPS أو متصفح حديث');
+          setError('المتصفح لا يدعم الكاميرا. يرجى استخدام Chrome أو Safari على HTTPS');
+        } else if (err.name === 'SecurityError') {
+          setError('الموقع يحتاج HTTPS للوصول للكاميرا');
         } else {
-          setError('فشل في فتح الكاميرا: ' + err.message);
+          setError('فشل في فتح الكاميرا: ' + (err.message || err.name));
         }
       }
-    }, 200);
+    }, 300);
   };
 
   const stopCamera = () => {
