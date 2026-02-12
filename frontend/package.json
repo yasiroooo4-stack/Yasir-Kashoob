@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@capacitor/android": "5",
+    "@capacitor/android": "5.7.4",
     "@capacitor/app": "5",
-    "@capacitor/cli": "5",
-    "@capacitor/core": "5",
+    "@capacitor/cli": "5.7.4",
+    "@capacitor/core": "5.7.4",
     "@capacitor/geolocation": "5",
     "@capacitor/local-notifications": "5",
     "@hookform/resolvers": "^5.0.1",
