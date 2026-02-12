@@ -118,6 +118,11 @@ const SupplierManagement = () => {
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [rejectRegistrationDialog, setRejectRegistrationDialog] = useState(false);
   const [registrationRejectReason, setRegistrationRejectReason] = useState("");
+  
+  // Delete States
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState(""); // "feed", "message", "registration"
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
