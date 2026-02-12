@@ -2117,6 +2117,73 @@ async def reply_to_supplier_message(
     
     return {"message": "تم إرسال الرد"}
 
+
+# Admin - Delete supplier feed request
+@api_router.delete("/admin/supplier-feed-requests/{request_id}")
+async def delete_supplier_feed_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حذف طلب علف"""
+    # Check if request exists
+    feed_request = await db.supplier_feed_requests.find_one({"id": request_id})
+    
+    if not feed_request:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    # Delete the request
+    result = await db.supplier_feed_requests.delete_one({"id": request_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="فشل في حذف الطلب")
+    
+    # Log activity
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_feed_request",
+        entity_type="supplier_feed_request",
+        entity_id=request_id,
+        entity_name=feed_request.get("supplier_name", ""),
+        details=f"حذف طلب علف: {feed_request.get('feed_type', '')} - {feed_request.get('quantity', 0)} كجم"
+    )
+    
+    return {"success": True, "message": "تم حذف الطلب بنجاح"}
+
+
+# Admin - Delete supplier message
+@api_router.delete("/admin/supplier-messages/{message_id}")
+async def delete_supplier_message(
+    message_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """حذف رسالة مورد"""
+    # Check if message exists
+    message = await db.supplier_messages.find_one({"id": message_id})
+    
+    if not message:
+        raise HTTPException(status_code=404, detail="الرسالة غير موجودة")
+    
+    # Delete the message
+    result = await db.supplier_messages.delete_one({"id": message_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="فشل في حذف الرسالة")
+    
+    # Log activity
+    await log_activity(
+        user_id=current_user["id"],
+        user_name=current_user["full_name"],
+        action="delete_supplier_message",
+        entity_type="supplier_message",
+        entity_id=message_id,
+        entity_name=message.get("supplier_name", ""),
+        details=f"حذف رسالة مورد: {message.get('subject', '')}"
+    )
+    
+    return {"success": True, "message": "تم حذف الرسالة بنجاح"}
+
+
 # ==================== MILK RECEPTION ROUTES ====================
 
 @api_router.post("/milk-receptions", response_model=MilkReception)
