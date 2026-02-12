@@ -5,20 +5,44 @@ import { toast, Toaster } from "sonner";
 // Get API URL
 const API = process.env.REACT_APP_BACKEND_URL + "/api";
 
+// Company Logo URL
+const LOGO_URL = "/almorooj-logo.png";
+
 // Company Logo Component
-const CompanyLogo = () => (
+const CompanyLogo = ({ size = 100 }) => (
   <div style={{
-    width: '100px',
-    height: '100px',
+    width: `${size}px`,
+    height: `${size}px`,
     margin: '0 auto 16px',
-    background: 'linear-gradient(135deg, #d4a574 0%, #c4956a 100%)',
-    borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 15px rgba(212, 165, 116, 0.4)'
   }}>
-    <span style={{ fontSize: '50px' }}>🐄</span>
+    <img 
+      src={LOGO_URL} 
+      alt="المروج للألبان" 
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        objectFit: 'contain' 
+      }}
+      onError={(e) => {
+        e.target.style.display = 'none';
+        e.target.nextSibling.style.display = 'flex';
+      }}
+    />
+    <div style={{
+      display: 'none',
+      width: `${size}px`,
+      height: `${size}px`,
+      background: '#c4a574',
+      borderRadius: '50%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: `${size * 0.5}px`
+    }}>
+      🐄
+    </div>
   </div>
 );
 
