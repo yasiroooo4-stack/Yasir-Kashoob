@@ -680,6 +680,131 @@ const EmployeeTrackingAdmin = () => {
         </Card>
       )}
 
+      {/* Location Attendance Tab */}
+      {activeTab === "attendance" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Timer className="w-5 h-5" />
+                {language === "ar" ? "سجل حضور الموقع" : "Location Attendance"}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={(e) => setAttendanceDate(e.target.value)}
+                  className="w-40"
+                />
+                <Button variant="outline" size="sm" onClick={fetchLocationAttendance}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <CardDescription>
+              {language === "ar" 
+                ? "تسجيل تلقائي لدخول وخروج الموظفين من موقع العمل بناءً على GPS"
+                : "Automatic check-in/out based on GPS location"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                  <TableHead>{language === "ar" ? "دخول الموقع" : "Location Check-in"}</TableHead>
+                  <TableHead>{language === "ar" ? "خروج الموقع" : "Location Check-out"}</TableHead>
+                  <TableHead>{language === "ar" ? "وقت التواجد" : "Time at Location"}</TableHead>
+                  <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {locationAttendance.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {language === "ar" ? "لا توجد بيانات لهذا التاريخ" : "No data for this date"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  locationAttendance.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{record.employee_name}</p>
+                          <p className="text-sm text-muted-foreground">{record.employee_code}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {record.location_check_in ? (
+                          <span className="text-green-600 font-medium">
+                            {new Date(record.location_check_in).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'})}
+                          </span>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {record.location_check_out ? (
+                          <span className="text-red-600 font-medium">
+                            {new Date(record.location_check_out).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'})}
+                          </span>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-bold text-primary">
+                          {record.total_time_formatted || "0:00"}
+                        </span>
+                        <span className="text-sm text-muted-foreground ms-1">
+                          ({record.total_time_hours || 0} {language === "ar" ? "ساعة" : "hrs"})
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={record.is_currently_at_location ? "default" : "secondary"}
+                               className={record.is_currently_at_location ? "bg-green-500" : ""}>
+                          {record.is_currently_at_location 
+                            ? (language === "ar" ? "متواجد" : "Present")
+                            : (language === "ar" ? "غادر" : "Left")}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            
+            {/* Summary */}
+            {locationAttendance.length > 0 && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-green-600">
+                      {locationAttendance.filter(r => r.location_check_in).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "ar" ? "سجلوا دخول" : "Checked in"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-primary">
+                      {locationAttendance.filter(r => r.is_currently_at_location).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "ar" ? "متواجدون الآن" : "Currently present"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {(locationAttendance.reduce((sum, r) => sum + (r.total_time_hours || 0), 0) / (locationAttendance.length || 1)).toFixed(1)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "ar" ? "متوسط الساعات" : "Avg hours"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Alerts Tab */}
       {activeTab === "alerts" && (
         <Card>
