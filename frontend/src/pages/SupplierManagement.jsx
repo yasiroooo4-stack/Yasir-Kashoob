@@ -150,6 +150,102 @@ const SupplierManagement = () => {
     }
   };
 
+  // Supplier Registration Functions
+  const fetchRegistrationSettings = async () => {
+    try {
+      const res = await axios.get(`${API}/supplier-registration/settings`);
+      setRegistrationSettings(res.data);
+    } catch (error) {
+      console.error("Error fetching registration settings:", error);
+    }
+  };
+
+  const fetchRegistrationRequests = async () => {
+    try {
+      const res = await axios.get(`${API}/supplier-registration/requests`, { headers });
+      setRegistrationRequests(res.data || []);
+    } catch (error) {
+      console.error("Error fetching registration requests:", error);
+    }
+  };
+
+  const fetchRegistrationStats = async () => {
+    try {
+      const res = await axios.get(`${API}/supplier-registration/stats`, { headers });
+      setRegistrationStats(res.data);
+    } catch (error) {
+      console.error("Error fetching registration stats:", error);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(`${API}/hr/employees`, { headers });
+      setEmployees(res.data || []);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
+  const handleToggleRegistration = async () => {
+    try {
+      const newStatus = !registrationSettings.is_open;
+      await axios.post(`${API}/supplier-registration/settings/toggle?is_open=${newStatus}`, {}, { headers });
+      setRegistrationSettings({ ...registrationSettings, is_open: newStatus });
+      toast.success(newStatus ? t("تم فتح التسجيل", "Registration opened") : t("تم إغلاق التسجيل", "Registration closed"));
+    } catch (error) {
+      toast.error(t("فشل في تحديث حالة التسجيل", "Failed to update registration status"));
+    }
+  };
+
+  const handleSaveRegistrationSettings = async () => {
+    try {
+      await axios.put(`${API}/supplier-registration/settings`, registrationSettings, { headers });
+      toast.success(t("تم حفظ الإعدادات", "Settings saved"));
+    } catch (error) {
+      toast.error(t("فشل في حفظ الإعدادات", "Failed to save settings"));
+    }
+  };
+
+  const handleApproveRegistration = async (registrationId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      await axios.put(`${API}/supplier-registration/requests/${registrationId}/approve?approved_by=${user.id}&approved_by_name=${user.name}`, {}, { headers });
+      toast.success(t("تمت الموافقة وإضافة المورد", "Registration approved and supplier added"));
+      fetchRegistrationRequests();
+      fetchRegistrationStats();
+      setViewRegistrationDialog(false);
+    } catch (error) {
+      toast.error(t("فشل في الموافقة", "Failed to approve"));
+    }
+  };
+
+  const handleRejectRegistration = async () => {
+    if (!selectedRegistration) return;
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      await axios.put(
+        `${API}/supplier-registration/requests/${selectedRegistration.id}/reject?rejection_reason=${encodeURIComponent(registrationRejectReason)}&rejected_by=${user.id}&rejected_by_name=${user.name}`,
+        {},
+        { headers }
+      );
+      toast.success(t("تم رفض الطلب", "Registration rejected"));
+      fetchRegistrationRequests();
+      fetchRegistrationStats();
+      setRejectRegistrationDialog(false);
+      setSelectedRegistration(null);
+      setRegistrationRejectReason("");
+    } catch (error) {
+      toast.error(t("فشل في رفض الطلب", "Failed to reject"));
+    }
+  };
+
+  const copyRegistrationLink = () => {
+    const link = `${window.location.origin}/supplier-registration`;
+    navigator.clipboard.writeText(link);
+    toast.success(t("تم نسخ الرابط", "Link copied"));
+  };
+
   const handleApproveRequest = async (requestId) => {
     try {
       setLoading(true);
