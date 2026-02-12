@@ -523,6 +523,7 @@ const EmployeeTrackingAdmin = () => {
         {[
           { id: "map", icon: MapPin, label: language === "ar" ? "الخريطة" : "Map" },
           { id: "employees", icon: Users, label: language === "ar" ? "الموظفين" : "Employees" },
+          { id: "attendance", icon: Timer, label: language === "ar" ? "حضور الموقع" : "Location Attendance" },
           { id: "alerts", icon: Bell, label: language === "ar" ? "التنبيهات" : "Alerts" },
           { id: "settings", icon: Settings, label: language === "ar" ? "الإعدادات" : "Settings" }
         ].map(tab => (
