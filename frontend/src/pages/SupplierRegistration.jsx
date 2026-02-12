@@ -698,7 +698,7 @@ const SupplierRegistration = () => {
               setSubmitted(false);
               setRegistrationResult(null);
               setForm({ civil_id: '', phone: '', name: '', milk_type: '', expected_quantity: '', address: '', notes: '' });
-              setDocument(null);
+              setAttachedFile(null);
             }} 
             style={styles.buttonOutline}
             data-testid="register-another-btn"
