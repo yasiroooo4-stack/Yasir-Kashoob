@@ -6274,15 +6274,15 @@ async def get_holidays_config(current_user: dict = Depends(get_current_user)):
         "official_holidays": official_holidays,
         "default_weekly_off_days": default_weekly_off_days,
         "day_names": {
-            0: "الأحد",
-            1: "الإثنين", 
-            2: "الثلاثاء",
-            3: "الأربعاء",
-            4: "الخميس",
-            5: "الجمعة",
-            6: "السبت"
+            0: "الإثنين",
+            1: "الثلاثاء", 
+            2: "الأربعاء",
+            3: "الخميس",
+            4: "الجمعة",
+            5: "السبت",
+            6: "الأحد"
         },
-        "note": "أيام الراحة الأسبوعية يمكن تخصيصها لكل موظف من خلال hr_employees.weekly_off_days"
+        "note": "أيام الراحة الأسبوعية يمكن تخصيصها لكل موظف من خلال hr_employees.weekly_off_days - Python weekday(): 0=Monday, 4=Friday, 5=Saturday"
     }
 
 @api_router.put("/hr/settings/default-weekly-off-days")
