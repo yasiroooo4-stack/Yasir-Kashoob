@@ -73,14 +73,15 @@ const EmployeeScheduling = () => {
     { id: "night", name: "ليلي", name_en: "Night", icon: Moon, color: "bg-indigo-100 text-indigo-700" },
   ];
 
+  // Python weekday(): 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
   const WEEKDAYS = [
-    { id: 0, name: "الأحد", name_en: "Sunday" },
-    { id: 1, name: "الإثنين", name_en: "Monday" },
-    { id: 2, name: "الثلاثاء", name_en: "Tuesday" },
-    { id: 3, name: "الأربعاء", name_en: "Wednesday" },
-    { id: 4, name: "الخميس", name_en: "Thursday" },
-    { id: 5, name: "الجمعة", name_en: "Friday" },
-    { id: 6, name: "السبت", name_en: "Saturday" },
+    { id: 0, name: "الإثنين", name_en: "Monday" },
+    { id: 1, name: "الثلاثاء", name_en: "Tuesday" },
+    { id: 2, name: "الأربعاء", name_en: "Wednesday" },
+    { id: 3, name: "الخميس", name_en: "Thursday" },
+    { id: 4, name: "الجمعة", name_en: "Friday" },
+    { id: 5, name: "السبت", name_en: "Saturday" },
+    { id: 6, name: "الأحد", name_en: "Sunday" },
   ];
 
   const DEPARTMENTS = [

@@ -55,14 +55,15 @@ const SHIFT_TYPES = [
   { id: "night", name_ar: "ليلي", name_en: "Night", icon: Moon, color: "text-blue-500", time: "22:00 - 6:00" },
 ];
 
+// Python weekday(): 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
 const DAYS = [
-  { id: 0, name_ar: "الأحد", name_en: "Sunday", short_ar: "أحد", short_en: "Sun" },
-  { id: 1, name_ar: "الإثنين", name_en: "Monday", short_ar: "إثن", short_en: "Mon" },
-  { id: 2, name_ar: "الثلاثاء", name_en: "Tuesday", short_ar: "ثلا", short_en: "Tue" },
-  { id: 3, name_ar: "الأربعاء", name_en: "Wednesday", short_ar: "أرب", short_en: "Wed" },
-  { id: 4, name_ar: "الخميس", name_en: "Thursday", short_ar: "خمي", short_en: "Thu" },
-  { id: 5, name_ar: "الجمعة", name_en: "Friday", short_ar: "جمع", short_en: "Fri" },
-  { id: 6, name_ar: "السبت", name_en: "Saturday", short_ar: "سبت", short_en: "Sat" },
+  { id: 0, name_ar: "الإثنين", name_en: "Monday", short_ar: "إثن", short_en: "Mon" },
+  { id: 1, name_ar: "الثلاثاء", name_en: "Tuesday", short_ar: "ثلا", short_en: "Tue" },
+  { id: 2, name_ar: "الأربعاء", name_en: "Wednesday", short_ar: "أرب", short_en: "Wed" },
+  { id: 3, name_ar: "الخميس", name_en: "Thursday", short_ar: "خمي", short_en: "Thu" },
+  { id: 4, name_ar: "الجمعة", name_en: "Friday", short_ar: "جمع", short_en: "Fri" },
+  { id: 5, name_ar: "السبت", name_en: "Saturday", short_ar: "سبت", short_en: "Sat" },
+  { id: 6, name_ar: "الأحد", name_en: "Sunday", short_ar: "أحد", short_en: "Sun" },
 ];
 
 const WorkScheduleManager = () => {
