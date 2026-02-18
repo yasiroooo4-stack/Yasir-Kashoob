@@ -65,7 +65,7 @@
 
 ## بيانات الاختبار
 - **المستخدم:** testadmin / admin123
-- **URL:** https://location-attendance.preview.emergentagent.com
+- **URL:** https://hr-mobile-build.preview.emergentagent.com
 
 ## تاريخ التحديث
 - **ديسمبر 2025:**

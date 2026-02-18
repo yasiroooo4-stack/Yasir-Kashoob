@@ -7,7 +7,7 @@ import os
 import random
 import string
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://location-attendance.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-mobile-build.preview.emergentagent.com')
 
 class TestTrackingAPI:
     """Test employee tracking location API"""

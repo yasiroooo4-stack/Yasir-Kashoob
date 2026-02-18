@@ -1758,7 +1758,7 @@ const CCTVSystem = ({ embedded = false }) => {
                   onClick={() => {
                     setSettings({
                       ...settings, 
-                      dairy_system_url: 'https://location-attendance.preview.emergentagent.com',
+                      dairy_system_url: 'https://hr-mobile-build.preview.emergentagent.com',
                       dairy_api_key: 'sk-emergent-57a636238E2E8C04f1'
                     });
                     toast.success('تم تحديث البيانات تلقائياً');
