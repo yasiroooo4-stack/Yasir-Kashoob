@@ -6434,7 +6434,8 @@ async def update_employee_work_schedule(
     )
     
     shift_names = {"morning": "صباحي", "afternoon": "مسائي", "night": "ليلي"}
-    day_names = {0: "الأحد", 1: "الإثنين", 2: "الثلاثاء", 3: "الأربعاء", 4: "الخميس", 5: "الجمعة", 6: "السبت"}
+    # Python weekday(): 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
+    day_names = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
     off_day_names = [day_names.get(d, str(d)) for d in off_days]
     
     await log_activity(
