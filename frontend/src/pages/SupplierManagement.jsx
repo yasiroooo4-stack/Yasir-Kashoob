@@ -59,8 +59,10 @@ import {
   Link,
   Copy,
   Trash2,
+  CheckSquare,
 } from "lucide-react";
 import { Switch } from "../components/ui/switch";
+import { Checkbox } from "../components/ui/checkbox";
 
 const SupplierManagement = () => {
   const { language } = useLanguage();
