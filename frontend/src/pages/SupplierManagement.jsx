@@ -1704,6 +1704,60 @@ const SupplierManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              {t("تأكيد الحذف الجماعي", "Confirm Bulk Delete")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              <p className="text-sm text-red-700 dark:text-red-300">
+                {t(
+                  `هل أنت متأكد من حذف العناصر المحددة؟ لا يمكن التراجع عن هذا الإجراء.`,
+                  `Are you sure you want to delete the selected items? This action cannot be undone.`
+                )}
+              </p>
+            </div>
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-lg font-bold text-center">
+                {bulkDeleteType === "feed" && (
+                  <span className="text-orange-600">
+                    {t(`سيتم حذف ${selectedFeedRequests.length} طلب علف`, `${selectedFeedRequests.length} feed requests will be deleted`)}
+                  </span>
+                )}
+                {bulkDeleteType === "message" && (
+                  <span className="text-blue-600">
+                    {t(`سيتم حذف ${selectedMessages.length} رسالة`, `${selectedMessages.length} messages will be deleted`)}
+                  </span>
+                )}
+                {bulkDeleteType === "registration" && (
+                  <span className="text-purple-600">
+                    {t(`سيتم حذف ${selectedRegistrations.length} طلب تسجيل`, `${selectedRegistrations.length} registration requests will be deleted`)}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setBulkDeleteDialogOpen(false);
+              setBulkDeleteType("");
+            }}>
+              {t("إلغاء", "Cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={loading}>
+              <Trash2 className="w-4 h-4 me-2" />
+              {loading ? t("جاري الحذف...", "Deleting...") : t("تأكيد الحذف", "Confirm Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
