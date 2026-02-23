@@ -40,7 +40,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Users, Phone, MapPin, Building, ArrowRightLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Phone, MapPin, Building, ArrowRightLeft, AlertCircle } from "lucide-react";
+import { Checkbox } from "../components/ui/checkbox";
 
 const Suppliers = () => {
   const { t } = useTranslation();
