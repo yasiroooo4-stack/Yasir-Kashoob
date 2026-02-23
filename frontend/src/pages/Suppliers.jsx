@@ -454,13 +454,24 @@ const Suppliers = () => {
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                       {t("no_data")}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredSuppliers.map((supplier) => (
-                    <TableRow key={supplier.id} className="table-row-hover" data-testid={`supplier-row-${supplier.id}`}>
+                    <TableRow 
+                      key={supplier.id} 
+                      className={`table-row-hover ${selectedSuppliers.includes(supplier.id) ? "bg-primary/5" : ""}`}
+                      data-testid={`supplier-row-${supplier.id}`}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedSuppliers.includes(supplier.id)}
+                          onCheckedChange={() => toggleSelectSupplier(supplier.id)}
+                          data-testid={`select-supplier-${supplier.id}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{supplier.name}</TableCell>
                       <TableCell>
                         <span className="badge-info">{supplier.supplier_code || "-"}</span>
