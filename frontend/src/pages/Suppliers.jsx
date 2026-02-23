@@ -57,6 +57,11 @@ const Suppliers = () => {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [newCenterId, setNewCenterId] = useState("");
+  
+  // Bulk Selection States
+  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
