@@ -371,7 +371,23 @@ const Suppliers = () => {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-lg">{t("suppliers")} ({filteredSuppliers.length})</CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-lg">{t("suppliers")} ({filteredSuppliers.length})</CardTitle>
+              {selectedSuppliers.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setBulkDeleteDialogOpen(true)}
+                  className="flex items-center gap-2"
+                  data-testid="bulk-delete-btn"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {language === "ar" 
+                    ? `حذف المحدد (${selectedSuppliers.length})` 
+                    : `Delete Selected (${selectedSuppliers.length})`}
+                </Button>
+              )}
+            </div>
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <Select value={filterCenter} onValueChange={setFilterCenter}>
                 <SelectTrigger className="w-full sm:w-40" data-testid="filter-center">
