@@ -830,7 +830,18 @@ const SupplierManagement = () => {
                   <CardTitle>{t("رسائل الموردين", "Supplier Messages")}</CardTitle>
                   <CardDescription>{t("عرض والرد على رسائل الموردين", "View and reply to supplier messages")}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                  {selectedMessages.length > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => openBulkDeleteDialog("message")}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t(`حذف المحدد (${selectedMessages.length})`, `Delete Selected (${selectedMessages.length})`)}
+                    </Button>
+                  )}
                   <div className="relative flex-1 sm:flex-none">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -860,6 +871,12 @@ const SupplierManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedMessages.length === filteredMessages.length && filteredMessages.length > 0}
+                          onCheckedChange={selectAllMessages}
+                        />
+                      </TableHead>
                       <TableHead>{t("المورد", "Supplier")}</TableHead>
                       <TableHead>{t("نوع الرسالة", "Message Type")}</TableHead>
                       <TableHead>{t("الموضوع", "Subject")}</TableHead>
@@ -871,13 +888,19 @@ const SupplierManagement = () => {
                   <TableBody>
                     {filteredMessages.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           {t("لا توجد رسائل", "No messages found")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredMessages.map((message) => (
-                        <TableRow key={message.id} className={message.status === "unread" ? "bg-blue-50 dark:bg-blue-900/20" : ""}>
+                        <TableRow key={message.id} className={`${message.status === "unread" ? "bg-blue-50 dark:bg-blue-900/20" : ""} ${selectedMessages.includes(message.id) ? "bg-primary/5" : ""}`}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedMessages.includes(message.id)}
+                              onCheckedChange={() => toggleSelectMessage(message.id)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
