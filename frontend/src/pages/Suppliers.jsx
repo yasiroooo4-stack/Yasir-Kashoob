@@ -784,6 +784,46 @@ const Suppliers = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              {language === "ar" ? "تأكيد الحذف الجماعي" : "Confirm Bulk Delete"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  {language === "ar"
+                    ? "هل أنت متأكد من حذف الموردين المحددين؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتهم."
+                    : "Are you sure you want to delete the selected suppliers? This action cannot be undone and all their data will be deleted."}
+                </p>
+              </div>
+              <div className="bg-muted p-4 rounded-lg text-center">
+                <p className="text-lg font-bold text-red-600">
+                  {language === "ar"
+                    ? `سيتم حذف ${selectedSuppliers.length} مورد`
+                    : `${selectedSuppliers.length} suppliers will be deleted`}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive hover:bg-destructive/90"
+              data-testid="confirm-bulk-delete-btn"
+            >
+              <Trash2 className="w-4 h-4 me-2" />
+              {language === "ar" ? "تأكيد الحذف" : "Confirm Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
