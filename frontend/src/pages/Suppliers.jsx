@@ -432,6 +432,13 @@ const Suppliers = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
+                      onCheckedChange={selectAllSuppliers}
+                      data-testid="select-all-suppliers"
+                    />
+                  </TableHead>
                   <TableHead>{t("supplier_name")}</TableHead>
                   <TableHead>{t("supplier_code")}</TableHead>
                   <TableHead>{language === "ar" ? "الرقم المدني" : "National ID"}</TableHead>
