@@ -649,7 +649,18 @@ const SupplierManagement = () => {
                   <CardTitle>{t("طلبات تحويل الرصيد إلى أعلاف", "Balance to Feed Conversion Requests")}</CardTitle>
                   <CardDescription>{t("إدارة طلبات الأعلاف من الموردين", "Manage feed requests from suppliers")}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                  {selectedFeedRequests.length > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => openBulkDeleteDialog("feed")}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t(`حذف المحدد (${selectedFeedRequests.length})`, `Delete Selected (${selectedFeedRequests.length})`)}
+                    </Button>
+                  )}
                   <div className="relative flex-1 sm:flex-none">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -679,6 +690,12 @@ const SupplierManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedFeedRequests.length === filteredFeedRequests.length && filteredFeedRequests.length > 0}
+                          onCheckedChange={selectAllFeedRequests}
+                        />
+                      </TableHead>
                       <TableHead>{t("المورد", "Supplier")}</TableHead>
                       <TableHead>{t("نوع العلف", "Feed Type")}</TableHead>
                       <TableHead>{t("الكمية (كجم)", "Quantity (kg)")}</TableHead>
@@ -691,13 +708,19 @@ const SupplierManagement = () => {
                   <TableBody>
                     {filteredFeedRequests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           {t("لا توجد طلبات", "No requests found")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredFeedRequests.map((request) => (
-                        <TableRow key={request.id}>
+                        <TableRow key={request.id} className={selectedFeedRequests.includes(request.id) ? "bg-primary/5" : ""}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedFeedRequests.includes(request.id)}
+                              onCheckedChange={() => toggleSelectFeed(request.id)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
