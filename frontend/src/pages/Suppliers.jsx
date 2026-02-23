@@ -148,6 +148,46 @@ const Suppliers = () => {
     }
   };
 
+  // Bulk Selection Functions
+  const toggleSelectSupplier = (id) => {
+    setSelectedSuppliers(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllSuppliers = () => {
+    if (selectedSuppliers.length === filteredSuppliers.length) {
+      setSelectedSuppliers([]);
+    } else {
+      setSelectedSuppliers(filteredSuppliers.map(s => s.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      let deletedCount = 0;
+      for (const id of selectedSuppliers) {
+        try {
+          await axios.delete(`${API}/suppliers/${id}`);
+          deletedCount++;
+        } catch (e) {
+          console.error(`Failed to delete supplier ${id}:`, e);
+        }
+      }
+      
+      toast.success(language === "ar" 
+        ? `تم حذف ${deletedCount} مورد بنجاح` 
+        : `Successfully deleted ${deletedCount} suppliers`
+      );
+      
+      setSelectedSuppliers([]);
+      setBulkDeleteDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || t("error"));
+    }
+  };
+
   const handleTransfer = async () => {
     if (!newCenterId) {
       toast.error(language === "ar" ? "يرجى اختيار المركز الجديد" : "Please select new center");
