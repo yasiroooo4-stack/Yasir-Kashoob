@@ -126,6 +126,13 @@ const SupplierManagement = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState(""); // "feed", "message", "registration"
   const [itemToDelete, setItemToDelete] = useState(null);
+  
+  // Bulk Selection States
+  const [selectedFeedRequests, setSelectedFeedRequests] = useState([]);
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [selectedRegistrations, setSelectedRegistrations] = useState([]);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkDeleteType, setBulkDeleteType] = useState("");
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
