@@ -1087,13 +1087,32 @@ const SupplierManagement = () => {
           {/* Registration Requests Table */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("طلبات التسجيل", "Registration Requests")}</CardTitle>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <CardTitle>{t("طلبات التسجيل", "Registration Requests")}</CardTitle>
+                {selectedRegistrations.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => openBulkDeleteDialog("registration")}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {t(`حذف المحدد (${selectedRegistrations.length})`, `Delete Selected (${selectedRegistrations.length})`)}
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedRegistrations.length === registrationRequests.length && registrationRequests.length > 0}
+                          onCheckedChange={selectAllRegistrations}
+                        />
+                      </TableHead>
                       <TableHead>{t("رقم الطلب", "Request #")}</TableHead>
                       <TableHead>{t("الاسم", "Name")}</TableHead>
                       <TableHead>{t("الرقم المدني", "Civil ID")}</TableHead>
@@ -1108,13 +1127,19 @@ const SupplierManagement = () => {
                   <TableBody>
                     {registrationRequests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                           {t("لا توجد طلبات تسجيل", "No registration requests")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       registrationRequests.map((req) => (
-                        <TableRow key={req.id}>
+                        <TableRow key={req.id} className={selectedRegistrations.includes(req.id) ? "bg-primary/5" : ""}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedRegistrations.includes(req.id)}
+                              onCheckedChange={() => toggleSelectRegistration(req.id)}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{req.registration_number}</TableCell>
                           <TableCell>{req.name}</TableCell>
                           <TableCell>{req.civil_id}</TableCell>
