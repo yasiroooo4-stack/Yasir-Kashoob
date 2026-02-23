@@ -317,6 +317,116 @@ const SupplierManagement = () => {
     }
   };
 
+  // Bulk Selection Functions
+  const toggleSelectFeed = (id) => {
+    setSelectedFeedRequests(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectMessage = (id) => {
+    setSelectedMessages(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectRegistration = (id) => {
+    setSelectedRegistrations(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllFeedRequests = () => {
+    if (selectedFeedRequests.length === filteredFeedRequests.length) {
+      setSelectedFeedRequests([]);
+    } else {
+      setSelectedFeedRequests(filteredFeedRequests.map(r => r.id));
+    }
+  };
+
+  const selectAllMessages = () => {
+    if (selectedMessages.length === filteredMessages.length) {
+      setSelectedMessages([]);
+    } else {
+      setSelectedMessages(filteredMessages.map(m => m.id));
+    }
+  };
+
+  const selectAllRegistrations = () => {
+    if (selectedRegistrations.length === registrationRequests.length) {
+      setSelectedRegistrations([]);
+    } else {
+      setSelectedRegistrations(registrationRequests.map(r => r.id));
+    }
+  };
+
+  const openBulkDeleteDialog = (type) => {
+    setBulkDeleteType(type);
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      setLoading(true);
+      let endpoint = "";
+      let selectedIds = [];
+      let successMsg = "";
+      
+      switch (bulkDeleteType) {
+        case "feed":
+          endpoint = `${API}/admin/supplier-feed-requests`;
+          selectedIds = selectedFeedRequests;
+          successMsg = t(`تم حذف ${selectedIds.length} طلب علف`, `Deleted ${selectedIds.length} feed requests`);
+          break;
+        case "message":
+          endpoint = `${API}/admin/supplier-messages`;
+          selectedIds = selectedMessages;
+          successMsg = t(`تم حذف ${selectedIds.length} رسالة`, `Deleted ${selectedIds.length} messages`);
+          break;
+        case "registration":
+          endpoint = `${API}/supplier-registration/requests`;
+          selectedIds = selectedRegistrations;
+          successMsg = t(`تم حذف ${selectedIds.length} طلب تسجيل`, `Deleted ${selectedIds.length} registration requests`);
+          break;
+        default:
+          return;
+      }
+      
+      // Delete each selected item
+      let deletedCount = 0;
+      for (const id of selectedIds) {
+        try {
+          await axios.delete(`${endpoint}/${id}`, { headers });
+          deletedCount++;
+        } catch (e) {
+          console.error(`Failed to delete ${id}:`, e);
+        }
+      }
+      
+      toast.success(t(`تم حذف ${deletedCount} عنصر بنجاح`, `Successfully deleted ${deletedCount} items`));
+      
+      // Reset selections and refresh
+      if (bulkDeleteType === "feed") {
+        setSelectedFeedRequests([]);
+        fetchFeedRequests();
+      } else if (bulkDeleteType === "message") {
+        setSelectedMessages([]);
+        fetchMessages();
+      } else if (bulkDeleteType === "registration") {
+        setSelectedRegistrations([]);
+        fetchRegistrationRequests();
+        fetchRegistrationStats();
+      }
+      
+      setBulkDeleteDialogOpen(false);
+      setBulkDeleteType("");
+    } catch (error) {
+      toast.error(t("فشل في الحذف الجماعي", "Bulk delete failed"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleApproveRequest = async (requestId) => {
     try {
       setLoading(true);
