@@ -90,6 +90,11 @@ const EmployeeTrackingAdmin = () => {
     work_locations: []
   });
   
+  // Map display mode: "gps" (متصل GPS) or "attendance" (حاضر بالبصمة)
+  const [mapDisplayMode, setMapDisplayMode] = useState("gps");
+  const [attendanceBasedEmployees, setAttendanceBasedEmployees] = useState([]);
+  const [attendanceMapDate, setAttendanceMapDate] = useState(new Date().toISOString().split('T')[0]);
+  
   // Dialog states
   const [addLocationDialog, setAddLocationDialog] = useState(false);
   const [historyDialog, setHistoryDialog] = useState(false);
@@ -143,6 +148,16 @@ const EmployeeTrackingAdmin = () => {
     }
   }, [attendanceDate]);
 
+  // Fetch attendance-based employees for map
+  const fetchAttendanceBasedEmployees = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/tracking/employees/attendance-based?date=${attendanceMapDate}`);
+      setAttendanceBasedEmployees(res.data);
+    } catch (error) {
+      console.error("Error fetching attendance-based employees:", error);
+    }
+  }, [attendanceMapDate]);
+
   useEffect(() => {
     fetchData();
     // Auto refresh every 30 seconds
@@ -155,6 +170,13 @@ const EmployeeTrackingAdmin = () => {
       fetchLocationAttendance();
     }
   }, [activeTab, attendanceDate, fetchLocationAttendance]);
+
+  // Fetch attendance-based employees when mode or date changes
+  useEffect(() => {
+    if (mapDisplayMode === "attendance") {
+      fetchAttendanceBasedEmployees();
+    }
+  }, [mapDisplayMode, attendanceMapDate, fetchAttendanceBasedEmployees]);
 
   // Initialize map
   useEffect(() => {
@@ -230,7 +252,9 @@ const EmployeeTrackingAdmin = () => {
       mapReady,
       activeTab,
       trackedCount: trackedEmployees.length,
-      allCount: allEmployees.length
+      allCount: allEmployees.length,
+      mapDisplayMode,
+      attendanceBasedCount: attendanceBasedEmployees.length
     });
     
     if (!mapInstanceRef.current || !mapReady || activeTab !== "map") {
@@ -245,38 +269,52 @@ const EmployeeTrackingAdmin = () => {
       });
       markersRef.current = {};
       
-      // Combine tracked employees with employees who have last_location
-      const employeesToShow = [];
+      // Choose data source based on display mode
+      let employeesToShow = [];
       
-      // Add currently tracked employees (online now)
-      trackedEmployees.forEach(emp => {
-        if (emp.latitude && emp.longitude) {
-          employeesToShow.push({
-            ...emp,
-            isOnline: true
-          });
-        }
-      });
-      
-      // Add employees with last_location who are not currently tracked
-      const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
-      allEmployees.forEach(emp => {
-        if (emp.last_location && emp.last_location.latitude && !trackedIds.has(emp.id)) {
-          employeesToShow.push({
-            employee_id: emp.id,
-            employee_name: emp.name,
-            employee_code: emp.employee_code,
-            photo_url: emp.photo_url,
-            civil_id: emp.civil_id || emp.national_id,
-            latitude: emp.last_location.latitude,
-            longitude: emp.last_location.longitude,
-            distance_from_work: emp.last_location.distance_from_work,
-            is_within_range: emp.last_location.is_within_range,
-            created_at: emp.last_location.last_updated,
-            isOnline: false
-          });
-        }
-      });
+      if (mapDisplayMode === "attendance") {
+        // Show employees from attendance (fingerprint) system
+        attendanceBasedEmployees.forEach(emp => {
+          if (emp.latitude && emp.longitude) {
+            employeesToShow.push({
+              ...emp,
+              isOnline: emp.attendance_status === "present", // Green if present, gray if checked out
+              isFromAttendance: true
+            });
+          }
+        });
+      } else {
+        // GPS mode - original logic
+        // Add currently tracked employees (online now)
+        trackedEmployees.forEach(emp => {
+          if (emp.latitude && emp.longitude) {
+            employeesToShow.push({
+              ...emp,
+              isOnline: true
+            });
+          }
+        });
+        
+        // Add employees with last_location who are not currently tracked
+        const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
+        allEmployees.forEach(emp => {
+          if (emp.last_location && emp.last_location.latitude && !trackedIds.has(emp.id)) {
+            employeesToShow.push({
+              employee_id: emp.id,
+              employee_name: emp.name,
+              employee_code: emp.employee_code,
+              photo_url: emp.photo_url,
+              civil_id: emp.civil_id || emp.national_id,
+              latitude: emp.last_location.latitude,
+              longitude: emp.last_location.longitude,
+              distance_from_work: emp.last_location.distance_from_work,
+              is_within_range: emp.last_location.is_within_range,
+              created_at: emp.last_location.last_updated,
+              isOnline: false
+            });
+          }
+        });
+      }
       
       console.log("Employees to show on map:", employeesToShow.length, employeesToShow);
       
@@ -421,7 +459,7 @@ const EmployeeTrackingAdmin = () => {
         }
       }
     });
-  }, [trackedEmployees, allEmployees, activeTab, mapReady]);
+  }, [trackedEmployees, allEmployees, activeTab, mapReady, mapDisplayMode, attendanceBasedEmployees]);
 
   // Save settings
   const saveSettings = async () => {
@@ -640,10 +678,66 @@ const EmployeeTrackingAdmin = () => {
       {activeTab === "map" && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              {language === "ar" ? "خريطة الموظفين" : "Employees Map"}
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                {language === "ar" ? "خريطة الموظفين" : "Employees Map"}
+              </CardTitle>
+              
+              {/* Display Mode Toggle */}
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                  <Button
+                    variant={mapDisplayMode === "gps" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setMapDisplayMode("gps")}
+                    className="text-xs"
+                  >
+                    <Navigation className="w-3 h-3 me-1" />
+                    {language === "ar" ? "GPS متصل" : "GPS Connected"}
+                  </Button>
+                  <Button
+                    variant={mapDisplayMode === "attendance" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setMapDisplayMode("attendance")}
+                    className="text-xs"
+                  >
+                    <CheckCircle className="w-3 h-3 me-1" />
+                    {language === "ar" ? "حاضر بالبصمة" : "Attendance"}
+                  </Button>
+                </div>
+                
+                {/* Date picker for attendance mode */}
+                {mapDisplayMode === "attendance" && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={attendanceMapDate}
+                      onChange={(e) => setAttendanceMapDate(e.target.value)}
+                      className="w-40 h-8 text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Stats for current mode */}
+            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+              {mapDisplayMode === "gps" ? (
+                <span>
+                  {language === "ar" 
+                    ? `${trackedEmployees.length} متصل الآن من ${allEmployees.length} موظف` 
+                    : `${trackedEmployees.length} connected of ${allEmployees.length} employees`}
+                </span>
+              ) : (
+                <span className="text-green-600 font-medium">
+                  {language === "ar" 
+                    ? `${attendanceBasedEmployees.length} موظف حاضر في البصمة (${attendanceMapDate})` 
+                    : `${attendanceBasedEmployees.length} employees present via fingerprint (${attendanceMapDate})`}
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div 
@@ -651,34 +745,43 @@ const EmployeeTrackingAdmin = () => {
               style={{ height: "500px", width: "100%", borderRadius: "8px" }}
               className="border"
             />
-            {/* Info message when no employees are tracking */}
-            {trackedEmployees.length === 0 && (
+            {/* Info message when no employees are showing */}
+            {mapDisplayMode === "gps" && trackedEmployees.length === 0 && (
               <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-center">
                 <p className="font-medium">
                   {language === "ar" 
-                    ? "⚠️ لا يوجد موظفين متصلين حالياً" 
-                    : "⚠️ No employees are currently connected"}
+                    ? "⚠️ لا يوجد موظفين متصلين حالياً عبر GPS" 
+                    : "⚠️ No employees are currently connected via GPS"}
                 </p>
                 <p className="text-sm mt-1">
                   {language === "ar" 
-                    ? "لرؤية الموظفين على الخريطة، يجب عليهم فتح تطبيق التتبع وتفعيل مشاركة الموقع" 
-                    : "To see employees on the map, they must open the tracking app and enable location sharing"}
-                </p>
-                <p className="text-sm mt-2 text-amber-600">
-                  {language === "ar" 
-                    ? `الموظفين المسجلين: ${allEmployees.length} | يظهرون عند تفعيل التتبع` 
-                    : `Registered employees: ${allEmployees.length} | They appear when tracking is enabled`}
+                    ? "جرب التبديل لوضع 'حاضر بالبصمة' لعرض الموظفين المسجلين في نظام الحضور" 
+                    : "Try switching to 'Attendance' mode to see employees registered in the attendance system"}
                 </p>
               </div>
             )}
-            <div className="flex items-center gap-4 mt-3 text-sm">
+            {mapDisplayMode === "attendance" && attendanceBasedEmployees.length === 0 && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-center">
+                <p className="font-medium">
+                  {language === "ar" 
+                    ? "ℹ️ لا يوجد سجلات حضور لهذا التاريخ" 
+                    : "ℹ️ No attendance records for this date"}
+                </p>
+                <p className="text-sm mt-1">
+                  {language === "ar" 
+                    ? "اختر تاريخاً آخر أو تأكد من مزامنة أجهزة البصمة" 
+                    : "Select another date or ensure fingerprint devices are synced"}
+                </p>
+              </div>
+            )}
+            <div className="flex items-center gap-4 mt-3 text-sm flex-wrap">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>{language === "ar" ? "داخل النطاق" : "Within Range"}</span>
+                <span>{language === "ar" ? (mapDisplayMode === "attendance" ? "حاضر" : "داخل النطاق") : (mapDisplayMode === "attendance" ? "Present" : "Within Range")}</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span>{language === "ar" ? "خارج النطاق" : "Outside Range"}</span>
+                <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                <span>{language === "ar" ? (mapDisplayMode === "attendance" ? "انصرف" : "غير متصل") : (mapDisplayMode === "attendance" ? "Checked Out" : "Offline")}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-blue-500 opacity-30"></div>

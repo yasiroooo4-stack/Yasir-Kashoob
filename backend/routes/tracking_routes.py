@@ -286,9 +286,10 @@ async def update_employee_location(location_data: dict):
 
 
 @router.get("/employees")
-async def get_tracked_employees():
+async def get_tracked_employees(include_attendance: bool = False, date: Optional[str] = None):
     """
     جلب مواقع جميع الموظفين المتصلين - للمدير
+    include_attendance: إذا كان True، يتم تضمين الموظفين الحاضرين في البصمة أيضاً
     """
     # Get current locations (last 5 minutes)
     five_minutes_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
@@ -309,8 +310,149 @@ async def get_tracked_employees():
         if employee:
             loc["photo_url"] = employee.get("photo_url")
             loc["civil_id"] = employee.get("civil_id") or employee.get("national_id")
+        
+        loc["source"] = "gps"  # مصدر الموقع: GPS
+    
+    # If include_attendance is True, also include employees who checked in today via fingerprint
+    if include_attendance:
+        today = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Get employees who have attendance today
+        attendance_records = await db.hr_attendance.find({
+            "date": today,
+            "check_in": {"$ne": None}
+        }).to_list(1000)
+        
+        # Get the IDs of employees already in GPS locations
+        gps_employee_ids = {loc.get("employee_id") for loc in locations}
+        
+        for att in attendance_records:
+            employee_id = att.get("employee_id")
+            
+            # Skip if already in GPS list
+            if employee_id in gps_employee_ids:
+                continue
+            
+            # Get employee details with work location
+            employee = await db.hr_employees.find_one(
+                {"id": employee_id},
+                {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "photo_url": 1, 
+                 "civil_id": 1, "national_id": 1, "work_location_lat": 1, "work_location_lng": 1,
+                 "department": 1, "position": 1}
+            )
+            
+            if employee:
+                # Try to get location from work_location or tracking settings
+                lat = employee.get("work_location_lat")
+                lng = employee.get("work_location_lng")
+                
+                # If no employee-specific location, try to get from work locations
+                if not lat or not lng:
+                    settings = await get_tracking_settings()
+                    work_locations = settings.get("work_locations", [])
+                    if work_locations:
+                        # Use first work location as default
+                        default_loc = work_locations[0]
+                        lat = default_loc.get("lat") or default_loc.get("latitude")
+                        lng = default_loc.get("lng") or default_loc.get("longitude")
+                
+                if lat and lng:
+                    locations.append({
+                        "employee_id": employee_id,
+                        "employee_name": employee.get("name"),
+                        "employee_code": employee.get("employee_code"),
+                        "latitude": lat,
+                        "longitude": lng,
+                        "is_within_range": True,
+                        "distance_from_work": 0,
+                        "created_at": att.get("check_in"),
+                        "photo_url": employee.get("photo_url"),
+                        "civil_id": employee.get("civil_id") or employee.get("national_id"),
+                        "source": "attendance",  # مصدر الموقع: البصمة
+                        "check_in_time": att.get("check_in"),
+                        "attendance_status": "present"
+                    })
     
     return locations
+
+
+@router.get("/employees/attendance-based")
+async def get_attendance_based_employees(date: Optional[str] = None):
+    """
+    جلب الموظفين الحاضرين في نظام البصمة مع مواقعهم
+    يعرض الموظفين الذين سجلوا حضورهم اليوم في نظام البصمة
+    """
+    today = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get employees who have attendance today
+    attendance_records = await db.hr_attendance.find({
+        "date": today,
+        "check_in": {"$ne": None}
+    }).to_list(1000)
+    
+    # Get tracking settings for work locations
+    settings = await get_tracking_settings()
+    work_locations = settings.get("work_locations", [])
+    
+    employees_on_map = []
+    
+    for att in attendance_records:
+        employee_id = att.get("employee_id")
+        
+        # Get employee details
+        employee = await db.hr_employees.find_one(
+            {"id": employee_id},
+            {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "photo_url": 1, 
+             "civil_id": 1, "national_id": 1, "work_location_lat": 1, "work_location_lng": 1,
+             "department": 1, "position": 1, "work_location": 1}
+        )
+        
+        if not employee:
+            continue
+        
+        # Determine location
+        lat = employee.get("work_location_lat")
+        lng = employee.get("work_location_lng")
+        location_name = employee.get("work_location", "مقر العمل")
+        
+        # If no employee-specific location, try to match by work_location name
+        if not lat or not lng:
+            for wl in work_locations:
+                if wl.get("name") == employee.get("work_location"):
+                    lat = wl.get("lat") or wl.get("latitude")
+                    lng = wl.get("lng") or wl.get("longitude")
+                    location_name = wl.get("name")
+                    break
+        
+        # If still no location, use first work location as default
+        if (not lat or not lng) and work_locations:
+            default_loc = work_locations[0]
+            lat = default_loc.get("lat") or default_loc.get("latitude")
+            lng = default_loc.get("lng") or default_loc.get("longitude")
+            location_name = default_loc.get("name", "مقر العمل الرئيسي")
+        
+        if lat and lng:
+            employees_on_map.append({
+                "employee_id": employee_id,
+                "employee_name": employee.get("name"),
+                "employee_code": employee.get("employee_code"),
+                "latitude": float(lat),
+                "longitude": float(lng),
+                "is_within_range": True,
+                "distance_from_work": 0,
+                "created_at": att.get("check_in"),
+                "photo_url": employee.get("photo_url"),
+                "civil_id": employee.get("civil_id") or employee.get("national_id"),
+                "department": employee.get("department"),
+                "position": employee.get("position"),
+                "source": "attendance",
+                "check_in_time": att.get("check_in"),
+                "check_out_time": att.get("check_out"),
+                "attendance_status": "checked_out" if att.get("check_out") else "present",
+                "work_location_name": location_name
+            })
+    
+    return employees_on_map
 
 
 @router.get("/employees/all")
