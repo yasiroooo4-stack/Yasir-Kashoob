@@ -272,8 +272,11 @@ const EmployeeTrackingAdmin = () => {
       // Choose data source based on display mode
       let employeesToShow = [];
       
+      console.log("Map display mode:", mapDisplayMode, "Attendance employees:", attendanceBasedEmployees.length);
+      
       if (mapDisplayMode === "attendance") {
         // Show employees from attendance (fingerprint) system
+        console.log("Using attendance mode, employees:", attendanceBasedEmployees.length);
         attendanceBasedEmployees.forEach(emp => {
           if (emp.latitude && emp.longitude) {
             employeesToShow.push({

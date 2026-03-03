@@ -394,6 +394,21 @@ async def get_attendance_based_employees(date: Optional[str] = None):
     settings = await get_tracking_settings()
     work_locations = settings.get("work_locations", [])
     
+    # Helper function to normalize Arabic text for comparison (remove hamza variations)
+    def normalize_arabic(text):
+        if not text:
+            return ""
+        # Replace various hamza forms with alif
+        text = text.replace("إ", "ا").replace("أ", "ا").replace("آ", "ا").replace("ء", "")
+        # Remove extra spaces and strip
+        return text.strip().lower()
+    
+    # Create a mapping of normalized names to work locations
+    work_location_map = {}
+    for wl in work_locations:
+        normalized_name = normalize_arabic(wl.get("name", ""))
+        work_location_map[normalized_name] = wl
+    
     employees_on_map = []
     
     for att in attendance_records:
@@ -415,14 +430,16 @@ async def get_attendance_based_employees(date: Optional[str] = None):
         lng = employee.get("work_location_lng")
         location_name = employee.get("work_location", "مقر العمل")
         
-        # If no employee-specific location, try to match by work_location name
+        # If no employee-specific coordinates, try to match by work_location name
         if not lat or not lng:
-            for wl in work_locations:
-                if wl.get("name") == employee.get("work_location"):
-                    lat = wl.get("lat") or wl.get("latitude")
-                    lng = wl.get("lng") or wl.get("longitude")
-                    location_name = wl.get("name")
-                    break
+            emp_location = normalize_arabic(employee.get("work_location", ""))
+            
+            # Try to find matching work location
+            if emp_location in work_location_map:
+                wl = work_location_map[emp_location]
+                lat = wl.get("lat") or wl.get("latitude")
+                lng = wl.get("lng") or wl.get("longitude")
+                location_name = wl.get("name")
         
         # If still no location, use first work location as default
         if (not lat or not lng) and work_locations:
@@ -432,12 +449,29 @@ async def get_attendance_based_employees(date: Optional[str] = None):
             location_name = default_loc.get("name", "مقر العمل الرئيسي")
         
         if lat and lng:
+            # Add offset to avoid markers overlapping at same location
+            # Each employee gets a different position in a grid/spiral pattern
+            offset_index = len(employees_on_map)
+            import math
+            
+            # Create a grid pattern instead of spiral for better visibility
+            # Grid: 5 columns, unlimited rows
+            grid_cols = 5
+            row = offset_index // grid_cols
+            col = offset_index % grid_cols
+            
+            # Offset in degrees (approximately 50 meters per 0.0005 degree)
+            lat_offset = row * 0.001  # ~100m per row
+            lng_offset = (col - 2) * 0.001  # Center the grid, ~100m per column
+            
             employees_on_map.append({
                 "employee_id": employee_id,
                 "employee_name": employee.get("name"),
                 "employee_code": employee.get("employee_code"),
-                "latitude": float(lat),
-                "longitude": float(lng),
+                "latitude": float(lat) + lat_offset,
+                "longitude": float(lng) + lng_offset,
+                "original_latitude": float(lat),
+                "original_longitude": float(lng),
                 "is_within_range": True,
                 "distance_from_work": 0,
                 "created_at": att.get("check_in"),
