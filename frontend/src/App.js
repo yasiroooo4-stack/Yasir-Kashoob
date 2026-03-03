@@ -75,6 +75,7 @@ import TasksManagement from "./pages/TasksManagement";
 import EmployeeTracking from "./pages/EmployeeTracking";
 import EmployeeApp from "./pages/EmployeeApp";
 import MobileTrackingApp from "./pages/MobileTrackingApp";
+import GPSAttendance from "./pages/GPSAttendance";
 
 // Layout
 import Layout from "./components/Layout";
@@ -346,6 +347,9 @@ function App() {
               
               {/* Mobile Tracking App (Capacitor) - Public Route */}
               <Route path="/mobile-tracking" element={<MobileTrackingApp />} />
+              
+              {/* GPS Attendance - Public Route for employees */}
+              <Route path="/gps-attendance" element={<GPSAttendance />} />
               
               <Route path="/" element={
                 user ? (

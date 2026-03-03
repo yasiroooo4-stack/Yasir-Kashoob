@@ -94,6 +94,160 @@ async def check_within_work_range(lat: float, lng: float, settings: dict) -> tup
     return is_within, min_distance, nearest_location
 
 
+# ==================== EMPLOYEE LOGIN & GPS ATTENDANCE ====================
+
+@router.post("/employee-login")
+async def employee_login_for_tracking(data: dict):
+    """
+    تسجيل دخول الموظف للتتبع باستخدام رقم الهاتف أو الرقم الوظيفي
+    """
+    phone = data.get("phone")
+    employee_code = data.get("employee_code")
+    
+    if not phone and not employee_code:
+        raise HTTPException(status_code=400, detail="يرجى إدخال رقم الهاتف أو الرقم الوظيفي")
+    
+    # Find employee
+    query = {}
+    if phone:
+        # Try multiple phone field variations
+        query = {"$or": [
+            {"phone": phone},
+            {"mobile": phone},
+            {"phone_number": phone},
+            {"contact_phone": phone}
+        ]}
+    elif employee_code:
+        query = {"$or": [
+            {"employee_code": employee_code},
+            {"code": employee_code},
+            {"emp_code": employee_code}
+        ]}
+    
+    employee = await db.hr_employees.find_one(query, {"_id": 0})
+    
+    if not employee:
+        raise HTTPException(status_code=404, detail="لم يتم العثور على الموظف")
+    
+    # Get today's attendance
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_attendance = await db.hr_attendance.find_one({
+        "employee_id": employee.get("id"),
+        "date": today
+    }, {"_id": 0})
+    
+    return {
+        "employee": {
+            "id": employee.get("id"),
+            "name": employee.get("name"),
+            "employee_code": employee.get("employee_code"),
+            "department": employee.get("department"),
+            "position": employee.get("position"),
+            "phone": employee.get("phone"),
+            "photo_url": employee.get("photo_url"),
+            "work_location": employee.get("work_location")
+        },
+        "today_attendance": today_attendance
+    }
+
+
+@router.post("/gps-attendance")
+async def record_gps_attendance(data: dict):
+    """
+    تسجيل الحضور/الانصراف تلقائياً بناءً على GPS
+    يُستدعى عند دخول/خروج الموظف من نطاق العمل
+    """
+    employee_id = data.get("employee_id")
+    action = data.get("action")  # "check_in" or "check_out"
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+    date = data.get("date") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    if not employee_id or not action:
+        raise HTTPException(status_code=400, detail="بيانات ناقصة")
+    
+    # Get employee
+    employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Get or create today's attendance record
+    attendance = await db.hr_attendance.find_one({
+        "employee_id": employee_id,
+        "date": date
+    })
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if action == "check_in":
+        if attendance and attendance.get("check_in"):
+            # Already checked in
+            return {"success": False, "message": "تم تسجيل الحضور مسبقاً", "check_in_time": attendance.get("check_in")}
+        
+        if attendance:
+            # Update existing record
+            await db.hr_attendance.update_one(
+                {"employee_id": employee_id, "date": date},
+                {"$set": {
+                    "check_in": now,
+                    "check_in_method": "gps",
+                    "check_in_location_lat": latitude,
+                    "check_in_location_lng": longitude,
+                    "updated_at": now
+                }}
+            )
+        else:
+            # Create new attendance record
+            attendance_record = {
+                "id": str(uuid.uuid4()),
+                "employee_id": employee_id,
+                "employee_name": employee.get("name"),
+                "employee_code": employee.get("employee_code"),
+                "date": date,
+                "check_in": now,
+                "check_out": None,
+                "check_in_method": "gps",
+                "check_out_method": None,
+                "check_in_location_lat": latitude,
+                "check_in_location_lng": longitude,
+                "status": "present",
+                "created_at": now,
+                "updated_at": now
+            }
+            await db.hr_attendance.insert_one(attendance_record)
+        
+        return {"success": True, "message": "تم تسجيل الحضور بنجاح", "check_in_time": now}
+    
+    elif action == "check_out":
+        if not attendance or not attendance.get("check_in"):
+            raise HTTPException(status_code=400, detail="لم يتم تسجيل الحضور بعد")
+        
+        if attendance.get("check_out"):
+            return {"success": False, "message": "تم تسجيل الانصراف مسبقاً", "check_out_time": attendance.get("check_out")}
+        
+        # Calculate working hours
+        check_in_time = datetime.fromisoformat(attendance.get("check_in").replace('Z', '+00:00'))
+        check_out_time = datetime.now(timezone.utc)
+        working_hours = (check_out_time - check_in_time).total_seconds() / 3600
+        
+        await db.hr_attendance.update_one(
+            {"employee_id": employee_id, "date": date},
+            {"$set": {
+                "check_out": now,
+                "check_out_method": "gps",
+                "check_out_location_lat": latitude,
+                "check_out_location_lng": longitude,
+                "working_hours": round(working_hours, 2),
+                "updated_at": now
+            }}
+        )
+        
+        return {"success": True, "message": "تم تسجيل الانصراف بنجاح", "check_out_time": now, "working_hours": round(working_hours, 2)}
+    
+    else:
+        raise HTTPException(status_code=400, detail="الإجراء غير صحيح")
+
+
 # ==================== LOCATION UPDATES ====================
 
 async def record_location_attendance(employee: dict, is_within: bool, timestamp: str):
