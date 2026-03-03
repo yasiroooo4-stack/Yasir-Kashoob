@@ -381,6 +381,7 @@ async def get_attendance_based_employees(date: Optional[str] = None):
     """
     جلب الموظفين الحاضرين في نظام البصمة مع مواقعهم
     يعرض الموظفين الذين سجلوا حضورهم اليوم في نظام البصمة
+    الموقع يعتمد على موقع جهاز البصمة + حالة GPS
     """
     today = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
@@ -394,13 +395,23 @@ async def get_attendance_based_employees(date: Optional[str] = None):
     settings = await get_tracking_settings()
     work_locations = settings.get("work_locations", [])
     
-    # Helper function to normalize Arabic text for comparison (remove hamza variations)
+    # Get fingerprint devices with their locations
+    fingerprint_devices = await db.fingerprint_devices.find({}).to_list(100)
+    device_locations = {}
+    for device in fingerprint_devices:
+        device_ip = device.get("ip") or device.get("ip_address")
+        if device_ip:
+            device_locations[device_ip] = {
+                "name": device.get("name"),
+                "location": device.get("location"),
+                "id": device.get("id")
+            }
+    
+    # Helper function to normalize Arabic text for comparison
     def normalize_arabic(text):
         if not text:
             return ""
-        # Replace various hamza forms with alif
         text = text.replace("إ", "ا").replace("أ", "ا").replace("آ", "ا").replace("ء", "")
-        # Remove extra spaces and strip
         return text.strip().lower()
     
     # Create a mapping of normalized names to work locations
@@ -409,81 +420,160 @@ async def get_attendance_based_employees(date: Optional[str] = None):
         normalized_name = normalize_arabic(wl.get("name", ""))
         work_location_map[normalized_name] = wl
     
+    # Get current GPS locations (last 10 minutes for more coverage)
+    ten_minutes_ago = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    gps_locations = await db.employee_current_locations.find({
+        "created_at": {"$gte": ten_minutes_ago}
+    }).to_list(1000)
+    
+    # Create GPS location map by employee_id
+    gps_map = {}
+    for loc in gps_locations:
+        gps_map[loc.get("employee_id")] = loc
+    
     employees_on_map = []
     
     for att in attendance_records:
         employee_id = att.get("employee_id")
+        device_ip = att.get("device_ip")
+        check_in_location = att.get("check_in_location")
         
         # Get employee details
         employee = await db.hr_employees.find_one(
             {"id": employee_id},
             {"_id": 0, "id": 1, "name": 1, "employee_code": 1, "photo_url": 1, 
              "civil_id": 1, "national_id": 1, "work_location_lat": 1, "work_location_lng": 1,
-             "department": 1, "position": 1, "work_location": 1}
+             "department": 1, "position": 1, "work_location": 1, "phone": 1}
         )
         
         if not employee:
             continue
         
-        # Determine location
-        lat = employee.get("work_location_lat")
-        lng = employee.get("work_location_lng")
-        location_name = employee.get("work_location", "مقر العمل")
+        # Determine location - Priority:
+        # 1. GPS location (if available)
+        # 2. Fingerprint device location
+        # 3. Employee's assigned work_location
         
-        # If no employee-specific coordinates, try to match by work_location name
+        lat = None
+        lng = None
+        location_name = "غير محدد"
+        location_source = "unknown"
+        is_within_geofence = None
+        gps_status = "no_gps"  # no_gps, inside, outside
+        
+        # Check if employee has GPS location
+        gps_data = gps_map.get(employee_id)
+        if gps_data:
+            lat = gps_data.get("latitude")
+            lng = gps_data.get("longitude")
+            location_source = "gps"
+            is_within_geofence = gps_data.get("is_within_range", False)
+            gps_status = "inside" if is_within_geofence else "outside"
+            location_name = "GPS تتبع"
+        
+        # If no GPS, use fingerprint device location
+        if not lat or not lng:
+            # Try to get location from fingerprint device
+            if device_ip and device_ip in device_locations:
+                device_info = device_locations[device_ip]
+                device_location_name = device_info.get("location")
+                normalized_device_loc = normalize_arabic(device_location_name)
+                
+                if normalized_device_loc in work_location_map:
+                    wl = work_location_map[normalized_device_loc]
+                    lat = wl.get("lat") or wl.get("latitude")
+                    lng = wl.get("lng") or wl.get("longitude")
+                    location_name = wl.get("name")
+                    location_source = "fingerprint_device"
+                    gps_status = "no_gps"
+            
+            # Try check_in_location from attendance record
+            elif check_in_location:
+                normalized_loc = normalize_arabic(check_in_location)
+                if normalized_loc in work_location_map:
+                    wl = work_location_map[normalized_loc]
+                    lat = wl.get("lat") or wl.get("latitude")
+                    lng = wl.get("lng") or wl.get("longitude")
+                    location_name = wl.get("name")
+                    location_source = "attendance_location"
+                    gps_status = "no_gps"
+        
+        # Fallback to employee's assigned work_location
         if not lat or not lng:
             emp_location = normalize_arabic(employee.get("work_location", ""))
-            
-            # Try to find matching work location
             if emp_location in work_location_map:
                 wl = work_location_map[emp_location]
                 lat = wl.get("lat") or wl.get("latitude")
                 lng = wl.get("lng") or wl.get("longitude")
                 location_name = wl.get("name")
+                location_source = "employee_assigned"
+                gps_status = "no_gps"
         
-        # If still no location, use first work location as default
+        # Last fallback - use first work location
         if (not lat or not lng) and work_locations:
-            default_loc = work_locations[0]
-            lat = default_loc.get("lat") or default_loc.get("latitude")
-            lng = default_loc.get("lng") or default_loc.get("longitude")
-            location_name = default_loc.get("name", "مقر العمل الرئيسي")
+            wl = work_locations[0]
+            lat = wl.get("lat") or wl.get("latitude")
+            lng = wl.get("lng") or wl.get("longitude")
+            location_name = wl.get("name", "مقر العمل")
+            location_source = "default"
+            gps_status = "no_gps"
         
         if lat and lng:
-            # Add offset to avoid markers overlapping at same location
-            # Each employee gets a different position in a grid/spiral pattern
-            offset_index = len(employees_on_map)
+            # Add small offset if multiple employees at same location
             import math
+            offset_index = len([e for e in employees_on_map if e.get("work_location_name") == location_name])
+            if offset_index > 0 and gps_status == "no_gps":
+                grid_cols = 5
+                row = offset_index // grid_cols
+                col = offset_index % grid_cols
+                lat_offset = row * 0.0008
+                lng_offset = (col - 2) * 0.0008
+                lat = float(lat) + lat_offset
+                lng = float(lng) + lng_offset
             
-            # Create a grid pattern instead of spiral for better visibility
-            # Grid: 5 columns, unlimited rows
-            grid_cols = 5
-            row = offset_index // grid_cols
-            col = offset_index % grid_cols
+            # Determine marker color based on status
+            # Green: inside geofence OR checked in (no checkout)
+            # Red: outside geofence OR checked out
+            # Gray: no GPS, just fingerprint location
+            has_checked_out = att.get("check_out") is not None
             
-            # Offset in degrees (approximately 50 meters per 0.0005 degree)
-            lat_offset = row * 0.001  # ~100m per row
-            lng_offset = (col - 2) * 0.001  # Center the grid, ~100m per column
+            if gps_status == "outside":
+                marker_color = "red"
+                status_text = "خارج النطاق"
+            elif gps_status == "inside":
+                marker_color = "green"
+                status_text = "داخل النطاق"
+            elif has_checked_out:
+                marker_color = "red"
+                status_text = "انصرف"
+            else:
+                marker_color = "blue"  # Present via fingerprint, no GPS
+                status_text = "حاضر (بصمة)"
             
             employees_on_map.append({
                 "employee_id": employee_id,
                 "employee_name": employee.get("name"),
                 "employee_code": employee.get("employee_code"),
-                "latitude": float(lat) + lat_offset,
-                "longitude": float(lng) + lng_offset,
-                "original_latitude": float(lat),
-                "original_longitude": float(lng),
-                "is_within_range": True,
-                "distance_from_work": 0,
+                "latitude": float(lat),
+                "longitude": float(lng),
+                "is_within_range": gps_status == "inside" or (gps_status == "no_gps" and not has_checked_out),
+                "distance_from_work": gps_data.get("distance_from_work", 0) if gps_data else 0,
                 "created_at": att.get("check_in"),
                 "photo_url": employee.get("photo_url"),
                 "civil_id": employee.get("civil_id") or employee.get("national_id"),
                 "department": employee.get("department"),
                 "position": employee.get("position"),
+                "phone": employee.get("phone"),
                 "source": "attendance",
+                "location_source": location_source,
                 "check_in_time": att.get("check_in"),
                 "check_out_time": att.get("check_out"),
-                "attendance_status": "checked_out" if att.get("check_out") else "present",
-                "work_location_name": location_name
+                "attendance_status": "checked_out" if has_checked_out else "present",
+                "work_location_name": location_name,
+                "gps_status": gps_status,
+                "marker_color": marker_color,
+                "status_text": status_text,
+                "device_ip": device_ip
             })
     
     return employees_on_map

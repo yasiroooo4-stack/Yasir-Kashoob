@@ -340,8 +340,38 @@ const EmployeeTrackingAdmin = () => {
           const shortName = empName.split(' ').slice(0, 2).join(' ');
           const civilId = emp.civil_id || emp.employee_code || '';
           const isOnline = emp.isOnline;
-          const bgColor = emp.is_within_range ? '#22c55e' : '#ef4444';
           const distance = emp.distance_from_work || 0;
+          
+          // Determine marker color based on GPS status and attendance
+          // Green: inside geofence (GPS active)
+          // Red: outside geofence OR checked out
+          // Blue: present via fingerprint only (no GPS)
+          // Gray: offline (GPS mode only)
+          let markerColor = '#6b7280'; // Default gray
+          let statusText = '';
+          
+          if (emp.isFromAttendance) {
+            // Attendance mode - use marker_color from API
+            const colorMap = {
+              'green': '#22c55e',
+              'red': '#ef4444',
+              'blue': '#3b82f6',
+              'gray': '#6b7280'
+            };
+            markerColor = colorMap[emp.marker_color] || '#3b82f6';
+            statusText = emp.status_text || '';
+          } else {
+            // GPS mode
+            if (isOnline) {
+              markerColor = emp.is_within_range ? '#22c55e' : '#ef4444';
+              statusText = emp.is_within_range ? 'داخل النطاق' : 'خارج النطاق';
+            } else {
+              markerColor = '#6b7280';
+              statusText = 'غير متصل';
+            }
+          }
+          
+          const bgColor = markerColor;
           
           const icon = L.divIcon({
             className: 'custom-marker-with-name',
@@ -398,42 +428,72 @@ const EmployeeTrackingAdmin = () => {
           const marker = L.marker([emp.latitude, emp.longitude], { icon })
             .addTo(mapInstanceRef.current)
             .bindPopup(`
-              <div style="text-align: right; direction: rtl; min-width: 220px;">
+              <div style="text-align: right; direction: rtl; min-width: 240px;">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
                   ${photoUrl 
-                    ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};" onerror="this.style.display='none'" />`
-                    : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${emp.is_within_range ? '#22c55e' : '#ef4444'};">${firstLetter}</div>`
+                    ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${bgColor};" onerror="this.style.display='none'" />`
+                    : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${bgColor};">${firstLetter}</div>`
                   }
                   <div>
                     <b style="font-size: 16px; color: #333;">${empName}</b><br/>
                     <span style="color: #666; font-size: 13px;">كود: ${emp.employee_code || '-'}</span><br/>
                     <span style="color: #666; font-size: 13px;">هوية: ${civilId || '-'}</span>
+                    ${emp.phone ? `<br/><span style="color: #666; font-size: 13px;">📱 ${emp.phone}</span>` : ''}
                   </div>
                 </div>
                 <div style="
                   padding: 8px 12px;
                   border-radius: 8px;
-                  background: ${emp.is_within_range ? '#dcfce7' : '#fee2e2'};
-                  color: ${emp.is_within_range ? '#16a34a' : '#dc2626'};
+                  background: ${bgColor}20;
+                  color: ${bgColor};
                   font-weight: bold;
                   text-align: center;
                   margin-bottom: 8px;
                   font-size: 14px;
                 ">
-                  ${emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل'}
+                  ${statusText || (emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل')}
                 </div>
+                ${emp.work_location_name ? `
                 <div style="
                   padding: 6px 10px;
                   border-radius: 6px;
-                  background: ${isOnline ? '#dcfce7' : '#f3f4f6'};
-                  color: ${isOnline ? '#16a34a' : '#666'};
+                  background: #f0f9ff;
+                  color: #0369a1;
                   text-align: center;
                   margin-bottom: 8px;
                   font-size: 12px;
                 ">
-                  ${isOnline ? '🟢 متصل الآن' : '⚪ غير متصل'}
+                  📍 ${emp.work_location_name}
+                </div>
+                ` : ''}
+                <div style="
+                  padding: 6px 10px;
+                  border-radius: 6px;
+                  background: ${emp.gps_status === 'inside' ? '#dcfce7' : emp.gps_status === 'outside' ? '#fee2e2' : '#f3f4f6'};
+                  color: ${emp.gps_status === 'inside' ? '#16a34a' : emp.gps_status === 'outside' ? '#dc2626' : '#666'};
+                  text-align: center;
+                  margin-bottom: 8px;
+                  font-size: 12px;
+                ">
+                  ${emp.gps_status === 'inside' ? '🟢 GPS داخل النطاق' : 
+                    emp.gps_status === 'outside' ? '🔴 GPS خارج النطاق' : 
+                    emp.isFromAttendance ? '📟 حاضر بالبصمة' : 
+                    (isOnline ? '🟢 متصل الآن' : '⚪ غير متصل')}
                 </div>
                 <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                  ${emp.check_in_time ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>وقت الدخول:</span>
+                    <b style="color: #16a34a;">${new Date(emp.check_in_time).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</b>
+                  </div>
+                  ` : ''}
+                  ${emp.check_out_time ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>وقت الخروج:</span>
+                    <b style="color: #dc2626;">${new Date(emp.check_out_time).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</b>
+                  </div>
+                  ` : ''}
+                  ${distance > 0 ? `
                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span>المسافة:</span>
                     <b style="color: #333;">${distance < 1000 
@@ -441,6 +501,7 @@ const EmployeeTrackingAdmin = () => {
                       : `${(distance / 1000).toFixed(1)} كم`
                     }</b>
                   </div>
+                  ` : ''}
                   <div style="display: flex; justify-content: space-between;">
                     <span>آخر تحديث:</span>
                     <b style="color: #333;">${emp.created_at ? new Date(emp.created_at).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'}) : '-'}</b>
@@ -778,14 +839,37 @@ const EmployeeTrackingAdmin = () => {
               </div>
             )}
             <div className="flex items-center gap-4 mt-3 text-sm flex-wrap">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>{language === "ar" ? (mapDisplayMode === "attendance" ? "حاضر" : "داخل النطاق") : (mapDisplayMode === "attendance" ? "Present" : "Within Range")}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-                <span>{language === "ar" ? (mapDisplayMode === "attendance" ? "انصرف" : "غير متصل") : (mapDisplayMode === "attendance" ? "Checked Out" : "Offline")}</span>
-              </div>
+              {mapDisplayMode === "attendance" ? (
+                <>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span>{language === "ar" ? "GPS داخل النطاق" : "GPS Inside"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span>{language === "ar" ? "GPS خارج النطاق / انصرف" : "GPS Outside / Checked Out"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span>{language === "ar" ? "حاضر بالبصمة (بدون GPS)" : "Present via Fingerprint"}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span>{language === "ar" ? "داخل النطاق" : "Within Range"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span>{language === "ar" ? "خارج النطاق" : "Outside Range"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                    <span>{language === "ar" ? "غير متصل" : "Offline"}</span>
+                  </div>
+                </>
+              )}
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-blue-500 opacity-30"></div>
                 <span>{language === "ar" ? "نطاق العمل" : "Work Zone"}</span>
