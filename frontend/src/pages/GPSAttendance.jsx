@@ -13,6 +13,29 @@ import {
 
 const API = process.env.REACT_APP_BACKEND_URL + "/api";
 
+// Helper function to format time - handles both ISO format and simple time strings
+const formatTime = (timeString) => {
+  if (!timeString) return "--:--";
+  
+  // If it's already in HH:MM format, return as is
+  if (/^\d{1,2}:\d{2}$/.test(timeString)) {
+    return timeString;
+  }
+  
+  // Try to parse as ISO date
+  try {
+    const date = new Date(timeString);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'});
+    }
+  } catch (e) {
+    console.error("Error parsing time:", e);
+  }
+  
+  // If all else fails, return the original string
+  return timeString;
+};
+
 const GPSAttendance = () => {
   // Login state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -394,6 +417,9 @@ const GPSAttendance = () => {
               <Clock className="w-5 h-5" />
               حالة الحضور اليوم
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {new Date().toLocaleDateString('ar-SA', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}
+            </p>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -408,7 +434,7 @@ const GPSAttendance = () => {
                 </div>
                 <p className="text-xl font-bold text-center">
                   {todayAttendance?.check_in 
-                    ? new Date(todayAttendance.check_in).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})
+                    ? formatTime(todayAttendance.check_in)
                     : "--:--"
                   }
                 </p>
@@ -428,7 +454,7 @@ const GPSAttendance = () => {
                 </div>
                 <p className="text-xl font-bold text-center">
                   {todayAttendance?.check_out 
-                    ? new Date(todayAttendance.check_out).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})
+                    ? formatTime(todayAttendance.check_out)
                     : "--:--"
                   }
                 </p>
