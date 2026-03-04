@@ -416,10 +416,10 @@ const EmployeeTrackingAdmin = () => {
             // GPS mode
             if (isOnline) {
               markerColor = emp.is_within_range ? '#22c55e' : '#ef4444';
-              statusText = emp.is_within_range ? 'داخل النطاق' : 'خارج النطاق';
+              statusText = emp.is_within_range ? (language === "ar" ? 'داخل النطاق' : 'Inside Range') : (language === "ar" ? 'خارج النطاق' : 'Outside Range');
             } else {
               markerColor = '#6b7280';
-              statusText = 'غير متصل';
+              statusText = language === "ar" ? 'غير متصل' : 'Offline';
             }
           }
           
@@ -477,10 +477,32 @@ const EmployeeTrackingAdmin = () => {
             iconAnchor: [75, 45]
           });
           
+          const isAr = language === "ar";
+          const locale = isAr ? 'ar-SA' : 'en-US';
+          
+          // Safe time formatter - handles "HH:MM" and ISO strings
+          const fmtTime = (val) => {
+            if (!val || val === "None") return "-";
+            if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+            try { const d = new Date(val); if (!isNaN(d.getTime())) return d.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit'}); } catch {}
+            return val;
+          };
+          
+          // Bilingual status text
+          let popupStatus = statusText;
+          if (!isAr) {
+            if (emp.gps_status === 'inside') popupStatus = 'Inside Range';
+            else if (emp.gps_status === 'outside') popupStatus = 'Outside Range';
+            else if (emp.isFromAttendance && emp.attendance_status === 'checked_out') popupStatus = 'Checked Out';
+            else if (emp.isFromAttendance) popupStatus = 'Present (Fingerprint)';
+            else if (isOnline) popupStatus = emp.is_within_range ? 'Inside Range' : 'Outside Range';
+            else popupStatus = 'Offline';
+          }
+          
           const marker = L.marker([emp.latitude, emp.longitude], { icon })
             .addTo(mapInstanceRef.current)
             .bindPopup(`
-              <div style="text-align: right; direction: rtl; min-width: 240px;">
+              <div style="text-align: ${isAr ? 'right' : 'left'}; direction: ${isAr ? 'rtl' : 'ltr'}; min-width: 240px;">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
                   ${photoUrl 
                     ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${bgColor};" onerror="this.style.display='none'" />`
@@ -488,8 +510,8 @@ const EmployeeTrackingAdmin = () => {
                   }
                   <div>
                     <b style="font-size: 16px; color: #333;">${empName}</b><br/>
-                    <span style="color: #666; font-size: 13px;">كود: ${emp.employee_code || '-'}</span><br/>
-                    <span style="color: #666; font-size: 13px;">هوية: ${civilId || '-'}</span>
+                    <span style="color: #666; font-size: 13px;">${isAr ? 'كود' : 'Code'}: ${emp.employee_code || '-'}</span><br/>
+                    <span style="color: #666; font-size: 13px;">${isAr ? 'هوية' : 'ID'}: ${civilId || '-'}</span>
                     ${emp.phone ? `<br/><span style="color: #666; font-size: 13px;">📱 ${emp.phone}</span>` : ''}
                   </div>
                 </div>
@@ -503,7 +525,7 @@ const EmployeeTrackingAdmin = () => {
                   margin-bottom: 8px;
                   font-size: 14px;
                 ">
-                  ${statusText || (emp.is_within_range ? '✓ داخل نطاق العمل' : '✗ خارج نطاق العمل')}
+                  ${popupStatus}
                 </div>
                 ${emp.work_location_name ? `
                 <div style="
@@ -527,36 +549,36 @@ const EmployeeTrackingAdmin = () => {
                   margin-bottom: 8px;
                   font-size: 12px;
                 ">
-                  ${emp.gps_status === 'inside' ? '🟢 GPS داخل النطاق' : 
-                    emp.gps_status === 'outside' ? '🔴 GPS خارج النطاق' : 
-                    emp.isFromAttendance ? '📟 حاضر بالبصمة' : 
-                    (isOnline ? '🟢 متصل الآن' : '⚪ غير متصل')}
+                  ${emp.gps_status === 'inside' ? (isAr ? '🟢 GPS داخل النطاق' : '🟢 GPS Inside Range') : 
+                    emp.gps_status === 'outside' ? (isAr ? '🔴 GPS خارج النطاق' : '🔴 GPS Outside Range') : 
+                    emp.isFromAttendance ? (isAr ? '📟 حاضر بالبصمة' : '📟 Present via Fingerprint') : 
+                    (isOnline ? (isAr ? '🟢 متصل الآن' : '🟢 Online') : (isAr ? '⚪ غير متصل' : '⚪ Offline'))}
                 </div>
                 <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
                   ${emp.check_in_time ? `
                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>وقت الدخول:</span>
-                    <b style="color: #16a34a;">${new Date(emp.check_in_time).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</b>
+                    <span>${isAr ? 'وقت الدخول:' : 'Check-in:'}</span>
+                    <b style="color: #16a34a;">${fmtTime(emp.check_in_time)}</b>
                   </div>
                   ` : ''}
-                  ${emp.check_out_time ? `
+                  ${emp.check_out_time && emp.check_out_time !== 'None' ? `
                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>وقت الخروج:</span>
-                    <b style="color: #dc2626;">${new Date(emp.check_out_time).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</b>
+                    <span>${isAr ? 'وقت الخروج:' : 'Check-out:'}</span>
+                    <b style="color: #dc2626;">${fmtTime(emp.check_out_time)}</b>
                   </div>
                   ` : ''}
                   ${distance > 0 ? `
                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>المسافة:</span>
+                    <span>${isAr ? 'المسافة:' : 'Distance:'}</span>
                     <b style="color: #333;">${distance < 1000 
-                      ? `${Math.round(distance)} متر`
-                      : `${(distance / 1000).toFixed(1)} كم`
+                      ? `${Math.round(distance)} ${isAr ? 'متر' : 'm'}`
+                      : `${(distance / 1000).toFixed(1)} ${isAr ? 'كم' : 'km'}`
                     }</b>
                   </div>
                   ` : ''}
                   <div style="display: flex; justify-content: space-between;">
-                    <span>آخر تحديث:</span>
-                    <b style="color: #333;">${emp.created_at ? new Date(emp.created_at).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'}) : '-'}</b>
+                    <span>${isAr ? 'آخر تحديث:' : 'Last update:'}</span>
+                    <b style="color: #333;">${fmtTime(emp.created_at)}</b>
                   </div>
                 </div>
               </div>
@@ -575,7 +597,7 @@ const EmployeeTrackingAdmin = () => {
         }
       }
     });
-  }, [trackedEmployees, allEmployees, activeTab, mapReady, mapDisplayMode, attendanceBasedEmployees]);
+  }, [trackedEmployees, allEmployees, activeTab, mapReady, mapDisplayMode, attendanceBasedEmployees, language]);
 
   // Save settings
   const saveSettings = async () => {
