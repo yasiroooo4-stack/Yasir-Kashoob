@@ -1,63 +1,58 @@
-# نظام المروج للألبان - PRD
+# Attendance Guard - PRD
 
-## ملخص المشروع
-نظام متكامل لإدارة شركة ألبان يشمل: إدارة الموردين، تتبع الموظفين، بوابة الموردين، الموارد البشرية، المخزون والمالية.
+## Original Problem Statement
+Full-stack HR/Attendance management system (Arabic UI) with:
+- Employee management, fingerprint attendance, GPS tracking
+- Export Excel/PDF, manager approval workflow for GPS attendance
+- Selfie capture on check-in/out, mock GPS detection
+- WiFi-based attendance with company network verification
+- Strict network validation (block non-company networks)
+- Admin settings for WiFi/network configuration per location
 
-## الميزات المُنجزة
+## Architecture
+- **Backend:** FastAPI + MongoDB (milk_erp database)
+- **Frontend:** React + Shadcn UI + Tailwind CSS
+- **Language:** Arabic (RTL), employee names always in Arabic
 
-### نظام تتبع الموظفين (مكتمل)
-- خريطة تفاعلية (Leaflet.js) بعلامات ملونة (أزرق: بصمة، أخضر: GPS داخل، أحمر: GPS خارج)
-- وضع عرض مختلط: GPS مباشر أو حضور بالبصمة
+## What's Been Implemented
+- [x] Employee list with Export Excel/PDF + date filters
+- [x] Manager approval workflow for GPS attendance
+- [x] GPS display bugs fixed in HR reports
+- [x] Core logic: GPS + fingerprint merge on same day
+- [x] Selfie capture (WebRTC) on check-in/out
+- [x] Mock GPS detection + security logging
+- [x] WiFi-based attendance flow
+- [x] Admin WiFi config UI (SSID, BSSID, Password, IP, Gateway)
+- [x] GPS approval reset in System Settings
+- [x] **Strict network validation** - blocks non-company networks on /gps-attendance
+- [x] **Simplified flow** - removed WiFi password step, direct Selfie + Check-in/out (Feb 2026)
 
-### بوابة تسجيل الموردين (مكتمل)
-- صفحة عامة ثنائية اللغة + إيصال + حذف جماعي
+## Key Endpoints
+- `GET /api/tracking/detect-network` - Auto IP verification
+- `POST /api/tracking/gps-attendance` - Check-in/out with selfie
+- `POST /api/tracking/employee-login` - Employee login
+- `GET /api/tracking/settings` - Tracking settings with work locations
 
-### إصلاح خطأ الغياب يوم الجمعة (مكتمل)
-- الجمعة والسبت عطلات رسمية
+## Configured Company Network
+- Public IP: 85.154.168.39
+- WiFi SSID: AL MOROOJ-2.4G
+- Location: الادارة
 
-### تصدير بيانات الحضور (مكتمل - مارس 2026)
-- تصدير Excel/PDF مع فلتر تاريخ
+## Prioritized Backlog
+### P0
+- [ ] Build native Android App (.apk) for reliable WiFi/BSSID detection
 
-### نظام موافقة حضور GPS (مكتمل - مارس 2026)
-- تسجيل GPS يتطلب موافقة المدير
-- تبويب "طلبات الموافقة GPS" في الإعدادات
-- إصلاح ربط GPS مع البصمة (الآن يعملان معاً بدون تعارض)
+### P1
+- [ ] SMS/QR Code for GPS attendance link distribution
 
-### سيلفي + GPS (مكتمل - مارس 2026)
-- التقاط صورة سيلفي عند تسجيل الحضور/الانصراف اليدوي
-- حفظ الصورة كإثبات مع ختم التاريخ والوقت
-- عرض رابط "عرض السيلفي" في لوحة الموافقات
+### P2
+- [ ] Supplier registration email/SMS notifications
+- [ ] Enhanced location-based attendance reporting
 
-### كشف Mock GPS (مكتمل - مارس 2026)
-- كشف تلقائي للمواقع الوهمية
-- كشف القفزات المفاجئة في الموقع
-- حظر التسجيل + تسجيل المحاولة في سجل الأمان
-- عرض حالة الأمان (آمن/تنبيه/محظور)
+### Refactoring
+- [ ] Split server.py and tracking_routes.py into smaller modules
+- [ ] Extract WiFi settings component from SystemSettings.jsx
 
-### حضور عبر WiFi (مكتمل - مارس 2026)
-- كشف اتصال WiFi تلقائياً
-- تسجيل حضور عبر WiFi + سيلفي
-- إعدادات شبكات WiFi المعتمدة (API جاهز)
-
-## المهام القادمة
-
-### P0 - بناء تطبيق Android (APK)
-- إرشاد المستخدم لبناء التطبيق على جهازه المحلي
-- تعليمات في BUILD_INSTRUCTIONS.md
-
-### P1 - إرسال رابط GPS عبر SMS أو QR Code
-
-### P2 - إشعارات بوابة الموردين (بريد/SMS)
-
-### P2 - تحسين تقارير الحضور المبني على الموقع
-
-## بيانات الاختبار
-- المستخدم: hassan / 123
-- موظف تجريبي: EMP202560 (ياسر)
-
-## الملفات الرئيسية
-- `/app/backend/server.py` - الخادم الرئيسي
-- `/app/backend/routes/tracking_routes.py` - مسارات التتبع وGPS وSelfie وWiFi
-- `/app/frontend/src/pages/GPSAttendance.jsx` - صفحة GPS مع سيلفي وWiFi وMock GPS
-- `/app/frontend/src/components/EmployeeTrackingAdmin.jsx` - لوحة تتبع + موافقات
-- `/app/frontend/src/pages/HR.jsx` - الموارد البشرية + التصدير
+## Test Credentials
+- Username: hassan | Password: 123
+- Test employee: EMP201802 (Said Mohammed Said Al Maamari)
