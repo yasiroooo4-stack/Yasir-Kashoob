@@ -400,6 +400,15 @@ const DataResetSettings = ({ language, t }) => {
       description: t("حذف بيانات إدارة المخازن الشاملة", "Delete all warehouse management data"),
       collection: "warehouses"
     },
+    { 
+      id: "gps_attendance_approvals", 
+      name: t("طلبات موافقة حضور GPS", "GPS Attendance Approvals"), 
+      nameAr: "طلبات موافقة حضور GPS",
+      icon: Navigation, 
+      color: "text-sky-600 bg-sky-100",
+      description: t("حذف جميع طلبات موافقة الحضور عبر GPS و WiFi", "Delete all GPS/WiFi attendance approval requests"),
+      collection: "gps_attendance_approvals"
+    },
   ];
   
   const handleReset = async () => {
@@ -882,7 +891,6 @@ const SystemSettings = () => {
               </TabsTrigger>
               <TabsTrigger value="reset" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 text-red-600 data-[state=active]:bg-red-100">
                 <Database className="w-4 h-4" /><span className="hidden sm:inline">{t("تصفير", "Reset")}</span>
-                {pendingGpsCount > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{pendingGpsCount}</Badge>}
               </TabsTrigger>
             </>
           )}
@@ -1193,113 +1201,6 @@ const SystemSettings = () => {
 
         {/* Data Reset Tab + GPS Approvals - Admin Only */}
         <TabsContent value="reset">
-          {/* GPS Approval Requests */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-blue-600" />
-                    {t("طلبات موافقة حضور GPS", "GPS Attendance Approvals")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("مراجعة والموافقة على طلبات الحضور/الانصراف المسجلة عبر GPS و WiFi", "Review GPS/WiFi attendance requests")}
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={fetchGpsApprovals}>
-                  <RefreshCw className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {pendingGpsApprovals.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground" data-testid="no-pending-approvals-settings">
-                  <CheckCircle className="w-10 h-10 mx-auto mb-2 text-green-400" />
-                  <p>{t("لا توجد طلبات معلقة", "No pending requests")}</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("الموظف", "Employee")}</TableHead>
-                      <TableHead>{t("التاريخ", "Date")}</TableHead>
-                      <TableHead>{t("النوع", "Type")}</TableHead>
-                      <TableHead>{t("الوقت", "Time")}</TableHead>
-                      <TableHead>{t("الطريقة", "Method")}</TableHead>
-                      <TableHead>{t("السيلفي", "Selfie")}</TableHead>
-                      <TableHead>{t("الإجراءات", "Actions")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingGpsApprovals.map((record) => {
-                      const pendingTypes = [];
-                      if (record.gps_approval_status === "pending") pendingTypes.push("check_in");
-                      if (record.gps_checkout_approval_status === "pending") pendingTypes.push("check_out");
-                      
-                      return pendingTypes.map((type) => {
-                        const timeStr = type === "check_in"
-                          ? (record.gps_check_in || record.check_in)
-                          : (record.gps_check_out || record.check_out);
-                        const formattedTime = timeStr && timeStr.includes("T")
-                          ? new Date(timeStr).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})
-                          : (timeStr || "-");
-                        
-                        return (
-                          <TableRow key={`${record.id}-${type}`}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium text-sm">{record.employee_name}</p>
-                                <p className="text-xs text-muted-foreground">{record.employee_code}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm">{record.date}</TableCell>
-                            <TableCell>
-                              <Badge className={type === "check_in" ? "bg-green-500" : "bg-orange-500"}>
-                                {type === "check_in" ? t("حضور", "Check-in") : t("انصراف", "Check-out")}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm font-mono">{formattedTime}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={record.check_in_method === "wifi" ? "bg-blue-50 text-blue-700" : "bg-green-50 text-green-700"}>
-                                {record.check_in_method === "wifi" ? "WiFi" : "GPS"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {record.check_in_selfie_url && type === "check_in" ? (
-                                <a href={`${process.env.REACT_APP_BACKEND_URL}${record.check_in_selfie_url}`} target="_blank" rel="noreferrer">
-                                  <Badge variant="outline" className="bg-purple-50 cursor-pointer hover:bg-purple-100 text-xs">
-                                    {t("عرض", "View")}
-                                  </Badge>
-                                </a>
-                              ) : "-"}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8"
-                                  disabled={approvalLoading}
-                                  onClick={() => handleGpsApproval(record.id, type, true)}>
-                                  <CheckCircle className="w-3 h-3 me-1" />
-                                  {t("موافقة", "Approve")}
-                                </Button>
-                                <Button size="sm" variant="destructive" className="h-8"
-                                  disabled={approvalLoading}
-                                  onClick={() => handleGpsApproval(record.id, type, false)}>
-                                  <XCircle className="w-3 h-3 me-1" />
-                                  {t("رفض", "Reject")}
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      });
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Data Reset */}
           <DataResetSettings language={language} t={t} />
         </TabsContent>
       </Tabs>

@@ -674,6 +674,7 @@ async def reset_data_section(section_id: str, current_user: dict = Depends(requi
         "advances": ["hr_advance_requests"],
         "leaves": ["hr_leave_requests"],
         "warehouse_management": ["warehouses", "warehouse_products", "warehouse_stock", "warehouse_items", "warehouse_solutions", "warehouse_consumption"],
+        "gps_attendance_approvals": ["gps_security_logs"],
     }
     
     if section_id not in section_collections:
@@ -682,6 +683,37 @@ async def reset_data_section(section_id: str, current_user: dict = Depends(requi
     collections = section_collections[section_id]
     deleted_counts = {}
     total_deleted = 0
+    
+    # Special handling for GPS attendance approvals - remove GPS fields from hr_attendance
+    if section_id == "gps_attendance_approvals":
+        result = await db.hr_attendance.update_many(
+            {"$or": [
+                {"check_in_method": {"$in": ["gps", "wifi"]}},
+                {"gps_approval_status": {"$exists": True}},
+                {"gps_check_in": {"$exists": True}},
+                {"has_gps_tracking": True}
+            ]},
+            {"$unset": {
+                "gps_check_in": "", "gps_check_out": "",
+                "check_in_method": "", "check_out_method": "",
+                "check_in_location_lat": "", "check_in_location_lng": "",
+                "check_out_location_lat": "", "check_out_location_lng": "",
+                "gps_approval_status": "", "gps_approval_requested_at": "",
+                "gps_checkout_approval_status": "",
+                "has_gps_tracking": "", "gps_working_hours": "",
+                "check_in_selfie_url": "", "check_out_selfie_url": "",
+                "check_in_wifi_ssid": "", "mock_gps_check": ""
+            }}
+        )
+        deleted_counts["hr_attendance_gps_fields"] = result.modified_count
+        total_deleted += result.modified_count
+        
+        # Also delete pure GPS records (no fingerprint)
+        result2 = await db.hr_attendance.delete_many({
+            "status": "pending_gps_approval"
+        })
+        deleted_counts["pure_gps_records"] = result2.deleted_count
+        total_deleted += result2.deleted_count
     
     for collection_name in collections:
         try:
