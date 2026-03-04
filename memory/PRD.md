@@ -26,6 +26,7 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] GPS approval reset in System Settings
 - [x] **Strict network validation** - blocks non-company networks on /gps-attendance
 - [x] **Simplified flow** - removed WiFi password step, direct Selfie + Check-in/out (Feb 2026)
+- [x] **Bilingual support (Arabic/English)** - language toggle on /gps-attendance, localStorage persistence (Feb 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification
