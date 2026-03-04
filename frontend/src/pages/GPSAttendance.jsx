@@ -8,14 +8,14 @@ import { Badge } from "../components/ui/badge";
 import { 
   Wifi, WifiOff, RefreshCw, Clock, Navigation, 
   User, Phone, LogIn, LogOut, CheckCircle, XCircle,
-  Locate, Camera, ShieldAlert, ShieldCheck, AlertTriangle, Globe
+  Locate, Camera, ShieldAlert, ShieldCheck, AlertTriangle, Globe,
+  MapPin, Bell, ArrowLeftRight
 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL + "/api";
 
 const translations = {
   ar: {
-    // Blocked screen
     blockedTitle: "خارج نطاق شبكة الشركة",
     blockedDesc: "لا يمكنك تسجيل الحضور من هذه الشبكة",
     mustConnectWifi: "يجب الاتصال بشبكة WiFi الشركة",
@@ -26,15 +26,12 @@ const translations = {
     step2: "اتصل بشبكة الشركة المحددة",
     step3: "أعد فتح هذه الصفحة",
     retryNetwork: "إعادة التحقق من الشبكة",
-    // Loading
     checkingNetwork: "جاري التحقق من الشبكة...",
     checkingNetworkDesc: "يتم فحص اتصالك بشبكة الشركة",
-    // Camera
     selfieCheckIn: "سيلفي تسجيل الحضور",
     selfieCheckOut: "سيلفي تسجيل الانصراف",
     capture: "التقاط",
     confirm: "تأكيد",
-    // Login
     attendanceTitle: "تسجيل الحضور",
     connectedTo: "متصل بشبكة:",
     phoneLabel: "رقم الهاتف",
@@ -43,7 +40,6 @@ const translations = {
     employeeCodeLabel: "الرقم الوظيفي",
     employeeCodePlaceholder: "مثال: EMP001",
     login: "تسجيل الدخول",
-    // Main
     verifiedNetwork: "شبكة مؤكدة:",
     secure: "آمن",
     todayStatus: "حالة الحضور اليوم",
@@ -57,16 +53,31 @@ const translations = {
     checkInSelfie: "حضور + سيلفي",
     checkOutDone: "تم الانصراف",
     checkOutSelfie: "انصراف + سيلفي",
-    gpsOptional: "تتبع GPS (اختياري)",
+    // GPS auto tracking
+    gpsAutoTitle: "تتبع GPS تلقائي",
+    gpsAutoDesc: "يتم تتبع موقعك تلقائياً بعد تسجيل الحضور",
+    gpsActivating: "جاري تفعيل GPS...",
     insideRange: "داخل نطاق العمل",
     outsideRange: "خارج نطاق العمل",
     lastUpdate: "آخر تحديث:",
-    stopGPS: "إيقاف GPS",
-    startGPS: "تفعيل GPS",
+    exitAlertTitle: "تنبيه: خارج نطاق العمل!",
+    exitAlertDesc: "أنت خارج نطاق موقع العمل المحدد",
+    distanceLabel: "المسافة:",
+    meters: "م",
+    // Exit log
+    exitLogTitle: "سجل الخروج من نطاق العمل",
+    exitTime: "وقت الخروج",
+    returnTime: "وقت العودة",
+    duration: "المدة",
+    distance: "المسافة",
+    statusOutside: "خارج النطاق",
+    statusReturned: "عاد للنطاق",
+    noExitLogs: "لا يوجد سجل خروج اليوم",
+    ongoing: "مستمر",
     // Instructions
     inst1: "النظام يعمل فقط من شبكة WiFi الشركة المحددة",
-    inst2: "التقط سيلفي لتسجيل الحضور أو الانصراف",
-    inst3: "بيانات الهاتف أو أي شبكة أخرى لن تعمل",
+    inst2: "يتم تفعيل GPS تلقائياً بعد تسجيل الحضور",
+    inst3: "سيتم تنبيهك عند الخروج من نطاق العمل",
     inst4: "جميع التسجيلات تحتاج موافقة المسؤول",
     // Toasts
     toastOutsideNetwork: "أنت خارج نطاق شبكة الشركة! لا يمكنك تسجيل الحضور",
@@ -76,10 +87,12 @@ const translations = {
     toastWelcome: "مرحباً",
     toastEmployeeNotFound: "لم يتم العثور على الموظف",
     toastMockGPS: "تم رصد موقع وهمي!",
-    toastTrackingOn: "تم تفعيل التتبع",
+    toastGpsAutoOn: "تم تفعيل تتبع GPS تلقائياً",
     toastLocationSendFail: "فشل في إرسال الموقع",
     toastBrowserNoGPS: "المتصفح لا يدعم GPS",
     toastLocationFail: "فشل في تحديد الموقع",
+    toastExitRange: "تنبيه! أنت خارج نطاق العمل",
+    toastReturnRange: "مرحباً بعودتك إلى نطاق العمل",
   },
   en: {
     blockedTitle: "Outside Company Network",
@@ -119,15 +132,28 @@ const translations = {
     checkInSelfie: "Check-in + Selfie",
     checkOutDone: "Checked Out",
     checkOutSelfie: "Check-out + Selfie",
-    gpsOptional: "GPS Tracking (optional)",
+    gpsAutoTitle: "Auto GPS Tracking",
+    gpsAutoDesc: "Your location is tracked automatically after check-in",
+    gpsActivating: "Activating GPS...",
     insideRange: "Inside work range",
     outsideRange: "Outside work range",
     lastUpdate: "Last update:",
-    stopGPS: "Stop GPS",
-    startGPS: "Start GPS",
+    exitAlertTitle: "Alert: Outside work range!",
+    exitAlertDesc: "You are outside the designated work area",
+    distanceLabel: "Distance:",
+    meters: "m",
+    exitLogTitle: "Work Range Exit Log",
+    exitTime: "Exit Time",
+    returnTime: "Return Time",
+    duration: "Duration",
+    distance: "Distance",
+    statusOutside: "Outside",
+    statusReturned: "Returned",
+    noExitLogs: "No exit records today",
+    ongoing: "Ongoing",
     inst1: "System works only from the designated company WiFi",
-    inst2: "Take a selfie to check in or check out",
-    inst3: "Mobile data or other networks will not work",
+    inst2: "GPS activates automatically after check-in",
+    inst3: "You will be alerted when leaving work area",
     inst4: "All records require manager approval",
     toastOutsideNetwork: "You are outside the company network! Attendance cannot be recorded",
     toastCameraFail: "Failed to open camera - please allow access",
@@ -136,10 +162,12 @@ const translations = {
     toastWelcome: "Welcome",
     toastEmployeeNotFound: "Employee not found",
     toastMockGPS: "Mock GPS detected!",
-    toastTrackingOn: "Tracking activated",
+    toastGpsAutoOn: "GPS tracking activated automatically",
     toastLocationSendFail: "Failed to send location",
     toastBrowserNoGPS: "Browser does not support GPS",
     toastLocationFail: "Failed to determine location",
+    toastExitRange: "Alert! You are outside the work area",
+    toastReturnRange: "Welcome back to the work area",
   }
 };
 
@@ -159,17 +187,9 @@ const detectMockGPS = (pos) => {
 };
 
 const LanguageToggle = ({ lang, setLang }) => (
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={() => {
-      const next = lang === "ar" ? "en" : "ar";
-      setLang(next);
-      localStorage.setItem("gps_attendance_lang", next);
-    }}
-    className="gap-2 font-medium"
-    data-testid="lang-toggle-btn"
-  >
+  <Button variant="outline" size="sm"
+    onClick={() => { const next = lang === "ar" ? "en" : "ar"; setLang(next); localStorage.setItem("gps_attendance_lang", next); }}
+    className="gap-2 font-medium" data-testid="lang-toggle-btn">
     <Globe className="w-4 h-4" />
     {lang === "ar" ? "English" : "عربي"}
   </Button>
@@ -180,33 +200,28 @@ const GPSAttendance = () => {
   const t = translations[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
 
-  // Auth
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [phone, setPhone] = useState("");
   const [employeeCode, setEmployeeCode] = useState("");
   const [employee, setEmployee] = useState(null);
   const [loginLoading, setLoginLoading] = useState(false);
   
-  // Network
   const [networkChecked, setNetworkChecked] = useState(false);
   const [networkChecking, setNetworkChecking] = useState(false);
   const [isCompanyNetwork, setIsCompanyNetwork] = useState(false);
   const [matchedLocation, setMatchedLocation] = useState(null);
   const [clientIP, setClientIP] = useState("");
   
-  // GPS
   const [isTracking, setIsTracking] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [error, setError] = useState(null);
   const [watchId, setWatchId] = useState(null);
-  const [locationStatus, setLocationStatus] = useState({ isWithinRange: false, distance: 0 });
+  const [locationStatus, setLocationStatus] = useState({ isWithinRange: true, distance: 0 });
   
-  // Attendance
   const [todayAttendance, setTodayAttendance] = useState(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   
-  // Selfie
   const [showCamera, setShowCamera] = useState(false);
   const [selfiePhoto, setSelfiePhoto] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
@@ -218,6 +233,10 @@ const GPSAttendance = () => {
   const [mockGpsDetected, setMockGpsDetected] = useState(false);
   const hasAutoCheckedIn = useRef(false);
   const hasAutoCheckedOut = useRef(false);
+  const gpsAutoStarted = useRef(false);
+
+  // Exit logs
+  const [exitLogs, setExitLogs] = useState([]);
 
   // Network check
   const checkNetwork = useCallback(async () => {
@@ -239,22 +258,24 @@ const GPSAttendance = () => {
 
   useEffect(() => { checkNetwork(); }, [checkNetwork]);
 
-  useEffect(() => {
-    (async () => { try { await axios.get(`${API}/tracking/settings`); } catch {} })();
-  }, []);
+  // Fetch exit logs
+  const fetchExitLogs = useCallback(async () => {
+    if (!employee) return;
+    try {
+      const res = await axios.get(`${API}/tracking/range-exit-logs/${employee.id}`);
+      setExitLogs(res.data);
+    } catch {}
+  }, [employee]);
 
   // Camera
   const startCamera = async (action, method = "wifi") => {
-    setPendingAction(action);
-    setPendingMethod(method);
-    setShowCamera(true);
+    setPendingAction(action); setPendingMethod(method); setShowCamera(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 480, height: 480 } });
       streamRef.current = stream;
       setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = stream; }, 100);
     } catch {
-      toast.error(t.toastCameraFail);
-      setShowCamera(false);
+      toast.error(t.toastCameraFail); setShowCamera(false);
     }
   };
 
@@ -277,6 +298,57 @@ const GPSAttendance = () => {
     if (streamRef.current) { streamRef.current.getTracks().forEach(tr => tr.stop()); streamRef.current = null; }
   };
 
+  // GPS tracking
+  const sendLocation = useCallback(async (pos) => {
+    if (!employee) return;
+    const mock = detectMockGPS(pos);
+    if (mock.is_mock) { setMockGpsDetected(true); toast.error(t.toastMockGPS); return; }
+    try {
+      const res = await axios.post(`${API}/tracking/location`, {
+        employee_id: employee.id, latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude, accuracy: pos.coords.accuracy
+      });
+      setCurrentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setLastUpdate(new Date());
+      const wasInside = locationStatus.isWithinRange;
+      setLocationStatus({ isWithinRange: res.data.is_within_range, distance: res.data.distance_from_work });
+      setError(null);
+
+      // Handle range events with toasts
+      if (res.data.range_event === "exit") {
+        toast.error(t.toastExitRange, { duration: 10000 });
+        fetchExitLogs();
+      } else if (res.data.range_event === "return") {
+        toast.success(t.toastReturnRange);
+        fetchExitLogs();
+      }
+    } catch { setError(t.toastLocationSendFail); }
+  }, [employee, t.toastMockGPS, t.toastLocationSendFail, t.toastExitRange, t.toastReturnRange, locationStatus.isWithinRange, fetchExitLogs]);
+
+  const startTracking = useCallback(() => {
+    if (!navigator.geolocation) { setError(t.toastBrowserNoGPS); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => { sendLocation(p); setIsTracking(true); },
+      () => { setError(t.toastLocationFail); },
+      { enableHighAccuracy: true, timeout: 30000 }
+    );
+    const id = navigator.geolocation.watchPosition(sendLocation, () => {}, { enableHighAccuracy: true, maximumAge: 10000 });
+    setWatchId(id);
+  }, [sendLocation, t.toastBrowserNoGPS, t.toastLocationFail]);
+
+  const stopTracking = useCallback(() => {
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    setWatchId(null); setIsTracking(false);
+  }, [watchId]);
+
+  // Auto-start GPS after check-in
+  const autoStartGPS = useCallback(() => {
+    if (gpsAutoStarted.current || !navigator.geolocation) return;
+    gpsAutoStarted.current = true;
+    toast.success(t.toastGpsAutoOn);
+    startTracking();
+  }, [startTracking, t.toastGpsAutoOn]);
+
   const confirmSelfieAndSubmit = async () => {
     if (!selfiePhoto || !pendingAction) return;
     setAttendanceLoading(true);
@@ -296,6 +368,8 @@ const GPSAttendance = () => {
         if (pendingAction === "check_in") {
           hasAutoCheckedIn.current = true;
           setTodayAttendance(p => ({ ...p, check_in: res.data.check_in_time, check_in_method: pendingMethod, gps_approval_status: "pending" }));
+          // Auto-start GPS after check-in
+          setTimeout(() => autoStartGPS(), 500);
         } else {
           hasAutoCheckedOut.current = true;
           setTodayAttendance(p => ({ ...p, check_out: res.data.check_out_time, check_out_method: pendingMethod, gps_checkout_approval_status: "pending" }));
@@ -323,40 +397,22 @@ const GPSAttendance = () => {
         setTodayAttendance(res.data.today_attendance);
         toast.success(`${t.toastWelcome} ${res.data.employee.name}`);
         const att = res.data.today_attendance;
-        hasAutoCheckedIn.current = !!(att?.check_in_method === "gps" || att?.check_in_method === "wifi" || att?.gps_check_in);
+        const wasCheckedIn = !!(att?.check_in_method === "gps" || att?.check_in_method === "wifi" || att?.gps_check_in);
+        hasAutoCheckedIn.current = wasCheckedIn;
         hasAutoCheckedOut.current = !!(att?.check_out_method === "gps" || att?.check_out_method === "wifi" || att?.gps_check_out);
+        // If already checked in, auto-start GPS
+        if (wasCheckedIn && !hasAutoCheckedOut.current) {
+          setTimeout(() => autoStartGPS(), 800);
+        }
       }
     } catch (err) { toast.error(err.response?.data?.detail || t.toastEmployeeNotFound); }
     finally { setLoginLoading(false); }
   };
 
-  // GPS
-  const sendLocation = useCallback(async (pos) => {
-    if (!employee) return;
-    const mock = detectMockGPS(pos);
-    if (mock.is_mock) { setMockGpsDetected(true); toast.error(t.toastMockGPS); return; }
-    try {
-      const res = await axios.post(`${API}/tracking/location`, { employee_id: employee.id, latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy });
-      setCurrentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLastUpdate(new Date());
-      setLocationStatus({ isWithinRange: res.data.is_within_range, distance: res.data.distance_from_work });
-      setError(null);
-    } catch { setError(t.toastLocationSendFail); }
-  }, [employee, t.toastMockGPS, t.toastLocationSendFail]);
+  // Fetch exit logs when employee is set
+  useEffect(() => { if (employee) fetchExitLogs(); }, [employee, fetchExitLogs]);
 
-  const startTracking = useCallback(() => {
-    if (!navigator.geolocation) { setError(t.toastBrowserNoGPS); return; }
-    navigator.geolocation.getCurrentPosition(
-      (p) => { sendLocation(p); setIsTracking(true); toast.success(t.toastTrackingOn); },
-      () => { setError(t.toastLocationFail); }, { enableHighAccuracy: true, timeout: 30000 }
-    );
-    setWatchId(navigator.geolocation.watchPosition(sendLocation, () => {}, { enableHighAccuracy: true }));
-  }, [sendLocation, t.toastBrowserNoGPS, t.toastLocationFail, t.toastTrackingOn]);
-
-  const stopTracking = useCallback(() => {
-    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-    setWatchId(null); setIsTracking(false);
-  }, [watchId]);
-
+  // Cleanup
   useEffect(() => () => { if (watchId !== null) navigator.geolocation.clearWatch(watchId); stopCamera(); }, [watchId]);
 
   const checkInDone = hasAutoCheckedIn.current;
@@ -388,13 +444,9 @@ const GPSAttendance = () => {
               </div>
             </div>
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700 font-medium flex items-center gap-2">
-                <Wifi className="w-4 h-4" />{t.requiredSteps}
-              </p>
+              <p className="text-sm text-blue-700 font-medium flex items-center gap-2"><Wifi className="w-4 h-4" />{t.requiredSteps}</p>
               <ol className="list-decimal list-inside text-sm text-blue-600 mt-2 space-y-1">
-                <li>{t.step1}</li>
-                <li>{t.step2}</li>
-                <li>{t.step3}</li>
+                <li>{t.step1}</li><li>{t.step2}</li><li>{t.step3}</li>
               </ol>
             </div>
             <Button onClick={checkNetwork} className="w-full h-12 text-lg" disabled={networkChecking} data-testid="retry-network-btn">
@@ -515,7 +567,7 @@ const GPSAttendance = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4" dir={dir}>
       <div className="max-w-md mx-auto space-y-4">
-        {/* Header: Employee + Network + Language */}
+        {/* Employee + Network */}
         <Card className="border-2 border-green-300">
           <CardContent className="pt-4">
             <div className="flex items-center gap-3 mb-3">
@@ -527,7 +579,7 @@ const GPSAttendance = () => {
                 <p className="text-xs text-muted-foreground">{employee?.employee_code} - {employee?.department}</p>
               </div>
               <LanguageToggle lang={lang} setLang={setLang} />
-              <Button variant="ghost" size="sm" onClick={() => { setIsLoggedIn(false); setEmployee(null); stopTracking(); }}>
+              <Button variant="ghost" size="sm" onClick={() => { setIsLoggedIn(false); setEmployee(null); stopTracking(); gpsAutoStarted.current = false; }}>
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -540,6 +592,26 @@ const GPSAttendance = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Exit Alert - Prominent warning when outside range */}
+        {isTracking && !locationStatus.isWithinRange && (
+          <Card className="border-2 border-red-400 bg-red-50 animate-pulse" data-testid="exit-alert-card">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center shrink-0">
+                  <Bell className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-red-700 text-base">{t.exitAlertTitle}</h3>
+                  <p className="text-sm text-red-600">{t.exitAlertDesc}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {t.distanceLabel} <strong>{Math.round(locationStatus.distance)} {t.meters}</strong>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Attendance Status */}
         <Card>
@@ -592,28 +664,90 @@ const GPSAttendance = () => {
           </CardContent>
         </Card>
 
-        {/* GPS (optional) */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
-              <Navigation className="w-4 h-4" />{t.gpsOptional}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {isTracking && (
-              <div className={`p-2 rounded-lg text-sm ${locationStatus.isWithinRange ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                <span>{locationStatus.isWithinRange ? t.insideRange : t.outsideRange}</span>
-                {locationStatus.distance > 0 && <span className="text-xs text-muted-foreground ms-2">({Math.round(locationStatus.distance)}{lang === "ar" ? "م" : "m"})</span>}
-              </div>
-            )}
-            {lastUpdate && <p className="text-xs text-center text-muted-foreground">{t.lastUpdate} {lastUpdate.toLocaleTimeString(dateLocale)}</p>}
-            {error && <p className="text-xs text-center text-red-500">{error}</p>}
-            <Button onClick={isTracking ? stopTracking : startTracking} variant="outline" size="sm"
-              className="w-full" disabled={mockGpsDetected} data-testid="tracking-toggle-btn">
-              {isTracking ? <><WifiOff className="w-4 h-4 me-1" />{t.stopGPS}</> : <><Locate className="w-4 h-4 me-1" />{t.startGPS}</>}
-            </Button>
-          </CardContent>
-        </Card>
+        {/* GPS Auto Tracking Status */}
+        {checkInDone && (
+          <Card className={`border-2 ${isTracking ? (locationStatus.isWithinRange ? 'border-green-300' : 'border-red-300') : 'border-gray-200'}`}
+            data-testid="gps-tracking-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Navigation className={`w-5 h-5 ${isTracking ? 'text-green-600 animate-pulse' : 'text-gray-400'}`} />
+                {t.gpsAutoTitle}
+              </CardTitle>
+              <CardDescription className="text-xs">{t.gpsAutoDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {isTracking ? (
+                <div className={`p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${locationStatus.isWithinRange ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                  <MapPin className="w-4 h-4" />
+                  <span>{locationStatus.isWithinRange ? t.insideRange : t.outsideRange}</span>
+                  {locationStatus.distance > 0 && (
+                    <span className="text-xs ms-auto">({Math.round(locationStatus.distance)} {t.meters})</span>
+                  )}
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg text-sm bg-blue-50 border border-blue-200 text-blue-700 flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>{t.gpsActivating}</span>
+                </div>
+              )}
+              {lastUpdate && (
+                <p className="text-xs text-center text-muted-foreground">
+                  {t.lastUpdate} {lastUpdate.toLocaleTimeString(dateLocale)}
+                </p>
+              )}
+              {error && <p className="text-xs text-center text-red-500">{error}</p>}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Exit Logs */}
+        {checkInDone && (
+          <Card data-testid="exit-logs-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ArrowLeftRight className="w-5 h-5 text-orange-500" />
+                {t.exitLogTitle}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {exitLogs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-3" data-testid="no-exit-logs">
+                  {t.noExitLogs}
+                </p>
+              ) : (
+                <div className="space-y-2" data-testid="exit-logs-list">
+                  {exitLogs.map((log, i) => (
+                    <div key={log.id || i} className={`p-3 rounded-lg border text-sm ${log.status === 'outside' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`}
+                      data-testid={`exit-log-${i}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <Badge variant="outline" className={`text-xs ${log.status === 'outside' ? 'text-red-600 border-red-300' : 'text-orange-600 border-orange-300'}`}>
+                          {log.status === "outside" ? t.statusOutside : t.statusReturned}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {log.exit_distance} {t.meters}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs mt-2">
+                        <div>
+                          <p className="text-muted-foreground">{t.exitTime}</p>
+                          <p className="font-medium">{formatTime(log.exit_time, lang)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">{t.returnTime}</p>
+                          <p className="font-medium">{log.return_time ? formatTime(log.return_time, lang) : t.ongoing}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">{t.duration}</p>
+                          <p className="font-medium">{log.duration_formatted || "--"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Instructions */}
         <Card>

@@ -695,38 +695,83 @@ async def update_employee_location(location_data: dict):
         upsert=True
     )
     
-    # Check if exited work range and create alert
-    if settings.get("alert_on_exit") and not is_within:
-        # Check if already has unread exit alert
-        existing_alert = await db.tracking_alerts.find_one({
+    # Detect range transition (exit/return) by comparing with previous state
+    prev_location = await db.employee_current_locations.find_one(
+        {"employee_id": employee.get("id")}, {"_id": 0}
+    )
+    was_within = prev_location.get("is_within_range", True) if prev_location else True
+    range_event = None
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    if was_within and not is_within:
+        # Employee just LEFT the work range
+        exit_log = {
+            "id": str(uuid.uuid4()),
             "employee_id": employee.get("id"),
+            "employee_name": employee.get("name", ""),
+            "employee_code": employee.get("employee_code", ""),
+            "date": today,
+            "exit_time": timestamp,
+            "exit_latitude": latitude,
+            "exit_longitude": longitude,
+            "exit_distance": round(distance, 2) if distance else 0,
+            "return_time": None,
+            "return_distance": None,
+            "duration_outside_seconds": None,
+            "work_location_name": location_name,
+            "status": "outside",
+            "created_at": timestamp
+        }
+        await db.range_exit_logs.insert_one(exit_log)
+        range_event = "exit"
+
+        # Create alert for manager
+        alert = {
+            "id": str(uuid.uuid4()),
+            "employee_id": employee.get("id"),
+            "employee_name": employee.get("name", ""),
+            "employee_code": employee.get("employee_code", ""),
             "alert_type": "exit_range",
+            "message": f"الموظف {employee.get('name')} خرج من نطاق العمل. المسافة: {round(distance)} متر",
+            "latitude": latitude,
+            "longitude": longitude,
+            "distance_from_work": round(distance, 2),
+            "is_read": False,
             "is_dismissed": False,
-            "created_at": {"$gte": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()}
-        })
-        
-        if not existing_alert:
-            alert = {
-                "id": str(uuid.uuid4()),
-                "employee_id": employee.get("id"),
-                "employee_name": employee.get("name", ""),
-                "employee_code": employee.get("employee_code", ""),
-                "alert_type": "exit_range",
-                "message": f"الموظف {employee.get('name')} خرج من نطاق العمل. المسافة: {round(distance)} متر",
-                "latitude": latitude,
-                "longitude": longitude,
-                "distance_from_work": round(distance, 2),
-                "is_read": False,
-                "is_dismissed": False,
-                "created_at": timestamp
-            }
-            await db.tracking_alerts.insert_one(alert)
-    
+            "created_at": timestamp
+        }
+        await db.tracking_alerts.insert_one(alert)
+
+    elif not was_within and is_within:
+        # Employee just RETURNED to work range
+        open_log = await db.range_exit_logs.find_one(
+            {"employee_id": employee.get("id"), "status": "outside", "date": today},
+            sort=[("exit_time", -1)]
+        )
+        if open_log:
+            try:
+                exit_dt = datetime.fromisoformat(open_log["exit_time"].replace("Z", "+00:00"))
+                return_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                duration = int((return_dt - exit_dt).total_seconds())
+            except Exception:
+                duration = 0
+            await db.range_exit_logs.update_one(
+                {"_id": open_log["_id"]},
+                {"$set": {
+                    "return_time": timestamp,
+                    "return_distance": round(distance, 2) if distance else 0,
+                    "duration_outside_seconds": duration,
+                    "status": "returned"
+                }}
+            )
+        range_event = "return"
+
     return {
         "success": True,
         "is_within_range": is_within,
         "distance_from_work": round(distance, 2) if distance else 0,
-        "work_location": location_name
+        "work_location": location_name,
+        "range_event": range_event
     }
 
 
@@ -1505,3 +1550,69 @@ async def get_attendance_by_location_report(date: Optional[str] = None):
         "employees": list(employee_data.values()),
         "total_employees_tracked": len(employee_data)
     }
+
+
+# ==================== RANGE EXIT LOGS ====================
+
+@router.get("/range-exit-logs")
+async def get_range_exit_logs(date: Optional[str] = None, employee_id: Optional[str] = None):
+    """جلب سجل خروج/دخول الموظفين من نطاق العمل"""
+    query = {}
+    if date:
+        query["date"] = date
+    else:
+        query["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if employee_id:
+        query["employee_id"] = employee_id
+
+    logs = await db.range_exit_logs.find(query, {"_id": 0}).sort("exit_time", -1).to_list(200)
+
+    for log in logs:
+        dur = log.get("duration_outside_seconds")
+        if dur is not None:
+            mins = dur // 60
+            secs = dur % 60
+            log["duration_formatted"] = f"{mins}:{secs:02d}"
+        elif log.get("status") == "outside" and log.get("exit_time"):
+            try:
+                exit_dt = datetime.fromisoformat(log["exit_time"].replace("Z", "+00:00"))
+                now = datetime.now(timezone.utc)
+                ongoing = int((now - exit_dt).total_seconds())
+                mins = ongoing // 60
+                secs = ongoing % 60
+                log["duration_formatted"] = f"{mins}:{secs:02d}"
+                log["duration_outside_seconds"] = ongoing
+            except Exception:
+                log["duration_formatted"] = "--"
+    return logs
+
+
+@router.get("/range-exit-logs/{employee_id}")
+async def get_employee_range_exit_logs(employee_id: str, date: Optional[str] = None):
+    """جلب سجل خروج/دخول موظف محدد من نطاق العمل"""
+    query = {"employee_id": employee_id}
+    if date:
+        query["date"] = date
+    else:
+        query["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    logs = await db.range_exit_logs.find(query, {"_id": 0}).sort("exit_time", -1).to_list(50)
+
+    for log in logs:
+        dur = log.get("duration_outside_seconds")
+        if dur is not None:
+            mins = dur // 60
+            secs = dur % 60
+            log["duration_formatted"] = f"{mins}:{secs:02d}"
+        elif log.get("status") == "outside" and log.get("exit_time"):
+            try:
+                exit_dt = datetime.fromisoformat(log["exit_time"].replace("Z", "+00:00"))
+                now = datetime.now(timezone.utc)
+                ongoing = int((now - exit_dt).total_seconds())
+                mins = ongoing // 60
+                secs = ongoing % 60
+                log["duration_formatted"] = f"{mins}:{secs:02d}"
+                log["duration_outside_seconds"] = ongoing
+            except Exception:
+                log["duration_formatted"] = "--"
+    return logs
