@@ -2707,15 +2707,16 @@ const HR = () => {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Badge variant={record.source === "fingerprint" ? "success" : 
-                                             record.check_in_method === "gps" ? "default" :
+                                             (record.check_in_method === "gps" || record.check_in_method === "wifi") ? "default" :
                                              record.source === "external_work_approved" ? "default" :
                                              record.source === "excuse_approved" ? "default" :
                                              record.source === "leave_approved" ? "default" : "secondary"}
-                                     className={record.check_in_method === "gps" ? "bg-blue-500" :
+                                     className={(record.check_in_method === "gps" || record.check_in_method === "wifi") ? "bg-blue-500" :
                                                record.source === "external_work_approved" ? "bg-orange-500" :
                                                record.source === "excuse_approved" ? "bg-yellow-500" :
                                                record.source === "leave_approved" ? "bg-purple-500" : ""}>
                                 {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : 
+                                 record.check_in_method === "wifi" ? "WiFi" :
                                  record.check_in_method === "gps" ? "GPS" :
                                  record.source === "zkteco_import" ? "ZKTeco" :
                                  record.source === "excel_import" ? "Excel" :
@@ -2733,11 +2734,14 @@ const HR = () => {
                           </TableCell>
                           {/* GPS Check-in */}
                           <TableCell data-testid={`gps-checkin-${idx}`}>
-                            {record.gps_check_in ? (
+                            {(record.gps_check_in || (record.check_in_method === "gps" || record.check_in_method === "wifi")) ? (() => {
+                              const timeVal = record.gps_check_in || record.check_in;
+                              const fmtTime = timeVal && timeVal.includes && timeVal.includes("T") 
+                                ? new Date(timeVal).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) 
+                                : timeVal || "-";
+                              return (
                               <div className="flex flex-col items-start gap-1">
-                                <span className="text-sm font-medium">
-                                  {record.gps_check_in.includes("T") ? new Date(record.gps_check_in).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : record.gps_check_in}
-                                </span>
+                                <span className="text-sm font-medium">{fmtTime}</span>
                                 {record.gps_approval_status === "pending" && (
                                   <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300">
                                     {language === "ar" ? "بانتظار الموافقة" : "Pending"}
@@ -2753,16 +2757,27 @@ const HR = () => {
                                     {language === "ar" ? "مرفوض" : "Rejected"}
                                   </Badge>
                                 )}
+                                {record.check_in_selfie_url && (
+                                  <a href={`${process.env.REACT_APP_BACKEND_URL}${record.check_in_selfie_url}`} target="_blank" rel="noreferrer">
+                                    <Badge variant="outline" className="text-xs bg-purple-50 cursor-pointer hover:bg-purple-100">
+                                      {language === "ar" ? "سيلفي" : "Selfie"}
+                                    </Badge>
+                                  </a>
+                                )}
                               </div>
-                            ) : "-"}
+                              );
+                            })() : "-"}
                           </TableCell>
                           {/* GPS Check-out */}
                           <TableCell data-testid={`gps-checkout-${idx}`}>
-                            {record.gps_check_out ? (
+                            {(record.gps_check_out || (record.check_out_method === "gps" || record.check_out_method === "wifi")) ? (() => {
+                              const timeVal = record.gps_check_out || record.check_out;
+                              const fmtTime = timeVal && timeVal.includes && timeVal.includes("T") 
+                                ? new Date(timeVal).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) 
+                                : timeVal || "-";
+                              return (
                               <div className="flex flex-col items-start gap-1">
-                                <span className="text-sm font-medium">
-                                  {record.gps_check_out.includes("T") ? new Date(record.gps_check_out).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : record.gps_check_out}
-                                </span>
+                                <span className="text-sm font-medium">{fmtTime}</span>
                                 {record.gps_checkout_approval_status === "pending" && (
                                   <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300">
                                     {language === "ar" ? "بانتظار الموافقة" : "Pending"}
@@ -2778,8 +2793,16 @@ const HR = () => {
                                     {language === "ar" ? "مرفوض" : "Rejected"}
                                   </Badge>
                                 )}
+                                {record.check_out_selfie_url && (
+                                  <a href={`${process.env.REACT_APP_BACKEND_URL}${record.check_out_selfie_url}`} target="_blank" rel="noreferrer">
+                                    <Badge variant="outline" className="text-xs bg-purple-50 cursor-pointer hover:bg-purple-100">
+                                      {language === "ar" ? "سيلفي" : "Selfie"}
+                                    </Badge>
+                                  </a>
+                                )}
                               </div>
-                            ) : "-"}
+                              );
+                            })() : "-"}
                           </TableCell>
                         </TableRow>
                       ))
