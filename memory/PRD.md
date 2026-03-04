@@ -29,6 +29,7 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] **Bilingual support (Arabic/English)** - language toggle on /gps-attendance, localStorage persistence (Feb 2026)
 - [x] **Auto GPS tracking** - GPS activates automatically after check-in, no button needed (Feb 2026)
 - [x] **Range exit alerts** - instant alert when employee leaves work area + exit/return log with timestamps (Feb 2026)
+- [x] **GPS columns in HR report** - added حضور GPS + انصراف GPS columns with approval status badges (Mar 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification
