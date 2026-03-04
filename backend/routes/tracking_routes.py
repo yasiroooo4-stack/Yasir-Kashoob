@@ -481,6 +481,31 @@ async def get_security_logs():
     return logs
 
 
+@router.post("/wifi-verify")
+async def verify_wifi_password(data: dict):
+    """التحقق من الرقم السري لشبكة WiFi لموقع العمل"""
+    location_id = data.get("location_id")
+    wifi_password = data.get("wifi_password", "")
+    
+    if not location_id:
+        raise HTTPException(status_code=400, detail="بيانات ناقصة")
+    
+    settings = await get_tracking_settings()
+    work_locations = settings.get("work_locations", [])
+    
+    for loc in work_locations:
+        if loc.get("id") == location_id:
+            stored_password = loc.get("wifi_password", "")
+            if not stored_password:
+                raise HTTPException(status_code=400, detail="لم يتم إعداد الرقم السري لهذه الشبكة")
+            if wifi_password == stored_password:
+                return {"verified": True, "location_name": loc.get("name"), "wifi_ssid": loc.get("wifi_ssid")}
+            else:
+                return {"verified": False, "message": "الرقم السري غير صحيح"}
+    
+    raise HTTPException(status_code=404, detail="الموقع غير موجود")
+
+
 # ==================== LOCATION UPDATES ====================
 
 async def record_location_attendance(employee: dict, is_within: bool, timestamp: str):
