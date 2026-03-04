@@ -687,6 +687,12 @@ async def update_employee_location(location_data: dict):
     # Save to history
     await db.employee_locations.insert_one(location_record)
     
+    # Get PREVIOUS state BEFORE updating current location
+    prev_location = await db.employee_current_locations.find_one(
+        {"employee_id": employee.get("id")}, {"_id": 0}
+    )
+    was_within = prev_location.get("is_within_range", True) if prev_location else True
+    
     # Update current location (upsert) - exclude _id and id to avoid immutable field error
     current_location_data = {k: v for k, v in location_record.items() if k not in ["_id", "id"]}
     await db.employee_current_locations.update_one(
@@ -695,11 +701,7 @@ async def update_employee_location(location_data: dict):
         upsert=True
     )
     
-    # Detect range transition (exit/return) by comparing with previous state
-    prev_location = await db.employee_current_locations.find_one(
-        {"employee_id": employee.get("id")}, {"_id": 0}
-    )
-    was_within = prev_location.get("is_within_range", True) if prev_location else True
+    # Detect range transition (exit/return)
     range_event = None
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -1616,3 +1618,17 @@ async def get_employee_range_exit_logs(employee_id: str, date: Optional[str] = N
             except Exception:
                 log["duration_formatted"] = "--"
     return logs
+
+
+# ==================== CLEAN TEST DATA ====================
+
+@router.delete("/clean-test-data")
+async def clean_test_data():
+    """حذف جميع بيانات التتبع التجريبية"""
+    results = {}
+    results["employee_locations"] = (await db.employee_locations.delete_many({})).deleted_count
+    results["employee_current_locations"] = (await db.employee_current_locations.delete_many({})).deleted_count
+    results["range_exit_logs"] = (await db.range_exit_logs.delete_many({})).deleted_count
+    results["tracking_alerts"] = (await db.tracking_alerts.delete_many({})).deleted_count
+    results["security_logs"] = (await db.security_logs.delete_many({})).deleted_count
+    return {"success": True, "deleted": results}

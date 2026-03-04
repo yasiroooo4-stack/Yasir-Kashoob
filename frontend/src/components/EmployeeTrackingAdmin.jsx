@@ -97,6 +97,8 @@ const EmployeeTrackingAdmin = () => {
   
   // Map display mode: "gps" (متصل GPS) or "attendance" (حاضر بالبصمة)
   const [mapDisplayMode, setMapDisplayMode] = useState("gps");
+  const hasFittedBounds = useRef(false);
+  const prevDisplayMode = useRef("gps");
   const [attendanceBasedEmployees, setAttendanceBasedEmployees] = useState([]);
   const [attendanceMapDate, setAttendanceMapDate] = useState(new Date().toISOString().split('T')[0]);
   
@@ -299,306 +301,182 @@ const EmployeeTrackingAdmin = () => {
 
   // Update markers when employees change - show all employees with location
   useEffect(() => {
-    console.log("Marker update effect triggered", {
-      hasMap: !!mapInstanceRef.current,
-      mapReady,
-      activeTab,
-      trackedCount: trackedEmployees.length,
-      allCount: allEmployees.length,
-      mapDisplayMode,
-      attendanceBasedCount: attendanceBasedEmployees.length
-    });
-    
-    if (!mapInstanceRef.current || !mapReady || activeTab !== "map") {
-      console.log("Skipping marker update - map not ready or wrong tab");
-      return;
-    }
+    if (!mapInstanceRef.current || !mapReady || activeTab !== "map") return;
     
     import('leaflet').then((L) => {
-      // Clear old markers
-      Object.values(markersRef.current).forEach(marker => {
-        try { marker.remove(); } catch(e) {}
-      });
-      markersRef.current = {};
-      
       // Choose data source based on display mode
       let employeesToShow = [];
       
-      console.log("Map display mode:", mapDisplayMode, "Attendance employees:", attendanceBasedEmployees.length);
-      
       if (mapDisplayMode === "attendance") {
-        // Show employees from attendance (fingerprint) system
-        console.log("Using attendance mode, employees:", attendanceBasedEmployees.length);
         attendanceBasedEmployees.forEach(emp => {
           if (emp.latitude && emp.longitude) {
-            employeesToShow.push({
-              ...emp,
-              isOnline: emp.attendance_status === "present", // Green if present, gray if checked out
-              isFromAttendance: true
-            });
+            employeesToShow.push({ ...emp, isOnline: emp.attendance_status === "present", isFromAttendance: true });
           }
         });
       } else {
-        // GPS mode - original logic
-        // Add currently tracked employees (online now)
+        // GPS mode
         trackedEmployees.forEach(emp => {
-          if (emp.latitude && emp.longitude) {
-            employeesToShow.push({
-              ...emp,
-              isOnline: true
-            });
-          }
+          if (emp.latitude && emp.longitude) employeesToShow.push({ ...emp, isOnline: true });
         });
         
-        // Add employees with last_location who are not currently tracked
+        // Add offline employees
         const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
         allEmployees.forEach(emp => {
-          if (emp.last_location && emp.last_location.latitude && !trackedIds.has(emp.id)) {
+          if (!trackedIds.has(emp.id) && emp.last_latitude && emp.last_longitude) {
             employeesToShow.push({
+              ...emp,
               employee_id: emp.id,
-              employee_name: emp.name,
-              employee_code: emp.employee_code,
-              photo_url: emp.photo_url,
-              civil_id: emp.civil_id || emp.national_id,
-              latitude: emp.last_location.latitude,
-              longitude: emp.last_location.longitude,
-              distance_from_work: emp.last_location.distance_from_work,
-              is_within_range: emp.last_location.is_within_range,
-              created_at: emp.last_location.last_updated,
-              isOnline: false
+              latitude: emp.last_latitude,
+              longitude: emp.last_longitude,
+              isOnline: false,
+              created_at: emp.last_location_time
             });
           }
         });
       }
       
-      console.log("Employees to show on map:", employeesToShow.length, employeesToShow);
+      // Track which marker IDs are in the new data
+      const newIds = new Set();
+      const isAr = language === "ar";
+      const locale = isAr ? 'ar-SA' : 'en-US';
       
-      if (employeesToShow.length === 0) {
-        console.log("No employees to show on map");
-        return;
-      }
+      const fmtTime = (val) => {
+        if (!val || val === "None") return "-";
+        if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+        try { const d = new Date(val); if (!isNaN(d.getTime())) return d.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit'}); } catch {}
+        return val;
+      };
       
-      const boundsArray = [];
-      
-      // Add markers for all employees
       employeesToShow.forEach(emp => {
-        if (emp.latitude && emp.longitude) {
-          boundsArray.push([emp.latitude, emp.longitude]);
-            
-          // Get employee photo or first letter
-          const photoUrl = emp.photo_url;
-          const empName = emp.employee_name || emp.name || 'موظف';
-          const firstLetter = empName.charAt(0) || '?';
-          const shortName = empName.split(' ').slice(0, 2).join(' ');
-          const civilId = emp.civil_id || emp.employee_code || '';
-          const isOnline = emp.isOnline;
-          const distance = emp.distance_from_work || 0;
-          
-          // Determine marker color based on GPS status and attendance
-          // Green: inside geofence (GPS active)
-          // Red: outside geofence OR checked out
-          // Blue: present via fingerprint only (no GPS)
-          // Gray: offline (GPS mode only)
-          let markerColor = '#6b7280'; // Default gray
-          let statusText = '';
-          
-          if (emp.isFromAttendance) {
-            // Attendance mode - use marker_color from API
-            const colorMap = {
-              'green': '#22c55e',
-              'red': '#ef4444',
-              'blue': '#3b82f6',
-              'gray': '#6b7280'
-            };
-            markerColor = colorMap[emp.marker_color] || '#3b82f6';
-            statusText = emp.status_text || '';
-          } else {
-            // GPS mode
-            if (isOnline) {
-              markerColor = emp.is_within_range ? '#22c55e' : '#ef4444';
-              statusText = emp.is_within_range ? (language === "ar" ? 'داخل النطاق' : 'Inside Range') : (language === "ar" ? 'خارج النطاق' : 'Outside Range');
-            } else {
-              markerColor = '#6b7280';
-              statusText = language === "ar" ? 'غير متصل' : 'Offline';
-            }
-          }
-          
-          const bgColor = markerColor;
-          
-          const icon = L.divIcon({
-            className: 'custom-marker-with-name',
-            html: `
-              <div style="
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                transform: translateX(-50%);
-                opacity: ${isOnline ? '1' : '0.7'};
-              ">
-                <div style="
-                  background: ${isOnline ? bgColor : '#6b7280'};
-                  width: 50px;
-                  height: 50px;
-                  border-radius: 50%;
-                  border: 3px solid ${isOnline ? 'white' : '#d1d5db'};
-                  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 18px;
-                  color: white;
-                  font-weight: bold;
-                  overflow: hidden;
-                ">
-                  ${photoUrl 
-                    ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${firstLetter}</span>`
-                    : firstLetter
-                  }
-                </div>
-                <div style="
-                  background: rgba(0,0,0,0.85);
-                  color: white;
-                  padding: 4px 10px;
-                  border-radius: 12px;
-                  font-size: 12px;
-                  font-weight: bold;
-                  margin-top: 4px;
-                  white-space: nowrap;
-                  max-width: 150px;
-                  text-align: center;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                ">
-                  ${shortName}
-                  <div style="font-size: 10px; color: #aaa; margin-top: 2px;">${civilId}</div>
-                </div>
+        const markerId = emp.employee_id || emp.id;
+        newIds.add(markerId);
+        
+        const empName = emp.employee_name || emp.name || "";
+        const firstLetter = empName.charAt(0) || "?";
+        const isOnline = emp.isOnline;
+        const civilId = emp.civil_id || emp.civil_id_number || "";
+        const photoUrl = emp.photo ? `${process.env.REACT_APP_BACKEND_URL}/api/uploads/${emp.photo}` : null;
+        const distance = emp.distance_from_work || 0;
+        
+        let markerColor, statusText, bgColor;
+        
+        if (emp.isFromAttendance) {
+          markerColor = emp.attendance_status === "present" ? '#22c55e' : '#ef4444';
+          statusText = isAr
+            ? (emp.attendance_status === "checked_out" ? 'انصرف' : `حاضر (بصمة)`)
+            : (emp.attendance_status === "checked_out" ? 'Checked Out' : 'Present (Fingerprint)');
+          bgColor = emp.attendance_status === "present" ? '#22c55e' : '#ef4444';
+        } else if (emp.gps_status === 'inside') {
+          markerColor = '#22c55e'; bgColor = '#22c55e';
+          statusText = isAr ? 'داخل النطاق' : 'Inside Range';
+        } else if (emp.gps_status === 'outside') {
+          markerColor = '#ef4444'; bgColor = '#ef4444';
+          statusText = isAr ? 'خارج النطاق' : 'Outside Range';
+        } else if (isOnline) {
+          markerColor = emp.is_within_range ? '#22c55e' : '#ef4444';
+          statusText = emp.is_within_range ? (isAr ? 'داخل النطاق' : 'Inside Range') : (isAr ? 'خارج النطاق' : 'Outside Range');
+          bgColor = markerColor;
+        } else {
+          markerColor = '#6b7280'; bgColor = '#6b7280';
+          statusText = isAr ? 'غير متصل' : 'Offline';
+        }
+        
+        let popupStatus = statusText;
+        if (!isAr) {
+          if (emp.gps_status === 'inside') popupStatus = 'Inside Range';
+          else if (emp.gps_status === 'outside') popupStatus = 'Outside Range';
+          else if (emp.isFromAttendance && emp.attendance_status === 'checked_out') popupStatus = 'Checked Out';
+          else if (emp.isFromAttendance) popupStatus = 'Present (Fingerprint)';
+          else if (isOnline) popupStatus = emp.is_within_range ? 'Inside Range' : 'Outside Range';
+          else popupStatus = 'Offline';
+        }
+        
+        const popupHtml = `
+          <div style="text-align: ${isAr ? 'right' : 'left'}; direction: ${isAr ? 'rtl' : 'ltr'}; min-width: 240px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
+              ${photoUrl 
+                ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${bgColor};" onerror="this.style.display='none'" />`
+                : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${bgColor};">${firstLetter}</div>`
+              }
+              <div>
+                <b style="font-size: 16px; color: #333;">${empName}</b><br/>
+                <span style="color: #666; font-size: 13px;">${isAr ? 'كود' : 'Code'}: ${emp.employee_code || '-'}</span><br/>
+                <span style="color: #666; font-size: 13px;">${isAr ? 'هوية' : 'ID'}: ${civilId || '-'}</span>
+                ${emp.phone ? `<br/><span style="color: #666; font-size: 13px;">📱 ${emp.phone}</span>` : ''}
               </div>
-            `,
-            iconSize: [150, 90],
-            iconAnchor: [75, 45]
-          });
-          
-          const isAr = language === "ar";
-          const locale = isAr ? 'ar-SA' : 'en-US';
-          
-          // Safe time formatter - handles "HH:MM" and ISO strings
-          const fmtTime = (val) => {
-            if (!val || val === "None") return "-";
-            if (/^\d{1,2}:\d{2}$/.test(val)) return val;
-            try { const d = new Date(val); if (!isNaN(d.getTime())) return d.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit'}); } catch {}
-            return val;
-          };
-          
-          // Bilingual status text
-          let popupStatus = statusText;
-          if (!isAr) {
-            if (emp.gps_status === 'inside') popupStatus = 'Inside Range';
-            else if (emp.gps_status === 'outside') popupStatus = 'Outside Range';
-            else if (emp.isFromAttendance && emp.attendance_status === 'checked_out') popupStatus = 'Checked Out';
-            else if (emp.isFromAttendance) popupStatus = 'Present (Fingerprint)';
-            else if (isOnline) popupStatus = emp.is_within_range ? 'Inside Range' : 'Outside Range';
-            else popupStatus = 'Offline';
-          }
-          
+            </div>
+            <div style="padding:8px 12px;border-radius:8px;background:${bgColor}20;color:${bgColor};font-weight:bold;text-align:center;margin-bottom:8px;font-size:14px;">${popupStatus}</div>
+            ${emp.work_location_name ? `<div style="padding:6px 10px;border-radius:6px;background:#f0f9ff;color:#0369a1;text-align:center;margin-bottom:8px;font-size:12px;">📍 ${emp.work_location_name}</div>` : ''}
+            <div style="padding:6px 10px;border-radius:6px;background:${emp.gps_status === 'inside' ? '#dcfce7' : emp.gps_status === 'outside' ? '#fee2e2' : '#f3f4f6'};color:${emp.gps_status === 'inside' ? '#16a34a' : emp.gps_status === 'outside' ? '#dc2626' : '#666'};text-align:center;margin-bottom:8px;font-size:12px;">
+              ${emp.gps_status === 'inside' ? (isAr ? '🟢 GPS داخل النطاق' : '🟢 GPS Inside Range') : 
+                emp.gps_status === 'outside' ? (isAr ? '🔴 GPS خارج النطاق' : '🔴 GPS Outside Range') : 
+                emp.isFromAttendance ? (isAr ? '📟 حاضر بالبصمة' : '📟 Present via Fingerprint') : 
+                (isOnline ? (isAr ? '🟢 متصل الآن' : '🟢 Online') : (isAr ? '⚪ غير متصل' : '⚪ Offline'))}
+            </div>
+            <div style="font-size:13px;color:#666;background:#f5f5f5;padding:8px;border-radius:6px;">
+              ${emp.check_in_time ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${isAr ? 'وقت الدخول:' : 'Check-in:'}</span><b style="color:#16a34a;">${fmtTime(emp.check_in_time)}</b></div>` : ''}
+              ${emp.check_out_time && emp.check_out_time !== 'None' ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${isAr ? 'وقت الخروج:' : 'Check-out:'}</span><b style="color:#dc2626;">${fmtTime(emp.check_out_time)}</b></div>` : ''}
+              ${distance > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${isAr ? 'المسافة:' : 'Distance:'}</span><b style="color:#333;">${distance < 1000 ? `${Math.round(distance)} ${isAr ? 'متر' : 'm'}` : `${(distance / 1000).toFixed(1)} ${isAr ? 'كم' : 'km'}`}</b></div>` : ''}
+              <div style="display:flex;justify-content:space-between;"><span>${isAr ? 'آخر تحديث:' : 'Last update:'}</span><b style="color:#333;">${fmtTime(emp.created_at)}</b></div>
+            </div>
+          </div>`;
+        
+        const icon = L.divIcon({
+          className: 'custom-marker-with-name',
+          html: `<div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: all;">
+            ${photoUrl 
+              ? `<div style="width:40px;height:40px;border-radius:50%;border:3px solid ${markerColor};overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+                  <img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;\\'>${firstLetter}</div>'" />
+                </div>`
+              : `<div style="width:40px;height:40px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;border:3px solid ${markerColor};box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+                  ${firstLetter}
+                </div>`
+            }
+            <div style="background:white;padding:2px 6px;border-radius:4px;margin-top:2px;font-size:11px;font-weight:bold;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;">
+              ${empName.split(' ').slice(0,2).join(' ')}
+            </div>
+          </div>`,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0],
+          popupAnchor: [0, -50]
+        });
+        
+        // Update existing marker or create new one
+        if (markersRef.current[markerId]) {
+          const marker = markersRef.current[markerId];
+          marker.setLatLng([emp.latitude, emp.longitude]);
+          marker.setIcon(icon);
+          marker.setPopupContent(popupHtml);
+        } else {
           const marker = L.marker([emp.latitude, emp.longitude], { icon })
             .addTo(mapInstanceRef.current)
-            .bindPopup(`
-              <div style="text-align: ${isAr ? 'right' : 'left'}; direction: ${isAr ? 'rtl' : 'ltr'}; min-width: 240px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
-                  ${photoUrl 
-                    ? `<img src="${photoUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid ${bgColor};" onerror="this.style.display='none'" />`
-                    : `<div style="width:60px;height:60px;border-radius:50%;background:#8B5A2B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid ${bgColor};">${firstLetter}</div>`
-                  }
-                  <div>
-                    <b style="font-size: 16px; color: #333;">${empName}</b><br/>
-                    <span style="color: #666; font-size: 13px;">${isAr ? 'كود' : 'Code'}: ${emp.employee_code || '-'}</span><br/>
-                    <span style="color: #666; font-size: 13px;">${isAr ? 'هوية' : 'ID'}: ${civilId || '-'}</span>
-                    ${emp.phone ? `<br/><span style="color: #666; font-size: 13px;">📱 ${emp.phone}</span>` : ''}
-                  </div>
-                </div>
-                <div style="
-                  padding: 8px 12px;
-                  border-radius: 8px;
-                  background: ${bgColor}20;
-                  color: ${bgColor};
-                  font-weight: bold;
-                  text-align: center;
-                  margin-bottom: 8px;
-                  font-size: 14px;
-                ">
-                  ${popupStatus}
-                </div>
-                ${emp.work_location_name ? `
-                <div style="
-                  padding: 6px 10px;
-                  border-radius: 6px;
-                  background: #f0f9ff;
-                  color: #0369a1;
-                  text-align: center;
-                  margin-bottom: 8px;
-                  font-size: 12px;
-                ">
-                  📍 ${emp.work_location_name}
-                </div>
-                ` : ''}
-                <div style="
-                  padding: 6px 10px;
-                  border-radius: 6px;
-                  background: ${emp.gps_status === 'inside' ? '#dcfce7' : emp.gps_status === 'outside' ? '#fee2e2' : '#f3f4f6'};
-                  color: ${emp.gps_status === 'inside' ? '#16a34a' : emp.gps_status === 'outside' ? '#dc2626' : '#666'};
-                  text-align: center;
-                  margin-bottom: 8px;
-                  font-size: 12px;
-                ">
-                  ${emp.gps_status === 'inside' ? (isAr ? '🟢 GPS داخل النطاق' : '🟢 GPS Inside Range') : 
-                    emp.gps_status === 'outside' ? (isAr ? '🔴 GPS خارج النطاق' : '🔴 GPS Outside Range') : 
-                    emp.isFromAttendance ? (isAr ? '📟 حاضر بالبصمة' : '📟 Present via Fingerprint') : 
-                    (isOnline ? (isAr ? '🟢 متصل الآن' : '🟢 Online') : (isAr ? '⚪ غير متصل' : '⚪ Offline'))}
-                </div>
-                <div style="font-size: 13px; color: #666; background: #f5f5f5; padding: 8px; border-radius: 6px;">
-                  ${emp.check_in_time ? `
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>${isAr ? 'وقت الدخول:' : 'Check-in:'}</span>
-                    <b style="color: #16a34a;">${fmtTime(emp.check_in_time)}</b>
-                  </div>
-                  ` : ''}
-                  ${emp.check_out_time && emp.check_out_time !== 'None' ? `
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>${isAr ? 'وقت الخروج:' : 'Check-out:'}</span>
-                    <b style="color: #dc2626;">${fmtTime(emp.check_out_time)}</b>
-                  </div>
-                  ` : ''}
-                  ${distance > 0 ? `
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>${isAr ? 'المسافة:' : 'Distance:'}</span>
-                    <b style="color: #333;">${distance < 1000 
-                      ? `${Math.round(distance)} ${isAr ? 'متر' : 'm'}`
-                      : `${(distance / 1000).toFixed(1)} ${isAr ? 'كم' : 'km'}`
-                    }</b>
-                  </div>
-                  ` : ''}
-                  <div style="display: flex; justify-content: space-between;">
-                    <span>${isAr ? 'آخر تحديث:' : 'Last update:'}</span>
-                    <b style="color: #333;">${fmtTime(emp.created_at)}</b>
-                  </div>
-                </div>
-              </div>
-            `);
-          
-          markersRef.current[emp.employee_id] = marker;
+            .bindPopup(popupHtml);
+          markersRef.current[markerId] = marker;
         }
       });
       
-      // Fit bounds if there are markers
-      if (boundsArray.length > 0) {
-        try {
-          mapInstanceRef.current.fitBounds(boundsArray, { padding: [50, 50], maxZoom: 15 });
-        } catch(e) {
-          console.log("Fit bounds error:", e);
+      // Remove markers that are no longer in the data
+      Object.keys(markersRef.current).forEach(id => {
+        if (!newIds.has(id)) {
+          try { markersRef.current[id].remove(); } catch {}
+          delete markersRef.current[id];
+        }
+      });
+      
+      // Fit bounds only on first load or when display mode changes
+      const modeChanged = prevDisplayMode.current !== mapDisplayMode;
+      prevDisplayMode.current = mapDisplayMode;
+      
+      if (employeesToShow.length > 0 && (!hasFittedBounds.current || modeChanged)) {
+        const bounds = L.latLngBounds(employeesToShow.map(e => [e.latitude, e.longitude]));
+        if (bounds.isValid()) {
+          mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+          hasFittedBounds.current = true;
         }
       }
     });
   }, [trackedEmployees, allEmployees, activeTab, mapReady, mapDisplayMode, attendanceBasedEmployees, language]);
-
+      
   // Save settings
   const saveSettings = async () => {
     try {
