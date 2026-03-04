@@ -2647,6 +2647,8 @@ const HR = () => {
                       <TableHead>{language === "ar" ? "وقت الانصراف" : "Check Out"}</TableHead>
                       <TableHead>{language === "ar" ? "موقع الانصراف" : "Out Location"}</TableHead>
                       <TableHead>{language === "ar" ? "المصدر" : "Source"}</TableHead>
+                      <TableHead>{language === "ar" ? "حضور GPS" : "GPS In"}</TableHead>
+                      <TableHead>{language === "ar" ? "انصراف GPS" : "GPS Out"}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -2662,7 +2664,7 @@ const HR = () => {
                       })
                       .length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                           {language === "ar" ? "لا توجد سجلات حضور. أضف حضور يدوياً أو قم بمزامنة جهاز البصمة." : "No attendance records. Add manually or sync fingerprint device."}
                         </TableCell>
                       </TableRow>
@@ -2722,27 +2724,62 @@ const HR = () => {
                                  record.source === "leave_approved" ? (language === "ar" ? "إجازة" : "Leave") :
                                  (language === "ar" ? "يدوي" : "Manual")}
                               </Badge>
-                              {record.gps_approval_status === "pending" && (
-                                <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300">
-                                  {language === "ar" ? "بانتظار الموافقة" : "Pending"}
-                                </Badge>
-                              )}
-                              {record.gps_approval_status === "approved" && (
-                                <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
-                                  {language === "ar" ? "تمت الموافقة" : "Approved"}
-                                </Badge>
-                              )}
-                              {record.gps_approval_status === "rejected" && (
-                                <Badge variant="outline" className="text-xs bg-red-100 text-red-700 border-red-300">
-                                  {language === "ar" ? "مرفوض" : "Rejected"}
-                                </Badge>
-                              )}
                               {record.multi_location && (
                                 <Badge variant="outline" className="text-xs bg-blue-100">
                                   {language === "ar" ? "متعدد" : "Multi"}
                                 </Badge>
                               )}
                             </div>
+                          </TableCell>
+                          {/* GPS Check-in */}
+                          <TableCell data-testid={`gps-checkin-${idx}`}>
+                            {record.gps_check_in ? (
+                              <div className="flex flex-col items-start gap-1">
+                                <span className="text-sm font-medium">
+                                  {record.gps_check_in.includes("T") ? new Date(record.gps_check_in).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : record.gps_check_in}
+                                </span>
+                                {record.gps_approval_status === "pending" && (
+                                  <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300">
+                                    {language === "ar" ? "بانتظار الموافقة" : "Pending"}
+                                  </Badge>
+                                )}
+                                {record.gps_approval_status === "approved" && (
+                                  <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
+                                    {language === "ar" ? "تمت الموافقة" : "Approved"}
+                                  </Badge>
+                                )}
+                                {record.gps_approval_status === "rejected" && (
+                                  <Badge variant="outline" className="text-xs bg-red-100 text-red-700 border-red-300">
+                                    {language === "ar" ? "مرفوض" : "Rejected"}
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : "-"}
+                          </TableCell>
+                          {/* GPS Check-out */}
+                          <TableCell data-testid={`gps-checkout-${idx}`}>
+                            {record.gps_check_out ? (
+                              <div className="flex flex-col items-start gap-1">
+                                <span className="text-sm font-medium">
+                                  {record.gps_check_out.includes("T") ? new Date(record.gps_check_out).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : record.gps_check_out}
+                                </span>
+                                {record.gps_checkout_approval_status === "pending" && (
+                                  <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300">
+                                    {language === "ar" ? "بانتظار الموافقة" : "Pending"}
+                                  </Badge>
+                                )}
+                                {record.gps_checkout_approval_status === "approved" && (
+                                  <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
+                                    {language === "ar" ? "تمت الموافقة" : "Approved"}
+                                  </Badge>
+                                )}
+                                {record.gps_checkout_approval_status === "rejected" && (
+                                  <Badge variant="outline" className="text-xs bg-red-100 text-red-700 border-red-300">
+                                    {language === "ar" ? "مرفوض" : "Rejected"}
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : "-"}
                           </TableCell>
                         </TableRow>
                       ))
