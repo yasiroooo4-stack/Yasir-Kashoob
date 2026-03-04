@@ -2686,7 +2686,7 @@ const HR = () => {
                               {record.fingerprint_id || "-"}
                             </span>
                           </TableCell>
-                          <TableCell>{record.check_in || "-"}</TableCell>
+                          <TableCell>{record.check_in ? (record.check_in.includes("T") ? new Date(record.check_in).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : record.check_in) : "-"}</TableCell>
                           <TableCell>
                             {record.check_in_location ? (
                               <Badge variant="outline" className="text-xs">
@@ -2694,7 +2694,7 @@ const HR = () => {
                               </Badge>
                             ) : "-"}
                           </TableCell>
-                          <TableCell>{record.check_out || "-"}</TableCell>
+                          <TableCell>{record.check_out ? (record.check_out.includes("T") ? new Date(record.check_out).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : record.check_out) : "-"}</TableCell>
                           <TableCell>
                             {record.check_out_location ? (
                               <Badge variant="outline" className="text-xs">
@@ -2705,13 +2705,16 @@ const HR = () => {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Badge variant={record.source === "fingerprint" ? "success" : 
+                                             record.check_in_method === "gps" ? "default" :
                                              record.source === "external_work_approved" ? "default" :
                                              record.source === "excuse_approved" ? "default" :
                                              record.source === "leave_approved" ? "default" : "secondary"}
-                                     className={record.source === "external_work_approved" ? "bg-orange-500" :
+                                     className={record.check_in_method === "gps" ? "bg-blue-500" :
+                                               record.source === "external_work_approved" ? "bg-orange-500" :
                                                record.source === "excuse_approved" ? "bg-yellow-500" :
                                                record.source === "leave_approved" ? "bg-purple-500" : ""}>
                                 {record.source === "fingerprint" ? (language === "ar" ? "بصمة" : "Fingerprint") : 
+                                 record.check_in_method === "gps" ? "GPS" :
                                  record.source === "zkteco_import" ? "ZKTeco" :
                                  record.source === "excel_import" ? "Excel" :
                                  record.source === "external_work_approved" ? (language === "ar" ? "عمل خارجي" : "External Work") :
@@ -2719,6 +2722,21 @@ const HR = () => {
                                  record.source === "leave_approved" ? (language === "ar" ? "إجازة" : "Leave") :
                                  (language === "ar" ? "يدوي" : "Manual")}
                               </Badge>
+                              {record.gps_approval_status === "pending" && (
+                                <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300">
+                                  {language === "ar" ? "بانتظار الموافقة" : "Pending"}
+                                </Badge>
+                              )}
+                              {record.gps_approval_status === "approved" && (
+                                <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
+                                  {language === "ar" ? "تمت الموافقة" : "Approved"}
+                                </Badge>
+                              )}
+                              {record.gps_approval_status === "rejected" && (
+                                <Badge variant="outline" className="text-xs bg-red-100 text-red-700 border-red-300">
+                                  {language === "ar" ? "مرفوض" : "Rejected"}
+                                </Badge>
+                              )}
                               {record.multi_location && (
                                 <Badge variant="outline" className="text-xs bg-blue-100">
                                   {language === "ar" ? "متعدد" : "Multi"}
