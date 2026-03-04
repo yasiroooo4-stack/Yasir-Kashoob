@@ -880,12 +880,9 @@ const SystemSettings = () => {
               <TabsTrigger value="fingerprint" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5">
                 <Fingerprint className="w-4 h-4" /><span className="hidden sm:inline">{t("البصمة", "Fingerprint")}</span>
               </TabsTrigger>
-              <TabsTrigger value="gps-approvals" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 text-blue-600 data-[state=active]:bg-blue-100">
-                <CheckCircle className="w-4 h-4" /><span className="hidden sm:inline">{t("موافقات GPS", "GPS Approvals")}</span>
-                {pendingGpsCount > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{pendingGpsCount}</Badge>}
-              </TabsTrigger>
               <TabsTrigger value="reset" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 text-red-600 data-[state=active]:bg-red-100">
                 <Database className="w-4 h-4" /><span className="hidden sm:inline">{t("تصفير", "Reset")}</span>
+                {pendingGpsCount > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{pendingGpsCount}</Badge>}
               </TabsTrigger>
             </>
           )}
@@ -1194,14 +1191,15 @@ const SystemSettings = () => {
           <FingerprintSyncSettings language={language} t={t} />
         </TabsContent>
 
-        {/* GPS Approvals Tab */}
-        <TabsContent value="gps-approvals">
-          <Card>
+        {/* Data Reset Tab + GPS Approvals - Admin Only */}
+        <TabsContent value="reset">
+          {/* GPS Approval Requests */}
+          <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
                     {t("طلبات موافقة حضور GPS", "GPS Attendance Approvals")}
                   </CardTitle>
                   <CardDescription>
@@ -1215,8 +1213,8 @@ const SystemSettings = () => {
             </CardHeader>
             <CardContent>
               {pendingGpsApprovals.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground" data-testid="no-pending-approvals-settings">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-400" />
+                <div className="text-center py-6 text-muted-foreground" data-testid="no-pending-approvals-settings">
+                  <CheckCircle className="w-10 h-10 mx-auto mb-2 text-green-400" />
                   <p>{t("لا توجد طلبات معلقة", "No pending requests")}</p>
                 </div>
               ) : (
@@ -1279,15 +1277,13 @@ const SystemSettings = () => {
                               <div className="flex gap-2">
                                 <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8"
                                   disabled={approvalLoading}
-                                  onClick={() => handleGpsApproval(record.id, type, true)}
-                                  data-testid={`settings-approve-${record.id}`}>
+                                  onClick={() => handleGpsApproval(record.id, type, true)}>
                                   <CheckCircle className="w-3 h-3 me-1" />
                                   {t("موافقة", "Approve")}
                                 </Button>
                                 <Button size="sm" variant="destructive" className="h-8"
                                   disabled={approvalLoading}
-                                  onClick={() => handleGpsApproval(record.id, type, false)}
-                                  data-testid={`settings-reject-${record.id}`}>
+                                  onClick={() => handleGpsApproval(record.id, type, false)}>
                                   <XCircle className="w-3 h-3 me-1" />
                                   {t("رفض", "Reject")}
                                 </Button>
@@ -1302,10 +1298,8 @@ const SystemSettings = () => {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Data Reset Tab - Admin Only */}
-        <TabsContent value="reset">
+          
+          {/* Data Reset */}
           <DataResetSettings language={language} t={t} />
         </TabsContent>
       </Tabs>
