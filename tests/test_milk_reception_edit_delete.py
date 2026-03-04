@@ -12,7 +12,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-workflow.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-guard-3.preview.emergentagent.com')
 
 class TestMilkReceptionEditDelete:
     """Test milk reception edit and delete functionality"""

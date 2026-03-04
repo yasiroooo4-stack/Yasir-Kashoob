@@ -508,33 +508,34 @@ async def verify_wifi_password(data: dict):
 
 @router.get("/detect-network")
 async def detect_network(request: Request):
-    """استخراج بيانات الشبكة من اتصال المستخدم الحالي"""
-    # Get client IP from various headers
+    """استخراج بيانات الشبكة من اتصال المستخدم الحالي والتحقق من صحتها"""
     client_ip = (
         request.headers.get("x-forwarded-for", "").split(",")[0].strip() or
         request.headers.get("x-real-ip", "") or
         request.client.host if request.client else "unknown"
     )
     
-    # Collect all available network info from headers
-    network_info = {
-        "client_ip": client_ip,
-        "user_agent": request.headers.get("user-agent", ""),
-        "accept_language": request.headers.get("accept-language", ""),
-        "x_forwarded_for": request.headers.get("x-forwarded-for", ""),
-        "x_real_ip": request.headers.get("x-real-ip", ""),
-        "connection": request.headers.get("connection", ""),
-        "host": request.headers.get("host", ""),
-    }
+    # Check if this IP matches any configured work location
+    settings = await get_tracking_settings()
+    work_locations = settings.get("work_locations", [])
+    
+    matched_location = None
+    for loc in work_locations:
+        stored_ip = loc.get("wifi_ip_range", "")
+        if stored_ip and client_ip == stored_ip:
+            matched_location = loc
+            break
     
     return {
         "success": True,
-        "message": "بيانات الشبكة المكتشفة",
-        "network": network_info,
-        "instructions": {
-            "ar": "لاستخراج BSSID و Gateway، افتح الرابط التالي من هاتفك المتصل بنفس الشبكة",
-            "note": "IP العام يمكن استخدامه للتحقق من أن الموظف متصل من شبكة الشركة"
-        }
+        "client_ip": client_ip,
+        "is_company_network": matched_location is not None,
+        "matched_location": {
+            "name": matched_location.get("name"),
+            "wifi_ssid": matched_location.get("wifi_ssid"),
+            "id": matched_location.get("id")
+        } if matched_location else None,
+        "configured_ips": [loc.get("wifi_ip_range") for loc in work_locations if loc.get("wifi_ip_range")]
     }
 
 

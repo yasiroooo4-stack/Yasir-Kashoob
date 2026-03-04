@@ -78,7 +78,7 @@ class SyncManagerApp:
     def load_config(self):
         """تحميل ملف التكوين"""
         default_config = {
-            'api_url': 'https://attendance-workflow.preview.emergentagent.com',
+            'api_url': 'https://attendance-guard-3.preview.emergentagent.com',
             'username': 'yasir',
             'password': 'admin123',
             'sync_interval': 3600,  # ساعة واحدة (60 دقيقة)

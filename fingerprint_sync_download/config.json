@@ -1,5 +1,5 @@
 {
-  "api_url": "https://attendance-workflow.preview.emergentagent.com",
+  "api_url": "https://attendance-guard-3.preview.emergentagent.com",
   "username": "yasir",
   "password": "admin123",
   "sync_interval": 3600,
