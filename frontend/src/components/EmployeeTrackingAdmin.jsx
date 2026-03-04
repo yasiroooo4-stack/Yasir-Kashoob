@@ -117,11 +117,8 @@ const EmployeeTrackingAdmin = () => {
   
   // New location form
   const [newLocation, setNewLocation] = useState({
-    name: "",
-    lat: "",
-    lng: "",
-    radius: 500,
-    wifi_ssid: ""
+    name: "", lat: "", lng: "", radius: 500,
+    wifi_ssid: "", wifi_password: "", wifi_bssid: "", wifi_ip_range: "", wifi_gateway: ""
   });
 
   // Load Leaflet CSS
@@ -603,12 +600,16 @@ const EmployeeTrackingAdmin = () => {
         lat: parseFloat(newLocation.lat),
         lng: parseFloat(newLocation.lng),
         radius: newLocation.radius,
-        wifi_ssid: newLocation.wifi_ssid || ""
+        wifi_ssid: newLocation.wifi_ssid || "",
+        wifi_password: newLocation.wifi_password || "",
+        wifi_bssid: newLocation.wifi_bssid || "",
+        wifi_ip_range: newLocation.wifi_ip_range || "",
+        wifi_gateway: newLocation.wifi_gateway || ""
       });
       
       toast.success(language === "ar" ? "تمت إضافة الموقع" : "Location added");
       setAddLocationDialog(false);
-      setNewLocation({ name: "", lat: "", lng: "", radius: 500, wifi_ssid: "" });
+      setNewLocation({ name: "", lat: "", lng: "", radius: 500, wifi_ssid: "", wifi_password: "", wifi_bssid: "", wifi_ip_range: "", wifi_gateway: "" });
       fetchData();
     } catch (error) {
       toast.error(language === "ar" ? "فشل في إضافة الموقع" : "Failed to add location");
@@ -1605,66 +1606,43 @@ const EmployeeTrackingAdmin = () => {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      {/* WiFi SSID Setting */}
-                      <div className="flex items-center gap-2 pt-1 border-t">
-                        <Wifi className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                        <Input
-                          placeholder={language === "ar" ? "اسم شبكة WiFi (SSID)" : "WiFi SSID"}
-                          defaultValue={loc.wifi_ssid || ""}
-                          className="h-8 text-sm"
-                          data-testid={`wifi-ssid-input-${loc.id}`}
-                          onBlur={async (e) => {
-                            const newSsid = e.target.value;
-                            if (newSsid !== (loc.wifi_ssid || "")) {
+                      {/* WiFi Network Settings */}
+                      <div className="space-y-2 pt-2 border-t">
+                        <p className="text-xs font-bold text-blue-600 flex items-center gap-1">
+                          <Wifi className="w-3 h-3" />
+                          {language === "ar" ? "بيانات شبكة WiFi" : "WiFi Network Data"}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input placeholder="SSID (اسم الشبكة)" defaultValue={loc.wifi_ssid || ""}
+                            className="h-7 text-xs" id={`ssid-${loc.id}`} />
+                          <Input type="password" placeholder={language === "ar" ? "الرقم السري" : "Password"}
+                            defaultValue={loc.wifi_password || ""} className="h-7 text-xs" id={`pass-${loc.id}`} />
+                          <Input placeholder="BSSID / MAC (مثال: AA:BB:CC:DD:EE:FF)" defaultValue={loc.wifi_bssid || ""}
+                            className="h-7 text-xs font-mono" dir="ltr" id={`bssid-${loc.id}`} />
+                          <Input placeholder="IP Range (مثال: 192.168.1.0/24)" defaultValue={loc.wifi_ip_range || ""}
+                            className="h-7 text-xs font-mono" dir="ltr" id={`ip-${loc.id}`} />
+                          <Input placeholder="Gateway (مثال: 192.168.1.1)" defaultValue={loc.wifi_gateway || ""}
+                            className="h-7 text-xs font-mono" dir="ltr" id={`gw-${loc.id}`} />
+                          <Button size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                            data-testid={`save-wifi-${loc.id}`}
+                            onClick={async () => {
                               try {
                                 await axios.put(`${API}/tracking/settings/work-location/${loc.id}/wifi`, {
-                                  wifi_ssid: newSsid,
-                                  wifi_password: loc.wifi_password || ""
+                                  wifi_ssid: document.getElementById(`ssid-${loc.id}`).value,
+                                  wifi_password: document.getElementById(`pass-${loc.id}`).value,
+                                  wifi_bssid: document.getElementById(`bssid-${loc.id}`).value,
+                                  wifi_ip_range: document.getElementById(`ip-${loc.id}`).value,
+                                  wifi_gateway: document.getElementById(`gw-${loc.id}`).value,
                                 });
-                                toast.success(language === "ar" ? `تم حفظ شبكة WiFi لـ ${loc.name}` : `WiFi saved for ${loc.name}`);
+                                toast.success(language === "ar" ? `تم حفظ بيانات WiFi لـ ${loc.name}` : `WiFi saved for ${loc.name}`);
                                 fetchData();
                               } catch (error) {
-                                toast.error(language === "ar" ? "فشل في حفظ إعدادات WiFi" : "Failed to save WiFi");
+                                toast.error(language === "ar" ? "فشل في حفظ بيانات WiFi" : "Failed to save WiFi");
                               }
-                            }
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === "Enter") {
-                              e.target.blur();
-                            }
-                          }}
-                        />
-                      </div>
-                      {/* WiFi Password */}
-                      <div className="flex items-center gap-2">
-                        <span className="w-4 flex-shrink-0" />
-                        <Input
-                          type="password"
-                          placeholder={language === "ar" ? "الرقم السري للشبكة" : "WiFi Password"}
-                          defaultValue={loc.wifi_password || ""}
-                          className="h-8 text-sm"
-                          data-testid={`wifi-password-input-${loc.id}`}
-                          onBlur={async (e) => {
-                            const newPass = e.target.value;
-                            if (newPass !== (loc.wifi_password || "")) {
-                              try {
-                                await axios.put(`${API}/tracking/settings/work-location/${loc.id}/wifi`, {
-                                  wifi_ssid: loc.wifi_ssid || "",
-                                  wifi_password: newPass
-                                });
-                                toast.success(language === "ar" ? `تم حفظ الرقم السري لـ ${loc.name}` : `Password saved for ${loc.name}`);
-                                fetchData();
-                              } catch (error) {
-                                toast.error(language === "ar" ? "فشل في حفظ الرقم السري" : "Failed to save password");
-                              }
-                            }
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === "Enter") {
-                              e.target.blur();
-                            }
-                          }}
-                        />
+                            }}>
+                            {language === "ar" ? "حفظ WiFi" : "Save WiFi"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1729,17 +1707,23 @@ const EmployeeTrackingAdmin = () => {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Wifi className="w-4 h-4 text-blue-500" />
-                {language === "ar" ? "اسم شبكة WiFi (SSID)" : "WiFi Network Name (SSID)"}
+                {language === "ar" ? "بيانات شبكة WiFi" : "WiFi Network Data"}
               </Label>
-              <Input
-                value={newLocation.wifi_ssid}
+              <Input value={newLocation.wifi_ssid}
                 onChange={(e) => setNewLocation({...newLocation, wifi_ssid: e.target.value})}
-                placeholder={language === "ar" ? "مثال: Almorooj-Office" : "e.g., Almorooj-Office"}
-                data-testid="new-location-wifi-ssid"
-              />
-              <p className="text-xs text-muted-foreground">
-                {language === "ar" ? "اسم شبكة WiFi في هذا الموقع لتسجيل الحضور التلقائي" : "WiFi name at this location for auto attendance"}
-              </p>
+                placeholder="SSID (اسم الشبكة)" />
+              <Input type="password" value={newLocation.wifi_password}
+                onChange={(e) => setNewLocation({...newLocation, wifi_password: e.target.value})}
+                placeholder={language === "ar" ? "الرقم السري" : "Password"} />
+              <Input value={newLocation.wifi_bssid}
+                onChange={(e) => setNewLocation({...newLocation, wifi_bssid: e.target.value})}
+                placeholder="BSSID / MAC (مثال: AA:BB:CC:DD:EE:FF)" dir="ltr" />
+              <Input value={newLocation.wifi_ip_range}
+                onChange={(e) => setNewLocation({...newLocation, wifi_ip_range: e.target.value})}
+                placeholder="IP Range (مثال: 192.168.1.0/24)" dir="ltr" />
+              <Input value={newLocation.wifi_gateway}
+                onChange={(e) => setNewLocation({...newLocation, wifi_gateway: e.target.value})}
+                placeholder="Gateway (مثال: 192.168.1.1)" dir="ltr" />
             </div>
           </div>
           <DialogFooter>
