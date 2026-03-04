@@ -50,7 +50,11 @@ import {
   Eye,
   Calendar,
   Timer,
+  FileSpreadsheet,
+  FileText,
+  Download,
 } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 // Leaflet CSS (loaded dynamically)
 const loadLeaflet = () => {
@@ -95,12 +99,20 @@ const EmployeeTrackingAdmin = () => {
   const [attendanceBasedEmployees, setAttendanceBasedEmployees] = useState([]);
   const [attendanceMapDate, setAttendanceMapDate] = useState(new Date().toISOString().split('T')[0]);
   
+  // Employee list filter dates
+  const [employeeFilterFromDate, setEmployeeFilterFromDate] = useState(new Date().toISOString().split('T')[0]);
+  const [employeeFilterToDate, setEmployeeFilterToDate] = useState(new Date().toISOString().split('T')[0]);
+  
   // Dialog states
   const [addLocationDialog, setAddLocationDialog] = useState(false);
   const [historyDialog, setHistoryDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [locationHistory, setLocationHistory] = useState([]);
   const [mapReady, setMapReady] = useState(false); // Track map initialization
+  
+  // GPS Approval states
+  const [pendingGpsApprovals, setPendingGpsApprovals] = useState([]);
+  const [approvalLoading, setApprovalLoading] = useState(false);
   
   // New location form
   const [newLocation, setNewLocation] = useState({
@@ -177,6 +189,47 @@ const EmployeeTrackingAdmin = () => {
       fetchAttendanceBasedEmployees();
     }
   }, [mapDisplayMode, attendanceMapDate, fetchAttendanceBasedEmployees]);
+
+  // Fetch pending GPS approvals
+  const fetchPendingGpsApprovals = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/tracking/gps-attendance/pending`);
+      setPendingGpsApprovals(res.data);
+    } catch (error) {
+      console.error("Error fetching pending GPS approvals:", error);
+    }
+  }, []);
+
+  // Fetch approvals when approvals tab is active
+  useEffect(() => {
+    if (activeTab === "approvals") {
+      fetchPendingGpsApprovals();
+    }
+  }, [activeTab, fetchPendingGpsApprovals]);
+
+  // Handle GPS attendance approval
+  const handleGpsApproval = async (attendanceId, type, approved) => {
+    setApprovalLoading(true);
+    try {
+      await axios.post(`${API}/tracking/gps-attendance/approve`, {
+        attendance_id: attendanceId,
+        type: type,
+        approved: approved,
+        approved_by: "admin" // Could be replaced with actual user
+      });
+      
+      toast.success(approved 
+        ? (language === "ar" ? "تمت الموافقة بنجاح" : "Approved successfully")
+        : (language === "ar" ? "تم الرفض" : "Rejected")
+      );
+      
+      fetchPendingGpsApprovals();
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل في العملية" : "Operation failed");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
 
   // Initialize map
   useEffect(() => {
@@ -637,6 +690,106 @@ const EmployeeTrackingAdmin = () => {
     }
   };
 
+  // Export employee list to Excel
+  const exportEmployeeListToExcel = () => {
+    try {
+      const data = allEmployees.map(emp => ({
+        "الاسم": emp.name,
+        "الرقم الوظيفي": emp.employee_code,
+        "الهاتف": emp.phone || "-",
+        "القسم": emp.department || "-",
+        "الحالة": emp.last_location?.is_within_range ? "داخل النطاق" : "خارج النطاق / غير متصل",
+        "المسافة (متر)": emp.last_location?.distance_from_work ? Math.round(emp.last_location.distance_from_work) : "-",
+        "آخر تحديث": emp.last_location?.last_updated ? new Date(emp.last_location.last_updated).toLocaleString('ar-SA') : "-",
+        "رابط التتبع": `${window.location.origin}/gps-attendance`
+      }));
+      
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "قائمة الموظفين");
+      
+      // Auto-fit columns
+      const colWidths = Object.keys(data[0] || {}).map(key => ({ wch: Math.max(key.length, 15) }));
+      ws['!cols'] = colWidths;
+      
+      XLSX.writeFile(wb, `قائمة_الموظفين_${employeeFilterFromDate}_${employeeFilterToDate}.xlsx`);
+      toast.success(language === "ar" ? "تم تصدير الملف بنجاح" : "File exported successfully");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(language === "ar" ? "فشل في تصدير الملف" : "Export failed");
+    }
+  };
+
+  // Export employee list to PDF
+  const exportEmployeeListToPDF = () => {
+    try {
+      // Create printable content
+      const printContent = `
+        <!DOCTYPE html>
+        <html dir="rtl">
+        <head>
+          <meta charset="UTF-8">
+          <title>قائمة الموظفين</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; direction: rtl; }
+            h1 { text-align: center; color: #333; margin-bottom: 10px; }
+            .date-range { text-align: center; color: #666; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 10px; text-align: right; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            tr:nth-child(even) { background-color: #fafafa; }
+            .status-in { color: green; font-weight: bold; }
+            .status-out { color: red; }
+            .footer { margin-top: 20px; text-align: center; color: #999; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <h1>قائمة الموظفين - تتبع المواقع</h1>
+          <p class="date-range">الفترة: ${employeeFilterFromDate} إلى ${employeeFilterToDate}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>الرقم الوظيفي</th>
+                <th>الهاتف</th>
+                <th>الحالة</th>
+                <th>المسافة</th>
+                <th>آخر تحديث</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allEmployees.map(emp => `
+                <tr>
+                  <td>${emp.name}</td>
+                  <td>${emp.employee_code || '-'}</td>
+                  <td>${emp.phone || '-'}</td>
+                  <td class="${emp.last_location?.is_within_range ? 'status-in' : 'status-out'}">
+                    ${emp.last_location?.is_within_range ? 'داخل النطاق' : 'خارج / غير متصل'}
+                  </td>
+                  <td>${emp.last_location?.distance_from_work ? Math.round(emp.last_location.distance_from_work) + ' م' : '-'}</td>
+                  <td>${emp.last_location?.last_updated ? new Date(emp.last_location.last_updated).toLocaleString('ar-SA') : '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <p class="footer">تم التصدير بتاريخ: ${new Date().toLocaleString('ar-SA')}</p>
+        </body>
+        </html>
+      `;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      
+      toast.success(language === "ar" ? "تم فتح نافذة الطباعة" : "Print window opened");
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast.error(language === "ar" ? "فشل في تصدير PDF" : "PDF export failed");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -712,11 +865,12 @@ const EmployeeTrackingAdmin = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b pb-2">
+      <div className="flex gap-2 border-b pb-2 flex-wrap">
         {[
           { id: "map", icon: MapPin, label: language === "ar" ? "الخريطة" : "Map" },
           { id: "employees", icon: Users, label: language === "ar" ? "الموظفين" : "Employees" },
           { id: "attendance", icon: Timer, label: language === "ar" ? "حضور الموقع" : "Location Attendance" },
+          { id: "approvals", icon: CheckCircle, label: language === "ar" ? "طلبات الموافقة GPS" : "GPS Approvals", count: pendingGpsApprovals.length },
           { id: "alerts", icon: Bell, label: language === "ar" ? "التنبيهات" : "Alerts" },
           { id: "settings", icon: Settings, label: language === "ar" ? "الإعدادات" : "Settings" }
         ].map(tab => (
@@ -730,6 +884,9 @@ const EmployeeTrackingAdmin = () => {
             {tab.label}
             {tab.id === "alerts" && unreadCount > 0 && (
               <Badge variant="destructive" className="ml-1">{unreadCount}</Badge>
+            )}
+            {tab.id === "approvals" && pendingGpsApprovals.length > 0 && (
+              <Badge variant="destructive" className="ml-1">{pendingGpsApprovals.length}</Badge>
             )}
           </Button>
         ))}
@@ -883,12 +1040,60 @@ const EmployeeTrackingAdmin = () => {
       {activeTab === "employees" && (
         <Card>
           <CardHeader>
-            <CardTitle>{language === "ar" ? "قائمة الموظفين" : "Employees List"}</CardTitle>
-            <CardDescription>
-              {language === "ar" 
-                ? "اضغط على 'طلب موقع' لإرسال رابط التتبع للموظف" 
-                : "Click 'Request Location' to send tracking link to employee"}
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>{language === "ar" ? "قائمة الموظفين" : "Employees List"}</CardTitle>
+                <CardDescription>
+                  {language === "ar" 
+                    ? "اضغط على 'طلب موقع' لإرسال رابط التتبع للموظف" 
+                    : "Click 'Request Location' to send tracking link to employee"}
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Date Range Filter */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">{language === "ar" ? "من:" : "From:"}</span>
+                    <Input 
+                      type="date" 
+                      value={employeeFilterFromDate}
+                      onChange={(e) => setEmployeeFilterFromDate(e.target.value)}
+                      className="w-36 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">{language === "ar" ? "إلى:" : "To:"}</span>
+                    <Input 
+                      type="date" 
+                      value={employeeFilterToDate}
+                      onChange={(e) => setEmployeeFilterToDate(e.target.value)}
+                      className="w-36 h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                {/* Export Buttons */}
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => exportEmployeeListToExcel()}
+                    className="flex items-center gap-1"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Excel
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => exportEmployeeListToPDF()}
+                    className="flex items-center gap-1"
+                  >
+                    <FileText className="w-4 h-4" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>

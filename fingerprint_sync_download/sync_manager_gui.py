@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://hr-mobile-build.preview.emergentagent.com',
+            'api_url': 'https://attendance-workflow.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,

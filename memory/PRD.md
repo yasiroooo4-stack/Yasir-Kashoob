@@ -65,7 +65,7 @@
 
 ## بيانات الاختبار
 - **المستخدم:** testadmin / admin123
-- **URL:** https://hr-mobile-build.preview.emergentagent.com
+- **URL:** https://attendance-workflow.preview.emergentagent.com
 
 ## تاريخ التحديث
 - **ديسمبر 2025:**

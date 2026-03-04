@@ -185,7 +185,7 @@ async def record_gps_attendance(data: dict):
             return {"success": False, "message": "تم تسجيل الحضور مسبقاً", "check_in_time": attendance.get("check_in")}
         
         if attendance:
-            # Update existing record
+            # Update existing record - GPS attendance requires approval
             await db.hr_attendance.update_one(
                 {"employee_id": employee_id, "date": date},
                 {"$set": {
@@ -193,11 +193,13 @@ async def record_gps_attendance(data: dict):
                     "check_in_method": "gps",
                     "check_in_location_lat": latitude,
                     "check_in_location_lng": longitude,
+                    "gps_approval_status": "pending",  # Requires manager approval
+                    "gps_approval_requested_at": now,
                     "updated_at": now
                 }}
             )
         else:
-            # Create new attendance record
+            # Create new attendance record - GPS attendance requires approval
             attendance_record = {
                 "id": str(uuid.uuid4()),
                 "employee_id": employee_id,
@@ -210,13 +212,20 @@ async def record_gps_attendance(data: dict):
                 "check_out_method": None,
                 "check_in_location_lat": latitude,
                 "check_in_location_lng": longitude,
-                "status": "present",
+                "gps_approval_status": "pending",  # Requires manager approval
+                "gps_approval_requested_at": now,
+                "status": "pending_gps_approval",  # Not counted until approved
                 "created_at": now,
                 "updated_at": now
             }
             await db.hr_attendance.insert_one(attendance_record)
         
-        return {"success": True, "message": "تم تسجيل الحضور بنجاح", "check_in_time": now}
+        return {
+            "success": True, 
+            "message": "تم تسجيل الحضور - بانتظار موافقة المسؤول", 
+            "check_in_time": now,
+            "requires_approval": True
+        }
     
     elif action == "check_out":
         if not attendance or not attendance.get("check_in"):
@@ -238,14 +247,86 @@ async def record_gps_attendance(data: dict):
                 "check_out_location_lat": latitude,
                 "check_out_location_lng": longitude,
                 "working_hours": round(working_hours, 2),
+                "gps_checkout_approval_status": "pending",  # Checkout also requires approval
                 "updated_at": now
             }}
         )
         
-        return {"success": True, "message": "تم تسجيل الانصراف بنجاح", "check_out_time": now, "working_hours": round(working_hours, 2)}
+        return {
+            "success": True, 
+            "message": "تم تسجيل الانصراف - بانتظار موافقة المسؤول", 
+            "check_out_time": now, 
+            "working_hours": round(working_hours, 2),
+            "requires_approval": True
+        }
     
     else:
         raise HTTPException(status_code=400, detail="الإجراء غير صحيح")
+
+
+@router.get("/gps-attendance/pending")
+async def get_pending_gps_attendance():
+    """
+    جلب طلبات الحضور GPS المعلقة التي تحتاج موافقة
+    """
+    pending = await db.hr_attendance.find({
+        "$or": [
+            {"gps_approval_status": "pending"},
+            {"gps_checkout_approval_status": "pending"}
+        ]
+    }, {"_id": 0}).sort("date", -1).to_list(100)
+    
+    return pending
+
+
+@router.post("/gps-attendance/approve")
+async def approve_gps_attendance(data: dict):
+    """
+    موافقة على طلب حضور GPS
+    """
+    attendance_id = data.get("attendance_id")
+    approval_type = data.get("type")  # "check_in" or "check_out"
+    approved = data.get("approved", True)
+    approved_by = data.get("approved_by")
+    rejection_reason = data.get("rejection_reason")
+    
+    if not attendance_id or not approval_type:
+        raise HTTPException(status_code=400, detail="بيانات ناقصة")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if approval_type == "check_in":
+        update_data = {
+            "gps_approval_status": "approved" if approved else "rejected",
+            "gps_approved_by": approved_by,
+            "gps_approved_at": now,
+            "status": "present" if approved else "gps_rejected",
+            "updated_at": now
+        }
+        if not approved:
+            update_data["gps_rejection_reason"] = rejection_reason
+    else:  # check_out
+        update_data = {
+            "gps_checkout_approval_status": "approved" if approved else "rejected",
+            "gps_checkout_approved_by": approved_by,
+            "gps_checkout_approved_at": now,
+            "updated_at": now
+        }
+        if not approved:
+            update_data["gps_checkout_rejection_reason"] = rejection_reason
+    
+    result = await db.hr_attendance.update_one(
+        {"id": attendance_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="سجل الحضور غير موجود")
+    
+    return {
+        "success": True,
+        "message": "تمت الموافقة بنجاح" if approved else "تم الرفض"
+    }
 
 
 # ==================== LOCATION UPDATES ====================

@@ -180,9 +180,14 @@ const GPSAttendance = () => {
         setTodayAttendance(prev => ({
           ...prev,
           check_in: res.data.check_in_time,
-          check_in_method: "gps"
+          check_in_method: "gps",
+          gps_approval_status: "pending"
         }));
-        toast.success("✅ تم تسجيل الحضور تلقائياً - دخلت نطاق العمل");
+        if (res.data.requires_approval) {
+          toast.success("✅ تم تسجيل الحضور - بانتظار موافقة المسؤول");
+        } else {
+          toast.success("✅ تم تسجيل الحضور تلقائياً - دخلت نطاق العمل");
+        }
       }
     } catch (error) {
       console.error("Auto check-in error:", error);
@@ -214,9 +219,14 @@ const GPSAttendance = () => {
         setTodayAttendance(prev => ({
           ...prev,
           check_out: res.data.check_out_time,
-          check_out_method: "gps"
+          check_out_method: "gps",
+          gps_checkout_approval_status: "pending"
         }));
-        toast.warning("🔴 تم تسجيل الانصراف تلقائياً - خرجت من نطاق العمل");
+        if (res.data.requires_approval) {
+          toast.warning("🔴 تم تسجيل الانصراف - بانتظار موافقة المسؤول");
+        } else {
+          toast.warning("🔴 تم تسجيل الانصراف تلقائياً - خرجت من نطاق العمل");
+        }
       }
     } catch (error) {
       console.error("Auto check-out error:", error);
@@ -439,7 +449,18 @@ const GPSAttendance = () => {
                   }
                 </p>
                 {todayAttendance?.check_in_method === "gps" && (
-                  <Badge variant="secondary" className="mt-1 text-xs">GPS تلقائي</Badge>
+                  <div className="flex flex-col items-center gap-1 mt-1">
+                    <Badge variant="secondary" className="text-xs">GPS تلقائي</Badge>
+                    {todayAttendance?.gps_approval_status === "pending" && (
+                      <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">⏳ بانتظار الموافقة</Badge>
+                    )}
+                    {todayAttendance?.gps_approval_status === "approved" && (
+                      <Badge variant="outline" className="text-xs text-green-600 border-green-300">✓ تمت الموافقة</Badge>
+                    )}
+                    {todayAttendance?.gps_approval_status === "rejected" && (
+                      <Badge variant="destructive" className="text-xs">✗ مرفوض</Badge>
+                    )}
+                  </div>
                 )}
               </div>
               
@@ -459,7 +480,15 @@ const GPSAttendance = () => {
                   }
                 </p>
                 {todayAttendance?.check_out_method === "gps" && (
-                  <Badge variant="secondary" className="mt-1 text-xs">GPS تلقائي</Badge>
+                  <div className="flex flex-col items-center gap-1 mt-1">
+                    <Badge variant="secondary" className="text-xs">GPS تلقائي</Badge>
+                    {todayAttendance?.gps_checkout_approval_status === "pending" && (
+                      <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">⏳ بانتظار الموافقة</Badge>
+                    )}
+                    {todayAttendance?.gps_checkout_approval_status === "approved" && (
+                      <Badge variant="outline" className="text-xs text-green-600 border-green-300">✓ تمت الموافقة</Badge>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
