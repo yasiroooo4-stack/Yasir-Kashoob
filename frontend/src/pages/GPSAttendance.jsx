@@ -98,9 +98,10 @@ const GPSAttendance = () => {
         setTodayAttendance(res.data.today_attendance);
         toast.success(`مرحباً ${res.data.employee.name}`);
         
-        // Reset auto-check flags
-        hasAutoCheckedIn.current = !!res.data.today_attendance?.check_in;
-        hasAutoCheckedOut.current = !!res.data.today_attendance?.check_out;
+        // Reset auto-check flags - only skip GPS if GPS was already used (not fingerprint)
+        const att = res.data.today_attendance;
+        hasAutoCheckedIn.current = !!(att?.check_in_method === "gps" || att?.gps_check_in);
+        hasAutoCheckedOut.current = !!(att?.check_out_method === "gps" || att?.gps_check_out);
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || "لم يتم العثور على الموظف");

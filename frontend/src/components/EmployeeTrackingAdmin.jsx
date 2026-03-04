@@ -1372,10 +1372,16 @@ const EmployeeTrackingAdmin = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {type === "check_in" 
-                            ? (record.check_in ? new Date(record.check_in).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : "-")
-                            : (record.check_out ? new Date(record.check_out).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : "-")
-                          }
+                          {(() => {
+                            const timeStr = type === "check_in" 
+                              ? (record.gps_check_in || record.check_in) 
+                              : (record.gps_check_out || record.check_out);
+                            if (!timeStr) return "-";
+                            if (timeStr.includes("T")) {
+                              return new Date(timeStr).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'});
+                            }
+                            return timeStr;
+                          })()}
                         </TableCell>
                         <TableCell>
                           {type === "check_in" && record.check_in_location_lat && (

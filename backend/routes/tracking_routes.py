@@ -181,11 +181,34 @@ async def record_gps_attendance(data: dict):
     
     if action == "check_in":
         if attendance and attendance.get("check_in"):
-            # Already checked in
-            return {"success": False, "message": "تم تسجيل الحضور مسبقاً", "check_in_time": attendance.get("check_in")}
+            # Already has check-in - check if it was GPS or fingerprint
+            if attendance.get("check_in_method") == "gps":
+                # Already checked in via GPS
+                return {"success": False, "message": "تم تسجيل الحضور عبر GPS مسبقاً", "check_in_time": attendance.get("check_in")}
+            
+            # Has fingerprint check-in - add GPS data alongside it
+            await db.hr_attendance.update_one(
+                {"employee_id": employee_id, "date": date},
+                {"$set": {
+                    "gps_check_in": now,
+                    "check_in_method": "gps",
+                    "check_in_location_lat": latitude,
+                    "check_in_location_lng": longitude,
+                    "gps_approval_status": "pending",
+                    "gps_approval_requested_at": now,
+                    "has_gps_tracking": True,
+                    "updated_at": now
+                }}
+            )
+            return {
+                "success": True, 
+                "message": "تم إضافة تتبع GPS على سجل البصمة - بانتظار موافقة المسؤول", 
+                "check_in_time": now,
+                "requires_approval": True
+            }
         
         if attendance:
-            # Update existing record - GPS attendance requires approval
+            # Update existing record (no check_in yet) - GPS attendance requires approval
             await db.hr_attendance.update_one(
                 {"employee_id": employee_id, "date": date},
                 {"$set": {
@@ -193,7 +216,7 @@ async def record_gps_attendance(data: dict):
                     "check_in_method": "gps",
                     "check_in_location_lat": latitude,
                     "check_in_location_lng": longitude,
-                    "gps_approval_status": "pending",  # Requires manager approval
+                    "gps_approval_status": "pending",
                     "gps_approval_requested_at": now,
                     "updated_at": now
                 }}
@@ -228,28 +251,46 @@ async def record_gps_attendance(data: dict):
         }
     
     elif action == "check_out":
-        if not attendance or not attendance.get("check_in"):
+        if not attendance or (not attendance.get("check_in") and not attendance.get("gps_check_in")):
             raise HTTPException(status_code=400, detail="لم يتم تسجيل الحضور بعد")
         
-        if attendance.get("check_out"):
-            return {"success": False, "message": "تم تسجيل الانصراف مسبقاً", "check_out_time": attendance.get("check_out")}
+        if attendance.get("check_out_method") == "gps":
+            return {"success": False, "message": "تم تسجيل الانصراف عبر GPS مسبقاً", "check_out_time": attendance.get("check_out") or attendance.get("gps_check_out")}
         
-        # Calculate working hours
-        check_in_time = datetime.fromisoformat(attendance.get("check_in").replace('Z', '+00:00'))
+        # Calculate working hours from the earliest check-in
+        check_in_str = attendance.get("gps_check_in") or attendance.get("check_in")
+        try:
+            if "T" in check_in_str:
+                check_in_time = datetime.fromisoformat(check_in_str.replace('Z', '+00:00'))
+            else:
+                # Simple time format like "07:53" - combine with date
+                today_str = attendance.get("date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+                check_in_time = datetime.fromisoformat(f"{today_str}T{check_in_str}:00+00:00")
+        except:
+            check_in_time = datetime.now(timezone.utc)
+        
         check_out_time = datetime.now(timezone.utc)
         working_hours = (check_out_time - check_in_time).total_seconds() / 3600
         
+        update_data = {
+            "check_out_method": "gps",
+            "check_out_location_lat": latitude,
+            "check_out_location_lng": longitude,
+            "gps_checkout_approval_status": "pending",
+            "updated_at": now
+        }
+        
+        # If already has a fingerprint check_out, store GPS separately
+        if attendance.get("check_out") and attendance.get("check_out_method") != "gps":
+            update_data["gps_check_out"] = now
+            update_data["gps_working_hours"] = round(working_hours, 2)
+        else:
+            update_data["check_out"] = now
+            update_data["working_hours"] = round(working_hours, 2)
+        
         await db.hr_attendance.update_one(
             {"employee_id": employee_id, "date": date},
-            {"$set": {
-                "check_out": now,
-                "check_out_method": "gps",
-                "check_out_location_lat": latitude,
-                "check_out_location_lng": longitude,
-                "working_hours": round(working_hours, 2),
-                "gps_checkout_approval_status": "pending",  # Checkout also requires approval
-                "updated_at": now
-            }}
+            {"$set": update_data}
         )
         
         return {
