@@ -1072,6 +1072,7 @@ async def add_work_location(location_data: dict):
         "lng": location_data.get("lng") or location_data.get("longitude"),
         "radius": location_data.get("radius", settings.get("work_radius_meters", 500)),
         "wifi_ssid": location_data.get("wifi_ssid", ""),
+        "wifi_password": location_data.get("wifi_password", ""),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -1109,6 +1110,7 @@ async def update_location_wifi(location_id: str, data: dict):
     for loc in work_locations:
         if loc.get("id") == location_id:
             loc["wifi_ssid"] = data.get("wifi_ssid", "")
+            loc["wifi_password"] = data.get("wifi_password", "")
             updated = True
             break
     

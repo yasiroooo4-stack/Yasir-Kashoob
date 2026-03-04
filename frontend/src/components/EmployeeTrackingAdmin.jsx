@@ -1618,12 +1618,44 @@ const EmployeeTrackingAdmin = () => {
                             if (newSsid !== (loc.wifi_ssid || "")) {
                               try {
                                 await axios.put(`${API}/tracking/settings/work-location/${loc.id}/wifi`, {
-                                  wifi_ssid: newSsid
+                                  wifi_ssid: newSsid,
+                                  wifi_password: loc.wifi_password || ""
                                 });
                                 toast.success(language === "ar" ? `تم حفظ شبكة WiFi لـ ${loc.name}` : `WiFi saved for ${loc.name}`);
                                 fetchData();
                               } catch (error) {
                                 toast.error(language === "ar" ? "فشل في حفظ إعدادات WiFi" : "Failed to save WiFi");
+                              }
+                            }
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter") {
+                              e.target.blur();
+                            }
+                          }}
+                        />
+                      </div>
+                      {/* WiFi Password */}
+                      <div className="flex items-center gap-2">
+                        <span className="w-4 flex-shrink-0" />
+                        <Input
+                          type="password"
+                          placeholder={language === "ar" ? "الرقم السري للشبكة" : "WiFi Password"}
+                          defaultValue={loc.wifi_password || ""}
+                          className="h-8 text-sm"
+                          data-testid={`wifi-password-input-${loc.id}`}
+                          onBlur={async (e) => {
+                            const newPass = e.target.value;
+                            if (newPass !== (loc.wifi_password || "")) {
+                              try {
+                                await axios.put(`${API}/tracking/settings/work-location/${loc.id}/wifi`, {
+                                  wifi_ssid: loc.wifi_ssid || "",
+                                  wifi_password: newPass
+                                });
+                                toast.success(language === "ar" ? `تم حفظ الرقم السري لـ ${loc.name}` : `Password saved for ${loc.name}`);
+                                fetchData();
+                              } catch (error) {
+                                toast.error(language === "ar" ? "فشل في حفظ الرقم السري" : "Failed to save password");
                               }
                             }
                           }}
