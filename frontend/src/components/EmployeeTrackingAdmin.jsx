@@ -1327,6 +1327,13 @@ const EmployeeTrackingAdmin = () => {
                                 </Badge>
                               </a>
                             )}
+                            {record.check_out_selfie_url && type === "check_out" && (
+                              <a href={`${process.env.REACT_APP_BACKEND_URL}${record.check_out_selfie_url}`} target="_blank" rel="noreferrer">
+                                <Badge variant="outline" className="text-xs bg-purple-50 cursor-pointer hover:bg-purple-100">
+                                  {language === "ar" ? "عرض السيلفي" : "View Selfie"}
+                                </Badge>
+                              </a>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

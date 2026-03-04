@@ -336,6 +336,10 @@ async def record_gps_attendance(data: dict):
             "gps_checkout_approval_status": "pending",
             "updated_at": now
         }
+        if selfie_url:
+            update_data["check_out_selfie_url"] = selfie_url
+        if wifi_ssid:
+            update_data["check_out_wifi_ssid"] = wifi_ssid
         
         # If already has a fingerprint check_out, store GPS separately
         if attendance.get("check_out") and attendance.get("check_out_method") != "gps":
