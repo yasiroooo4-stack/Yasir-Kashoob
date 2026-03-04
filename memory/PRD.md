@@ -27,6 +27,8 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] **Strict network validation** - blocks non-company networks on /gps-attendance
 - [x] **Simplified flow** - removed WiFi password step, direct Selfie + Check-in/out (Feb 2026)
 - [x] **Bilingual support (Arabic/English)** - language toggle on /gps-attendance, localStorage persistence (Feb 2026)
+- [x] **Auto GPS tracking** - GPS activates automatically after check-in, no button needed (Feb 2026)
+- [x] **Range exit alerts** - instant alert when employee leaves work area + exit/return log with timestamps (Feb 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification
@@ -34,7 +36,9 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - `POST /api/tracking/employee-login` - Employee login
 - `GET /api/tracking/settings` - Tracking settings with work locations
 
-## Configured Company Network
+- `GET /api/tracking/range-exit-logs` - All employees' range exit logs for a date
+- `GET /api/tracking/range-exit-logs/{employee_id}` - Specific employee's exit logs
+- `POST /api/tracking/location` - UPDATED: now returns `range_event` (exit/return/null)
 - Public IP: 85.154.168.39
 - WiFi SSID: AL MOROOJ-2.4G
 - Location: الادارة
