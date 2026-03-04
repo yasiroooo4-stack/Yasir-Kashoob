@@ -1311,6 +1311,119 @@ const EmployeeTrackingAdmin = () => {
         </Card>
       )}
 
+      {/* GPS Approvals Tab */}
+      {activeTab === "approvals" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                {language === "ar" ? "طلبات موافقة حضور GPS" : "GPS Attendance Approvals"}
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={fetchPendingGpsApprovals}>
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+            <CardDescription>
+              {language === "ar" 
+                ? "مراجعة والموافقة على طلبات الحضور/الانصراف المسجلة عبر GPS"
+                : "Review and approve GPS-based attendance check-in/out requests"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pendingGpsApprovals.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground" data-testid="no-pending-approvals">
+                <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-400" />
+                <p>{language === "ar" ? "لا توجد طلبات معلقة" : "No pending requests"}</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                    <TableHead>{language === "ar" ? "التاريخ" : "Date"}</TableHead>
+                    <TableHead>{language === "ar" ? "نوع الطلب" : "Request Type"}</TableHead>
+                    <TableHead>{language === "ar" ? "الوقت" : "Time"}</TableHead>
+                    <TableHead>{language === "ar" ? "الموقع" : "Location"}</TableHead>
+                    <TableHead>{language === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingGpsApprovals.map((record) => {
+                    const pendingTypes = [];
+                    if (record.gps_approval_status === "pending") pendingTypes.push("check_in");
+                    if (record.gps_checkout_approval_status === "pending") pendingTypes.push("check_out");
+                    
+                    return pendingTypes.map((type) => (
+                      <TableRow key={`${record.id}-${type}`} data-testid={`approval-row-${record.id}-${type}`}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{record.employee_name}</p>
+                            <p className="text-sm text-muted-foreground">{record.employee_code}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{record.date}</TableCell>
+                        <TableCell>
+                          <Badge variant={type === "check_in" ? "default" : "secondary"}
+                                 className={type === "check_in" ? "bg-green-500" : "bg-orange-500"}>
+                            {type === "check_in" 
+                              ? (language === "ar" ? "تسجيل حضور" : "Check-in")
+                              : (language === "ar" ? "تسجيل انصراف" : "Check-out")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {type === "check_in" 
+                            ? (record.check_in ? new Date(record.check_in).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : "-")
+                            : (record.check_out ? new Date(record.check_out).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour: '2-digit', minute: '2-digit'}) : "-")
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {type === "check_in" && record.check_in_location_lat && (
+                            <span className="text-xs text-muted-foreground">
+                              {record.check_in_location_lat?.toFixed(4)}, {record.check_in_location_lng?.toFixed(4)}
+                            </span>
+                          )}
+                          {type === "check_out" && record.check_out_location_lat && (
+                            <span className="text-xs text-muted-foreground">
+                              {record.check_out_location_lat?.toFixed(4)}, {record.check_out_location_lng?.toFixed(4)}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              disabled={approvalLoading}
+                              onClick={() => handleGpsApproval(record.id, type, true)}
+                              data-testid={`approve-btn-${record.id}-${type}`}
+                            >
+                              <CheckCircle className="w-4 h-4 me-1" />
+                              {language === "ar" ? "موافقة" : "Approve"}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              disabled={approvalLoading}
+                              onClick={() => handleGpsApproval(record.id, type, false)}
+                              data-testid={`reject-btn-${record.id}-${type}`}
+                            >
+                              <XCircle className="w-4 h-4 me-1" />
+                              {language === "ar" ? "رفض" : "Reject"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ));
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Alerts Tab */}
       {activeTab === "alerts" && (
         <Card>
