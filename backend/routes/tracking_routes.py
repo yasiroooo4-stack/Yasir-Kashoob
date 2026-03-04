@@ -2,7 +2,7 @@
 Employee Tracking Routes - مسارات تتبع الموظفين
 نظام GPS لتتبع مواقع الموظفين في الوقت الفعلي
 """
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
 from math import radians, cos, sin, asin, sqrt
@@ -504,6 +504,38 @@ async def verify_wifi_password(data: dict):
                 return {"verified": False, "message": "الرقم السري غير صحيح"}
     
     raise HTTPException(status_code=404, detail="الموقع غير موجود")
+
+
+@router.get("/detect-network")
+async def detect_network(request: Request):
+    """استخراج بيانات الشبكة من اتصال المستخدم الحالي"""
+    # Get client IP from various headers
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip() or
+        request.headers.get("x-real-ip", "") or
+        request.client.host if request.client else "unknown"
+    )
+    
+    # Collect all available network info from headers
+    network_info = {
+        "client_ip": client_ip,
+        "user_agent": request.headers.get("user-agent", ""),
+        "accept_language": request.headers.get("accept-language", ""),
+        "x_forwarded_for": request.headers.get("x-forwarded-for", ""),
+        "x_real_ip": request.headers.get("x-real-ip", ""),
+        "connection": request.headers.get("connection", ""),
+        "host": request.headers.get("host", ""),
+    }
+    
+    return {
+        "success": True,
+        "message": "بيانات الشبكة المكتشفة",
+        "network": network_info,
+        "instructions": {
+            "ar": "لاستخراج BSSID و Gateway، افتح الرابط التالي من هاتفك المتصل بنفس الشبكة",
+            "note": "IP العام يمكن استخدامه للتحقق من أن الموظف متصل من شبكة الشركة"
+        }
+    }
 
 
 # ==================== LOCATION UPDATES ====================
