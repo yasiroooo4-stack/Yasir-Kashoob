@@ -162,14 +162,49 @@ async def record_gps_attendance(data: dict):
     latitude = data.get("latitude")
     longitude = data.get("longitude")
     date = data.get("date") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    selfie_photo = data.get("selfie_photo")  # Base64 encoded selfie
+    mock_gps_info = data.get("mock_gps_info")  # Mock GPS detection info
+    wifi_ssid = data.get("wifi_ssid")  # WiFi SSID for WiFi-based attendance
+    attendance_method = data.get("attendance_method", "gps")  # "gps" or "wifi"
     
     if not employee_id or not action:
         raise HTTPException(status_code=400, detail="بيانات ناقصة")
+    
+    # Check for mock GPS
+    if mock_gps_info and mock_gps_info.get("is_mock"):
+        # Log the mock GPS attempt
+        await db.gps_security_logs.insert_one({
+            "id": str(uuid.uuid4()),
+            "employee_id": employee_id,
+            "date": date,
+            "type": "mock_gps_detected",
+            "details": mock_gps_info,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=403, detail="تم رصد موقع وهمي (Mock GPS). لا يمكن تسجيل الحضور. يرجى إيقاف تطبيقات تزوير الموقع.")
     
     # Get employee
     employee = await db.hr_employees.find_one({"id": employee_id}, {"_id": 0})
     if not employee:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # Save selfie photo if provided
+    selfie_url = None
+    if selfie_photo:
+        try:
+            photo_filename = f"{employee_id}_{date}_{action}_{uuid.uuid4().hex[:8]}.jpg"
+            photo_path = os.path.join(VERIFICATION_PHOTOS_DIR, photo_filename)
+            
+            # Remove base64 header if present
+            if "," in selfie_photo:
+                selfie_photo = selfie_photo.split(",")[1]
+            
+            photo_bytes = base64.b64decode(selfie_photo)
+            with open(photo_path, "wb") as f:
+                f.write(photo_bytes)
+            selfie_url = f"/api/tracking/verification-photo/{photo_filename}"
+        except Exception as e:
+            print(f"Error saving selfie: {e}")
     
     # Get or create today's attendance record
     attendance = await db.hr_attendance.find_one({
@@ -187,18 +222,26 @@ async def record_gps_attendance(data: dict):
                 return {"success": False, "message": "تم تسجيل الحضور عبر GPS مسبقاً", "check_in_time": attendance.get("check_in")}
             
             # Has fingerprint check-in - add GPS data alongside it
+            gps_update = {
+                "gps_check_in": now,
+                "check_in_method": attendance_method,
+                "check_in_location_lat": latitude,
+                "check_in_location_lng": longitude,
+                "gps_approval_status": "pending",
+                "gps_approval_requested_at": now,
+                "has_gps_tracking": True,
+                "updated_at": now
+            }
+            if selfie_url:
+                gps_update["check_in_selfie_url"] = selfie_url
+            if wifi_ssid:
+                gps_update["check_in_wifi_ssid"] = wifi_ssid
+            if mock_gps_info:
+                gps_update["mock_gps_check"] = mock_gps_info
+                
             await db.hr_attendance.update_one(
                 {"employee_id": employee_id, "date": date},
-                {"$set": {
-                    "gps_check_in": now,
-                    "check_in_method": "gps",
-                    "check_in_location_lat": latitude,
-                    "check_in_location_lng": longitude,
-                    "gps_approval_status": "pending",
-                    "gps_approval_requested_at": now,
-                    "has_gps_tracking": True,
-                    "updated_at": now
-                }}
+                {"$set": gps_update}
             )
             return {
                 "success": True, 
@@ -207,19 +250,27 @@ async def record_gps_attendance(data: dict):
                 "requires_approval": True
             }
         
+        gps_data = {
+            "check_in": now,
+            "check_in_method": attendance_method,
+            "check_in_location_lat": latitude,
+            "check_in_location_lng": longitude,
+            "gps_approval_status": "pending",
+            "gps_approval_requested_at": now,
+            "updated_at": now
+        }
+        if selfie_url:
+            gps_data["check_in_selfie_url"] = selfie_url
+        if wifi_ssid:
+            gps_data["check_in_wifi_ssid"] = wifi_ssid
+        if mock_gps_info:
+            gps_data["mock_gps_check"] = mock_gps_info
+            
         if attendance:
-            # Update existing record (no check_in yet) - GPS attendance requires approval
+            # Update existing record (no check_in yet)
             await db.hr_attendance.update_one(
                 {"employee_id": employee_id, "date": date},
-                {"$set": {
-                    "check_in": now,
-                    "check_in_method": "gps",
-                    "check_in_location_lat": latitude,
-                    "check_in_location_lng": longitude,
-                    "gps_approval_status": "pending",
-                    "gps_approval_requested_at": now,
-                    "updated_at": now
-                }}
+                {"$set": gps_data}
             )
         else:
             # Create new attendance record - GPS attendance requires approval
@@ -231,16 +282,22 @@ async def record_gps_attendance(data: dict):
                 "date": date,
                 "check_in": now,
                 "check_out": None,
-                "check_in_method": "gps",
+                "check_in_method": attendance_method,
                 "check_out_method": None,
                 "check_in_location_lat": latitude,
                 "check_in_location_lng": longitude,
-                "gps_approval_status": "pending",  # Requires manager approval
+                "gps_approval_status": "pending",
                 "gps_approval_requested_at": now,
-                "status": "pending_gps_approval",  # Not counted until approved
+                "status": "pending_gps_approval",
                 "created_at": now,
                 "updated_at": now
             }
+            if selfie_url:
+                attendance_record["check_in_selfie_url"] = selfie_url
+            if wifi_ssid:
+                attendance_record["check_in_wifi_ssid"] = wifi_ssid
+            if mock_gps_info:
+                attendance_record["mock_gps_check"] = mock_gps_info
             await db.hr_attendance.insert_one(attendance_record)
         
         return {
@@ -368,6 +425,60 @@ async def approve_gps_attendance(data: dict):
         "success": True,
         "message": "تمت الموافقة بنجاح" if approved else "تم الرفض"
     }
+
+
+@router.get("/verification-photo/{filename}")
+async def get_verification_photo(filename: str):
+    """خدمة صور التحقق (السيلفي)"""
+    from fastapi.responses import FileResponse
+    photo_path = os.path.join(VERIFICATION_PHOTOS_DIR, filename)
+    if not os.path.exists(photo_path):
+        raise HTTPException(status_code=404, detail="الصورة غير موجودة")
+    return FileResponse(photo_path, media_type="image/jpeg")
+
+
+@router.get("/wifi-settings")
+async def get_wifi_settings():
+    """جلب إعدادات شبكات WiFi المعتمدة"""
+    settings = await db.tracking_wifi_settings.find_one({}, {"_id": 0})
+    if not settings:
+        default = {
+            "id": str(uuid.uuid4()),
+            "enabled": True,
+            "networks": [],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.tracking_wifi_settings.insert_one(default)
+        return default
+    return settings
+
+
+@router.post("/wifi-settings")
+async def update_wifi_settings(data: dict):
+    """تحديث إعدادات شبكات WiFi"""
+    networks = data.get("networks", [])
+    enabled = data.get("enabled", True)
+    
+    now = datetime.now(timezone.utc).isoformat()
+    await db.tracking_wifi_settings.update_one(
+        {},
+        {"$set": {
+            "enabled": enabled,
+            "networks": networks,
+            "updated_at": now
+        }},
+        upsert=True
+    )
+    return {"success": True, "message": "تم تحديث إعدادات WiFi"}
+
+
+@router.get("/security-logs")
+async def get_security_logs():
+    """جلب سجلات الأمان (محاولات التلاعب)"""
+    logs = await db.gps_security_logs.find(
+        {}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return logs
 
 
 # ==================== LOCATION UPDATES ====================

@@ -1384,16 +1384,28 @@ const EmployeeTrackingAdmin = () => {
                           })()}
                         </TableCell>
                         <TableCell>
-                          {type === "check_in" && record.check_in_location_lat && (
-                            <span className="text-xs text-muted-foreground">
-                              {record.check_in_location_lat?.toFixed(4)}, {record.check_in_location_lng?.toFixed(4)}
-                            </span>
-                          )}
-                          {type === "check_out" && record.check_out_location_lat && (
-                            <span className="text-xs text-muted-foreground">
-                              {record.check_out_location_lat?.toFixed(4)}, {record.check_out_location_lng?.toFixed(4)}
-                            </span>
-                          )}
+                          <div className="space-y-1">
+                            {type === "check_in" && record.check_in_location_lat && (
+                              <span className="text-xs text-muted-foreground block">
+                                {record.check_in_location_lat?.toFixed(4)}, {record.check_in_location_lng?.toFixed(4)}
+                              </span>
+                            )}
+                            {type === "check_out" && record.check_out_location_lat && (
+                              <span className="text-xs text-muted-foreground block">
+                                {record.check_out_location_lat?.toFixed(4)}, {record.check_out_location_lng?.toFixed(4)}
+                              </span>
+                            )}
+                            {record.check_in_method === "wifi" && (
+                              <Badge variant="outline" className="text-xs bg-blue-50">WiFi</Badge>
+                            )}
+                            {record.check_in_selfie_url && type === "check_in" && (
+                              <a href={`${process.env.REACT_APP_BACKEND_URL}${record.check_in_selfie_url}`} target="_blank" rel="noreferrer">
+                                <Badge variant="outline" className="text-xs bg-purple-50 cursor-pointer hover:bg-purple-100">
+                                  {language === "ar" ? "عرض السيلفي" : "View Selfie"}
+                                </Badge>
+                              </a>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
