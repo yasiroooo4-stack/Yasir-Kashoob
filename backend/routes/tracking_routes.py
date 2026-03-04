@@ -1071,6 +1071,7 @@ async def add_work_location(location_data: dict):
         "lat": location_data.get("lat") or location_data.get("latitude"),
         "lng": location_data.get("lng") or location_data.get("longitude"),
         "radius": location_data.get("radius", settings.get("work_radius_meters", 500)),
+        "wifi_ssid": location_data.get("wifi_ssid", ""),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -1096,6 +1097,30 @@ async def delete_work_location(location_id: str):
     )
     
     return {"success": True, "message": "تم حذف الموقع بنجاح"}
+
+
+@router.put("/settings/work-location/{location_id}/wifi")
+async def update_location_wifi(location_id: str, data: dict):
+    """تحديث إعدادات WiFi لموقع عمل"""
+    settings = await get_tracking_settings()
+    work_locations = settings.get("work_locations", [])
+    
+    updated = False
+    for loc in work_locations:
+        if loc.get("id") == location_id:
+            loc["wifi_ssid"] = data.get("wifi_ssid", "")
+            updated = True
+            break
+    
+    if not updated:
+        raise HTTPException(status_code=404, detail="الموقع غير موجود")
+    
+    await db.tracking_settings.update_one(
+        {"id": settings.get("id")},
+        {"$set": {"work_locations": work_locations, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"success": True, "message": "تم تحديث إعدادات WiFi"}
 
 
 # ==================== ALERTS ====================

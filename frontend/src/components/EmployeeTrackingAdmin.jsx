@@ -53,6 +53,7 @@ import {
   FileSpreadsheet,
   FileText,
   Download,
+  Wifi,
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 
@@ -119,7 +120,8 @@ const EmployeeTrackingAdmin = () => {
     name: "",
     lat: "",
     lng: "",
-    radius: 500
+    radius: 500,
+    wifi_ssid: ""
   });
 
   // Load Leaflet CSS
@@ -600,12 +602,13 @@ const EmployeeTrackingAdmin = () => {
         name: newLocation.name,
         lat: parseFloat(newLocation.lat),
         lng: parseFloat(newLocation.lng),
-        radius: newLocation.radius
+        radius: newLocation.radius,
+        wifi_ssid: newLocation.wifi_ssid || ""
       });
       
       toast.success(language === "ar" ? "تمت إضافة الموقع" : "Location added");
       setAddLocationDialog(false);
-      setNewLocation({ name: "", lat: "", lng: "", radius: 500 });
+      setNewLocation({ name: "", lat: "", lng: "", radius: 500, wifi_ssid: "" });
       fetchData();
     } catch (error) {
       toast.error(language === "ar" ? "فشل في إضافة الموقع" : "Failed to add location");
@@ -1582,24 +1585,55 @@ const EmployeeTrackingAdmin = () => {
               ) : (
                 <div className="space-y-2">
                   {settings.work_locations?.map(loc => (
-                    <div key={loc.id} className="p-3 rounded-lg border flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{loc.name}</p>
-                        <p className="text-sm text-muted-foreground font-mono">
-                          {loc.lat?.toFixed(4)}, {loc.lng?.toFixed(4)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {language === "ar" ? "النطاق" : "Radius"}: {loc.radius}m
-                        </p>
+                    <div key={loc.id} className="p-3 rounded-lg border space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{loc.name}</p>
+                          <p className="text-sm text-muted-foreground font-mono">
+                            {loc.lat?.toFixed(4)}, {loc.lng?.toFixed(4)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {language === "ar" ? "النطاق" : "Radius"}: {loc.radius}m
+                          </p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteLocation(loc.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => handleDeleteLocation(loc.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {/* WiFi SSID Setting */}
+                      <div className="flex items-center gap-2 pt-1 border-t">
+                        <Wifi className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <Input
+                          placeholder={language === "ar" ? "اسم شبكة WiFi (SSID)" : "WiFi SSID"}
+                          defaultValue={loc.wifi_ssid || ""}
+                          className="h-8 text-sm"
+                          data-testid={`wifi-ssid-input-${loc.id}`}
+                          onBlur={async (e) => {
+                            const newSsid = e.target.value;
+                            if (newSsid !== (loc.wifi_ssid || "")) {
+                              try {
+                                await axios.put(`${API}/tracking/settings/work-location/${loc.id}/wifi`, {
+                                  wifi_ssid: newSsid
+                                });
+                                toast.success(language === "ar" ? `تم حفظ شبكة WiFi لـ ${loc.name}` : `WiFi saved for ${loc.name}`);
+                                fetchData();
+                              } catch (error) {
+                                toast.error(language === "ar" ? "فشل في حفظ إعدادات WiFi" : "Failed to save WiFi");
+                              }
+                            }
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter") {
+                              e.target.blur();
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1659,6 +1693,21 @@ const EmployeeTrackingAdmin = () => {
                 />
                 <span className="w-20 text-center font-mono">{newLocation.radius}m</span>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Wifi className="w-4 h-4 text-blue-500" />
+                {language === "ar" ? "اسم شبكة WiFi (SSID)" : "WiFi Network Name (SSID)"}
+              </Label>
+              <Input
+                value={newLocation.wifi_ssid}
+                onChange={(e) => setNewLocation({...newLocation, wifi_ssid: e.target.value})}
+                placeholder={language === "ar" ? "مثال: Almorooj-Office" : "e.g., Almorooj-Office"}
+                data-testid="new-location-wifi-ssid"
+              />
+              <p className="text-xs text-muted-foreground">
+                {language === "ar" ? "اسم شبكة WiFi في هذا الموقع لتسجيل الحضور التلقائي" : "WiFi name at this location for auto attendance"}
+              </p>
             </div>
           </div>
           <DialogFooter>
