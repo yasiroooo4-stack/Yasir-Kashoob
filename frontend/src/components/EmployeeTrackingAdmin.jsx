@@ -76,7 +76,12 @@ const EmployeeTrackingAdmin = () => {
   const markersRef = useRef({});
   
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("map"); // map, employees, alerts, attendance, settings
+  const [activeTab, setActiveTab] = useState("map"); // map, employees, alerts, attendance, settings, exit_log
+  
+  // Exit log state
+  const [exitLogs, setExitLogs] = useState([]);
+  const [exitLogDate, setExitLogDate] = useState(new Date().toISOString().split('T')[0]);
+  const [exitLogLoading, setExitLogLoading] = useState(false);
   
   // Location attendance data
   const [locationAttendance, setLocationAttendance] = useState([]);
@@ -210,6 +215,20 @@ const EmployeeTrackingAdmin = () => {
       fetchPendingGpsApprovals();
     }
   }, [activeTab, fetchPendingGpsApprovals]);
+
+  // Fetch exit logs
+  const fetchExitLogs = useCallback(async () => {
+    setExitLogLoading(true);
+    try {
+      const res = await axios.get(`${API}/tracking/range-exit-logs?date=${exitLogDate}`);
+      setExitLogs(res.data);
+    } catch { setExitLogs([]); }
+    finally { setExitLogLoading(false); }
+  }, [exitLogDate]);
+
+  useEffect(() => {
+    if (activeTab === "exit_log") fetchExitLogs();
+  }, [activeTab, fetchExitLogs]);
 
   // Handle GPS attendance approval
   const handleGpsApproval = async (attendanceId, type, approved) => {
@@ -793,6 +812,7 @@ const EmployeeTrackingAdmin = () => {
           { id: "employees", icon: Users, label: language === "ar" ? "الموظفين" : "Employees" },
           { id: "attendance", icon: Timer, label: language === "ar" ? "حضور الموقع" : "Location Attendance" },
           { id: "approvals", icon: CheckCircle, label: language === "ar" ? "طلبات الموافقة GPS" : "GPS Approvals", count: pendingGpsApprovals.length },
+          { id: "exit_log", icon: AlertTriangle, label: language === "ar" ? "سجل الخروج" : "Exit Log" },
           { id: "alerts", icon: Bell, label: language === "ar" ? "التنبيهات" : "Alerts" },
           { id: "settings", icon: Settings, label: language === "ar" ? "الإعدادات" : "Settings" }
         ].map(tab => (
@@ -1363,6 +1383,114 @@ const EmployeeTrackingAdmin = () => {
                         </TableCell>
                       </TableRow>
                     ));
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Alerts Tab */}
+      {/* Exit Log Tab */}
+      {activeTab === "exit_log" && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                {language === "ar" ? "سجل الخروج من نطاق العمل" : "Work Range Exit Log"}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Input type="date" value={exitLogDate}
+                  onChange={(e) => setExitLogDate(e.target.value)}
+                  className="w-40" data-testid="exit-log-date" />
+                <Button variant="outline" size="sm" onClick={fetchExitLogs} data-testid="exit-log-refresh">
+                  <RefreshCw className={`w-4 h-4 ${exitLogLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            </div>
+            {/* Stats */}
+            {exitLogs.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-orange-700">{exitLogs.length}</p>
+                  <p className="text-xs text-orange-600">{language === "ar" ? "عدد مرات الخروج" : "Exit Count"}</p>
+                </div>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-red-700">{exitLogs.filter(l => l.status === "outside").length}</p>
+                  <p className="text-xs text-red-600">{language === "ar" ? "خارج النطاق الآن" : "Currently Outside"}</p>
+                </div>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-blue-700">
+                    {(() => {
+                      const totalSec = exitLogs.reduce((sum, l) => sum + (l.duration_outside_seconds || 0), 0);
+                      const h = Math.floor(totalSec / 3600);
+                      const m = Math.floor((totalSec % 3600) / 60);
+                      return h > 0 ? `${h}:${String(m).padStart(2,'0')}` : `${m} ${language === "ar" ? "د" : "m"}`;
+                    })()}
+                  </p>
+                  <p className="text-xs text-blue-600">{language === "ar" ? "إجمالي الوقت خارج النطاق" : "Total Time Outside"}</p>
+                </div>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent>
+            {exitLogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                <p>{language === "ar" ? "لا يوجد سجل خروج لهذا اليوم" : "No exit records for this date"}</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{language === "ar" ? "الموظف" : "Employee"}</TableHead>
+                    <TableHead>{language === "ar" ? "الموقع" : "Location"}</TableHead>
+                    <TableHead>{language === "ar" ? "وقت الخروج" : "Exit Time"}</TableHead>
+                    <TableHead>{language === "ar" ? "وقت العودة" : "Return Time"}</TableHead>
+                    <TableHead>{language === "ar" ? "المدة" : "Duration"}</TableHead>
+                    <TableHead>{language === "ar" ? "المسافة" : "Distance"}</TableHead>
+                    <TableHead>{language === "ar" ? "الحالة" : "Status"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {exitLogs.map((log, idx) => {
+                    const fmtTime = (val) => {
+                      if (!val) return "-";
+                      if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+                      try { return new Date(val).toLocaleTimeString(language === "ar" ? "ar-SA" : "en-US", {hour:'2-digit',minute:'2-digit'}); } catch { return val; }
+                    };
+                    return (
+                      <TableRow key={log.id || idx} data-testid={`exit-log-row-${idx}`}
+                        className={log.status === "outside" ? "bg-red-50" : ""}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm">{log.employee_name}</p>
+                            <p className="text-xs text-muted-foreground">{log.employee_code}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{log.work_location_name || "-"}</TableCell>
+                        <TableCell className="text-sm font-medium text-red-600">{fmtTime(log.exit_time)}</TableCell>
+                        <TableCell className="text-sm font-medium text-green-600">
+                          {log.return_time ? fmtTime(log.return_time) : (
+                            <Badge variant="outline" className="text-xs bg-red-100 text-red-700 border-red-300 animate-pulse">
+                              {language === "ar" ? "مستمر" : "Ongoing"}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">{log.duration_formatted || "-"}</TableCell>
+                        <TableCell className="text-sm">{log.exit_distance} {language === "ar" ? "م" : "m"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline"
+                            className={`text-xs ${log.status === "outside" ? "bg-red-100 text-red-700 border-red-300" : "bg-green-100 text-green-700 border-green-300"}`}>
+                            {log.status === "outside"
+                              ? (language === "ar" ? "خارج النطاق" : "Outside")
+                              : (language === "ar" ? "عاد للنطاق" : "Returned")}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
                   })}
                 </TableBody>
               </Table>
