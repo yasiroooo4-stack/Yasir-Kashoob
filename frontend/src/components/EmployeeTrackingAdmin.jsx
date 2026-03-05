@@ -101,9 +101,9 @@ const EmployeeTrackingAdmin = () => {
   });
   
   // Map display mode: "gps" (متصل GPS) or "attendance" (حاضر بالبصمة)
-  const [mapDisplayMode, setMapDisplayMode] = useState("gps");
+  const [mapDisplayMode, setMapDisplayMode] = useState("attendance");
   const hasFittedBounds = useRef(false);
-  const prevDisplayMode = useRef("gps");
+  const prevDisplayMode = useRef("attendance");
   const [attendanceBasedEmployees, setAttendanceBasedEmployees] = useState([]);
   const [attendanceMapDate, setAttendanceMapDate] = useState(new Date().toISOString().split('T')[0]);
   
@@ -178,13 +178,14 @@ const EmployeeTrackingAdmin = () => {
 
   useEffect(() => {
     fetchData();
+    fetchAttendanceBasedEmployees(); // Always load attendance data on mount
     // Auto refresh every 30 seconds
     const interval = setInterval(() => {
       fetchData();
-      if (mapDisplayMode === "attendance") fetchAttendanceBasedEmployees();
+      fetchAttendanceBasedEmployees(); // Always keep attendance data fresh
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchData, mapDisplayMode, fetchAttendanceBasedEmployees]);
+  }, [fetchData, fetchAttendanceBasedEmployees]);
 
   useEffect(() => {
     if (activeTab === "attendance") {
@@ -194,9 +195,7 @@ const EmployeeTrackingAdmin = () => {
 
   // Fetch attendance-based employees when mode or date changes
   useEffect(() => {
-    if (mapDisplayMode === "attendance") {
-      fetchAttendanceBasedEmployees();
-    }
+    fetchAttendanceBasedEmployees();
   }, [mapDisplayMode, attendanceMapDate, fetchAttendanceBasedEmployees]);
 
   // Fetch pending GPS approvals
@@ -267,6 +266,7 @@ const EmployeeTrackingAdmin = () => {
           console.log("Map cleanup error:", e);
         }
         mapInstanceRef.current = null;
+        markersRef.current = {};
         setMapReady(false);
       }
       
@@ -316,6 +316,7 @@ const EmployeeTrackingAdmin = () => {
           console.log("Map cleanup error:", e);
         }
         mapInstanceRef.current = null;
+        markersRef.current = {};
         setMapReady(false);
       }
     };
@@ -342,9 +343,9 @@ const EmployeeTrackingAdmin = () => {
         });
         
         // Add offline employees
-        const trackedIds = new Set(trackedEmployees.map(e => e.employee_id));
+        const trackedIds = new Set(trackedEmployees.map(e => String(e.employee_id)));
         allEmployees.forEach(emp => {
-          if (!trackedIds.has(emp.id) && emp.last_latitude && emp.last_longitude) {
+          if (!trackedIds.has(String(emp.id)) && emp.last_latitude && emp.last_longitude) {
             employeesToShow.push({
               ...emp,
               employee_id: emp.id,
@@ -357,7 +358,7 @@ const EmployeeTrackingAdmin = () => {
         });
       }
       
-      // Track which marker IDs are in the new data
+      // Track which marker IDs are in the new data - always use strings
       const newIds = new Set();
       const isAr = language === "ar";
       const locale = isAr ? 'ar-SA' : 'en-US';
@@ -370,7 +371,7 @@ const EmployeeTrackingAdmin = () => {
       };
       
       employeesToShow.forEach(emp => {
-        const markerId = emp.employee_id || emp.id;
+        const markerId = String(emp.employee_id || emp.id);
         newIds.add(markerId);
         
         const empName = emp.employee_name || emp.name || "";
@@ -494,7 +495,7 @@ const EmployeeTrackingAdmin = () => {
       
       // Remove markers that are no longer in the data
       Object.keys(markersRef.current).forEach(id => {
-        if (!newIds.has(id)) {
+        if (!newIds.has(String(id))) {
           try { markersRef.current[id].remove(); } catch {}
           delete markersRef.current[id];
         }

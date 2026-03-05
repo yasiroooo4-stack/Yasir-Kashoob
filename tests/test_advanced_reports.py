@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-guard-3.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://gps-check-in-1.preview.emergentagent.com')
 
 class TestAdvancedReportsAPIs:
     """Test suite for Advanced Reports APIs"""

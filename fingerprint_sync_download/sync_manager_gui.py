@@ -35,7 +35,7 @@ class SyncManagerApp:
         
     def load_config(self):
         default_config = {
-            'api_url': 'https://attendance-guard-3.preview.emergentagent.com',
+            'api_url': 'https://gps-check-in-1.preview.emergentagent.com',
             'username': '',
             'password': '',
             'sync_interval': 3600,
