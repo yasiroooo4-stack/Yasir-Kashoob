@@ -32,6 +32,10 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] **GPS columns in HR report** - added حضور GPS + انصراف GPS columns with approval status badges (Mar 2026)
 - [x] **Fixed Invalid Date in map popup** - safe time formatting for "HH:MM" strings (Mar 2026)
 - [x] **Bilingual map popups** - popup labels switch with language (Code/كود, Check-in/وقت الدخول, etc.) (Mar 2026)
+- [x] **Exit log dashboard** - admin can view employee range exit/return logs with date filter + statistics (Mar 2026)
+- [x] **Fixed source column** - WiFi/GPS attendance shows correct source badge instead of "يدوي" (Mar 2026)
+- [x] **Fixed GPS columns in HR** - show time + approval + selfie for WiFi/GPS check-in/out (Mar 2026)
+- [x] **Fixed check-out selfie** - selfie now saved as check_out_selfie_url (Mar 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification
