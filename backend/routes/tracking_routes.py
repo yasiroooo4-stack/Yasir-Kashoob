@@ -1294,6 +1294,22 @@ async def clear_all_alerts():
     return {"success": True, "message": "تم حذف التنبيهات المقروءة"}
 
 
+
+@router.get("/alerts/recent")
+async def get_recent_alerts(since: Optional[str] = None):
+    """جلب التنبيهات الجديدة منذ وقت معين - للإشعارات الفورية"""
+    query = {"is_dismissed": False, "is_read": False}
+    if since:
+        query["created_at"] = {"$gt": since}
+    
+    alerts = await db.tracking_alerts.find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    return alerts
+
+
+
 # ==================== PHOTO VERIFICATION ====================
 
 @router.post("/verify-photo")

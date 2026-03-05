@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth, useLanguage, API } from "../App";
@@ -493,6 +493,108 @@ const Layout = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // ==================== GEOFENCE PUSH NOTIFICATIONS ====================
+  const lastAlertTimeRef = useRef(new Date().toISOString());
+  const notificationPermRef = useRef("default");
+  const [geofenceNotifEnabled, setGeofenceNotifEnabled] = useState(() => {
+    return localStorage.getItem("geofence_notif_enabled") !== "false";
+  });
+  const [unreadAlertCount, setUnreadAlertCount] = useState(0);
+  const notifAudioRef = useRef(null);
+
+  // Create notification sound
+  useEffect(() => {
+    if (!notifAudioRef.current) {
+      notifAudioRef.current = new Audio("data:audio/wav;base64,UklGRl4FAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToFAACAgICAgICAgICAgICA7f/t/+3/7f+AgICAgICA7f/t/+3/7f+AgICAgICAgICA7f/t/+3/7f+AgICA//8AAP//AACAAP//AAD//wAAgAD//wAA//8AAIAD//8AAP//AACCgP//AAD//wAAgoD//wAA//8AAIKAAAD//wAA//8AAIKA//8AAP//AACCAP//AAD//wAAgID//wAA//8AAIIA//8AAP//AACAgP//AAD//wAAggD//wAA//8AAIAA//8AAP//AACAgP//AAD//wAAggD//wAA//8AAICA//8AAP//AACAAICAgICAgICAgICAgICAgICAgICAgICAgICAgICA");
+      notifAudioRef.current.volume = 0.5;
+    }
+  }, []);
+
+  // Request notification permission for admins
+  useEffect(() => {
+    if (!user?.role || (user.role !== "admin" && user.role !== "hr_manager")) return;
+    if (!("Notification" in window)) return;
+    
+    notificationPermRef.current = Notification.permission;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(perm => {
+        notificationPermRef.current = perm;
+      });
+    }
+  }, [user?.role]);
+
+  // Poll for new geofence alerts
+  const checkNewAlerts = useCallback(async () => {
+    if (!user?.role || (user.role !== "admin" && user.role !== "hr_manager")) return;
+    if (!geofenceNotifEnabled) return;
+    
+    try {
+      const since = lastAlertTimeRef.current;
+      const res = await axios.get(`${API}/tracking/alerts/recent?since=${encodeURIComponent(since)}`);
+      const newAlerts = res.data;
+      
+      if (newAlerts.length > 0) {
+        // Update last check time
+        lastAlertTimeRef.current = newAlerts[0].created_at;
+        
+        // Play sound
+        try { notifAudioRef.current?.play(); } catch {}
+        
+        // Show browser notifications
+        newAlerts.forEach(alert => {
+          // Toast notification
+          const isAr = language === "ar";
+          const alertMsg = isAr 
+            ? `${alert.employee_name} خرج من نطاق العمل (${Math.round(alert.distance_from_work || 0)} متر)`
+            : `${alert.employee_name} left work range (${Math.round(alert.distance_from_work || 0)}m)`;
+          
+          toast.error(alertMsg, { 
+            duration: 8000,
+            icon: "🔴",
+            description: isAr ? "تنبيه خروج من النطاق" : "Geofence exit alert"
+          });
+          
+          // Browser notification
+          if (notificationPermRef.current === "granted") {
+            try {
+              new Notification(isAr ? "تنبيه خروج من النطاق" : "Geofence Exit Alert", {
+                body: alertMsg,
+                icon: "/favicon.ico",
+                tag: alert.id,
+                requireInteraction: true
+              });
+            } catch {}
+          }
+        });
+      }
+      
+      // Also update unread count
+      const countRes = await axios.get(`${API}/tracking/alerts/count`);
+      setUnreadAlertCount(countRes.data.count || 0);
+    } catch {}
+  }, [user?.role, geofenceNotifEnabled, language]);
+
+  useEffect(() => {
+    if (!user?.role || (user.role !== "admin" && user.role !== "hr_manager")) return;
+    
+    // Initial check
+    checkNewAlerts();
+    
+    // Poll every 15 seconds
+    const interval = setInterval(checkNewAlerts, 15000);
+    return () => clearInterval(interval);
+  }, [checkNewAlerts, user?.role]);
+
+  const toggleGeofenceNotif = () => {
+    const newVal = !geofenceNotifEnabled;
+    setGeofenceNotifEnabled(newVal);
+    localStorage.setItem("geofence_notif_enabled", newVal.toString());
+    toast.success(newVal 
+      ? (language === "ar" ? "تم تفعيل الإشعارات الفورية" : "Push notifications enabled")
+      : (language === "ar" ? "تم إيقاف الإشعارات الفورية" : "Push notifications disabled")
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
       {/* Mobile Menu Overlay */}
@@ -605,6 +707,27 @@ const Layout = () => {
 
             {/* Letter Request Button */}
             <LetterRequestButton currentUser={user} />
+
+            {/* Geofence Notification Bell - Admin/HR only */}
+            {(user?.role === "admin" || user?.role === "hr_manager") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleGeofenceNotif}
+                className={`gap-2 relative ${geofenceNotifEnabled ? "border-green-300 bg-green-50 hover:bg-green-100" : "border-red-300 bg-red-50 hover:bg-red-100"}`}
+                data-testid="geofence-notif-toggle-btn"
+                title={language === "ar" 
+                  ? (geofenceNotifEnabled ? "إيقاف إشعارات الخروج" : "تفعيل إشعارات الخروج")
+                  : (geofenceNotifEnabled ? "Disable exit alerts" : "Enable exit alerts")}
+              >
+                <Bell className={`w-4 h-4 ${geofenceNotifEnabled ? "text-green-600" : "text-red-500"}`} />
+                {unreadAlertCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold animate-pulse">
+                    {unreadAlertCount > 9 ? "9+" : unreadAlertCount}
+                  </span>
+                )}
+              </Button>
+            )}
 
             {/* Language Toggle */}
             <Button
