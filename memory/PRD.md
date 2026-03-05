@@ -36,6 +36,7 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] **Fixed source column** - WiFi/GPS attendance shows correct source badge instead of "يدوي" (Mar 2026)
 - [x] **Fixed GPS columns in HR** - show time + approval + selfie for WiFi/GPS check-in/out (Mar 2026)
 - [x] **Fixed check-out selfie** - selfie now saved as check_out_selfie_url (Mar 2026)
+- [x] **Fixed employee tracking map** - changed default mode to 'attendance' (حاضر بالبصمة), fixed marker ID consistency (String), cleared markersRef on cleanup. Fingerprint employees now appear on map by default. (Mar 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification
