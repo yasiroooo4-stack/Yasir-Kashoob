@@ -13646,6 +13646,10 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         # Note: Using weekday() where 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
         employee_weekly_off_days = emp.get("weekly_off_days", [4, 5])  # 4=Friday, 5=Saturday
         
+        # حماية: إذا كانت أيام الإجازة أكثر من 3 أيام (بيانات تالفة)، استخدم الافتراضي
+        if len(employee_weekly_off_days) > 3:
+            employee_weekly_off_days = [4, 5]  # Default: Friday & Saturday
+        
         # Get salary structure for this employee
         salary_struct = salary_structure_map.get(emp.get("id"), {})
         
@@ -13695,7 +13699,13 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
                 status = attendance.get("status", "present")
                 overtime_hrs = attendance.get("overtime_hours", 0) or 0
                 
-                if status == "present":
+                # حساب الحضور: "present" أو أي حالة تدل على تسجيل حضور فعلي
+                is_present = status in ["present", "pending_gps_approval"]
+                # أيضاً: إذا كان هناك تسجيل دخول فعلي يُعتبر حاضراً
+                if not is_present and attendance.get("check_in"):
+                    is_present = True
+                
+                if is_present:
                     # Check if working on a holiday or weekend
                     if is_official_holiday:
                         # التحقق من وجود موافقة على أجر العمل في العطلة
