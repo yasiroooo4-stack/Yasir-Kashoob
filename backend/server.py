@@ -13643,7 +13643,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
     
     for emp in employees:
         # Get employee's weekly off days (default Friday & Saturday)
-        # Note: Using isoweekday() where 1=Monday, 5=Friday, 6=Saturday, 7=Sunday
+        # Note: Using weekday() where 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
         employee_weekly_off_days = emp.get("weekly_off_days", [4, 5])  # 4=Friday, 5=Saturday
         
         # Get salary structure for this employee
@@ -13684,7 +13684,7 @@ async def calculate_payroll(period_id: str, current_user: dict = Depends(get_cur
         
         while current_date <= end_date_dt:
             date_str = current_date.strftime("%Y-%m-%d")
-            day_of_week = current_date.isoweekday()  # 1=Monday, 5=Friday, 6=Saturday, 7=Sunday
+            day_of_week = current_date.weekday()  # 0=Monday, 4=Friday, 5=Saturday (matches DB format)
             
             is_official_holiday = date_str in holiday_dates
             is_weekly_off = day_of_week in employee_weekly_off_days
