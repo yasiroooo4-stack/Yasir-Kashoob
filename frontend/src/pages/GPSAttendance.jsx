@@ -235,8 +235,53 @@ const GPSAttendance = () => {
   const hasAutoCheckedOut = useRef(false);
   const gpsAutoStarted = useRef(false);
 
+  // Admin IP update state
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminUser, setAdminUser] = useState("");
+  const [adminPass, setAdminPass] = useState("");
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [ipUpdateLoading, setIpUpdateLoading] = useState(false);
+  const [isAdminVerified, setIsAdminVerified] = useState(false);
+
   // Exit logs
   const [exitLogs, setExitLogs] = useState([]);
+
+  // Admin login to update IP
+  const handleAdminLogin = async () => {
+    if (!adminUser || !adminPass) return;
+    setAdminLoading(true);
+    try {
+      const res = await axios.post(`${API}/auth/login`, { username: adminUser, password: adminPass });
+      if ((res.data.token || res.data.access_token) && res.data.user?.role === "admin") {
+        setIsAdminVerified(true);
+        toast.success(lang === "ar" ? "تم التحقق من المدير" : "Admin verified");
+      } else {
+        toast.error(lang === "ar" ? "هذا الحساب ليس مدير" : "This account is not admin");
+      }
+    } catch {
+      toast.error(lang === "ar" ? "خطأ في تسجيل الدخول" : "Login failed");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleUpdateCompanyIP = async () => {
+    setIpUpdateLoading(true);
+    try {
+      const res = await axios.post(`${API}/tracking/update-company-ip`, { location_name: null });
+      if (res.data.success) {
+        toast.success(lang === "ar" ? `تم تحديث IP الشركة إلى ${res.data.new_ip}` : `Company IP updated to ${res.data.new_ip}`);
+        // Re-check network after update
+        setTimeout(() => checkNetwork(), 1000);
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch {
+      toast.error(lang === "ar" ? "فشل في تحديث IP" : "Failed to update IP");
+    } finally {
+      setIpUpdateLoading(false);
+    }
+  };
 
   // Network check
   const checkNetwork = useCallback(async () => {
@@ -440,7 +485,7 @@ const GPSAttendance = () => {
               </div>
               <p className="text-sm text-red-600">{t.blockedExplain}</p>
               <div className="text-xs text-muted-foreground mt-2 p-2 bg-white rounded border">
-                <p>{t.currentIP} <span className="font-mono">{clientIP}</span></p>
+                <p>{t.currentIP} <span className="font-mono font-bold">{clientIP}</span></p>
               </div>
             </div>
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -452,6 +497,63 @@ const GPSAttendance = () => {
             <Button onClick={checkNetwork} className="w-full h-12 text-lg" disabled={networkChecking} data-testid="retry-network-btn">
               {networkChecking ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><RefreshCw className="w-5 h-5 me-2" />{t.retryNetwork}</>}
             </Button>
+
+            {/* Admin IP Update Section */}
+            <div className="border-t pt-4 mt-4">
+              <p className="text-sm text-center text-muted-foreground mb-3">
+                {lang === "ar" ? "هل تغير IP الشبكة؟ (للمدير فقط)" : "Network IP changed? (Admin only)"}
+              </p>
+              {!showAdminLogin && !isAdminVerified && (
+                <Button variant="outline" onClick={() => setShowAdminLogin(true)} className="w-full" data-testid="show-admin-login-btn">
+                  <ShieldCheck className="w-4 h-4 me-2" />
+                  {lang === "ar" ? "تحديث IP الشركة (مدير)" : "Update Company IP (Admin)"}
+                </Button>
+              )}
+              {showAdminLogin && !isAdminVerified && (
+                <div className="space-y-3 p-3 bg-white rounded-lg border">
+                  <Input
+                    placeholder={lang === "ar" ? "اسم المستخدم" : "Username"}
+                    value={adminUser}
+                    onChange={(e) => setAdminUser(e.target.value)}
+                    data-testid="admin-username-input"
+                  />
+                  <Input
+                    type="password"
+                    placeholder={lang === "ar" ? "كلمة المرور" : "Password"}
+                    value={adminPass}
+                    onChange={(e) => setAdminPass(e.target.value)}
+                    data-testid="admin-password-input"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleAdminLogin} disabled={adminLoading} className="flex-1" data-testid="admin-login-btn">
+                      {adminLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : (lang === "ar" ? "تحقق" : "Verify")}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setShowAdminLogin(false)}>
+                      {lang === "ar" ? "إلغاء" : "Cancel"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {isAdminVerified && (
+                <div className="space-y-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-sm text-green-700 text-center font-medium">
+                    {lang === "ar" 
+                      ? `سيتم تحديث IP الشركة إلى: ${clientIP}`
+                      : `Company IP will be updated to: ${clientIP}`}
+                  </p>
+                  <Button 
+                    onClick={handleUpdateCompanyIP} 
+                    disabled={ipUpdateLoading} 
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    data-testid="update-ip-btn"
+                  >
+                    {ipUpdateLoading 
+                      ? <RefreshCw className="w-4 h-4 animate-spin" />
+                      : <><CheckCircle className="w-4 h-4 me-2" />{lang === "ar" ? "تحديث IP الآن" : "Update IP Now"}</>}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

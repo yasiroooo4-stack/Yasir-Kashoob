@@ -543,6 +543,52 @@ async def detect_network(request: Request):
     }
 
 
+@router.post("/update-company-ip")
+async def update_company_ip(request: Request, data: dict):
+    """تحديث عنوان IP الشركة - للمدير فقط عند تغير IP الشبكة"""
+    location_name = data.get("location_name")
+    
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip() or
+        request.headers.get("x-real-ip", "") or
+        request.client.host if request.client else "unknown"
+    )
+    
+    settings = await get_tracking_settings()
+    work_locations = settings.get("work_locations", [])
+    
+    updated = False
+    for loc in work_locations:
+        if location_name and loc.get("name") == location_name:
+            loc["wifi_ip_range"] = client_ip
+            updated = True
+            break
+    
+    # If no specific location, update first location with existing WiFi config
+    if not updated:
+        for loc in work_locations:
+            if loc.get("wifi_ip_range") or loc.get("wifi_ssid"):
+                loc["wifi_ip_range"] = client_ip
+                updated = True
+                break
+    
+    if not updated and work_locations:
+        work_locations[0]["wifi_ip_range"] = client_ip
+        updated = True
+    
+    if updated:
+        await db.tracking_settings.update_one(
+            {},
+            {"$set": {"work_locations": work_locations}},
+            upsert=True
+        )
+        return {"success": True, "new_ip": client_ip, "message": f"تم تحديث IP الشركة إلى {client_ip}"}
+    
+    return {"success": False, "message": "لم يتم العثور على مواقع العمل"}
+
+
+
+
 # ==================== LOCATION UPDATES ====================
 
 async def record_location_attendance(employee: dict, is_within: bool, timestamp: str):
