@@ -39,6 +39,7 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] **Fixed employee tracking map** - changed default mode to 'attendance' (حاضر بالبصمة), fixed marker ID consistency (String), cleared markersRef on cleanup. Fingerprint employees now appear on map by default. (Mar 2026)
 - [x] **Geofence Push Notifications** - browser notifications + in-app toast + sound alert when employee exits work range. Notification bell with unread badge in header (admin/HR only). Toggle on/off with localStorage persistence. Polls every 15 seconds. (Mar 2026)
 - [x] **Admin IP Update from blocked page** - when WiFi IP changes, admin can update it directly from /gps-attendance blocked page without going to settings. Flow: blocked → admin login → update IP → page unblocks. (Mar 2026)
+- [x] **Fixed payroll period creation** - period name was sent empty when auto-generated. Now uses generatePeriodName() as fallback in submit handler. (Mar 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification

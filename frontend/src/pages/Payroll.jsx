@@ -182,7 +182,12 @@ const Payroll = () => {
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
-      formData.append("name", periodForm.name);
+      const periodName = periodForm.name || generatePeriodName();
+      if (!periodName) {
+        toast.error(language === "ar" ? "يرجى إدخال اسم الفترة" : "Please enter period name");
+        return;
+      }
+      formData.append("name", periodName);
       formData.append("start_date", periodForm.start_date);
       formData.append("end_date", periodForm.end_date);
       
@@ -195,7 +200,8 @@ const Payroll = () => {
       setPeriodForm({ name: "", start_date: "", end_date: "" });
       fetchPeriods();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Error creating period");
+      console.error("Create period error:", error);
+      toast.error(error.response?.data?.detail || (language === "ar" ? "خطأ في إنشاء الفترة" : "Error creating period"));
     }
   };
 
