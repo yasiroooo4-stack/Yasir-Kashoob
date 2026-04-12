@@ -122,9 +122,29 @@ async def get_election_results(election_id: str):
     ).to_list(200)
 
     for c in candidates:
+        # عدد الأصوات
         c["votes_count"] = await db.supplier_votes.count_documents({
             "election_id": election_id, "candidate_id": c["id"]
         })
+        # قائمة المصوتين لهذا المرشح
+        votes = await db.supplier_votes.find(
+            {"election_id": election_id, "candidate_id": c["id"]}, {"_id": 0}
+        ).to_list(500)
+        voters = []
+        for v in votes:
+            supplier = await db.suppliers.find_one(
+                {"supplier_code": v.get("voter_supplier_code")},
+                {"_id": 0, "name": 1, "supplier_code": 1}
+            )
+            voters.append({
+                "supplier_code": v.get("voter_supplier_code", ""),
+                "name": supplier.get("name", "غير معروف") if supplier else "غير معروف",
+                "voted_at": v.get("voted_at", "")
+            })
+        c["voters"] = voters
+        # رابط الصورة
+        if c.get("photo"):
+            c["photo_url"] = f"/api/elections/candidate-photo/{c['photo']}"
 
     # Group by center
     centers = election.get("centers", ["زيك", "حجيف", "غدو"])

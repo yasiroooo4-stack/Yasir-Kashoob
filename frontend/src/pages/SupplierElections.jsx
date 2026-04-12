@@ -14,7 +14,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "../components/ui/table";
 import {
-  Vote, Plus, Trophy, Users, Clock, Trash2, Eye, CalendarDays, BarChart3, Printer
+  Vote, Plus, Trophy, Users, Clock, Trash2, Eye, CalendarDays, BarChart3, Printer, ChevronDown, ChevronUp, Camera
 } from "lucide-react";
 import { useAuth, API } from "../App";
 
@@ -33,6 +33,7 @@ export default function SupplierElections() {
   const [showCreate, setShowCreate] = useState(false);
   const [showResults, setShowResults] = useState(null);
   const [results, setResults] = useState(null);
+  const [expandedCandidate, setExpandedCandidate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "",
@@ -353,6 +354,9 @@ export default function SupplierElections() {
                     {data.winner && (
                       <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200 mt-2">
                         <Trophy className="w-5 h-5 text-yellow-500" />
+                        {data.winner.photo_url && (
+                          <img src={`${API}${data.winner.photo_url}`} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-yellow-400" />
+                        )}
                         <span className="font-bold text-yellow-700">الفائز: {data.winner.name}</span>
                         <Badge className="bg-yellow-100 text-yellow-800">{data.winner.votes_count} صوت</Badge>
                       </div>
@@ -362,30 +366,67 @@ export default function SupplierElections() {
                     {data.candidates.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-3">لا يوجد مرشحون في هذا المركز</p>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-right">#</TableHead>
-                            <TableHead className="text-right">المرشح</TableHead>
-                            <TableHead className="text-right">الكود</TableHead>
-                            <TableHead className="text-right">الأصوات</TableHead>
-                            <TableHead className="text-right">النسبة</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {data.candidates.map((c, i) => (
-                            <TableRow key={c.id} className={i === 0 && c.votes_count > 0 ? "bg-yellow-50" : ""}>
-                              <TableCell>{i === 0 && c.votes_count > 0 ? <Trophy className="w-4 h-4 text-yellow-500" /> : i + 1}</TableCell>
-                              <TableCell className="font-medium">{c.name}</TableCell>
-                              <TableCell>{c.supplier_code || "-"}</TableCell>
-                              <TableCell className="font-bold">{c.votes_count}</TableCell>
-                              <TableCell>
-                                {data.total_votes > 0 ? `${((c.votes_count / data.total_votes) * 100).toFixed(1)}%` : "0%"}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="space-y-3">
+                        {data.candidates.map((c, i) => {
+                          const isWinner = i === 0 && c.votes_count > 0;
+                          const isExpanded = expandedCandidate === c.id;
+                          const pct = data.total_votes > 0 ? ((c.votes_count / data.total_votes) * 100).toFixed(1) : "0.0";
+                          return (
+                            <div key={c.id} className={`rounded-lg border-2 overflow-hidden ${isWinner ? 'border-yellow-300 bg-yellow-50/50' : 'border-gray-200'}`}
+                              data-testid={`result-candidate-${c.id}`}>
+                              {/* Candidate Row */}
+                              <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50"
+                                onClick={() => setExpandedCandidate(isExpanded ? null : c.id)}>
+                                {/* Photo */}
+                                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                                  {c.photo_url ? (
+                                    <img src={`${API}${c.photo_url}`} alt={c.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <Camera className="w-5 h-5 text-gray-400" />
+                                  )}
+                                </div>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    {isWinner && <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />}
+                                    <p className="font-bold text-sm truncate">{c.name}</p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">كود: {c.supplier_code || '-'}</p>
+                                </div>
+                                {/* Votes */}
+                                <div className="text-center flex-shrink-0">
+                                  <p className="text-lg font-bold text-indigo-700">{c.votes_count}</p>
+                                  <p className="text-[10px] text-muted-foreground">صوت ({pct}%)</p>
+                                </div>
+                                {/* Expand */}
+                                <div className="flex-shrink-0">
+                                  {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                </div>
+                              </div>
+                              {/* Voters List (Expanded) */}
+                              {isExpanded && (
+                                <div className="border-t bg-gray-50 p-3">
+                                  <p className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1">
+                                    <Users className="w-3 h-3" /> قائمة المصوتين ({c.voters?.length || 0})
+                                  </p>
+                                  {(!c.voters || c.voters.length === 0) ? (
+                                    <p className="text-xs text-muted-foreground text-center py-2">لا يوجد مصوتين</p>
+                                  ) : (
+                                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                                      {c.voters.map((v, vi) => (
+                                        <div key={vi} className="flex items-center justify-between bg-white rounded px-3 py-1.5 text-xs border">
+                                          <span className="font-medium">{v.name}</span>
+                                          <span className="text-muted-foreground">كود: {v.supplier_code}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
