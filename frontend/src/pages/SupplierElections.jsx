@@ -14,7 +14,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "../components/ui/table";
 import {
-  Vote, Plus, Trophy, Users, Clock, Trash2, Eye, CalendarDays, BarChart3
+  Vote, Plus, Trophy, Users, Clock, Trash2, Eye, CalendarDays, BarChart3, Printer
 } from "lucide-react";
 import { useAuth, API } from "../App";
 
@@ -86,6 +86,96 @@ export default function SupplierElections() {
   const formatDate = (d) => {
     if (!d) return "-";
     try { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return d; }
+  };
+
+  const printResults = () => {
+    if (!results || !showResults) return;
+    const logoUrl = window.location.origin + "/company-logo.png";
+    const now = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+    const centersHtml = results.results_by_center ? Object.entries(results.results_by_center).map(([center, data]) => {
+      const candidatesRows = data.candidates.map((c, i) => {
+        const pct = data.total_votes > 0 ? ((c.votes_count / data.total_votes) * 100).toFixed(1) : "0.0";
+        const isWinner = i === 0 && c.votes_count > 0;
+        return `<tr style="${isWinner ? 'background:#FFFDE7;font-weight:bold;' : ''}">
+          <td style="padding:8px 12px;border:1px solid #ddd;text-align:center;">${isWinner ? '🏆' : (i + 1)}</td>
+          <td style="padding:8px 12px;border:1px solid #ddd;">${c.name}</td>
+          <td style="padding:8px 12px;border:1px solid #ddd;text-align:center;">${c.supplier_code || '-'}</td>
+          <td style="padding:8px 12px;border:1px solid #ddd;text-align:center;font-weight:bold;">${c.votes_count}</td>
+          <td style="padding:8px 12px;border:1px solid #ddd;text-align:center;">${pct}%</td>
+        </tr>`;
+      }).join('');
+
+      return `
+        <div style="margin-bottom:25px;border:2px solid #ddd;border-radius:10px;overflow:hidden;">
+          <div style="background:#f8f9fa;padding:12px 16px;border-bottom:2px solid #ddd;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:16px;font-weight:bold;">مركز ${center}</span>
+            <span style="background:#e8f5e9;color:#2e7d32;padding:4px 12px;border-radius:12px;font-size:13px;">${data.total_votes} صوت</span>
+          </div>
+          ${data.winner ? `
+          <div style="background:#FFFDE7;padding:10px 16px;border-bottom:1px solid #FFF9C4;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">🏆</span>
+            <span style="font-weight:bold;color:#F57F17;">الفائز: ${data.winner.name}</span>
+            <span style="background:#FFF9C4;color:#F57F17;padding:2px 10px;border-radius:10px;font-size:12px;margin-right:8px;">${data.winner.votes_count} صوت</span>
+          </div>` : ''}
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="padding:8px 12px;border:1px solid #ddd;text-align:center;width:40px;">#</th>
+                <th style="padding:8px 12px;border:1px solid #ddd;text-align:right;">المرشح</th>
+                <th style="padding:8px 12px;border:1px solid #ddd;text-align:center;">الكود</th>
+                <th style="padding:8px 12px;border:1px solid #ddd;text-align:center;">الأصوات</th>
+                <th style="padding:8px 12px;border:1px solid #ddd;text-align:center;">النسبة</th>
+              </tr>
+            </thead>
+            <tbody>${candidatesRows}</tbody>
+          </table>
+        </div>`;
+    }).join('') : '';
+
+    const printWindow = window.open("", "_blank", "width=800,height=900");
+    printWindow.document.write(`
+      <html dir="rtl"><head><title>نتائج الانتخاب - المروج للألبان</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 30px; direction: rtl; color: #333; }
+        .header { text-align: center; border-bottom: 3px solid #8B7D3C; padding-bottom: 20px; margin-bottom: 25px; }
+        .header img { width: 90px; height: 90px; object-fit: contain; margin-bottom: 8px; }
+        .header h1 { font-size: 22px; margin: 5px 0; color: #8B7D3C; }
+        .header h2 { font-size: 14px; color: #666; margin: 3px 0; }
+        .header h3 { font-size: 18px; margin: 12px 0 5px; color: #333; }
+        .summary { display: flex; justify-content: center; gap: 30px; margin-bottom: 25px; }
+        .summary-box { text-align: center; padding: 15px 30px; border: 2px solid #e0e0e0; border-radius: 10px; min-width: 120px; }
+        .summary-box .num { font-size: 28px; font-weight: bold; }
+        .summary-box .label { font-size: 13px; color: #666; margin-top: 4px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px solid #8B7D3C; color: #888; font-size: 12px; }
+        @media print { body { padding: 15px; } }
+      </style></head><body>
+        <div class="header">
+          <img src="${logoUrl}" alt="المروج للألبان" />
+          <h1>المروج للألبان</h1>
+          <h2>Al Morooj Dairy</h2>
+          <h3>نتائج: ${showResults.title}</h3>
+          <p style="font-size:12px;color:#888;margin:5px 0;">${now}</p>
+        </div>
+        <div class="summary">
+          <div class="summary-box">
+            <div class="num" style="color:#3949AB;">${results.all_candidates?.length || 0}</div>
+            <div class="label">مرشح</div>
+          </div>
+          <div class="summary-box">
+            <div class="num" style="color:#2E7D32;">${results.total_votes}</div>
+            <div class="label">صوت</div>
+          </div>
+        </div>
+        ${centersHtml}
+        <div class="footer">
+          <p style="color:#8B7D3C;font-size:14px;font-weight:bold;">المروج للألبان - Al Morooj Dairy</p>
+          <p>تم إصدار هذا التقرير بتاريخ ${now}</p>
+        </div>
+        <script>window.onload=function(){setTimeout(function(){window.print();},500);}</script>
+      </body></html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -300,6 +390,11 @@ export default function SupplierElections() {
                   </CardContent>
                 </Card>
               ))}
+
+              {/* Print Results Button */}
+              <Button onClick={printResults} className="w-full gap-2" variant="outline" data-testid="print-results-btn">
+                <Printer className="w-4 h-4" /> طباعة إيصال النتائج
+              </Button>
             </div>
           )}
         </DialogContent>
