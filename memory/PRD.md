@@ -1,76 +1,43 @@
-# Attendance Guard - PRD
+# نظام المروج للألبان - Almorooj Dairy ERP
 
-## Original Problem Statement
-Full-stack HR/Attendance management system (Arabic UI) with:
-- Employee management, fingerprint attendance, GPS tracking
-- Export Excel/PDF, manager approval workflow for GPS attendance
-- Selfie capture on check-in/out, mock GPS detection
-- WiFi-based attendance with company network verification
-- Strict network validation (block non-company networks)
-- Admin settings for WiFi/network configuration per location
+## المشكلة الأصلية
+بناء نظام شامل لإدارة الحضور والانصراف مع طرق متعددة للتسجيل (بصمة، GPS، WiFi)، رقابة إدارية، تتبع الموظفين، ونظام الرواتب. بالإضافة لنظام انتخابات الموردين.
 
-## Architecture
-- **Backend:** FastAPI + MongoDB (milk_erp database)
-- **Frontend:** React + Shadcn UI + Tailwind CSS
-- **Language:** Arabic (RTL), employee names always in Arabic
+## المستخدمون
+- **المسؤول (Admin)**: إدارة الموظفين، الحضور، الرواتب، الانتخابات
+- **الموردون (Suppliers)**: الترشيح والتصويت في الانتخابات
 
-## What's Been Implemented
-- [x] Employee list with Export Excel/PDF + date filters
-- [x] Manager approval workflow for GPS attendance
-- [x] GPS display bugs fixed in HR reports
-- [x] Core logic: GPS + fingerprint merge on same day
-- [x] Selfie capture (WebRTC) on check-in/out
-- [x] Mock GPS detection + security logging
-- [x] WiFi-based attendance flow
-- [x] Admin WiFi config UI (SSID, BSSID, Password, IP, Gateway)
-- [x] GPS approval reset in System Settings
-- [x] **Strict network validation** - blocks non-company networks on /gps-attendance
-- [x] **Simplified flow** - removed WiFi password step, direct Selfie + Check-in/out (Feb 2026)
-- [x] **Bilingual support (Arabic/English)** - language toggle on /gps-attendance, localStorage persistence (Feb 2026)
-- [x] **Auto GPS tracking** - GPS activates automatically after check-in, no button needed (Feb 2026)
-- [x] **Range exit alerts** - instant alert when employee leaves work area + exit/return log with timestamps (Feb 2026)
-- [x] **GPS columns in HR report** - added حضور GPS + انصراف GPS columns with approval status badges (Mar 2026)
-- [x] **Fixed Invalid Date in map popup** - safe time formatting for "HH:MM" strings (Mar 2026)
-- [x] **Bilingual map popups** - popup labels switch with language (Code/كود, Check-in/وقت الدخول, etc.) (Mar 2026)
-- [x] **Exit log dashboard** - admin can view employee range exit/return logs with date filter + statistics (Mar 2026)
-- [x] **Fixed source column** - WiFi/GPS attendance shows correct source badge instead of "يدوي" (Mar 2026)
-- [x] **Fixed GPS columns in HR** - show time + approval + selfie for WiFi/GPS check-in/out (Mar 2026)
-- [x] **Fixed check-out selfie** - selfie now saved as check_out_selfie_url (Mar 2026)
-- [x] **Fixed employee tracking map** - changed default mode to 'attendance' (حاضر بالبصمة), fixed marker ID consistency (String), cleared markersRef on cleanup. Fingerprint employees now appear on map by default. (Mar 2026)
-- [x] **Geofence Push Notifications** - browser notifications + in-app toast + sound alert when employee exits work range. Notification bell with unread badge in header (admin/HR only). Toggle on/off with localStorage persistence. Polls every 15 seconds. (Mar 2026)
-- [x] **Admin IP Update from blocked page** - when WiFi IP changes, admin can update it directly from /gps-attendance blocked page without going to settings. Flow: blocked → admin login → update IP → page unblocks. (Mar 2026)
-- [x] **Fixed payroll period creation** - period name was sent empty when auto-generated. Now uses generatePeriodName() as fallback in submit handler. (Mar 2026)
-- [x] **Fixed payroll attendance calculation** - Three fixes: (1) weekday() instead of isoweekday() for correct Fri/Sat weekend detection, (2) safeguard for corrupted weekly_off_days >3 days defaults to [Fri,Sat], (3) count pending_gps_approval and records with check_in as present. Fixed 7 employees with corrupted weekly_off_days data. (Mar 2026)
-- [x] **Supplier Election & Voting System** - Full system for nominating and voting for "head of suppliers". Features: admin election management, time-bound nomination/voting periods, supplier code auto-lookup, manual entry fallback, one-vote-per-supplier, vote counts visible only to admin. Routes: /supplier-elections (admin), /supplier-voting (public). (Apr 2026)
+## المتطلبات الأساسية
+1. نظام حضور متعدد (بصمة، GPS، WiFi)
+2. تتبع الموظفين على الخريطة مع تنبيهات خروج السياج
+3. تقارير HR وكشوف رواتب
+4. نظام انتخابات الموردين (ترشيح، تصويت، نتائج حسب المركز)
+5. إشعارات دفع للمسؤول
 
-## Key Endpoints
-- `GET /api/tracking/detect-network` - Auto IP verification
-- `POST /api/tracking/gps-attendance` - Check-in/out with selfie
-- `POST /api/tracking/employee-login` - Employee login
-- `GET /api/tracking/settings` - Tracking settings with work locations
+## ما تم إنجازه
+- [x] نظام الحضور (بصمة + GPS + WiFi)
+- [x] تتبع الموظفين على الخريطة
+- [x] إشعارات دفع لخروج السياج
+- [x] إصلاح صفحة GPS لتحديث IP
+- [x] إصلاح نظام الرواتب
+- [x] نظام انتخابات الموردين (ترشيح، تصويت، مراكز، إيصال طباعة)
+- [x] **إصلاح مشكلة التوقيت في الانتخابات** (2026-04-12): تم تغيير المقارنة من UTC إلى توقيت عُمان UTC+4
 
-- `GET /api/tracking/range-exit-logs` - All employees' range exit logs for a date
-- `GET /api/tracking/range-exit-logs/{employee_id}` - Specific employee's exit logs
-- `POST /api/tracking/location` - UPDATED: now returns `range_event` (exit/return/null)
-- Public IP: 85.154.168.39
-- WiFi SSID: AL MOROOJ-2.4G
-- Location: الادارة
+## المهام المعلقة
+### P0 - عاجل
+- [ ] بناء تطبيق Android (APK) باستخدام Capacitor
 
-## Prioritized Backlog
-### P0
-- [ ] Build native Android App (.apk) for reliable WiFi/BSSID detection
+### P1 - مهم
+- [ ] إرسال SMS/QR تلقائي لرابط GPS
 
-### P1
-- [ ] SMS/QR Code for GPS attendance link distribution
+### P2 - مستقبلي
+- [ ] إشعارات تسجيل الموردين (SMS/Email)
+- [ ] تحسين تقارير الحضور المبنية على الموقع
+- [ ] توحيد إدارة التوقيت عبر جميع الوحدات
 
-### P2
-- [ ] Supplier registration email/SMS notifications
-- [ ] Enhanced location-based attendance reporting
-
-### Refactoring
-- [ ] Split server.py and tracking_routes.py into smaller modules
-- [ ] Extract WiFi settings component from SystemSettings.jsx
-
-## Test Credentials
-- Username: hassan | Password: 123
-- Test employee: EMP201802 (Said Mohammed Said Al Maamari)
+## البنية التقنية
+- **Frontend**: React + Shadcn UI + Tailwind
+- **Backend**: FastAPI + MongoDB
+- **Map**: Leaflet.js
+- **Mobile**: Capacitor (مخطط)
+- **التوقيت**: UTC+4 (عُمان) في نظام الانتخابات
