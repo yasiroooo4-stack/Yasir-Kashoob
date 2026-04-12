@@ -168,7 +168,7 @@ async def register_candidate(data: CandidateRegister):
         raise HTTPException(status_code=404, detail="الانتخاب غير موجود")
 
     status = get_election_status(election)
-    if status not in ["nomination", "draft"]:
+    if status != "nomination":
         raise HTTPException(status_code=400, detail="فترة الترشيح غير مفتوحة")
 
     # Validate center

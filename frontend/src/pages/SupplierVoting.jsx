@@ -302,7 +302,7 @@ export default function SupplierVoting() {
           </div>
 
           {/* Registration Form */}
-          {(selected.status === "nomination" || selected.status === "draft") && (
+          {selected.status === "nomination" && (
             <Card data-testid="nomination-form">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
