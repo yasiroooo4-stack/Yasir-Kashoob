@@ -51,14 +51,19 @@ class VoteCast(BaseModel):
 
 # ===== Helper =====
 def get_election_status(election: dict) -> str:
-    now = datetime.now(timezone.utc).isoformat()
-    if now < election["nomination_start"]:
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
+    nom_start = election.get("nomination_start", "")[:16]
+    nom_end = election.get("nomination_end", "")[:16]
+    vote_start = election.get("voting_start", "")[:16]
+    vote_end = election.get("voting_end", "")[:16]
+    
+    if now < nom_start:
         return "draft"
-    elif now <= election["nomination_end"]:
+    elif now <= nom_end:
         return "nomination"
-    elif now < election["voting_start"]:
+    elif now < vote_start:
         return "pending_voting"
-    elif now <= election["voting_end"]:
+    elif now <= vote_end:
         return "voting"
     else:
         return "closed"
@@ -159,7 +164,7 @@ async def register_candidate(data: CandidateRegister):
         raise HTTPException(status_code=404, detail="الانتخاب غير موجود")
 
     status = get_election_status(election)
-    if status != "nomination":
+    if status not in ["nomination", "draft"]:
         raise HTTPException(status_code=400, detail="فترة الترشيح غير مفتوحة")
 
     # Validate center

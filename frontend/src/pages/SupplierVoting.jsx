@@ -41,7 +41,7 @@ export default function SupplierVoting() {
   const fetchElections = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/api/elections/list`);
-      setElections(res.data.filter(e => e.status !== "draft"));
+      setElections(res.data);
     } catch {}
   }, []);
 
@@ -53,7 +53,7 @@ export default function SupplierVoting() {
       const res = await axios.get(`${API}/api/elections/${election.id}/candidates`);
       setCandidates(res.data);
     } catch {}
-    if (election.status === "nomination") setView("nominate");
+    if (election.status === "nomination" || election.status === "draft") setView("nominate");
     else if (election.status === "voting") setView("vote");
     else setView("nominate");
   };
