@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import {
-  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft, Printer, Timer
+  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft, Printer, Timer, Camera, RotateCcw
 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -98,7 +98,11 @@ export default function SupplierVoting() {
   const [votedFor, setVotedFor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState(null);
-  const [voterCenter, setVoterCenter] = useState(""); // مركز المصوت // Registration receipt
+  const [voterCenter, setVoterCenter] = useState(""); // مركز المصوت
+  const [capturedPhoto, setCapturedPhoto] = useState(null); // صورة الإثبات
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   const fetchElections = useCallback(async () => {
     try {
@@ -108,6 +112,47 @@ export default function SupplierVoting() {
   }, []);
 
   useEffect(() => { fetchElections(); }, [fetchElections]);
+
+  // ===== Camera Functions =====
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: 640, height: 480 }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch {
+      toast.error("لا يمكن الوصول للكاميرا. يرجى السماح بالوصول من إعدادات المتصفح");
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 480;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(videoRef.current, 0, 0, 640, 480);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+    setCapturedPhoto(dataUrl);
+    stopCamera();
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setShowCamera(false);
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    startCamera();
+  };
 
   const selectElection = async (election) => {
     setSelected(election);
@@ -148,11 +193,13 @@ export default function SupplierVoting() {
 
   const handleRegister = async () => {
     if (!regForm.name) { toast.error("يرجى إدخال الاسم"); return; }
+    if (!capturedPhoto) { toast.error("يرجى التقاط صورة شخصية للإثبات"); return; }
     setSubmitting(true);
     try {
       const res = await axios.post(`${API}/api/elections/register-candidate`, {
         election_id: selected.id,
-        ...regForm
+        ...regForm,
+        photo: capturedPhoto
       });
       toast.success("تم تسجيل الترشيح بنجاح!");
       // Save receipt data
@@ -171,6 +218,7 @@ export default function SupplierVoting() {
       setRegForm({ name: "", supplier_code: "", national_id: "", supply_type: "", center_name: "" });
       setSupplierCode("");
       setSupplierFound(null);
+      setCapturedPhoto(null);
     } catch (err) {
       toast.error(err.response?.data?.detail || "خطأ في التسجيل");
     } finally { setSubmitting(false); }
@@ -288,6 +336,7 @@ export default function SupplierVoting() {
   };
 
   const goBack = () => {
+    stopCamera();
     setSelected(null);
     setView("list");
     setCandidates([]);
@@ -301,6 +350,7 @@ export default function SupplierVoting() {
     setHasVoted(false);
     setVotedFor(null);
     setReceipt(null);
+    setCapturedPhoto(null);
   };
 
   // ===== Election List =====
@@ -420,7 +470,46 @@ export default function SupplierVoting() {
                     </select>
                   </div>
                 </div>
-                <Button onClick={handleRegister} disabled={submitting} className="w-full" data-testid="register-candidate-btn">
+                {/* Camera Capture Section */}
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/50" data-testid="camera-section">
+                  <Label className="font-bold text-blue-700 flex items-center gap-2 mb-3">
+                    <Camera className="w-4 h-4" /> صورة إثبات شخصية (إجباري) *
+                  </Label>
+                  {!capturedPhoto && !showCamera && (
+                    <Button type="button" onClick={startCamera} variant="outline" className="w-full gap-2 border-blue-300 text-blue-700 hover:bg-blue-100" data-testid="open-camera-btn">
+                      <Camera className="w-5 h-5" /> فتح الكاميرا للتصوير
+                    </Button>
+                  )}
+                  {showCamera && (
+                    <div className="space-y-3">
+                      <div className="relative rounded-lg overflow-hidden bg-black aspect-[4/3]">
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={capturePhoto} className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700" data-testid="capture-btn">
+                          <Camera className="w-4 h-4" /> التقاط الصورة
+                        </Button>
+                        <Button type="button" onClick={stopCamera} variant="outline" className="gap-2">
+                          إلغاء
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {capturedPhoto && (
+                    <div className="space-y-3">
+                      <div className="relative rounded-lg overflow-hidden border-2 border-green-400">
+                        <img src={capturedPhoto} alt="صورة المرشح" className="w-full aspect-[4/3] object-cover" style={{ transform: "scaleX(-1)" }} />
+                        <div className="absolute top-2 right-2">
+                          <Badge className="bg-green-500 text-white gap-1"><CheckCircle className="w-3 h-3" /> تم التصوير</Badge>
+                        </div>
+                      </div>
+                      <Button type="button" onClick={retakePhoto} variant="outline" className="w-full gap-2" data-testid="retake-btn">
+                        <RotateCcw className="w-4 h-4" /> إعادة التصوير
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <Button onClick={handleRegister} disabled={submitting || !capturedPhoto} className="w-full" data-testid="register-candidate-btn">
                   {submitting ? "جاري التسجيل..." : <><UserPlus className="w-4 h-4 me-2" /> تسجيل كمرشح</>}
                 </Button>
               </CardContent>

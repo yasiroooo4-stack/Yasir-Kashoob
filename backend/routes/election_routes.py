@@ -2,11 +2,13 @@
 نظام ترشيح وتصويت الموردين
 Supplier Election & Voting System
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 import uuid
+import base64
 
 # توقيت عُمان UTC+4
 OMAN_TZ = timezone(timedelta(hours=4))
@@ -15,6 +17,10 @@ import motor.motor_asyncio
 
 MONGO_URL = os.environ.get("MONGO_URL")
 DB_NAME = os.environ.get("DB_NAME", "milk_erp")
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URL)
+
+UPLOAD_DIR = "/app/backend/uploads/candidates"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 
@@ -43,6 +49,7 @@ class CandidateRegister(BaseModel):
     national_id: Optional[str] = None
     supply_type: Optional[str] = None
     center_name: Optional[str] = None
+    photo: Optional[str] = None  # Base64 encoded photo
 
 
 class VoteCast(BaseModel):
@@ -171,6 +178,10 @@ async def register_candidate(data: CandidateRegister):
     if status != "nomination":
         raise HTTPException(status_code=400, detail="فترة الترشيح غير مفتوحة")
 
+    # التحقق من وجود صورة إثبات
+    if not data.photo:
+        raise HTTPException(status_code=400, detail="يرجى التقاط صورة شخصية للإثبات")
+
     # Validate center
     centers = election.get("centers", ["زيك", "حجيف", "غدو"])
     if data.center_name and data.center_name not in centers:
@@ -196,19 +207,45 @@ async def register_candidate(data: CandidateRegister):
         if existing:
             raise HTTPException(status_code=400, detail="هذا المورد مسجل مسبقاً كمرشح")
 
+    candidate_id = str(uuid.uuid4())
+
+    # حفظ الصورة
+    photo_filename = None
+    if data.photo:
+        try:
+            photo_data = data.photo.split(",")[1] if "," in data.photo else data.photo
+            photo_bytes = base64.b64decode(photo_data)
+            photo_filename = f"{candidate_id}.jpg"
+            photo_path = os.path.join(UPLOAD_DIR, photo_filename)
+            with open(photo_path, "wb") as f:
+                f.write(photo_bytes)
+        except Exception:
+            raise HTTPException(status_code=400, detail="خطأ في حفظ الصورة")
+
     candidate = {
-        "id": str(uuid.uuid4()),
+        "id": candidate_id,
         "election_id": data.election_id,
         "supplier_code": data.supplier_code,
         "name": data.name,
         "national_id": data.national_id,
         "supply_type": data.supply_type,
         "center_name": data.center_name,
+        "photo": photo_filename,
         "registered_at": datetime.now(OMAN_TZ).isoformat()
     }
     await db.supplier_candidates.insert_one(candidate)
     candidate.pop("_id", None)
     return candidate
+
+
+@router.get("/candidate-photo/{filename}")
+async def get_candidate_photo(filename: str):
+    """عرض صورة المرشح"""
+    photo_path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(photo_path):
+        raise HTTPException(status_code=404, detail="الصورة غير موجودة")
+    return FileResponse(photo_path, media_type="image/jpeg")
+
 
 
 @router.get("/lookup-supplier/{supplier_code}")
