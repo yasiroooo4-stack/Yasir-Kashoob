@@ -193,11 +193,11 @@ export default function SupplierVoting() {
           supply_type: s.milk_type || "",
           center_name: s.center_name || ""
         });
-        toast.success("تم العثور على بيانات المورد");
+        toast.success(`تم العثور على المورد: ${s.name}`);
       } else {
         setSupplierFound(false);
-        setRegForm({ ...regForm, supplier_code: supplierCode });
-        toast.info("لم يتم العثور - يرجى إدخال البيانات يدوياً");
+        setRegForm({ name: "", supplier_code: "", national_id: "", supply_type: "", center_name: "" });
+        toast.error("كود المورد غير موجود في النظام");
       }
     } catch {
       setSupplierFound(false);
@@ -438,52 +438,57 @@ export default function SupplierVoting() {
               <CardContent className="space-y-4">
                 {/* Supplier Code Lookup */}
                 <div>
-                  <Label>كود المورد</Label>
+                  <Label className="font-bold">أدخل كود المورد</Label>
                   <div className="flex gap-2">
-                    <Input value={supplierCode} onChange={e => setSupplierCode(e.target.value)}
-                      placeholder="أدخل كود المورد للبحث" data-testid="lookup-code-input"
+                    <Input value={supplierCode} onChange={e => { setSupplierCode(e.target.value); setSupplierFound(null); setRegForm({ name: "", supplier_code: "", national_id: "", supply_type: "", center_name: "" }); }}
+                      placeholder="أدخل كود المورد" data-testid="lookup-code-input"
                       onKeyDown={e => e.key === "Enter" && lookupSupplier()} />
-                    <Button onClick={lookupSupplier} disabled={lookupLoading} variant="outline" data-testid="lookup-btn">
-                      <Search className="w-4 h-4" />
+                    <Button onClick={lookupSupplier} disabled={lookupLoading} data-testid="lookup-btn">
+                      {lookupLoading ? "جاري البحث..." : <><Search className="w-4 h-4 me-1" /> بحث</>}
                     </Button>
                   </div>
-                  {supplierFound === true && <p className="text-xs text-green-600 mt-1">تم العثور على بيانات المورد</p>}
-                  {supplierFound === false && <p className="text-xs text-orange-600 mt-1">لم يتم العثور - أدخل البيانات يدوياً</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>الاسم *</Label>
-                    <Input value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})}
-                      placeholder="اسم المرشح" data-testid="candidate-name-input" />
+
+                {/* Supplier Data - Read Only */}
+                {supplierFound === true && (
+                  <div className="border-2 border-green-300 rounded-lg p-4 bg-green-50/50 space-y-3" data-testid="supplier-data-card">
+                    <div className="flex items-center gap-2 text-green-700 font-bold text-sm">
+                      <CheckCircle className="w-4 h-4" /> بيانات المورد
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="bg-white rounded-lg p-2.5 border">
+                        <p className="text-[11px] text-muted-foreground">الاسم</p>
+                        <p className="font-bold">{regForm.name}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-2.5 border">
+                        <p className="text-[11px] text-muted-foreground">كود المورد</p>
+                        <p className="font-bold">{regForm.supplier_code}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-2.5 border">
+                        <p className="text-[11px] text-muted-foreground">رقم المدني</p>
+                        <p className="font-bold">{regForm.national_id || "-"}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-2.5 border">
+                        <p className="text-[11px] text-muted-foreground">نوع التوريد</p>
+                        <p className="font-bold">{regForm.supply_type || "-"}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-2.5 border col-span-2">
+                        <p className="text-[11px] text-muted-foreground">مركز التوريد</p>
+                        <p className="font-bold">{regForm.center_name}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label>رقم المدني</Label>
-                    <Input value={regForm.national_id} onChange={e => setRegForm({...regForm, national_id: e.target.value})}
-                      placeholder="رقم الهوية المدنية" data-testid="candidate-id-input" />
+                )}
+
+                {supplierFound === false && (
+                  <div className="border-2 border-red-200 rounded-lg p-4 bg-red-50 text-center">
+                    <p className="text-red-600 font-medium">كود المورد غير موجود في النظام</p>
+                    <p className="text-xs text-red-400 mt-1">يرجى التأكد من الكود والمحاولة مرة أخرى</p>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>نوع التوريد</Label>
-                    <Input value={regForm.supply_type} onChange={e => setRegForm({...regForm, supply_type: e.target.value})}
-                      placeholder="مثال: أبقار / أغنام" />
-                  </div>
-                  <div>
-                    <Label>مركز التوريد *</Label>
-                    <select
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={regForm.center_name}
-                      onChange={e => setRegForm({...regForm, center_name: e.target.value})}
-                      data-testid="center-select"
-                    >
-                      <option value="">-- اختر المركز --</option>
-                      {(selected?.centers || ["زيك", "حجيف", "غدو"]).map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                {/* Camera Capture Section */}
+                )}
+
+                {/* Camera - Only after supplier found */}
+                {supplierFound === true && (<>
                 <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/50" data-testid="camera-section">
                   <Label className="font-bold text-blue-700 flex items-center gap-2 mb-3">
                     <Camera className="w-4 h-4" /> صورة إثبات شخصية (إجباري) *
@@ -533,6 +538,7 @@ export default function SupplierVoting() {
                 <Button onClick={handleRegister} disabled={submitting || !capturedPhoto} className="w-full" data-testid="register-candidate-btn">
                   {submitting ? "جاري التسجيل..." : <><UserPlus className="w-4 h-4 me-2" /> تسجيل كمرشح</>}
                 </Button>
+                </>)}
               </CardContent>
             </Card>
           )}
