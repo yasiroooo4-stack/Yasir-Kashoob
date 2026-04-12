@@ -23,6 +23,7 @@ class Election(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: Optional[str] = ""
+    centers: List[str] = ["زيك", "حجيف", "غدو"]  # المراكز المشاركة
     nomination_start: str  # ISO date
     nomination_end: str
     voting_start: str
@@ -44,6 +45,7 @@ class CandidateRegister(BaseModel):
 class VoteCast(BaseModel):
     election_id: str
     voter_supplier_code: str
+    voter_center: str  # مركز المصوت
     candidate_id: str
 
 
@@ -94,26 +96,40 @@ async def get_election(election_id: str):
 
 @router.get("/{election_id}/results")
 async def get_election_results(election_id: str):
-    """نتائج التصويت - للمسؤول فقط"""
+    """نتائج التصويت مصنفة حسب المركز - للمسؤول فقط"""
     election = await db.supplier_elections.find_one({"id": election_id}, {"_id": 0})
     if not election:
         raise HTTPException(status_code=404, detail="الانتخاب غير موجود")
 
     candidates = await db.supplier_candidates.find(
         {"election_id": election_id}, {"_id": 0}
-    ).to_list(100)
+    ).to_list(200)
 
     for c in candidates:
         c["votes_count"] = await db.supplier_votes.count_documents({
             "election_id": election_id, "candidate_id": c["id"]
         })
 
-    candidates.sort(key=lambda x: x["votes_count"], reverse=True)
+    # Group by center
+    centers = election.get("centers", ["زيك", "حجيف", "غدو"])
+    results_by_center = {}
+    for center in centers:
+        center_candidates = [c for c in candidates if c.get("center_name") == center]
+        center_candidates.sort(key=lambda x: x["votes_count"], reverse=True)
+        center_votes = sum(c["votes_count"] for c in center_candidates)
+        winner = center_candidates[0] if center_candidates and center_candidates[0]["votes_count"] > 0 else None
+        results_by_center[center] = {
+            "candidates": center_candidates,
+            "total_votes": center_votes,
+            "winner": winner
+        }
+
     total_votes = await db.supplier_votes.count_documents({"election_id": election_id})
 
     return {
         "election": election,
-        "candidates": candidates,
+        "results_by_center": results_by_center,
+        "all_candidates": candidates,
         "total_votes": total_votes
     }
 
@@ -146,16 +162,30 @@ async def register_candidate(data: CandidateRegister):
     if status != "nomination":
         raise HTTPException(status_code=400, detail="فترة الترشيح غير مفتوحة")
 
+    # Validate center
+    centers = election.get("centers", ["زيك", "حجيف", "غدو"])
+    if data.center_name and data.center_name not in centers:
+        raise HTTPException(status_code=400, detail=f"المركز غير صحيح. المراكز المتاحة: {', '.join(centers)}")
+
+    if not data.center_name:
+        raise HTTPException(status_code=400, detail="يرجى اختيار مركز التوريد")
+
     # Check if already registered
-    existing = await db.supplier_candidates.find_one({
-        "election_id": data.election_id,
-        "$or": [
-            {"supplier_code": data.supplier_code},
-            {"national_id": data.national_id}
-        ]
-    })
-    if existing:
-        raise HTTPException(status_code=400, detail="هذا المورد مسجل مسبقاً كمرشح")
+    if data.supplier_code:
+        existing = await db.supplier_candidates.find_one({
+            "election_id": data.election_id,
+            "supplier_code": data.supplier_code
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="هذا المورد مسجل مسبقاً كمرشح")
+    
+    if data.national_id:
+        existing = await db.supplier_candidates.find_one({
+            "election_id": data.election_id,
+            "national_id": data.national_id
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="هذا المورد مسجل مسبقاً كمرشح")
 
     candidate = {
         "id": str(uuid.uuid4()),
@@ -203,13 +233,18 @@ async def cast_vote(data: VoteCast):
     if not candidate:
         raise HTTPException(status_code=404, detail="المرشح غير موجود")
 
-    # Check if already voted
+    # المصوت يجب أن يصوت لمرشح من نفس مركزه
+    if candidate.get("center_name") != data.voter_center:
+        raise HTTPException(status_code=400, detail="يجب التصويت لمرشح من نفس مركزك")
+
+    # Check if already voted in this center
     existing_vote = await db.supplier_votes.find_one({
         "election_id": data.election_id,
-        "voter_supplier_code": data.voter_supplier_code
+        "voter_supplier_code": data.voter_supplier_code,
+        "voter_center": data.voter_center
     })
     if existing_vote:
-        raise HTTPException(status_code=400, detail="لقد قمت بالتصويت مسبقاً")
+        raise HTTPException(status_code=400, detail="لقد قمت بالتصويت مسبقاً في هذا المركز")
 
     # Cannot vote for yourself
     if candidate.get("supplier_code") == data.voter_supplier_code:
@@ -219,6 +254,7 @@ async def cast_vote(data: VoteCast):
         "id": str(uuid.uuid4()),
         "election_id": data.election_id,
         "voter_supplier_code": data.voter_supplier_code,
+        "voter_center": data.voter_center,
         "candidate_id": data.candidate_id,
         "voted_at": datetime.now(timezone.utc).isoformat()
     }
@@ -227,11 +263,12 @@ async def cast_vote(data: VoteCast):
     return {"success": True, "message": "تم التصويت بنجاح"}
 
 
-@router.get("/check-vote/{election_id}/{supplier_code}")
-async def check_vote(election_id: str, supplier_code: str):
-    """التحقق إذا صوت المورد مسبقاً"""
+@router.get("/check-vote/{election_id}/{supplier_code}/{center}")
+async def check_vote(election_id: str, supplier_code: str, center: str):
+    """التحقق إذا صوت المورد مسبقاً في مركزه"""
     vote = await db.supplier_votes.find_one({
         "election_id": election_id,
-        "voter_supplier_code": supplier_code
+        "voter_supplier_code": supplier_code,
+        "voter_center": center
     }, {"_id": 0})
     return {"has_voted": vote is not None, "vote": vote}

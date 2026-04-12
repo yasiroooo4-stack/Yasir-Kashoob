@@ -228,7 +228,7 @@ export default function SupplierElections() {
 
       {/* Results Dialog */}
       <Dialog open={!!showResults} onOpenChange={() => setShowResults(null)}>
-        <DialogContent className="max-w-2xl" data-testid="results-dialog">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" data-testid="results-dialog">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-yellow-500" />
@@ -236,11 +236,11 @@ export default function SupplierElections() {
             </DialogTitle>
           </DialogHeader>
           {results && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex gap-4 text-center">
                 <Card className="flex-1">
                   <CardContent className="py-3">
-                    <p className="text-2xl font-bold text-indigo-600">{results.candidates.length}</p>
+                    <p className="text-2xl font-bold text-indigo-600">{results.all_candidates?.length || 0}</p>
                     <p className="text-xs text-muted-foreground">مرشح</p>
                   </CardContent>
                 </Card>
@@ -251,40 +251,55 @@ export default function SupplierElections() {
                   </CardContent>
                 </Card>
               </div>
-              {results.candidates.length === 0 ? (
-                <p className="text-center text-muted-foreground py-6">لا يوجد مرشحون بعد</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">#</TableHead>
-                      <TableHead className="text-right">المرشح</TableHead>
-                      <TableHead className="text-right">الكود</TableHead>
-                      <TableHead className="text-right">المركز</TableHead>
-                      <TableHead className="text-right">الأصوات</TableHead>
-                      <TableHead className="text-right">النسبة</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {results.candidates.map((c, i) => (
-                      <TableRow key={c.id} className={i === 0 && c.votes_count > 0 ? "bg-yellow-50" : ""}>
-                        <TableCell>
-                          {i === 0 && c.votes_count > 0 ? <Trophy className="w-4 h-4 text-yellow-500" /> : i + 1}
-                        </TableCell>
-                        <TableCell className="font-medium">{c.name}</TableCell>
-                        <TableCell>{c.supplier_code || "-"}</TableCell>
-                        <TableCell>{c.center_name || "-"}</TableCell>
-                        <TableCell className="font-bold">{c.votes_count}</TableCell>
-                        <TableCell>
-                          {results.total_votes > 0
-                            ? `${((c.votes_count / results.total_votes) * 100).toFixed(1)}%`
-                            : "0%"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+
+              {/* Results by Center */}
+              {results.results_by_center && Object.entries(results.results_by_center).map(([center, data]) => (
+                <Card key={center} className="border-2">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">مركز {center}</CardTitle>
+                      <Badge variant="outline">{data.total_votes} صوت</Badge>
+                    </div>
+                    {data.winner && (
+                      <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200 mt-2">
+                        <Trophy className="w-5 h-5 text-yellow-500" />
+                        <span className="font-bold text-yellow-700">الفائز: {data.winner.name}</span>
+                        <Badge className="bg-yellow-100 text-yellow-800">{data.winner.votes_count} صوت</Badge>
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {data.candidates.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-3">لا يوجد مرشحون في هذا المركز</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-right">#</TableHead>
+                            <TableHead className="text-right">المرشح</TableHead>
+                            <TableHead className="text-right">الكود</TableHead>
+                            <TableHead className="text-right">الأصوات</TableHead>
+                            <TableHead className="text-right">النسبة</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.candidates.map((c, i) => (
+                            <TableRow key={c.id} className={i === 0 && c.votes_count > 0 ? "bg-yellow-50" : ""}>
+                              <TableCell>{i === 0 && c.votes_count > 0 ? <Trophy className="w-4 h-4 text-yellow-500" /> : i + 1}</TableCell>
+                              <TableCell className="font-medium">{c.name}</TableCell>
+                              <TableCell>{c.supplier_code || "-"}</TableCell>
+                              <TableCell className="font-bold">{c.votes_count}</TableCell>
+                              <TableCell>
+                                {data.total_votes > 0 ? `${((c.votes_count / data.total_votes) * 100).toFixed(1)}%` : "0%"}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </DialogContent>
