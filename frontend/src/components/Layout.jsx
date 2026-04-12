@@ -41,6 +41,7 @@ import {
   EyeOff,
   ClipboardList,
   Bell,
+  Vote,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -339,6 +340,7 @@ const Layout = () => {
     // الموردين واستلام الحليب
     { path: "/suppliers", icon: Users, label: "suppliers", departments: ["purchasing", "milk_reception", "admin", "it"] },
     { path: "/supplier-management", icon: PackageSearch, label: "supplier_management", departments: ["purchasing", "admin", "it"] },
+    { path: "/supplier-elections", icon: Vote, label: "supplier_elections", departments: ["admin", "it"] },
     { path: "/milk-reception", icon: Milk, label: "milk_reception" },
     
     // العملاء والمبيعات

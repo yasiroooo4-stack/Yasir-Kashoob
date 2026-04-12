@@ -63,6 +63,8 @@ import SystemSettings from "./pages/SystemSettings";
 import EmployeeScheduling from "./pages/EmployeeScheduling";
 import DriverSchedule from "./pages/DriverSchedule";
 import SupplierApp from "./pages/SupplierApp";
+import SupplierElections from "./pages/SupplierElections";
+import SupplierVoting from "./pages/SupplierVoting";
 import SalaryStructures from "./pages/SalaryStructures";
 import AdvancedReports from "./pages/AdvancedReports";
 import NotificationSettings from "./pages/NotificationSettings";
@@ -339,6 +341,9 @@ function App() {
               {/* Supplier App (PWA) - Public Route */}
               <Route path="/supplier-app" element={<SupplierApp />} />
               
+              {/* Supplier Voting - Public Route */}
+              <Route path="/supplier-voting" element={<SupplierVoting />} />
+              
               {/* Employee Tracking - Public Route */}
               <Route path="/employee-tracking" element={<EmployeeTracking />} />
               
@@ -365,6 +370,11 @@ function App() {
                 <Route path="suppliers" element={
                   <ProtectedRoute allowedDepartments={["purchasing", "milk_reception", "admin", "it"]} allowedPermissions={["suppliers", "suppliers_view", "suppliers_create", "suppliers_edit"]}>
                     <Suppliers />
+                  </ProtectedRoute>
+                } />
+                <Route path="supplier-elections" element={
+                  <ProtectedRoute allowedDepartments={["admin", "it"]} allowedPermissions={["suppliers", "admin"]}>
+                    <SupplierElections />
                   </ProtectedRoute>
                 } />
                 <Route path="milk-reception" element={

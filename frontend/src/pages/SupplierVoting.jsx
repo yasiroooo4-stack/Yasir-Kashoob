@@ -1,0 +1,400 @@
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import {
+  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft
+} from "lucide-react";
+
+const API = process.env.REACT_APP_BACKEND_URL;
+
+const statusLabels = {
+  draft: "لم يبدأ بعد",
+  nomination: "الترشيح مفتوح",
+  pending_voting: "بانتظار التصويت",
+  voting: "التصويت مفتوح",
+  closed: "مغلق",
+};
+
+export default function SupplierVoting() {
+  const [elections, setElections] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [view, setView] = useState("list"); // list, nominate, vote
+  const [supplierCode, setSupplierCode] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [supplierFound, setSupplierFound] = useState(null);
+  const [regForm, setRegForm] = useState({
+    name: "", supplier_code: "", national_id: "", supply_type: "", center_name: ""
+  });
+  const [voterCode, setVoterCode] = useState("");
+  const [hasVoted, setHasVoted] = useState(false);
+  const [votedFor, setVotedFor] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchElections = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/api/elections/list`);
+      setElections(res.data.filter(e => e.status !== "draft"));
+    } catch {}
+  }, []);
+
+  useEffect(() => { fetchElections(); }, [fetchElections]);
+
+  const selectElection = async (election) => {
+    setSelected(election);
+    try {
+      const res = await axios.get(`${API}/api/elections/${election.id}/candidates`);
+      setCandidates(res.data);
+    } catch {}
+    if (election.status === "nomination") setView("nominate");
+    else if (election.status === "voting") setView("vote");
+    else setView("nominate");
+  };
+
+  const lookupSupplier = async () => {
+    if (!supplierCode.trim()) return;
+    setLookupLoading(true);
+    try {
+      const res = await axios.get(`${API}/api/elections/lookup-supplier/${supplierCode.trim()}`);
+      if (res.data.found) {
+        const s = res.data.supplier;
+        setSupplierFound(true);
+        setRegForm({
+          name: s.name || "",
+          supplier_code: s.supplier_code || supplierCode,
+          national_id: s.national_id || "",
+          supply_type: s.milk_type || "",
+          center_name: s.center_name || ""
+        });
+        toast.success("تم العثور على بيانات المورد");
+      } else {
+        setSupplierFound(false);
+        setRegForm({ ...regForm, supplier_code: supplierCode });
+        toast.info("لم يتم العثور - يرجى إدخال البيانات يدوياً");
+      }
+    } catch {
+      setSupplierFound(false);
+    } finally { setLookupLoading(false); }
+  };
+
+  const handleRegister = async () => {
+    if (!regForm.name) { toast.error("يرجى إدخال الاسم"); return; }
+    setSubmitting(true);
+    try {
+      await axios.post(`${API}/api/elections/register-candidate`, {
+        election_id: selected.id,
+        ...regForm
+      });
+      toast.success("تم تسجيل الترشيح بنجاح!");
+      const res = await axios.get(`${API}/api/elections/${selected.id}/candidates`);
+      setCandidates(res.data);
+      setRegForm({ name: "", supplier_code: "", national_id: "", supply_type: "", center_name: "" });
+      setSupplierCode("");
+      setSupplierFound(null);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "خطأ في التسجيل");
+    } finally { setSubmitting(false); }
+  };
+
+  const checkVoteStatus = async () => {
+    if (!voterCode.trim()) { toast.error("أدخل كود المورد"); return; }
+    try {
+      const res = await axios.get(`${API}/api/elections/check-vote/${selected.id}/${voterCode.trim()}`);
+      setHasVoted(res.data.has_voted);
+      if (res.data.has_voted) {
+        setVotedFor(res.data.vote?.candidate_id);
+        toast.info("لقد قمت بالتصويت مسبقاً");
+      }
+    } catch {}
+  };
+
+  const handleVote = async (candidateId) => {
+    if (!voterCode.trim()) { toast.error("أدخل كود المورد أولاً"); return; }
+    if (!window.confirm("هل أنت متأكد من التصويت لهذا المرشح؟ لا يمكن تغيير التصويت لاحقاً.")) return;
+    setSubmitting(true);
+    try {
+      await axios.post(`${API}/api/elections/vote`, {
+        election_id: selected.id,
+        voter_supplier_code: voterCode.trim(),
+        candidate_id: candidateId
+      });
+      toast.success("تم التصويت بنجاح! شكراً لمشاركتك");
+      setHasVoted(true);
+      setVotedFor(candidateId);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "خطأ في التصويت");
+    } finally { setSubmitting(false); }
+  };
+
+  const goBack = () => {
+    setSelected(null);
+    setView("list");
+    setCandidates([]);
+    setRegForm({ name: "", supplier_code: "", national_id: "", supply_type: "", center_name: "" });
+    setSupplierCode("");
+    setSupplierFound(null);
+    setVoterCode("");
+    setHasVoted(false);
+    setVotedFor(null);
+  };
+
+  // ===== Election List =====
+  if (!selected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8" dir="rtl">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+              <Vote className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h1 className="text-2xl font-bold">ترشيح وتصويت الموردين</h1>
+            <p className="text-muted-foreground">اختر عملية الانتخاب للمشاركة</p>
+          </div>
+          {elections.length === 0 ? (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">
+              لا توجد انتخابات حالياً
+            </CardContent></Card>
+          ) : (
+            elections.map(e => (
+              <Card key={e.id} className="cursor-pointer hover:shadow-lg transition-all hover:border-indigo-300"
+                onClick={() => selectElection(e)} data-testid={`election-select-${e.id}`}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{e.title}</CardTitle>
+                    <Badge variant={e.status === "nomination" ? "default" : e.status === "voting" ? "destructive" : "secondary"}>
+                      {statusLabels[e.status]}
+                    </Badge>
+                  </div>
+                  {e.description && <CardDescription>{e.description}</CardDescription>}
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-6 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {e.candidates_count} مرشح</span>
+                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" />
+                      {e.status === "nomination" ? "الترشيح مفتوح" : e.status === "voting" ? "التصويت مفتوح" : statusLabels[e.status]}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ===== Nomination View =====
+  if (view === "nominate") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8" dir="rtl">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Button variant="ghost" onClick={goBack} className="mb-2">
+            <ArrowLeft className="w-4 h-4 ms-1" /> رجوع
+          </Button>
+          <div className="text-center space-y-2">
+            <h1 className="text-xl font-bold">{selected.title}</h1>
+            <Badge className="bg-blue-100 text-blue-700">الترشيح مفتوح</Badge>
+          </div>
+
+          {/* Registration Form */}
+          {selected.status === "nomination" && (
+            <Card data-testid="nomination-form">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-blue-600" /> تسجيل ترشيح جديد
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Supplier Code Lookup */}
+                <div>
+                  <Label>كود المورد</Label>
+                  <div className="flex gap-2">
+                    <Input value={supplierCode} onChange={e => setSupplierCode(e.target.value)}
+                      placeholder="أدخل كود المورد للبحث" data-testid="lookup-code-input"
+                      onKeyDown={e => e.key === "Enter" && lookupSupplier()} />
+                    <Button onClick={lookupSupplier} disabled={lookupLoading} variant="outline" data-testid="lookup-btn">
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {supplierFound === true && <p className="text-xs text-green-600 mt-1">تم العثور على بيانات المورد</p>}
+                  {supplierFound === false && <p className="text-xs text-orange-600 mt-1">لم يتم العثور - أدخل البيانات يدوياً</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>الاسم *</Label>
+                    <Input value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})}
+                      placeholder="اسم المرشح" data-testid="candidate-name-input" />
+                  </div>
+                  <div>
+                    <Label>رقم المدني</Label>
+                    <Input value={regForm.national_id} onChange={e => setRegForm({...regForm, national_id: e.target.value})}
+                      placeholder="رقم الهوية المدنية" data-testid="candidate-id-input" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>نوع التوريد</Label>
+                    <Input value={regForm.supply_type} onChange={e => setRegForm({...regForm, supply_type: e.target.value})}
+                      placeholder="مثال: أبقار / أغنام" />
+                  </div>
+                  <div>
+                    <Label>مركز التوريد</Label>
+                    <Input value={regForm.center_name} onChange={e => setRegForm({...regForm, center_name: e.target.value})}
+                      placeholder="مثال: الادارة" />
+                  </div>
+                </div>
+                <Button onClick={handleRegister} disabled={submitting} className="w-full" data-testid="register-candidate-btn">
+                  {submitting ? "جاري التسجيل..." : <><UserPlus className="w-4 h-4 me-2" /> تسجيل كمرشح</>}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Candidates List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="w-5 h-5" /> المرشحون ({candidates.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {candidates.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6">لا يوجد مرشحون بعد - كن أول مرشح!</p>
+              ) : (
+                <div className="space-y-3">
+                  {candidates.map((c, i) => (
+                    <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg border bg-white"
+                      data-testid={`candidate-${c.id}`}>
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{c.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {c.supplier_code && `كود: ${c.supplier_code}`}
+                          {c.center_name && ` | ${c.center_name}`}
+                          {c.supply_type && ` | ${c.supply_type}`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Switch to voting if available */}
+          {(selected.status === "voting" || selected.status === "pending_voting") && (
+            <Button className="w-full" onClick={() => setView("vote")}>
+              <Vote className="w-4 h-4 me-2" /> الانتقال للتصويت
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ===== Voting View =====
+  if (view === "vote") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 p-4 md:p-8" dir="rtl">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Button variant="ghost" onClick={goBack} className="mb-2">
+            <ArrowLeft className="w-4 h-4 ms-1" /> رجوع
+          </Button>
+          <div className="text-center space-y-2">
+            <h1 className="text-xl font-bold">{selected.title}</h1>
+            <Badge className="bg-green-100 text-green-700">التصويت مفتوح</Badge>
+          </div>
+
+          {/* Voter Identification */}
+          {!hasVoted && (
+            <Card data-testid="voter-id-card">
+              <CardHeader>
+                <CardTitle className="text-lg">التحقق من هوية المصوت</CardTitle>
+                <CardDescription>أدخل كود المورد الخاص بك للتصويت</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Input value={voterCode} onChange={e => setVoterCode(e.target.value)}
+                    placeholder="كود المورد" data-testid="voter-code-input"
+                    onKeyDown={e => e.key === "Enter" && checkVoteStatus()} />
+                  <Button onClick={checkVoteStatus} variant="outline" data-testid="check-vote-btn">
+                    <Search className="w-4 h-4 me-1" /> تحقق
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Already Voted */}
+          {hasVoted && (
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="py-8 text-center">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-green-700">تم التصويت بنجاح</h3>
+                <p className="text-green-600 mt-1">شكراً لمشاركتك. لقد قمت بالتصويت مسبقاً.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Candidates to vote for */}
+          {!hasVoted && voterCode && selected.status === "voting" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Vote className="w-5 h-5 text-green-600" /> اختر المرشح
+                </CardTitle>
+                <CardDescription>اضغط على "تصويت" بجانب المرشح الذي تريد التصويت له</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {candidates.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6">لا يوجد مرشحون</p>
+                ) : (
+                  <div className="space-y-3">
+                    {candidates.map(c => (
+                      <div key={c.id} className="flex items-center gap-3 p-4 rounded-lg border bg-white hover:border-green-300 transition-colors"
+                        data-testid={`vote-candidate-${c.id}`}>
+                        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <Users className="w-6 h-6 text-indigo-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold">{c.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {c.supplier_code && `كود: ${c.supplier_code}`}
+                            {c.center_name && ` | ${c.center_name}`}
+                          </p>
+                        </div>
+                        <Button onClick={() => handleVote(c.id)} disabled={submitting}
+                          className="bg-green-600 hover:bg-green-700" data-testid={`vote-btn-${c.id}`}>
+                          <Vote className="w-4 h-4 me-1" /> تصويت
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* View candidates in non-voting state */}
+          {selected.status !== "voting" && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                <Clock className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>التصويت غير مفتوح حالياً</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}

@@ -16346,6 +16346,11 @@ from routes.supplier_registration_routes import router as supplier_reg_router, s
 set_supplier_reg_db(db)
 app.include_router(supplier_reg_router)
 
+# Include Supplier Election router
+from routes.election_routes import router as election_router
+app.include_router(election_router, prefix="/api")
+
+
 # Mount static files for exports
 static_exports_path = Path(__file__).parent / "static" / "exports"
 if static_exports_path.exists():
