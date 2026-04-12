@@ -270,11 +270,13 @@ export default function SupplierVoting() {
           </Button>
           <div className="text-center space-y-2">
             <h1 className="text-xl font-bold">{selected.title}</h1>
-            <Badge className="bg-blue-100 text-blue-700">الترشيح مفتوح</Badge>
+            <Badge className={selected.status === "nomination" || selected.status === "draft" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}>
+              {statusLabels[selected.status] || "لم يبدأ بعد"}
+            </Badge>
           </div>
 
           {/* Registration Form */}
-          {selected.status === "nomination" && (
+          {(selected.status === "nomination" || selected.status === "draft") && (
             <Card data-testid="nomination-form">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">

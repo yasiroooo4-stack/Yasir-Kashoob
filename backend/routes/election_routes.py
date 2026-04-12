@@ -5,8 +5,11 @@ Supplier Election & Voting System
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
+
+# توقيت عُمان UTC+4
+OMAN_TZ = timezone(timedelta(hours=4))
 import os
 import motor.motor_asyncio
 
@@ -29,7 +32,7 @@ class Election(BaseModel):
     voting_start: str
     voting_end: str
     status: str = "draft"  # draft, nomination, voting, closed
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(OMAN_TZ).isoformat())
     created_by: Optional[str] = None
 
 
@@ -51,7 +54,8 @@ class VoteCast(BaseModel):
 
 # ===== Helper =====
 def get_election_status(election: dict) -> str:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
+    """تحديد حالة الانتخاب بناءً على توقيت عُمان UTC+4"""
+    now = datetime.now(OMAN_TZ).strftime("%Y-%m-%dT%H:%M")
     nom_start = election.get("nomination_start", "")[:16]
     nom_end = election.get("nomination_end", "")[:16]
     vote_start = election.get("voting_start", "")[:16]
@@ -200,7 +204,7 @@ async def register_candidate(data: CandidateRegister):
         "national_id": data.national_id,
         "supply_type": data.supply_type,
         "center_name": data.center_name,
-        "registered_at": datetime.now(timezone.utc).isoformat()
+        "registered_at": datetime.now(OMAN_TZ).isoformat()
     }
     await db.supplier_candidates.insert_one(candidate)
     candidate.pop("_id", None)
@@ -261,7 +265,7 @@ async def cast_vote(data: VoteCast):
         "voter_supplier_code": data.voter_supplier_code,
         "voter_center": data.voter_center,
         "candidate_id": data.candidate_id,
-        "voted_at": datetime.now(timezone.utc).isoformat()
+        "voted_at": datetime.now(OMAN_TZ).isoformat()
     }
     await db.supplier_votes.insert_one(vote)
     vote.pop("_id", None)
