@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import {
-  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft
+  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft, Printer
 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -35,6 +35,7 @@ export default function SupplierVoting() {
   const [hasVoted, setHasVoted] = useState(false);
   const [votedFor, setVotedFor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [receipt, setReceipt] = useState(null); // Registration receipt
 
   const fetchElections = useCallback(async () => {
     try {
@@ -86,19 +87,77 @@ export default function SupplierVoting() {
     if (!regForm.name) { toast.error("يرجى إدخال الاسم"); return; }
     setSubmitting(true);
     try {
-      await axios.post(`${API}/api/elections/register-candidate`, {
+      const res = await axios.post(`${API}/api/elections/register-candidate`, {
         election_id: selected.id,
         ...regForm
       });
       toast.success("تم تسجيل الترشيح بنجاح!");
-      const res = await axios.get(`${API}/api/elections/${selected.id}/candidates`);
-      setCandidates(res.data);
+      // Save receipt data
+      setReceipt({
+        candidateId: res.data.id,
+        name: regForm.name,
+        supplierCode: regForm.supplier_code,
+        nationalId: regForm.national_id,
+        supplyType: regForm.supply_type,
+        centerName: regForm.center_name,
+        electionTitle: selected.title,
+        registeredAt: new Date().toLocaleString("ar-SA")
+      });
+      const candRes = await axios.get(`${API}/api/elections/${selected.id}/candidates`);
+      setCandidates(candRes.data);
       setRegForm({ name: "", supplier_code: "", national_id: "", supply_type: "", center_name: "" });
       setSupplierCode("");
       setSupplierFound(null);
     } catch (err) {
       toast.error(err.response?.data?.detail || "خطأ في التسجيل");
     } finally { setSubmitting(false); }
+  };
+
+  const printReceipt = () => {
+    if (!receipt) return;
+    const printWindow = window.open("", "_blank", "width=600,height=500");
+    printWindow.document.write(`
+      <html dir="rtl"><head><title>إيصال ترشيح</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 30px; direction: rtl; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .header h1 { font-size: 22px; margin: 5px 0; }
+        .header h2 { font-size: 16px; color: #555; margin: 5px 0; }
+        .reg-num { text-align: center; background: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 8px; }
+        .reg-num span { font-size: 28px; font-weight: bold; color: #333; }
+        .info { margin: 10px 0; }
+        .info table { width: 100%; border-collapse: collapse; }
+        .info td { padding: 8px 12px; border: 1px solid #ddd; }
+        .info td:first-child { background: #f8f8f8; font-weight: bold; width: 35%; }
+        .footer { text-align: center; margin-top: 30px; color: #888; font-size: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
+        @media print { body { padding: 15px; } }
+      </style></head><body>
+        <div class="header">
+          <h1>إيصال تسجيل ترشيح</h1>
+          <h2>${receipt.electionTitle}</h2>
+        </div>
+        <div class="reg-num">
+          <p style="margin:0;font-size:14px;color:#666;">رقم التسجيل</p>
+          <span>${receipt.candidateId.substring(0, 8).toUpperCase()}</span>
+        </div>
+        <div class="info">
+          <table>
+            <tr><td>الاسم</td><td>${receipt.name}</td></tr>
+            <tr><td>كود المورد</td><td>${receipt.supplierCode || "-"}</td></tr>
+            <tr><td>رقم المدني</td><td>${receipt.nationalId || "-"}</td></tr>
+            <tr><td>نوع التوريد</td><td>${receipt.supplyType || "-"}</td></tr>
+            <tr><td>مركز التوريد</td><td>${receipt.centerName || "-"}</td></tr>
+            <tr><td>تاريخ التسجيل</td><td>${receipt.registeredAt}</td></tr>
+          </table>
+        </div>
+        <div class="footer">
+          <p>هذا الإيصال هو إثبات لتسجيل الترشيح</p>
+          <p>يرجى الاحتفاظ بهذا الإيصال ورقم التسجيل</p>
+        </div>
+        <script>window.onload=function(){window.print();}</script>
+      </body></html>
+    `);
+    printWindow.document.close();
   };
 
   const checkVoteStatus = async () => {
@@ -255,18 +314,36 @@ export default function SupplierVoting() {
             </Card>
           )}
 
-          {/* Candidates List */}
+          {/* Receipt after registration */}
+          {receipt && (
+            <Card className="border-green-300 bg-green-50" data-testid="registration-receipt">
+              <CardContent className="py-6 text-center space-y-3">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+                <h3 className="text-lg font-bold text-green-700">تم تسجيل الترشيح بنجاح!</h3>
+                <div className="bg-white rounded-lg p-4 border">
+                  <p className="text-sm text-muted-foreground">رقم التسجيل</p>
+                  <p className="text-2xl font-bold font-mono tracking-wider">{receipt.candidateId.substring(0, 8).toUpperCase()}</p>
+                </div>
+                <Button onClick={printReceipt} className="gap-2" data-testid="print-receipt-btn">
+                  <Printer className="w-4 h-4" /> طباعة إيصال التسجيل
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setReceipt(null)}>إغلاق</Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Candidates List - numbers only, no names */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="w-5 h-5" /> المرشحون ({candidates.length})
+                <Users className="w-5 h-5" /> عدد المرشحين ({candidates.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {candidates.length === 0 ? (
                 <p className="text-center text-muted-foreground py-6">لا يوجد مرشحون بعد - كن أول مرشح!</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {candidates.map((c, i) => (
                     <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg border bg-white"
                       data-testid={`candidate-${c.id}`}>
@@ -274,12 +351,7 @@ export default function SupplierVoting() {
                         {i + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {c.supplier_code && `كود: ${c.supplier_code}`}
-                          {c.center_name && ` | ${c.center_name}`}
-                          {c.supply_type && ` | ${c.supply_type}`}
-                        </p>
+                        <p className="font-medium font-mono text-sm">رقم التسجيل: {c.id.substring(0, 8).toUpperCase()}</p>
                       </div>
                     </div>
                   ))}
