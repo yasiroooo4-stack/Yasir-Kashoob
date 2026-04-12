@@ -116,26 +116,36 @@ export default function SupplierVoting() {
   // ===== Camera Functions =====
   const startCamera = async () => {
     try {
+      setShowCamera(true);
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: 640, height: 480 }
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setShowCamera(true);
-    } catch {
+      // Wait for video element to render then attach stream
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 100);
+    } catch (err) {
+      setShowCamera(false);
       toast.error("لا يمكن الوصول للكاميرا. يرجى السماح بالوصول من إعدادات المتصفح");
     }
   };
 
   const capturePhoto = () => {
     if (!videoRef.current) return;
+    const video = videoRef.current;
     const canvas = document.createElement("canvas");
-    canvas.width = 640;
-    canvas.height = 480;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(videoRef.current, 0, 0, 640, 480);
+    // Mirror the image (front camera)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
     setCapturedPhoto(dataUrl);
     stopCamera();
@@ -145,6 +155,9 @@ export default function SupplierVoting() {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setShowCamera(false);
   };
@@ -483,7 +496,15 @@ export default function SupplierVoting() {
                   {showCamera && (
                     <div className="space-y-3">
                       <div className="relative rounded-lg overflow-hidden bg-black aspect-[4/3]">
-                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
+                        <video 
+                          ref={videoRef} 
+                          autoPlay 
+                          playsInline 
+                          muted 
+                          className="w-full h-full object-cover" 
+                          style={{ transform: "scaleX(-1)" }}
+                          onLoadedMetadata={(e) => e.target.play()}
+                        />
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" onClick={capturePhoto} className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700" data-testid="capture-btn">
@@ -498,7 +519,7 @@ export default function SupplierVoting() {
                   {capturedPhoto && (
                     <div className="space-y-3">
                       <div className="relative rounded-lg overflow-hidden border-2 border-green-400">
-                        <img src={capturedPhoto} alt="صورة المرشح" className="w-full aspect-[4/3] object-cover" style={{ transform: "scaleX(-1)" }} />
+                        <img src={capturedPhoto} alt="صورة المرشح" className="w-full aspect-[4/3] object-cover" />
                         <div className="absolute top-2 right-2">
                           <Badge className="bg-green-500 text-white gap-1"><CheckCircle className="w-3 h-3" /> تم التصوير</Badge>
                         </div>
