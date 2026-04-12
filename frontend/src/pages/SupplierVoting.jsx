@@ -168,17 +168,41 @@ export default function SupplierVoting() {
     printWindow.document.close();
   };
 
+  const [voterName, setVoterName] = useState("");
+  const [voterVerified, setVoterVerified] = useState(false);
+
   const checkVoteStatus = async () => {
     if (!voterCode.trim()) { toast.error("أدخل كود المورد"); return; }
-    if (!voterCenter) { toast.error("اختر مركزك أولاً"); return; }
     try {
-      const res = await axios.get(`${API}/api/elections/check-vote/${selected.id}/${voterCode.trim()}/${voterCenter}`);
+      // البحث عن بيانات المورد تلقائياً
+      const lookupRes = await axios.get(`${API}/api/elections/lookup-supplier/${voterCode.trim()}`);
+      if (!lookupRes.data.found) {
+        toast.error("كود المورد غير موجود في النظام");
+        setVoterVerified(false);
+        return;
+      }
+      const supplier = lookupRes.data.supplier;
+      setVoterCenter(supplier.center_name || "");
+      setVoterName(supplier.name || "");
+      setVoterVerified(true);
+
+      if (!supplier.center_name) {
+        toast.error("لم يتم تحديد مركز لهذا المورد");
+        return;
+      }
+
+      // التحقق إذا صوت مسبقاً
+      const res = await axios.get(`${API}/api/elections/check-vote/${selected.id}/${voterCode.trim()}/${supplier.center_name}`);
       setHasVoted(res.data.has_voted);
       if (res.data.has_voted) {
         setVotedFor(res.data.vote?.candidate_id);
         toast.info("لقد قمت بالتصويت مسبقاً");
+      } else {
+        toast.success(`مرحباً ${supplier.name} - مركز ${supplier.center_name}`);
       }
-    } catch {}
+    } catch {
+      toast.error("خطأ في التحقق");
+    }
   };
 
   const handleVote = async (candidateId) => {
@@ -210,6 +234,8 @@ export default function SupplierVoting() {
     setSupplierFound(null);
     setVoterCode("");
     setVoterCenter("");
+    setVoterName("");
+    setVoterVerified(false);
     setHasVoted(false);
     setVotedFor(null);
     setReceipt(null);
@@ -412,29 +438,36 @@ export default function SupplierVoting() {
           </div>
 
           {/* Voter Identification */}
-          {!hasVoted && (
+          {!hasVoted && !voterVerified && (
             <Card data-testid="voter-id-card">
               <CardHeader>
                 <CardTitle className="text-lg">التحقق من هوية المصوت</CardTitle>
-                <CardDescription>أدخل كود المورد واختر مركزك للتصويت</CardDescription>
+                <CardDescription>أدخل كود المورد للتحقق وعرض المرشحين في مركزك</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex gap-2">
                   <Input value={voterCode} onChange={e => setVoterCode(e.target.value)}
-                    placeholder="كود المورد" data-testid="voter-code-input" />
-                  <select
-                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm min-w-[120px]"
-                    value={voterCenter}
-                    onChange={e => setVoterCenter(e.target.value)}
-                    data-testid="voter-center-select"
-                  >
-                    <option value="">المركز</option>
-                    {(selected?.centers || ["زيك", "حجيف", "غدو"]).map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    placeholder="أدخل كود المورد" data-testid="voter-code-input"
+                    onKeyDown={e => e.key === "Enter" && checkVoteStatus()} />
                   <Button onClick={checkVoteStatus} variant="outline" data-testid="check-vote-btn">
                     <Search className="w-4 h-4 me-1" /> تحقق
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Voter Info Card */}
+          {voterVerified && !hasVoted && (
+            <Card className="border-blue-200 bg-blue-50" data-testid="voter-info-card">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-blue-800">{voterName}</p>
+                    <p className="text-sm text-blue-600">كود: {voterCode} | مركز: {voterCenter}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => { setVoterVerified(false); setVoterCode(""); setVoterCenter(""); setVoterName(""); }}>
+                    تغيير
                   </Button>
                 </div>
               </CardContent>
@@ -453,7 +486,7 @@ export default function SupplierVoting() {
           )}
 
           {/* Candidates to vote for - filtered by voter's center */}
-          {!hasVoted && voterCode && voterCenter && selected.status === "voting" && (
+          {!hasVoted && voterVerified && voterCenter && selected.status === "voting" && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
