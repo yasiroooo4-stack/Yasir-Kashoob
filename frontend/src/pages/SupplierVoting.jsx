@@ -116,16 +116,19 @@ export default function SupplierVoting() {
 
   const printReceipt = () => {
     if (!receipt) return;
-    const printWindow = window.open("", "_blank", "width=600,height=500");
+    const logoUrl = window.location.origin + "/company-logo.png";
+    const printWindow = window.open("", "_blank", "width=600,height=600");
     printWindow.document.write(`
-      <html dir="rtl"><head><title>إيصال ترشيح</title>
+      <html dir="rtl"><head><title>إيصال ترشيح - المروج للألبان</title>
       <style>
         body { font-family: Arial, sans-serif; padding: 30px; direction: rtl; }
         .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
-        .header h1 { font-size: 22px; margin: 5px 0; }
-        .header h2 { font-size: 16px; color: #555; margin: 5px 0; }
+        .header img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 8px; }
+        .header h1 { font-size: 20px; margin: 3px 0; color: #8B7D3C; }
+        .header h2 { font-size: 14px; color: #666; margin: 3px 0; }
+        .header h3 { font-size: 16px; margin: 8px 0 3px; }
         .reg-num { text-align: center; background: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 8px; }
-        .reg-num span { font-size: 28px; font-weight: bold; color: #333; }
+        .reg-num span { font-size: 28px; font-weight: bold; color: #333; letter-spacing: 3px; }
         .info { margin: 10px 0; }
         .info table { width: 100%; border-collapse: collapse; }
         .info td { padding: 8px 12px; border: 1px solid #ddd; }
@@ -134,8 +137,11 @@ export default function SupplierVoting() {
         @media print { body { padding: 15px; } }
       </style></head><body>
         <div class="header">
-          <h1>إيصال تسجيل ترشيح</h1>
-          <h2>${receipt.electionTitle}</h2>
+          <img src="${logoUrl}" alt="المروج للألبان" />
+          <h1>المروج للألبان</h1>
+          <h2>Al Morooj Dairy</h2>
+          <h3>إيصال تسجيل ترشيح</h3>
+          <p style="font-size:13px;color:#555;margin:3px 0">${receipt.electionTitle}</p>
         </div>
         <div class="reg-num">
           <p style="margin:0;font-size:14px;color:#666;">رقم التسجيل</p>
@@ -154,8 +160,9 @@ export default function SupplierVoting() {
         <div class="footer">
           <p>هذا الإيصال هو إثبات لتسجيل الترشيح</p>
           <p>يرجى الاحتفاظ بهذا الإيصال ورقم التسجيل</p>
+          <p style="margin-top:8px;color:#8B7D3C;">المروج للألبان - Al Morooj Dairy</p>
         </div>
-        <script>window.onload=function(){window.print();}</script>
+        <script>window.onload=function(){setTimeout(function(){window.print();},500);}</script>
       </body></html>
     `);
     printWindow.document.close();
@@ -214,10 +221,10 @@ export default function SupplierVoting() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8" dir="rtl">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="text-center space-y-2">
-            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-              <Vote className="w-8 h-8 text-indigo-600" />
-            </div>
-            <h1 className="text-2xl font-bold">ترشيح وتصويت الموردين</h1>
+            <img src="/company-logo.png" alt="المروج للألبان" className="mx-auto w-24 h-24 object-contain" />
+            <h1 className="text-2xl font-bold">المروج للألبان</h1>
+            <p className="text-sm text-muted-foreground">Al Morooj Dairy</p>
+            <h2 className="text-lg font-semibold mt-2">ترشيح وتصويت الموردين</h2>
             <p className="text-muted-foreground">اختر عملية الانتخاب للمشاركة</p>
           </div>
           {elections.length === 0 ? (
