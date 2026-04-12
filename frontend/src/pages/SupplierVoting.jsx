@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import {
-  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft, Printer
+  Vote, UserPlus, Search, CheckCircle, Users, Clock, Trophy, ArrowLeft, Printer, Timer
 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -19,6 +19,68 @@ const statusLabels = {
   voting: "التصويت مفتوح",
   closed: "مغلق",
 };
+
+// مكون العد التنازلي
+function Countdown({ election }) {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [label, setLabel] = useState("");
+
+  useEffect(() => {
+    const calcTime = () => {
+      const now = new Date();
+      const nomStart = new Date(election.nomination_start);
+      const nomEnd = new Date(election.nomination_end);
+      const voteStart = new Date(election.voting_start);
+      const voteEnd = new Date(election.voting_end);
+
+      let target, text;
+      if (now < nomStart) {
+        target = nomStart; text = "يبدأ الترشيح بعد";
+      } else if (now <= nomEnd) {
+        target = nomEnd; text = "ينتهي الترشيح بعد";
+      } else if (now < voteStart) {
+        target = voteStart; text = "يبدأ التصويت بعد";
+      } else if (now <= voteEnd) {
+        target = voteEnd; text = "ينتهي التصويت بعد";
+      } else {
+        setLabel(""); setTimeLeft("انتهى"); return;
+      }
+
+      const diff = target - now;
+      if (diff <= 0) { setTimeLeft("الآن!"); setLabel(text); return; }
+
+      const days = Math.floor(diff / 86400000);
+      const hrs = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+
+      let parts = [];
+      if (days > 0) parts.push(`${days} يوم`);
+      if (hrs > 0) parts.push(`${hrs} ساعة`);
+      if (mins > 0) parts.push(`${mins} دقيقة`);
+      if (days === 0) parts.push(`${secs} ثانية`);
+
+      setTimeLeft(parts.join("  "));
+      setLabel(text);
+    };
+
+    calcTime();
+    const interval = setInterval(calcTime, 1000);
+    return () => clearInterval(interval);
+  }, [election]);
+
+  if (!timeLeft || timeLeft === "انتهى") return null;
+
+  return (
+    <div className="mt-3 p-3 rounded-lg bg-gradient-to-l from-amber-50 to-orange-50 border border-amber-200" data-testid="countdown-timer">
+      <div className="flex items-center gap-2 justify-center">
+        <Timer className="w-4 h-4 text-amber-600 animate-pulse" />
+        <span className="text-sm font-medium text-amber-700">{label}</span>
+      </div>
+      <p className="text-center text-lg font-bold text-amber-800 mt-1 font-mono tracking-wide">{timeLeft}</p>
+    </div>
+  );
+}
 
 export default function SupplierVoting() {
   const [elections, setElections] = useState([]);
@@ -277,6 +339,7 @@ export default function SupplierVoting() {
                       {e.status === "nomination" ? "الترشيح مفتوح" : e.status === "voting" ? "التصويت مفتوح" : statusLabels[e.status]}
                     </span>
                   </div>
+                  <Countdown election={e} />
                 </CardContent>
               </Card>
             ))
