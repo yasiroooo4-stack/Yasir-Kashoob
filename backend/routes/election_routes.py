@@ -144,7 +144,7 @@ async def get_election_results(election_id: str):
         c["voters"] = voters
         # رابط الصورة
         if c.get("photo"):
-            c["photo_url"] = f"/api/elections/candidate-photo/{c['photo']}"
+            c["photo_url"] = f"/elections/candidate-photo/{c['photo']}"
 
     # Group by center
     centers = election.get("centers", ["زيك", "حجيف", "غدو"])
