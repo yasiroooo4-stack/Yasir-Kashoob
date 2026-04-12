@@ -41,6 +41,7 @@ Full-stack HR/Attendance management system (Arabic UI) with:
 - [x] **Admin IP Update from blocked page** - when WiFi IP changes, admin can update it directly from /gps-attendance blocked page without going to settings. Flow: blocked → admin login → update IP → page unblocks. (Mar 2026)
 - [x] **Fixed payroll period creation** - period name was sent empty when auto-generated. Now uses generatePeriodName() as fallback in submit handler. (Mar 2026)
 - [x] **Fixed payroll attendance calculation** - Three fixes: (1) weekday() instead of isoweekday() for correct Fri/Sat weekend detection, (2) safeguard for corrupted weekly_off_days >3 days defaults to [Fri,Sat], (3) count pending_gps_approval and records with check_in as present. Fixed 7 employees with corrupted weekly_off_days data. (Mar 2026)
+- [x] **Supplier Election & Voting System** - Full system for nominating and voting for "head of suppliers". Features: admin election management, time-bound nomination/voting periods, supplier code auto-lookup, manual entry fallback, one-vote-per-supplier, vote counts visible only to admin. Routes: /supplier-elections (admin), /supplier-voting (public). (Apr 2026)
 
 ## Key Endpoints
 - `GET /api/tracking/detect-network` - Auto IP verification
